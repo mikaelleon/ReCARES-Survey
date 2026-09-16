@@ -63,6 +63,7 @@ export default function AdminSignupPage() {
         </div>
 
         <div
+          data-auth=""
           style={{
             ['--text-body' as string]: 'var(--white)',
             ['--surface-2' as string]: 'rgba(255,255,255,.14)',

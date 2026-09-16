@@ -92,7 +92,7 @@ export function HomePage() {
               alignItems: 'flex-start',
               justifyContent: 'flex-start',
               padding: 20,
-              color: '#fff',
+              color: '#e5ebe8',
               fontSize: 14,
             }}
           >

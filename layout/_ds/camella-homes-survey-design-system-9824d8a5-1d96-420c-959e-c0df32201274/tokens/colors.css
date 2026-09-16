@@ -1,8 +1,8 @@
 :root{
---black:#0B0B0B;--white:#FFFFFF;--dark-emerald:#13693F;--harvest-orange:#F78021;--bright-amber:#FECA09;--dim-grey:#7B7170;--error-red:#D64545;
+--black:#0B0B0B;--white:#E5EBE8;--dark-emerald:#13693F;--harvest-orange:#F78021;--bright-amber:#FECA09;--dim-grey:#7B7170;--error-red:#D64545;
 --page-bg:var(--white);
 --surface-1:#F4F4F4;--surface-2:#EAEAEA;--surface-3:var(--white);--surface-3-border:rgba(0,0,0,.12);
---card-fill-neutral:#DCDCCE;--card-fill-brand:var(--dark-emerald);--card-fill-accordion-open:rgba(0,0,0,.09);
+--card-fill-neutral:#FFFFFF;--card-fill-brand:var(--dark-emerald);--card-fill-accordion-open:rgba(0,0,0,.09);
 --brand-emerald:var(--dark-emerald);
 --text-headline:var(--dark-emerald);--text-body:var(--dark-emerald);--text-caption:rgba(0,0,0,.7);
 --text-section-heading:var(--dark-emerald);

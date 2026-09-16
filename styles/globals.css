@@ -17,9 +17,15 @@ body {
   --text-on-primary: var(--black);
 }
 
-[data-inq] input::placeholder {
-  color: rgba(255, 255, 255, 0.72);
+[data-inq] input::placeholder,
+[data-auth] input::placeholder {
+  color: rgba(229, 235, 232, 0.78);
   opacity: 1;
+}
+
+[data-auth] input {
+  color: var(--white);
+  caret-color: var(--white);
 }
 
 h1,

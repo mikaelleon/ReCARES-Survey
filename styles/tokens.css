@@ -1,6 +1,6 @@
 ﻿:root {
   --black: #0b0b0b;
-  --white: #ffffff;
+  --white: #e5ebe8;
   --dark-emerald: #13693f;
   --harvest-orange: #f78021;
   --bright-amber: #feca09;
@@ -11,7 +11,7 @@
   --surface-2: #eaeaea;
   --surface-3: var(--white);
   --surface-3-border: rgba(0, 0, 0, 0.12);
-  --card-fill-neutral: #dcdcce;
+  --card-fill-neutral: #ffffff;
   --card-fill-brand: var(--dark-emerald);
   --card-fill-accordion-open: rgba(0, 0, 0, 0.09);
   --brand-emerald: var(--dark-emerald);
