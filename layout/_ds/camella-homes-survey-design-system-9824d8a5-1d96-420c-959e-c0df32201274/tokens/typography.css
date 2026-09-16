@@ -1,0 +1,17 @@
+@font-face{font-family:'Plus Jakarta Sans';font-style:normal;font-weight:400 800;font-display:swap;src:url(https://fonts.gstatic.com/s/plusjakartasans/v8/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_qMs.woff2) format('woff2');}
+:root{
+--font-sans:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+/* Two weights only across the whole site: 400 body, 700 headings/labels/buttons. */
+--weight-body:400;--weight-bold:700;
+--text-h1-size:32px;--text-h1-weight:700;--text-h1-line:1.25;--text-h1-color:var(--text-headline);
+--text-h2-size:24px;--text-h2-weight:700;--text-h2-line:1.3;--text-h2-color:var(--text-headline);
+--text-h3-size:18px;--text-h3-weight:700;--text-h3-line:1.4;--text-h3-color:var(--text-headline);
+--text-body-size:16px;--text-body-weight:400;--text-body-line:1.55;--text-body-color:var(--text-body);
+--text-label-size:14px;--text-label-weight:700;--text-label-line:1.4;--text-label-color:var(--text-body);
+--text-caption-size:14px;--text-caption-weight:400;--text-caption-line:1.5;--text-caption-color:var(--text-caption);
+/* Uppercase treatments — eyebrow, section heading, card title, button label */
+--text-eyebrow-size:13px;--text-eyebrow-weight:700;--text-eyebrow-tracking:.12em;
+--text-section-heading-size:24px;--text-section-heading-weight:700;--text-section-heading-tracking:.04em;
+--text-card-title-size:15px;--text-card-title-weight:700;--text-card-title-tracking:.06em;
+--text-button-size:14px;--text-button-weight:700;--text-button-tracking:.06em;
+}

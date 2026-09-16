@@ -1,0 +1,7 @@
+:root{
+--space-1:4px;--space-2:8px;--space-3:16px;--space-4:24px;--space-5:32px;--space-6:48px;--space-7:64px;
+--content-max-width:1120px;--content-max-width-form:720px;--section-gap:96px;--card-padding:32px;
+--radius-sm:8px;--radius-md:16px;--radius-lg:20px;--radius-checkbox:4px;--radius-card:16px;
+--touch-target-min:44px;
+--motion-duration:220ms;/* @kind other */--motion-ease:ease-in-out;/* @kind other */
+}

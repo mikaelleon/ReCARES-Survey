@@ -1,0 +1,86 @@
+'use client';
+
+import type { ChangeEventHandler, CSSProperties } from 'react';
+
+export interface InputProps {
+  label?: string;
+  placeholder?: string;
+  value?: string;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
+  type?: string;
+  required?: boolean;
+  error?: string | null;
+  helperText?: string | null;
+}
+
+export function Input({
+  label,
+  placeholder,
+  value,
+  onChange,
+  type = 'text',
+  required = false,
+  error = null,
+  helperText = null,
+}: InputProps) {
+  const wrapperStyle: CSSProperties = {
+    fontFamily: 'var(--font-sans)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    width: '100%',
+  };
+
+  const labelStyle: CSSProperties = {
+    fontSize: 'var(--text-label-size)',
+    fontWeight: 'var(--text-label-weight)',
+    color: 'var(--text-body)',
+    display: 'flex',
+    gap: 4,
+  };
+
+  const inputStyle: CSSProperties = {
+    fontFamily: 'var(--font-sans)',
+    fontSize: 'var(--text-body-size)',
+    color: 'var(--text-body)',
+    background: 'var(--surface-2)',
+    border: error ? '1px solid var(--error-red)' : '1px solid transparent',
+    borderRadius: 'var(--radius-sm)',
+    height: 44,
+    padding: '0 14px',
+    outline: 'none',
+    boxSizing: 'border-box',
+  };
+
+  const captionStyle: CSSProperties = {
+    fontSize: 'var(--text-caption-size)',
+    color: error ? 'var(--error-red)' : 'var(--text-caption)',
+  };
+
+  return (
+    <div style={wrapperStyle}>
+      {label && (
+        <label style={labelStyle}>
+          {label}
+          {required && (
+            <span style={{ color: 'var(--harvest-orange)' }} aria-label="required">
+              *
+            </span>
+          )}
+        </label>
+      )}
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        style={inputStyle}
+      />
+      {error ? (
+        <span style={captionStyle}>{error}</span>
+      ) : (
+        helperText && <span style={captionStyle}>{helperText}</span>
+      )}
+    </div>
+  );
+}

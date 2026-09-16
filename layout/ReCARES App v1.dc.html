@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/camella-homes-survey-design-system-9824d8a5-1d96-420c-959e-c0df32201274/tokens/colors.css">
+<link rel="stylesheet" href="_ds/camella-homes-survey-design-system-9824d8a5-1d96-420c-959e-c0df32201274/tokens/typography.css">
+<link rel="stylesheet" href="_ds/camella-homes-survey-design-system-9824d8a5-1d96-420c-959e-c0df32201274/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/camella-homes-survey-design-system-9824d8a5-1d96-420c-959e-c0df32201274/tokens/shadows.css">
+<link rel="stylesheet" href="_ds/camella-homes-survey-design-system-9824d8a5-1d96-420c-959e-c0df32201274/styles.css">
+<script src="_ds/camella-homes-survey-design-system-9824d8a5-1d96-420c-959e-c0df32201274/_ds_bundle.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+html,body{margin:0;padding:0}
+a{color:var(--accent-primary);text-decoration:underline}
+a:hover{color:var(--accent-hover)}
+/* Shadow-part rule: cannot be inline. Pins the hero slot's empty-state caption to the
+   top-left corner so it never sits under the centred hero copy. */
+image-slot#hero-perimeter::part(empty){align-items:flex-start;justify-content:flex-start;text-align:left;padding:20px;color:#fff}
+</style>
+</helmet>
+
+<div data-theme="{{ theme }}" style="--accent-primary:var(--harvest-orange);--accent-hover:#C2600F;--text-on-primary:var(--black);background:var(--page-bg);min-height:100vh;font-family:var(--font-sans);color:var(--text-body);padding-bottom:0">
+
+  <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:12px 32px">
+    <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.LanguageToggle" value="{{ lang }}" onChange="{{ setLang }}" hint-size="120px,40px"></x-import>
+    <button type="button" onClick="{{ toggleTheme }}" style="height:40px;padding:0 16px;border-radius:8px;cursor:pointer;font-family:var(--font-sans);font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:transparent;color:var(--text-body);border:1px solid var(--border-default)">{{ themeLabel }}</button>
+  </div>
+
+  <sc-if value="{{ filNote }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1120px;margin:0 auto 16px;padding:12px 32px;background:var(--bright-amber);color:var(--black);font-size:14px;border-radius:8px">Filipino translations are pending. Strings are shown in English for now; every string has a Filipino counterpart in the final build.</div>
+  </sc-if>
+
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+  <div>
+    <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.NavBar" active="Home" onNavigate="{{ onNav }}" hint-size="100%,64px"></x-import>
+
+    <div style="max-width:1120px;margin:0 auto;padding:32px 32px 0">
+      <div style="position:relative;border-radius:16px;overflow:hidden;min-height:520px;display:flex;align-items:center;justify-content:center">
+        <div style="position:absolute;inset:0">
+          <image-slot id="hero-perimeter" shape="rect" placeholder="Drop the perimeter photograph"></image-slot>
+        </div>
+        <div style="position:absolute;inset:0;background:var(--overlay-hero);pointer-events:none"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;height:22px;display:flex;pointer-events:none">
+          <div style="flex:1;background:var(--dark-emerald)"></div>
+          <div style="flex:1;background:var(--emerald-400)"></div>
+          <div style="flex:1;background:var(--harvest-orange)"></div>
+          <div style="flex:1;background:var(--bright-amber)"></div>
+        </div>
+        <div style="position:relative;padding:80px 40px 92px;text-align:center;pointer-events:none;max-width:820px">
+          <div style="font-weight:700;line-height:1;font-size:clamp(48px,8vw,92px);letter-spacing:.01em">
+            <span style="color:var(--white)">R</span><span style="color:var(--white)">e</span><span style="color:var(--emerald-400)">C</span><span style="color:var(--harvest-orange)">A</span><span style="color:var(--harvest-orange)">R</span><span style="color:var(--bright-amber)">E</span><span style="color:var(--white)">S</span>
+          </div>
+          <div style="margin-top:14px;font-size:24px;font-weight:700;color:var(--bright-amber)">Community needs assessment survey</div>
+          <div style="margin-top:14px;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--white)">For residents of Camella Homes Tibig, Lipa City</div>
+          <div style="margin:18px auto 0;max-width:620px;font-size:16px;line-height:1.55;color:var(--white);text-wrap:pretty">Help us understand what safety and service improvements Camella Homes Tibig residents need most, before we build anything.</div>
+          <div style="margin-top:28px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;pointer-events:auto">
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="primary" onDark="{{ true }}" onClick="{{ goSurvey }}" hint-size="auto,44px">Start the survey</x-import>
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="secondary" onDark="{{ true }}" onClick="{{ goAbout }}" hint-size="auto,44px">Learn more</x-import>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:14px;line-height:1.5;color:var(--text-caption)">Hero background: drop the subdivision perimeter photograph onto the hero. No photo was supplied, so it ships as an empty slot.</div>
+    </div>
+
+    <div id="about" style="max-width:1120px;margin:0 auto;padding:96px 32px 0">
+      <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.InfoCard" heading="What is this survey for?" iconSide="right" icon="{{ surveyIcon }}" hint-size="100%,260px">This survey is part of a research project by fourth-year Information Technology students at the University of Batangas, Lipa Campus, working with the Camella Homes Tibig Homeowners Association. It asks about your experience with the current HOA office hours, security setup, and reporting channels, so the proposed system reflects what residents actually deal with day to day, not just what looks good on paper. Your answers will shape which features get built first and which problems the system is designed to solve.</x-import>
+    </div>
+
+    <div style="max-width:1120px;margin:0 auto;padding:48px 32px 0">
+      <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.InfoCard" heading="About us" iconSide="left" icon="{{ aboutIcon }}" hint-size="100%,300px">ReCARES stands for Resident Centered Assistance for Reporting and Emergency System. We are a team of fourth-year Information Technology students from the University of Batangas, Lipa Campus, working on this as our capstone research project. We are currently exploring a possible collaboration with the Camella Homes Tibig Homeowners Association, and this survey is part of how we are assessing whether a system like this would actually be useful to the community before we design or build anything. Our work is supervised by our academic adviser. If you live in Camella Homes Tibig, your answers directly shape what we recommend next.</x-import>
+    </div>
+
+    <div style="max-width:1120px;margin:0 auto;padding:96px 32px 0">
+      <h2 style="margin:0 0 24px;text-align:center;color:var(--text-section-heading);text-transform:uppercase;font-size:24px;font-weight:700;letter-spacing:.04em">Goals of this study</h2>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:stretch">
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.GoalCard" title="Safer, more private reporting" hint-size="30%,220px">Give residents a way to reach out about sensitive personal safety concerns privately, without relying on public posts or waiting for the office to open.</x-import>
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.GoalCard" title="Accessible services for every resident" hint-size="30%,220px">Make it possible for residents with disabilities or mobility challenges to request documents, raise concerns, and get help without needing to travel to the office in person.</x-import>
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.GoalCard" title="Faster response to security concerns" hint-size="30%,220px">Help guards and HOA staff respond more quickly to suspicious behavior, break-ins, and other safety concerns by sending your real-time location pin.</x-import>
+      </div>
+    </div>
+
+    <div id="faq" style="max-width:1120px;margin:0 auto;padding:96px 32px 0">
+      <h2 style="margin:0 0 24px;color:var(--text-section-heading);text-transform:uppercase;font-size:24px;font-weight:700;letter-spacing:.04em">Frequently asked questions</h2>
+      <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:32px;align-items:start">
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.FaqList" items="{{ faqItems }}" hint-size="100%,520px"></x-import>
+        <div style="display:flex;flex-direction:column;gap:24px">
+          <div style="background:var(--card-fill-neutral);border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:20px">
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.StatRow" label="Estimated time" description="The survey takes around 10 to 15 minutes to complete." dotColor="var(--harvest-orange)" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.StatRow" label="Voluntary" description="You can skip any question, and some sections only appear if they apply to you." dotColor="var(--bright-amber)" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.StatRow" label="Confidential" description="Your answers are never shared with your name attached." dotColor="var(--dark-emerald)" hint-size="100%,56px"></x-import>
+            <div style="display:flex;justify-content:center;padding-top:4px">
+              <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="primary" onClick="{{ goSurvey }}" hint-size="auto,44px">Start the survey</x-import>
+            </div>
+          </div>
+
+          <div style="--text-body:var(--white);--surface-2:rgba(255,255,255,.14);--text-caption:rgba(255,255,255,.75);--error-red:var(--bright-amber);--status-error:var(--bright-amber);background:var(--card-fill-brand);border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px">
+            <h3 style="margin:0;color:var(--white);text-transform:uppercase;font-size:15px;font-weight:700;letter-spacing:.06em">For further inquiries or concerns</h3>
+            <p style="margin:0;color:var(--white);font-size:16px;line-height:1.55;text-wrap:pretty">Have a question about this survey or the study behind it? Send us a message and we will get back to you. This is also where you can reach out if you would like to know more about the study before deciding whether to participate.</p>
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="Name (optional)" placeholder="Your name" value="{{ inqName }}" onChange="{{ setInqName }}" hint-size="100%,72px"></x-import>
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="Email" type="email" placeholder="you@example.com" value="{{ inqEmail }}" onChange="{{ setInqEmail }}" hint-size="100%,72px"></x-import>
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="Message" placeholder="How can we help?" value="{{ inqMsg }}" onChange="{{ setInqMsg }}" hint-size="100%,72px"></x-import>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+              <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="primary" onDark="{{ true }}" onClick="{{ sendInquiry }}" hint-size="auto,44px">Send message</x-import>
+              <sc-if value="{{ inqSent }}" hint-placeholder-val="{{ false }}"><span style="color:var(--white);font-size:14px">Message sent. We will reply to the email you gave.</span></sc-if>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:96px">
+      <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Footer" credit="Capstone research project — BS Information Technology, fourth year" university="University of Batangas, Lipa Campus · supervised by our academic adviser" hoa="Collaboration being explored with the Camella Homes Tibig Homeowners Association · Questions about the survey? Use the inquiry form above" adminLinks="{{ adminLinks }}" onAdminLink="{{ goLogin }}" hint-size="100%,140px"></x-import>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isSurvey }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:720px;margin:0 auto;padding:8px 32px 96px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-body)">{{ stepLabel }}</div>
+      <button type="button" onClick="{{ goHome }}" style="background:transparent;border:none;cursor:pointer;font-family:var(--font-sans);font-size:14px;color:var(--text-caption);text-decoration:underline">Leave the survey</button>
+    </div>
+    <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.ProgressBar" value="{{ stepNum }}" max="{{ stepTotal }}" hint-size="100%,8px"></x-import>
+    <h1 style="margin:20px 0 0;color:var(--text-headline);font-size:32px;font-weight:700;line-height:1.25;text-wrap:pretty">{{ stepTitle }}</h1>
+    <p style="margin:10px 0 0;color:var(--text-caption);font-size:14px;line-height:1.5;text-wrap:pretty">{{ stepIntro }}</p>
+
+    <sc-if value="{{ isScreening }}" hint-placeholder-val="{{ true }}">
+      <div style="margin-top:28px;background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:32px">
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px">
+          <sc-for list="{{ screeningFields }}" as="f" hint-placeholder-count="6">
+            <div style="{{ f.cellStyle }}">
+              <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ true }}">
+                <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Select" label="{{ f.label }}" options="{{ f.options }}" value="{{ f.value }}" onChange="{{ f.onChange }}" hint-size="100%,72px"></x-import>
+              </sc-if>
+              <sc-if value="{{ f.isText }}" hint-placeholder-val="{{ false }}">
+                <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="{{ f.label }}" placeholder="{{ f.placeholder }}" value="{{ f.value }}" onChange="{{ f.onChange }}" hint-size="100%,72px"></x-import>
+              </sc-if>
+              <sc-if value="{{ f.isNumber }}" hint-placeholder-val="{{ false }}">
+                <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="{{ f.label }}" type="number" placeholder="{{ f.placeholder }}" value="{{ f.value }}" onChange="{{ f.onChange }}" hint-size="100%,72px"></x-import>
+              </sc-if>
+              <sc-if value="{{ f.isRadio }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="font-size:14px;font-weight:700;color:var(--text-body)">{{ f.label }}</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <sc-for list="{{ f.optionObjs }}" as="o" hint-placeholder-count="2">
+                      <button type="button" onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ f.isMulti }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="font-size:14px;font-weight:700;color:var(--text-body)">{{ f.label }}</div>
+                  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px">
+                    <sc-for list="{{ f.optionObjs }}" as="o" hint-placeholder-count="4">
+                      <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Checkbox" label="{{ o.label }}" checked="{{ o.checked }}" onChange="{{ o.onChange }}" hint-size="100%,44px"></x-import>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ f.hint }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:6px;font-size:14px;line-height:1.5;color:var(--text-caption)">{{ f.hint }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isPlan }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:28px;background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:32px;display:flex;flex-direction:column;gap:4px">
+        <sc-for list="{{ planRows }}" as="r" hint-placeholder-count="8">
+          <div style="display:flex;gap:16px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border-subtle)">
+            <div style="flex:0 0 44px;font-size:14px;font-weight:700;color:var(--text-caption)">{{ r.n }}</div>
+            <div style="flex:1 1 auto;min-width:0">
+              <div style="font-size:16px;font-weight:700;color:var(--text-body)">{{ r.t }}</div>
+              <div style="margin-top:4px;font-size:14px;line-height:1.5;color:var(--text-caption)">{{ r.reason }}</div>
+            </div>
+            <div style="{{ r.badgeStyle }}">{{ r.badge }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isS2 }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:28px;display:flex;flex-direction:column;gap:20px">
+        <sc-for list="{{ s2Items }}" as="it" hint-placeholder-count="5">
+          <div style="background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:32px">
+            <div style="font-size:18px;font-weight:700;line-height:1.4;color:var(--text-body);text-wrap:pretty">{{ it.q }}</div>
+            <div style="margin:8px 0 20px;font-size:14px;line-height:1.5;color:var(--text-caption);text-wrap:pretty">{{ it.sub }}</div>
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.LikertScale" value="{{ it.value }}" onChange="{{ it.onChange }}" labels="{{ it.labels }}" hint-size="100%,80px"></x-import>
+          </div>
+        </sc-for>
+        <div style="background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:32px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px">
+          <sc-for list="{{ s2Fields }}" as="f" hint-placeholder-count="3">
+            <div style="{{ f.cellStyle }}">
+              <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ true }}">
+                <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Select" label="{{ f.label }}" options="{{ f.options }}" value="{{ f.value }}" onChange="{{ f.onChange }}" hint-size="100%,72px"></x-import>
+              </sc-if>
+              <sc-if value="{{ f.isNumber }}" hint-placeholder-val="{{ false }}">
+                <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="{{ f.label }}" type="number" placeholder="{{ f.placeholder }}" value="{{ f.value }}" onChange="{{ f.onChange }}" hint-size="100%,72px"></x-import>
+              </sc-if>
+              <sc-if value="{{ f.isRadio }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="font-size:14px;font-weight:700;color:var(--text-body)">{{ f.label }}</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <sc-for list="{{ f.optionObjs }}" as="o" hint-placeholder-count="2">
+                      <button type="button" onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ f.hint }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:6px;font-size:14px;line-height:1.5;color:var(--text-caption)">{{ f.hint }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isS4 }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:28px;display:flex;flex-direction:column;gap:20px">
+        <div style="background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:32px">
+          <div style="font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-caption)">Why you are seeing this</div>
+          <div style="margin-top:8px;font-size:16px;line-height:1.55;color:var(--text-body);text-wrap:pretty">{{ s4Reason }}</div>
+        </div>
+
+        <sc-if value="{{ s4AskOptin }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:32px">
+            <div style="font-size:18px;font-weight:700;line-height:1.4;color:var(--text-body);text-wrap:pretty">This section asks about safety inside your household, including situations between people living in the same home. Would you like to answer it?</div>
+            <div style="margin:8px 0 20px;font-size:14px;line-height:1.5;color:var(--text-caption);text-wrap:pretty">Choosing no skips the whole section. It does not affect anything else in the survey, and we are not told why you skipped it.</div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="primary" onClick="{{ optInS4 }}" hint-size="auto,44px">Yes, include this section</x-import>
+              <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="secondary" onClick="{{ declineS4 }}" hint-size="auto,44px">No, skip this section</x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s4Skipped }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:32px;border:1px solid var(--border-subtle)">
+            <div style="font-size:18px;font-weight:700;color:var(--text-body)">Section skipped</div>
+            <div style="margin:8px 0 20px;font-size:14px;line-height:1.5;color:var(--text-caption);text-wrap:pretty">Every field in this section will be stored as not_shown, and section_4_shown will be recorded as false. You can change your mind before you submit.</div>
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="secondary" onClick="{{ optInS4 }}" hint-size="auto,44px">Include it after all</x-import>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s4Open }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:32px">
+            <div style="display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--border-subtle)">
+              <div style="font-size:14px;line-height:1.5;color:var(--text-caption);max-width:420px;text-wrap:pretty">You can leave this whole section without answering anything. The decline control stays visible above the questions, not only beside them.</div>
+              <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="secondary" onClick="{{ declineS4 }}" hint-size="auto,44px">Skip this section</x-import>
+            </div>
+            <div style="margin-top:20px;border:1px dashed var(--border-structural);border-radius:8px;padding:24px;font-size:14px;line-height:1.5;color:var(--text-caption);text-wrap:pretty">Section 4 items are not written yet. This screen exists to lock the gate and decline pattern that every gated section will reuse — Sections 3 extended, 5, 7a and 7b get the same treatment once their items are drafted in the Section 2 format.</div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isReview }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:28px;display:flex;flex-direction:column;gap:20px">
+        <div style="background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:32px">
+          <div style="font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-section-heading);margin-bottom:16px">Your answers</div>
+          <sc-for list="{{ reviewRows }}" as="r" hint-placeholder-count="10">
+            <div style="display:flex;gap:16px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border-subtle)">
+              <div style="flex:1 1 55%;min-width:0;font-size:14px;line-height:1.5;color:var(--text-caption)">{{ r.label }}</div>
+              <div style="flex:1 1 45%;min-width:0;font-size:16px;color:var(--text-body)">{{ r.value }}</div>
+            </div>
+          </sc-for>
+          <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="secondary" onClick="{{ editScreening }}" hint-size="auto,44px">Edit screening</x-import>
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="secondary" onClick="{{ editS2 }}" hint-size="auto,44px">Edit section 2</x-import>
+          </div>
+        </div>
+        <div style="background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:32px">
+          <div style="font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-section-heading);margin-bottom:12px">What gets stored</div>
+          <div style="font-size:14px;line-height:1.5;color:var(--text-caption);margin-bottom:16px;text-wrap:pretty">On submit, one document is written to the Firebase responses collection. Fields in sections your answers never unlocked are stored as not_shown, alongside a boolean flag per gated section.</div>
+          <pre style="margin:0;overflow:auto;max-height:280px;background:var(--surface-2);border-radius:8px;padding:16px;font-size:13px;line-height:1.5;color:var(--text-body);white-space:pre-wrap">{{ docJson }}</pre>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="margin-top:28px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+      <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="secondary" disabled="{{ atFirstStep }}" onClick="{{ back }}" hint-size="auto,44px">Back</x-import>
+      <sc-if value="{{ isReview }}" hint-placeholder-val="{{ false }}">
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="primary" onClick="{{ submit }}" hint-size="auto,44px">Submit my answers</x-import>
+      </sc-if>
+      <sc-if value="{{ notReview }}" hint-placeholder-val="{{ true }}">
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="primary" onClick="{{ next }}" hint-size="auto,44px">Continue</x-import>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isThanks }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:720px;margin:0 auto;padding:48px 32px 96px">
+    <div style="background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:32px">
+      <h1 style="margin:0;color:var(--text-headline);font-size:32px;font-weight:700;line-height:1.25">Thank you.</h1>
+      <p style="margin:16px 0 0;font-size:16px;line-height:1.55;color:var(--text-body);text-wrap:pretty">Your response has been recorded. Your answers are combined with everyone else's and compiled into a report for our academic adviser. If the results show this kind of system would genuinely help the community, we plan to bring that report to the Homeowners Association as part of proposing it formally.</p>
+      <p style="margin:16px 0 0;font-size:14px;line-height:1.5;color:var(--text-caption);text-wrap:pretty">Nothing you submitted is attached to your name. If you have a question about the study, use the inquiry form on the homepage.</p>
+      <div style="margin-top:28px;display:flex;gap:12px;flex-wrap:wrap">
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="primary" onClick="{{ goHome }}" hint-size="auto,44px">Back to the homepage</x-import>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isAuth }}" hint-placeholder-val="{{ false }}">
+  <div style="min-height:80vh;display:flex;align-items:center;justify-content:center;padding:48px 32px 96px">
+    <div style="width:100%;max-width:440px">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:28px;font-weight:700;letter-spacing:.01em">
+          <span style="color:var(--text-headline)">Re</span><span style="color:var(--emerald-500)">C</span><span style="color:var(--harvest-orange)">AR</span><span style="color:var(--bright-amber)">E</span><span style="color:var(--text-headline)">S</span>
+        </div>
+        <div style="margin-top:6px;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-caption)">Proponent access</div>
+      </div>
+      <div style="--text-body:var(--white);--surface-2:rgba(255,255,255,.14);--text-caption:rgba(255,255,255,.75);--error-red:var(--bright-amber);--status-error:var(--bright-amber);background:var(--card-fill-brand);border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px">
+        <h1 style="margin:0;color:var(--white);text-transform:uppercase;font-size:24px;font-weight:700;letter-spacing:.04em">{{ authTitle }}</h1>
+
+        <sc-if value="{{ isSignup }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="Name" placeholder="Full name" value="{{ authName }}" onChange="{{ setAuthName }}" required="{{ true }}" hint-size="100%,72px"></x-import>
+        </sc-if>
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="{{ emailLabel }}" type="email" placeholder="name@ub.edu.ph" value="{{ authEmail }}" onChange="{{ setAuthEmail }}" required="{{ true }}" error="{{ emailError }}" hint-size="100%,72px"></x-import>
+        <sc-if value="{{ isSignup }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="Access code" placeholder="Shared with the proponent team" value="{{ authCode }}" onChange="{{ setAuthCode }}" required="{{ true }}" helperText="Signup is gated: this tier can read every survey response, including the personal-safety section." hint-size="100%,88px"></x-import>
+        </sc-if>
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="Password" type="password" placeholder="••••••••" value="{{ authPass }}" onChange="{{ setAuthPass }}" required="{{ true }}" error="{{ passError }}" hint-size="100%,72px"></x-import>
+        <sc-if value="{{ isSignup }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="Confirm password" type="password" placeholder="••••••••" value="{{ authPass2 }}" onChange="{{ setAuthPass2 }}" required="{{ true }}" hint-size="100%,72px"></x-import>
+        </sc-if>
+
+        <div style="margin-top:8px">
+          <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="primary" onDark="{{ true }}" onClick="{{ authSubmit }}" hint-size="auto,44px">{{ authCta }}</x-import>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding-top:4px">
+          <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{ noop }}" style="background:transparent;border:none;padding:0;cursor:pointer;font-family:var(--font-sans);font-size:14px;color:rgba(255,255,255,.8);text-decoration:underline">Forgot password</button>
+          </sc-if>
+          <button type="button" onClick="{{ swapAuth }}" style="background:transparent;border:none;padding:0;cursor:pointer;font-family:var(--font-sans);font-size:14px;color:rgba(255,255,255,.8);text-decoration:underline">{{ authSwapLabel }}</button>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:20px">
+        <button type="button" onClick="{{ goHome }}" style="background:transparent;border:none;cursor:pointer;font-family:var(--font-sans);font-size:14px;color:var(--text-caption);text-decoration:underline">Back to the resident site</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+  <div>
+    <div style="background:var(--dark-emerald);padding:0 32px;min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap">
+      <div style="display:flex;align-items:baseline;gap:12px">
+        <span style="color:var(--white);font-size:20px;font-weight:700;letter-spacing:.04em">ReCARES</span>
+        <span style="color:rgba(255,255,255,.75);font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase">Response management</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <span style="color:rgba(255,255,255,.75);font-size:14px">{{ sessionEmail }}</span>
+        <button type="button" onClick="{{ logout }}" style="background:transparent;border:1px solid rgba(255,255,255,.7);color:var(--white);height:40px;padding:0 16px;border-radius:8px;cursor:pointer;font-family:var(--font-sans);font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Log out</button>
+      </div>
+    </div>
+
+    <div style="max-width:1120px;margin:0 auto;padding:32px 32px 96px">
+      <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:24px">
+        <div style="flex:1 1 200px;background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:24px">
+          <div style="font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-caption)">Responses</div>
+          <div style="margin-top:6px;font-size:32px;font-weight:700;color:var(--text-headline)">{{ total }}</div>
+        </div>
+        <div style="flex:1 1 200px;background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:24px">
+          <div style="font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-caption)">Section 4 answered</div>
+          <div style="margin-top:6px;font-size:32px;font-weight:700;color:var(--text-headline)">{{ s4Count }}</div>
+        </div>
+        <div style="flex:1 1 200px;background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:24px">
+          <div style="font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-caption)">PWD in household</div>
+          <div style="margin-top:6px;font-size:32px;font-weight:700;color:var(--text-headline)">{{ pwdCount }}</div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface-1);border-radius:16px;box-shadow:var(--shadow-card);padding:32px">
+        <div style="display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;margin-bottom:20px">
+          <div style="flex:1 1 260px;max-width:340px">
+            <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="Search responses" placeholder="Response ID, phase, resident type" value="{{ query }}" onChange="{{ setQuery }}" hint-size="100%,72px"></x-import>
+          </div>
+          <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="primary" onClick="{{ newRec }}" hint-size="auto,44px">Add response</x-import>
+        </div>
+
+        <div style="overflow:auto">
+          <div style="display:grid;grid-template-columns:minmax(110px,1fr) minmax(140px,1.2fr) minmax(90px,1fr) minmax(150px,1.4fr) minmax(70px,.7fr) minmax(170px,1.6fr) minmax(150px,1.2fr);gap:0;min-width:900px">
+            <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-caption);padding:0 12px 12px 0">Response</div>
+            <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-caption);padding:0 12px 12px 0">Submitted</div>
+            <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-caption);padding:0 12px 12px 0">Phase</div>
+            <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-caption);padding:0 12px 12px 0">Resident type</div>
+            <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-caption);padding:0 12px 12px 0">PWD</div>
+            <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-caption);padding:0 12px 12px 0">Gated sections shown</div>
+            <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-caption);padding:0 0 12px 0">Actions</div>
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+              <div style="padding:14px 12px 14px 0;border-top:1px solid var(--border-subtle);font-size:16px;font-weight:700;color:var(--text-body)">{{ r.id }}</div>
+              <div style="padding:14px 12px 14px 0;border-top:1px solid var(--border-subtle);font-size:14px;color:var(--text-caption)">{{ r.ts }}</div>
+              <div style="padding:14px 12px 14px 0;border-top:1px solid var(--border-subtle);font-size:14px;color:var(--text-body)">{{ r.phase }}</div>
+              <div style="padding:14px 12px 14px 0;border-top:1px solid var(--border-subtle);font-size:14px;color:var(--text-body)">{{ r.resident }}</div>
+              <div style="padding:14px 12px 14px 0;border-top:1px solid var(--border-subtle);font-size:14px;color:var(--text-body)">{{ r.pwd }}</div>
+              <div style="padding:14px 12px 14px 0;border-top:1px solid var(--border-subtle);font-size:14px;color:var(--text-caption)">{{ r.sections }}</div>
+              <div style="padding:14px 0;border-top:1px solid var(--border-subtle);display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" onClick="{{ r.onEdit }}" style="height:36px;padding:0 12px;border-radius:8px;cursor:pointer;font-family:var(--font-sans);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:transparent;color:var(--text-body);border:1px solid var(--border-default)">Edit</button>
+                <button type="button" onClick="{{ r.onDelete }}" style="height:36px;padding:0 12px;border-radius:8px;cursor:pointer;font-family:var(--font-sans);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:transparent;color:var(--status-error);border:1px solid var(--status-error)">Delete</button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:32px 0 0;font-size:16px;color:var(--text-caption)">No responses match that search.</div>
+        </sc-if>
+
+        <div style="margin-top:24px;font-size:14px;line-height:1.5;color:var(--text-caption);text-wrap:pretty">Fields belonging to a section a respondent never unlocked are stored as not_shown rather than blank, so an unanswered question and an unasked question stay distinguishable in analysis.</div>
+      </div>
+    </div>
+
+    <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Modal" open="{{ modalOpen }}" onClose="{{ closeModal }}" hint-size="420px,400px">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <h2 style="margin:0;color:var(--text-headline);font-size:24px;font-weight:700">{{ modalTitle }}</h2>
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Input" label="Response ID" value="{{ draftId }}" onChange="{{ setDraftId }}" hint-size="100%,72px"></x-import>
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Select" label="Phase" options="{{ phaseOptions }}" value="{{ draftPhase }}" onChange="{{ setDraftPhase }}" hint-size="100%,72px"></x-import>
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Select" label="Resident type" options="{{ residentOptions }}" value="{{ draftResident }}" onChange="{{ setDraftResident }}" hint-size="100%,72px"></x-import>
+        <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Select" label="Person with disability" options="{{ yesNoOptions }}" value="{{ draftPwd }}" onChange="{{ setDraftPwd }}" hint-size="100%,72px"></x-import>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+          <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="primary" onClick="{{ saveDraft }}" hint-size="auto,44px">Save</x-import>
+          <x-import component-from-global-scope="CamellaHomesSurveyDesignSystem_9824d8.Button" variant="secondary" onClick="{{ closeModal }}" hint-size="auto,44px">Cancel</x-import>
+        </div>
+      </div>
+    </x-import>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startRoute&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Homepage&quot;,&quot;Survey&quot;,&quot;Admin login&quot;,&quot;Admin dashboard&quot;],&quot;default&quot;:&quot;Homepage&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;startTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Light&quot;,&quot;Dark&quot;],&quot;default&quot;:&quot;Light&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;perimeterPhases&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Phase 1, Phase 4&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Gating&quot;}}">
+const SCREENING = [
+  { id:'addr_phase', label:'Phase', type:'select', options:['Phase 1','Phase 2','Phase 3','Phase 4','Phase 5'], hint:'Perimeter-adjacent phases unlock the extended security tier. Placeholder list — confirm the real phases with the HOA.' },
+  { id:'addr_block', label:'Block', type:'text', placeholder:'Optional' },
+  { id:'addr_lot', label:'Lot', type:'text', placeholder:'Optional' },
+  { id:'household_size', label:'Household size', type:'select', options:['1','2','3','4','5','6 or more'] },
+  { id:'civil_status', label:'Civil status', type:'select', options:['Single','Married','Widowed','Separated','Divorced'] },
+  { id:'children_yn', label:'Children in household', type:'radio', options:['Yes','No'] },
+  { id:'children_count', label:'Number of children', type:'select', options:['1','2','3','4 or more'], when:s => s.children_yn === 'Yes' },
+  { id:'sex', label:'Sex', type:'radio', options:['Female','Male'] },
+  { id:'age_range', label:'Age range', type:'select', options:['18–25','26–35','36–45','46–55','56 and above'] },
+  { id:'resident_type', label:'Resident type', type:'select', options:['Homeowner','Renter or lessee','Household member of a homeowner','Live-in household staff'], wide:true },
+  { id:'pwd_self', label:'Person with disability (PWD)', type:'radio', options:['Yes','No'] },
+  { id:'pwd_household', label:'Household member has a disability or mobility limitation', type:'radio', options:['Yes','No'] },
+  { id:'disability_type', label:'Type of disability', type:'multi', wide:true, when:s => s.pwd_self === 'Yes',
+    options:['Physical or mobility','Visual','Hearing or communication','Intellectual or developmental','Psychosocial or mental health','Chronic illness affecting mobility','Multiple','Prefer not to say'] },
+  { id:'primary_channel', label:'Primary channel currently used for HOA transactions', type:'select', wide:true,
+    options:['In person','Online forms downloaded and printed','Through a household member or representative','Do not currently transact with the HOA'] },
+];
+
+const S2_LIKERT = [
+  { id:'s2_adequacy', q:'How adequate are the current ways you can reach the HOA office when you have a concern or request?', sub:'Think about the ways you can currently contact the Homeowners Association today, such as dropping by the office, calling, or sending a message on Facebook.', labels:['Very inadequate','Inadequate','Neutral','Adequate','Very adequate'] },
+  { id:'s2_frequency', q:"How often have you had to wait several days before your request or form got processed because of the HOA office's limited hours?", sub:'The HOA office is currently open Monday to Saturday, 8:00 AM to 5:00 PM only. This asks how often that schedule has made you wait longer than you expected.', labels:['Always','Often','Sometimes','Rarely','Never'] },
+  { id:'s2_satisfaction', q:'How satisfied are you with how the HOA currently handles your requests, such as document requests or reports?', sub:"This includes anything you've submitted in person, by phone, or through Facebook, whether it was a form, a complaint, or a general concern.", labels:['Very dissatisfied','Dissatisfied','Neutral','Satisfied','Very satisfied'] },
+  { id:'s2_effectiveness', q:"How effective is the HOA's Facebook page in keeping you updated about important announcements?", sub:'This is about the personal Facebook profile the HOA currently uses to post updates and receive messages, not a mobile app or a website.', labels:['Not effective at all','Slightly effective','Moderately effective','Very effective','Extremely effective'] },
+  { id:'s2_agreement', q:'I would prefer to submit HOA forms and requests through my phone or computer instead of printing and dropping them off in person.', sub:'This means filling out a form on a screen and sending it electronically, without needing to print it out or travel to the office.', labels:['Strongly disagree','Disagree','Neutral','Agree','Strongly agree'] },
+];
+
+const S2_FIELDS = [
+  { id:'s2_printer_access', label:'How do you currently produce a physical copy of a downloaded HOA form?', type:'select', wide:true,
+    options:['I print it at home','I print it at a computer shop or printing service','A household member or neighbour prints it for me','I ask for a printed copy at the HOA office','I do not download forms at all'] },
+  { id:'s2_delay_days', label:'On average, how many days pass between downloading a form and submitting it?', type:'number', placeholder:'Number of days' },
+  { id:'s2_abandonment', label:'Has submitting forms in person ever made you delay or give up on a request, or on updating your 201 file?', type:'radio', options:['Yes','No'] },
+];
+
+const SECTIONS = [
+  { n:'1', t:'Screening', always:true },
+  { n:'2', t:'HOA access and office hours', always:true },
+  { n:'3', t:'Perimeter and security — base items', always:true },
+  { n:'3+', t:'Perimeter and security — extended tier', key:'perimeter', why:'Your phase is perimeter-adjacent.', whyNot:'Your phase is not perimeter-adjacent.' },
+  { n:'4', t:'Household and personal safety', key:'s4', why:'Opened by your civil status, or by your own opt-in.', whyNot:'Skipped — you declined it, or have not opted in yet.' },
+  { n:'5', t:'Children and youth safety', key:'s5', why:'You reported children in the household.', whyNot:'No children reported in the household.' },
+  { n:'6', t:'Reporting channels', always:true },
+  { n:'7a', t:'Accessibility — your own needs', key:'s7a', why:'You identified as a person with a disability.', whyNot:'Not applicable from your screening answers.' },
+  { n:'7b', t:'Accessibility — household member', key:'s7b', why:'You reported a household member with a disability or mobility limitation.', whyNot:'Not applicable from your screening answers.' },
+  { n:'7c', t:'Accessibility — general', always:true },
+  { n:'8', t:'Emergency response expectations', always:true },
+  { n:'9', t:'Technology access and digital literacy', always:true },
+  { n:'10', t:'Final comments', always:true },
+];
+
+const FAQ = [
+  { question:'Who is running this survey?', answer:"This survey is part of a capstone research project by fourth-year Information Technology students at the University of Batangas, Lipa Campus. We're exploring a possible collaboration with the Camella Homes Tibig Homeowners Association, and this survey is one of the ways we're finding out whether residents here would actually benefit from a system like this." },
+  { question:'Do I have to answer every question?', answer:'No. Every question is optional, and some sections only appear if they apply to your household. You can skip anything you would rather not answer and still submit.' },
+  { question:"Why did I see a question that my neighbor didn't?", answer:'The survey only shows the sections that apply to you. Your answers about your phase, household, and accessibility needs decide which sections open, so two residents can be asked different things.' },
+  { question:'Will my answers be kept private?', answer:'Yes. We never ask for your name, and responses are reported together rather than individually. Nothing you write is shown to the HOA with a household attached to it.' },
+  { question:'How long will this take?', answer:'Around 10 to 15 minutes. You can move back to an earlier section and change an answer at any point before you submit.' },
+  { question:'What happens after I submit the survey?', answer:"Your answers are combined with everyone else's and compiled into a report for our academic adviser. If the results show this kind of system would genuinely help the community, we plan to bring that report to the Homeowners Association as part of proposing it formally." },
+  { question:'Will answering honestly affect my standing with the HOA in any way?', answer:'No. The HOA does not receive individual responses. Only combined results appear in our report, and honest answers are the only thing that makes that report worth reading.' },
+  { question:"Is this the actual reporting system I'll use later?", answer:'No. This is only the needs assessment survey. Nothing you submit here reaches security or the HOA office as a report.' },
+  { question:'Who can I contact if I have questions or concerns about the survey?', answer:'Use the inquiry form on this page and a member of the proponent team will reply. Direct contact details for our academic adviser are pending and will be added before the survey goes live.' },
+];
+
+const SAMPLE = [
+  { id:'RC-0141', ts:'14 Sep 2026, 09:12', phase:'Phase 1', resident:'Homeowner', pwd:'No', s4:true, s5:true, s7a:false, s7b:true, ext:true },
+  { id:'RC-0142', ts:'14 Sep 2026, 11:40', phase:'Phase 3', resident:'Renter or lessee', pwd:'No', s4:false, s5:false, s7a:false, s7b:false, ext:false },
+  { id:'RC-0143', ts:'14 Sep 2026, 16:05', phase:'Phase 4', resident:'Homeowner', pwd:'Yes', s4:true, s5:true, s7a:true, s7b:false, ext:true },
+  { id:'RC-0144', ts:'15 Sep 2026, 08:22', phase:'Phase 2', resident:'Household member of a homeowner', pwd:'No', s4:true, s5:false, s7a:false, s7b:true, ext:false },
+  { id:'RC-0145', ts:'15 Sep 2026, 13:58', phase:'Phase 5', resident:'Live-in household staff', pwd:'No', s4:false, s5:false, s7a:false, s7b:false, ext:false },
+];
+
+const STEPS = [
+  { key:'screening', title:'Before we start', intro:'These answers decide which sections of the survey you are asked to fill in. Nothing here asks for your name.' },
+  { key:'plan', title:'Your survey plan', intro:'Based on what you just told us, here is what the rest of the survey will and will not ask you.' },
+  { key:'s2', title:'Section 2 — HOA access and office hours', intro:'Five scaled items and three short questions about reaching the HOA today.' },
+  { key:'s4', title:'Section 4 — Household and personal safety', intro:'This section is gated, and every gated section can be declined in full before its questions appear.' },
+  { key:'review', title:'Review and submit', intro:'Check anything you want to change. You can still go back to an earlier section.' },
+];
+
+const ROUTE_FROM_PROP = { 'Homepage':'home', 'Survey':'survey', 'Admin login':'login', 'Admin dashboard':'dash' };
+
+class Component extends DCLogic {
+  state = {
+    route: ROUTE_FROM_PROP[this.props.startRoute] || 'home',
+    theme: this.props.startTheme === 'Dark' ? 'dark' : 'light',
+    lang: 'EN',
+    step: 0,
+    sc: {},
+    multi: {},
+    s2: {},
+    s4: null,
+    inq: { name:'', email:'', msg:'' },
+    inqSent: false,
+    auth: { name:'', email:'', code:'', pass:'', pass2:'' },
+    authErr: {},
+    session: '',
+    recs: SAMPLE,
+    query: '',
+    draft: null,
+    draftIsNew: false,
+  };
+
+  go = r => this.setState({ route:r });
+  set = (group, id, val) => this.setState(s => ({ [group]: Object.assign({}, s[group], { [id]: val }) }));
+
+  chipStyle(sel) {
+    return { minHeight:44, padding:'0 16px', borderRadius:8, cursor:'pointer', fontFamily:'var(--font-sans)',
+      fontSize:15, fontWeight: sel ? 700 : 400,
+      background: sel ? 'var(--bright-amber)' : 'var(--surface-2)',
+      color: sel ? 'var(--black)' : 'var(--text-body)',
+      border: sel ? '1px solid var(--bright-amber)' : '1px solid var(--border-default)',
+      transition:'background var(--motion-duration) var(--motion-ease)' };
+  }
+
+  buildFields(defs, group) {
+    const values = this.state[group];
+    return defs.filter(d => !d.when || d.when(values)).map(d => {
+      const v = values[d.id] == null ? '' : values[d.id];
+      const f = {
+        label:d.label, hint:d.hint || '', placeholder:d.placeholder || '',
+        cellStyle:{ gridColumn: d.wide ? '1 / -1' : 'auto' },
+        isSelect:d.type === 'select', isText:d.type === 'text', isNumber:d.type === 'number',
+        isRadio:d.type === 'radio', isMulti:d.type === 'multi',
+        options:d.options || [], value:v,
+        onChange: e => this.set(group, d.id, e.target.value),
+      };
+      if (d.type === 'radio') {
+        f.optionObjs = d.options.map(o => ({ label:o, onClick:() => this.set(group, d.id, o), style:this.chipStyle(v === o) }));
+      }
+      if (d.type === 'multi') {
+        const m = this.state.multi[d.id] || {};
+        f.optionObjs = d.options.map(o => ({ label:o, checked:!!m[o], onChange:() => this.setState(s => {
+          const cur = Object.assign({}, s.multi[d.id] || {});
+          if (cur[o]) { delete cur[o]; } else { cur[o] = true; }
+          return { multi: Object.assign({}, s.multi, { [d.id]: cur }) };
+        }) }));
+      }
+      return f;
+    });
+  }
+
+  gates() {
+    const s = this.state.sc;
+    const perim = (this.props.perimeterPhases || 'Phase 1, Phase 4').split(',').map(x => x.trim());
+    const married = ['Married','Widowed','Separated','Divorced'].indexOf(s.civil_status) > -1;
+    return {
+      perimeter: perim.indexOf(s.addr_phase) > -1,
+      married,
+      s4: married || this.state.s4 === 'yes',
+      s5: s.children_yn === 'Yes',
+      s7a: s.pwd_self === 'Yes',
+      s7b: s.pwd_household === 'Yes',
+    };
+  }
+
+  answerLabel(id) {
+    const v = this.state.sc[id];
+    if (id === 'disability_type') {
+      const keys = Object.keys(this.state.multi.disability_type || {});
+      return keys.length ? keys.join(', ') : 'Not answered';
+    }
+    return v == null || v === '' ? 'Not answered' : String(v);
+  }
+
+  responseDoc() {
+    const g = this.gates();
+    const doc = { submitted_at:'<server timestamp>', anonymous:true, language:this.state.lang };
+    SCREENING.forEach(d => {
+      if (d.when && !d.when(this.state.sc)) { doc[d.id] = 'not_shown'; return; }
+      if (d.id === 'disability_type') {
+        const keys = Object.keys(this.state.multi.disability_type || {});
+        doc[d.id] = keys.length ? keys : null;
+        return;
+      }
+      doc[d.id] = this.state.sc[d.id] || null;
+    });
+    S2_LIKERT.forEach(i => { doc[i.id] = this.state.s2[i.id] || null; });
+    S2_FIELDS.forEach(d => { doc[d.id] = this.state.s2[d.id] || null; });
+    doc.section_3_extended_shown = g.perimeter;
+    doc.section_4_shown = g.s4;
+    doc.section_5_shown = g.s5;
+    doc.section_7a_shown = g.s7a;
+    doc.section_7b_shown = g.s7b;
+    if (!g.s4) { doc.s4_items = 'not_shown'; }
+    if (!g.s5) { doc.s5_items = 'not_shown'; }
+    if (!g.s7a) { doc.s7a_items = 'not_shown'; }
+    if (!g.s7b) { doc.s7b_items = 'not_shown'; }
+    if (!g.perimeter) { doc.s3_extended_items = 'not_shown'; }
+    return JSON.stringify(doc, null, 2);
+  }
+
+  renderVals() {
+    const st = this.state;
+    const g = this.gates();
+    const step = STEPS[st.step] || STEPS[0];
+    const recs = st.recs.filter(r => {
+      const q = st.query.trim().toLowerCase();
+      if (!q) return true;
+      return [r.id, r.phase, r.resident, r.pwd].join(' ').toLowerCase().indexOf(q) > -1;
+    });
+
+    const peopleHouse = React.createElement('svg', {
+      width:170, height:170, viewBox:'0 0 64 64', fill:'none', stroke:'currentColor', strokeWidth:2.2,
+      strokeLinecap:'round', strokeLinejoin:'round', 'aria-hidden':'true', style:{ color:'var(--text-body)' },
+    },
+      React.createElement('path', { key:'roof', d:'M6 27 32 8l26 19' }),
+      React.createElement('path', { key:'walls', d:'M11 25v29h42V25' }),
+      React.createElement('circle', { key:'h1', cx:32, cy:33, r:4 }),
+      React.createElement('path', { key:'b1', d:'M25 48c0-4.2 3.1-7.5 7-7.5s7 3.3 7 7.5' }),
+      React.createElement('circle', { key:'h2', cx:21, cy:38, r:3.2 }),
+      React.createElement('path', { key:'b2', d:'M16 50c0-3.4 2.3-6 5-6 1.3 0 2.5.6 3.4 1.6' }),
+      React.createElement('circle', { key:'h3', cx:43, cy:38, r:3.2 }),
+      React.createElement('path', { key:'b3', d:'M48 50c0-3.4-2.3-6-5-6-1.3 0-2.5.6-3.4 1.6' })
+    );
+
+    const clipboardPeople = React.createElement('svg', {
+      width:170, height:170, viewBox:'0 0 64 64', fill:'none', stroke:'currentColor', strokeWidth:2.2,
+      strokeLinecap:'round', strokeLinejoin:'round', 'aria-hidden':'true', style:{ color:'var(--text-body)' },
+    },
+      React.createElement('path', { key:'board', d:'M16 12h32a3 3 0 0 1 3 3v37a3 3 0 0 1-3 3H16a3 3 0 0 1-3-3V15a3 3 0 0 1 3-3z' }),
+      React.createElement('path', { key:'clip', d:'M25 12V9a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3z' }),
+      React.createElement('path', { key:'l1', d:'M21 25h10' }),
+      React.createElement('path', { key:'l2', d:'M21 33h22' }),
+      React.createElement('path', { key:'l3', d:'M21 41h16' }),
+      React.createElement('path', { key:'tick', d:'M38 22.5l3 3 6-6' })
+    );
+
+    const draft = st.draft || {};
+
+    return {
+      theme: st.theme,
+      themeLabel: st.theme === 'dark' ? 'Light mode' : 'Dark mode',
+      toggleTheme: () => this.setState(s => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
+      lang: st.lang,
+      setLang: v => this.setState({ lang:v }),
+      filNote: st.lang === 'FIL',
+
+      isHome: st.route === 'home',
+      isSurvey: st.route === 'survey',
+      isThanks: st.route === 'thanks',
+      isAuth: st.route === 'login' || st.route === 'signup',
+      isLogin: st.route === 'login',
+      isSignup: st.route === 'signup',
+      isDash: st.route === 'dash',
+
+      goHome: () => this.setState({ route:'home' }),
+      goSurvey: () => this.setState({ route:'survey', step:0 }),
+      goAbout: () => { window.location.hash = 'about'; },
+      goLogin: () => this.setState({ route:'login' }),
+      onNav: l => { if (l === 'Home') { window.location.hash = ''; } else { window.location.hash = l.toLowerCase(); } },
+      noop: () => {},
+      adminLinks: ['Proponent access'],
+      surveyIcon: clipboardPeople,
+      aboutIcon: peopleHouse,
+      faqItems: FAQ,
+
+      inqName: st.inq.name, inqEmail: st.inq.email, inqMsg: st.inq.msg, inqSent: st.inqSent,
+      setInqName: e => this.set('inq','name',e.target.value),
+      setInqEmail: e => this.set('inq','email',e.target.value),
+      setInqMsg: e => this.set('inq','msg',e.target.value),
+      sendInquiry: () => this.setState({ inqSent:true }),
+
+      stepNum: st.step + 1,
+      stepTotal: STEPS.length,
+      stepLabel: 'Step ' + (st.step + 1) + ' of ' + STEPS.length,
+      stepTitle: step.title,
+      stepIntro: step.intro,
+      isScreening: step.key === 'screening',
+      isPlan: step.key === 'plan',
+      isS2: step.key === 's2',
+      isS4: step.key === 's4',
+      isReview: step.key === 'review',
+      notReview: step.key !== 'review',
+      atFirstStep: st.step === 0,
+      next: () => this.setState(s => ({ step: Math.min(STEPS.length - 1, s.step + 1) })),
+      back: () => this.setState(s => ({ step: Math.max(0, s.step - 1) })),
+      editScreening: () => this.setState({ step:0 }),
+      editS2: () => this.setState({ step:2 }),
+      submit: () => this.setState({ route:'thanks' }),
+
+      screeningFields: this.buildFields(SCREENING, 'sc'),
+      s2Fields: this.buildFields(S2_FIELDS, 's2'),
+      s2Items: S2_LIKERT.map(i => ({
+        q:i.q, sub:i.sub, labels:i.labels, value:st.s2[i.id] || null,
+        onChange: n => this.set('s2', i.id, n),
+      })),
+
+      planRows: SECTIONS.map(s => {
+        const shown = s.always ? true : !!g[s.key];
+        return {
+          n:s.n, t:s.t,
+          reason: s.always ? 'Shown to every respondent.' : (shown ? s.why : s.whyNot),
+          badge: shown ? 'Will appear' : 'Skipped',
+          badgeStyle: { flex:'0 0 auto', fontSize:13, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase',
+            padding:'6px 10px', borderRadius:8,
+            background: shown ? 'var(--bright-amber)' : 'transparent',
+            color: shown ? 'var(--black)' : 'var(--text-caption)',
+            border: shown ? '1px solid var(--bright-amber)' : '1px solid var(--border-default)' },
+        };
+      }),
+
+      s4Reason: g.married
+        ? 'Your civil status opens this section directly. You can still decline it in full.'
+        : 'Your civil status does not open this section automatically, so we ask first instead of showing the questions.',
+      s4AskOptin: !g.married && st.s4 == null,
+      s4Skipped: !g.married && st.s4 === 'no',
+      s4Open: g.s4,
+      optInS4: () => this.setState({ s4:'yes' }),
+      declineS4: () => this.setState({ s4:'no' }),
+
+      reviewRows: SCREENING.filter(d => !d.when || d.when(st.sc)).map(d => ({ label:d.label, value:this.answerLabel(d.id) }))
+        .concat(S2_LIKERT.map((i, n) => ({ label:'Section 2 item ' + (n + 1) + ' — ' + i.labels[0] + ' to ' + i.labels[4], value: st.s2[i.id] ? String(st.s2[i.id]) + ' of 5' : 'Not answered' })))
+        .concat(S2_FIELDS.map(d => ({ label:d.label, value: st.s2[d.id] ? String(st.s2[d.id]) : 'Not answered' })))
+        .concat([{ label:'Section 4 — household and personal safety', value: g.s4 ? 'Included' : 'Skipped (stored as not_shown)' }]),
+      docJson: this.responseDoc(),
+
+      authTitle: st.route === 'signup' ? 'Create proponent account' : 'Proponent log in',
+      authCta: st.route === 'signup' ? 'Create account' : 'Log in',
+      authSwapLabel: st.route === 'signup' ? 'Already have an account? Log in' : "Don't have an account? Sign up",
+      emailLabel: st.route === 'signup' ? 'Institutional or team email' : 'Email',
+      swapAuth: () => this.setState(s => ({ route: s.route === 'signup' ? 'login' : 'signup', authErr:{} })),
+      authName: st.auth.name, authEmail: st.auth.email, authCode: st.auth.code,
+      authPass: st.auth.pass, authPass2: st.auth.pass2,
+      setAuthName: e => this.set('auth','name',e.target.value),
+      setAuthEmail: e => this.set('auth','email',e.target.value),
+      setAuthCode: e => this.set('auth','code',e.target.value),
+      setAuthPass: e => this.set('auth','pass',e.target.value),
+      setAuthPass2: e => this.set('auth','pass2',e.target.value),
+      emailError: st.authErr.email || null,
+      passError: st.authErr.pass || null,
+      authSubmit: () => {
+        const a = st.auth;
+        const err = {};
+        if (!a.email.trim()) { err.email = 'This field is required'; }
+        if (!a.pass.trim()) { err.pass = 'This field is required'; }
+        if (Object.keys(err).length) { this.setState({ authErr:err }); return; }
+        this.setState({ authErr:{}, session:a.email, route:'dash' });
+      },
+
+      sessionEmail: st.session || 'proponent@ub.edu.ph',
+      logout: () => this.setState({ route:'home', session:'' }),
+      total: st.recs.length,
+      s4Count: st.recs.filter(r => r.s4).length,
+      pwdCount: st.recs.filter(r => r.pwd === 'Yes' || r.s7b).length,
+      query: st.query,
+      setQuery: e => this.setState({ query:e.target.value }),
+      noRows: recs.length === 0,
+      rows: recs.map(r => ({
+        id:r.id, ts:r.ts, phase:r.phase, resident:r.resident, pwd:r.pwd,
+        sections: [r.ext ? '3 extended' : null, r.s4 ? '4' : null, r.s5 ? '5' : null, r.s7a ? '7a' : null, r.s7b ? '7b' : null]
+          .filter(Boolean).join(' · ') || 'None',
+        onEdit: () => this.setState({ draft:Object.assign({}, r), draftIsNew:false }),
+        onDelete: () => this.setState(s => ({ recs:s.recs.filter(x => x.id !== r.id) })),
+      })),
+      newRec: () => this.setState(s => ({
+        draftIsNew:true,
+        draft:{ id:'RC-0' + (146 + s.recs.length), ts:'16 Sep 2026, 10:00', phase:'Phase 1', resident:'Homeowner', pwd:'No', s4:false, s5:false, s7a:false, s7b:false, ext:true },
+      })),
+      modalOpen: !!st.draft,
+      modalTitle: st.draftIsNew ? 'Add response' : 'Edit response',
+      closeModal: () => this.setState({ draft:null }),
+      draftId: draft.id || '', draftPhase: draft.phase || '', draftResident: draft.resident || '', draftPwd: draft.pwd || '',
+      setDraftId: e => this.set('draft','id',e.target.value),
+      setDraftPhase: e => this.set('draft','phase',e.target.value),
+      setDraftResident: e => this.set('draft','resident',e.target.value),
+      setDraftPwd: e => this.set('draft','pwd',e.target.value),
+      phaseOptions: ['Phase 1','Phase 2','Phase 3','Phase 4','Phase 5'],
+      residentOptions: ['Homeowner','Renter or lessee','Household member of a homeowner','Live-in household staff'],
+      yesNoOptions: ['Yes','No'],
+      saveDraft: () => this.setState(s => {
+        const d = s.draft;
+        const exists = s.recs.some(r => r.id === d.id);
+        return { recs: s.draftIsNew && !exists ? s.recs.concat([d]) : s.recs.map(r => (r.id === d.id ? d : r)), draft:null };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>

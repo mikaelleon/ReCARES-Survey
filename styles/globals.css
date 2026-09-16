@@ -1,0 +1,103 @@
+@import './tokens.css';
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--page-bg);
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  color: var(--text-body);
+  /* Layout export overrides accent to orange primary on the app shell */
+  --accent-primary: var(--harvest-orange);
+  --accent-hover: #c2600f;
+  --text-on-primary: var(--black);
+}
+
+[data-inq] input::placeholder {
+  color: rgba(255, 255, 255, 0.72);
+  opacity: 1;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-title);
+}
+
+a {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+@media (max-width: 640px) {
+  [data-ic] > div > div > div {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+.lift:hover {
+  transform: translateY(-4px);
+}
+
+.nav-link:hover {
+  color: var(--bright-amber) !important;
+}
+
+.theme-btn-nav:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: var(--white) !important;
+}
+
+.theme-btn:hover {
+  background: var(--surface-2) !important;
+  border-color: var(--text-body) !important;
+}
+
+.footer-link:hover {
+  color: var(--bright-amber) !important;
+}
+
+.ghost-btn:hover {
+  background: var(--surface-2) !important;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card);
+}
