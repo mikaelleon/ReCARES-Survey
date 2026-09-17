@@ -8,9 +8,10 @@ export interface ThemeToggleProps {
   onDark?: boolean;
 }
 
-function MoonIcon() {
+function MoonIcon({ spinning }: { spinning: boolean }) {
   return (
     <svg
+      className={spinning ? 'theme-toggle-icon theme-toggle-icon--spin' : 'theme-toggle-icon'}
       width="18"
       height="18"
       viewBox="0 0 24 24"
@@ -32,6 +33,7 @@ export function ThemeToggle({
   onDark = false,
 }: ThemeToggleProps) {
   const [hover, setHover] = useState(false);
+  const [spinning, setSpinning] = useState(false);
 
   const style: CSSProperties = onDark
     ? {
@@ -69,12 +71,16 @@ export function ThemeToggle({
     <button
       type="button"
       aria-label={ariaLabel}
-      onClick={onClick}
+      onClick={(e) => {
+        setSpinning(true);
+        window.setTimeout(() => setSpinning(false), 220);
+        onClick?.(e);
+      }}
       style={style}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <MoonIcon />
+      <MoonIcon spinning={spinning} />
     </button>
   );
 }

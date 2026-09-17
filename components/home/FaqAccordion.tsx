@@ -1,29 +1,107 @@
 'use client';
 
-import { useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { FAQ } from '@/survey/content';
 
 /**
- * Single-expand FAQ accordion with sidebar summary (homepage mock layout).
+ * Single-expand FAQ accordion with measured panels, keyboard nav, and CTA pulse.
  */
 export function FaqAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [panelHeights, setPanelHeights] = useState<number[]>([]);
+  const [hovered, setHovered] = useState<number | null>(null);
+  const [pulseCta, setPulseCta] = useState(false);
+  const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const pulsedRef = useRef(false);
+
+  const measure = useCallback(() => {
+    setPanelHeights(
+      contentRefs.current.map((el) => (el ? el.scrollHeight : 0)),
+    );
+  }, []);
+
+  useLayoutEffect(() => {
+    measure();
+  }, [measure, openIndex]);
+
+  useEffect(() => {
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [measure]);
+
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node || pulsedRef.current) return;
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !pulsedRef.current) {
+          pulsedRef.current = true;
+          setPulseCta(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   const toggle = (index: number) => {
     setOpenIndex((prev) => (prev === index ? null : index));
   };
 
+  const focusButton = (index: number) => {
+    const clamped = Math.max(0, Math.min(FAQ.length - 1, index));
+    buttonRefs.current[clamped]?.focus();
+  };
+
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        focusButton(index + 1);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        focusButton(index - 1);
+        break;
+      case 'Home':
+        e.preventDefault();
+        focusButton(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        focusButton(FAQ.length - 1);
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <div
+      ref={sectionRef}
       id="faq"
       style={{
         flex: '1 1 100%',
         minWidth: 0,
         width: '100%',
         paddingTop: 'clamp(24px, 4vw, 40px)',
-        animation: 'riseIn 460ms ease-in-out both',
       }}
     >
       <div
@@ -57,20 +135,33 @@ export function FaqAccordion() {
           >
             {FAQ.map((item, index) => {
               const isOpen = openIndex === index;
+              const panelId = `faq-panel-${index}`;
+              const headerId = `faq-header-${index}`;
+              const showHover = !isOpen && hovered === index;
               return (
                 <div
                   key={item.question}
+                  onMouseEnter={() => setHovered(index)}
+                  onMouseLeave={() => setHovered((h) => (h === index ? null : h))}
                   style={{
-                    background: 'var(--card-fill-neutral)',
+                    background: showHover
+                      ? 'var(--card-fill-accordion-open)'
+                      : 'var(--card-fill-neutral)',
                     borderRadius: 12,
                     overflow: 'hidden',
                     transition: 'background var(--motion-duration) var(--motion-ease)',
                   }}
                 >
                   <button
+                    ref={(el) => {
+                      buttonRefs.current[index] = el;
+                    }}
+                    id={headerId}
                     type="button"
                     onClick={() => toggle(index)}
+                    onKeyDown={(e) => onKeyDown(e, index)}
                     aria-expanded={isOpen}
+                    aria-controls={panelId}
                     style={{
                       width: '100%',
                       minHeight: 48,
@@ -106,15 +197,22 @@ export function FaqAccordion() {
                     />
                   </button>
                   <div
+                    id={panelId}
+                    role="region"
+                    aria-labelledby={headerId}
+                    hidden={!isOpen}
                     style={{
                       overflow: 'hidden',
-                      maxHeight: isOpen ? '420px' : '0px',
+                      maxHeight: isOpen ? panelHeights[index] ?? 0 : 0,
                       opacity: isOpen ? 1 : 0,
                       transition:
                         'max-height 280ms var(--motion-ease), opacity 220ms var(--motion-ease)',
                     }}
                   >
                     <div
+                      ref={(el) => {
+                        contentRefs.current[index] = el;
+                      }}
                       style={{
                         padding: '0 18px 16px',
                         fontSize: 15,
@@ -166,7 +264,11 @@ export function FaqAccordion() {
             title="Confidential"
             body="Your answers are never shared with your name attached."
           />
-          <div style={{ marginTop: 4 }}>
+          <div
+            style={{ marginTop: 4 }}
+            className={pulseCta ? 'faq-cta-pulse' : undefined}
+            onAnimationEnd={() => setPulseCta(false)}
+          >
             <Button variant="primary" href="/survey" fullWidth>
               Start the survey.
             </Button>

@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { submitInquiry } from '@/lib/firebase/firestore';
 
+const REQUIRED = 'This field is required';
+
 /**
  * Homepage inquiry form with brand-fill styling and Firestore submit stub.
  */
@@ -12,11 +14,18 @@ export function InquiryForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [messageError, setMessageError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!email.trim() || !message.trim()) return;
+    const nextEmailError = !email.trim() ? REQUIRED : null;
+    const nextMessageError = !message.trim() ? REQUIRED : null;
+    setEmailError(nextEmailError);
+    setMessageError(nextMessageError);
+    if (nextEmailError || nextMessageError) return;
+
     setSubmitting(true);
     try {
       await submitInquiry({
@@ -25,6 +34,8 @@ export function InquiryForm() {
         message: message.trim(),
       });
       setSent(true);
+      setMessage('');
+      setMessageError(null);
     } finally {
       setSubmitting(false);
     }
@@ -47,8 +58,8 @@ export function InquiryForm() {
         display: 'flex',
         flexDirection: 'column',
         gap: 16,
-        animation: 'riseIn 460ms ease-in-out 80ms both',
         transition: 'transform 220ms ease-in-out',
+        width: '100%',
       }}
       className="lift"
     >
@@ -63,13 +74,21 @@ export function InquiryForm() {
         type="email"
         placeholder="you@example.com"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          if (emailError) setEmailError(null);
+        }}
+        error={emailError}
       />
       <Input
         label="Message"
         placeholder="How can we help?"
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
+        onChange={(e) => {
+          setMessage(e.target.value);
+          if (messageError) setMessageError(null);
+        }}
+        error={messageError}
       />
       <div
         style={{
@@ -81,7 +100,7 @@ export function InquiryForm() {
         }}
       >
         <Button variant="primary" onDark disabled={submitting} onClick={handleSubmit}>
-          Send message
+          {submitting ? 'Sending…' : 'Send message'}
         </Button>
         {sent && (
           <span

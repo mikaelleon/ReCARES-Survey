@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="light" className={`${lato.variable} ${poppins.variable}`}>
+    <html lang="en" data-theme="light" className={`${lato.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
         <link
           rel="stylesheet"
@@ -35,6 +35,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/@fontsource/open-sauce-one@5.2.5/700.css"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('recares-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`,
+          }}
         />
       </head>
       <body>

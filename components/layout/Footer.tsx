@@ -109,6 +109,15 @@ export function Footer() {
             <a
               href="/#contact"
               className="footer-link"
+              onClick={(e) => {
+                if (typeof window === 'undefined') return;
+                if (window.location.pathname !== '/') return;
+                e.preventDefault();
+                const el = document.getElementById('contact');
+                if (!el) return;
+                const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+              }}
               style={{
                 color: 'var(--white)',
                 textDecoration: 'underline',
