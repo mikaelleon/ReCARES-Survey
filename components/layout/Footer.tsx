@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { LanguageToggle } from '@/components/layout/LanguageToggle';
+import { RecaresLogo } from '@/components/brand/RecaresLogo';
 import { useState } from 'react';
 
 /**
@@ -29,18 +30,7 @@ export function Footer() {
         }}
       >
         <div style={{ flex: '1 1 230px', minWidth: 0 }}>
-          <div
-            style={{
-              color: 'var(--white)',
-              fontFamily: 'var(--font-title)',
-              fontSize: 18,
-              fontWeight: 700,
-              letterSpacing: '.16em',
-              textTransform: 'uppercase',
-            }}
-          >
-            ReCARES
-          </div>
+          <RecaresLogo surface="dark" size={56} />
           <p
             style={{
               margin: '18px 0 0',

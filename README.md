@@ -1,4 +1,4 @@
-# ReCARES
+# ReCARES Survey
 
 Community needs assessment survey for residents of Camella Homes Tibig, Lipa City.
 
@@ -34,3 +34,5 @@ The static design export remains in `/layout` as the visual source of truth.
 ## Images
 
 Put site photos and other raster assets in [`public/images/`](public/images/). See that folder’s README for the checklist (hero photograph first). Files there are served from `/images/...`.
+
+Favicons live in [`public/favicon_io/`](public/favicon_io/) and are linked from the root layout metadata.

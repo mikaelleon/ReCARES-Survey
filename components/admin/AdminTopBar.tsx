@@ -39,7 +39,7 @@ export function AdminTopBar({
     <header className="admin-topbar">
       <div className="admin-topbar__brand">
         <Link href={user ? '/admin/dashboard' : '/'} className="admin-topbar__logo">
-          ReCARES
+          ReCARES Survey
         </Link>
         <span className="admin-topbar__sub">{subtitle}</span>
       </div>

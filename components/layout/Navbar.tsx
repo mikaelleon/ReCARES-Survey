@@ -11,7 +11,8 @@ import {
 } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import { RecaresLogo } from '@/components/brand/RecaresLogo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -258,21 +259,18 @@ export function Navbar() {
       >
         <Link
           href="/"
-          aria-label="ReCARES home"
+          aria-label="ReCARES Survey home"
           onClick={(e) => onNavClick(e, '/')}
+          className="recares-logo-link"
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            background: 'var(--white)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
             flexShrink: 0,
             textDecoration: 'none',
+            lineHeight: 0,
           }}
         >
-          <Home size={18} color="var(--dark-emerald)" strokeWidth={2.25} aria-hidden="true" />
+          <RecaresLogo surface="dark" size={40} priority />
         </Link>
 
         <div
