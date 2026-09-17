@@ -3,26 +3,17 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DashboardAnalytics } from '@/components/admin/DashboardAnalytics';
 import { DashboardStatGrid } from '@/components/admin/DashboardStatGrid';
 import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import { ResponseDetailDrawer } from '@/components/admin/ResponseDetailDrawer';
 import { ResponseEmptyState } from '@/components/admin/ResponseEmptyState';
-import { ResponseTable } from '@/components/admin/ResponseTable';
-import {
-  ResponseToolbar,
-  type Section4Filter,
-  type SortDir,
-  type SortKey,
-} from '@/components/admin/ResponseToolbar';
+import { ResponseViewsPanel } from '@/components/admin/ResponseViewsPanel';
+import type { Section4Filter, SortDir, SortKey } from '@/components/admin/ResponseToolbar';
 import {
   buildCsv,
   buildSummaryText,
   computeKpis,
   countByPhase,
-  countByResident,
-  gateCoverage,
-  likertMeans,
 } from '@/lib/admin/analytics';
 import { SAMPLE_RESPONSES, type SampleRecord } from '@/lib/admin/sampleResponses';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -31,7 +22,7 @@ import { redirect } from 'next/navigation';
 type DemoState = 'data' | 'loading' | 'empty' | 'error';
 
 /**
- * Proponent dashboard — overview analytics + response management.
+ * Proponent dashboard — overview KPIs + Forms-style response views.
  * Auth guard is client-side until middleware + Firebase session exist.
  */
 export function AdminDashboard() {
@@ -89,9 +80,6 @@ export function AdminDashboard() {
 
   const kpis = useMemo(() => computeKpis(records), [records]);
   const byPhase = useMemo(() => countByPhase(records), [records]);
-  const byResident = useMemo(() => countByResident(records), [records]);
-  const gates = useMemo(() => gateCoverage(records), [records]);
-  const likert = useMemo(() => likertMeans(records), [records]);
 
   const resetFilters = useCallback(() => {
     setQuery('');
@@ -167,19 +155,11 @@ export function AdminDashboard() {
             Dashboard
           </h1>
           <p className="admin-section__lead">
-            Aggregate coverage for the Camella Homes Tibig needs assessment. Charts and KPIs stay
-            household-anonymous.
+            Aggregate coverage for the Camella Homes Tibig needs assessment. Use Summary, Question,
+            and Individual views below for Forms-style response analysis.
           </p>
 
           <DashboardStatGrid kpis={kpis} loading={loading} />
-          <DashboardAnalytics
-            byPhase={byPhase}
-            byResident={byResident}
-            gates={gates}
-            likert={likert}
-            total={records.length}
-            loading={loading}
-          />
         </section>
 
         <section className="admin-section" aria-labelledby="admin-responses-title">
@@ -187,67 +167,50 @@ export function AdminDashboard() {
             Responses
           </h2>
           <p className="admin-section__lead">
-            Browse individual submissions. Gated fields the respondent never unlocked stay{' '}
-            <code>not_shown</code>.
+            Browse aggregates by question, or step through each submission. Gated fields the
+            respondent never unlocked stay <code>not_shown</code>.
           </p>
 
-          <div className="admin-panel">
-            {error ? (
-              <ResponseEmptyState kind="error" onReset={() => window.location.assign('/admin/dashboard')} />
-            ) : loading ? (
+          {error ? (
+            <div className="admin-panel">
+              <ResponseEmptyState
+                kind="error"
+                onReset={() => window.location.assign('/admin/dashboard')}
+              />
+            </div>
+          ) : loading ? (
+            <div className="admin-panel">
               <div className="admin-table-skel" aria-hidden="true">
                 <div className="admin-table-skel__row" />
                 <div className="admin-table-skel__row" />
                 <div className="admin-table-skel__row" />
               </div>
-            ) : (
-              <>
-                <ResponseToolbar
-                  query={query}
-                  onQueryChange={setQuery}
-                  phase={phase}
-                  onPhaseChange={setPhase}
-                  section4={section4}
-                  onSection4Change={setSection4}
-                  sortKey={sortKey}
-                  sortDir={sortDir}
-                  onSortKeyChange={setSortKey}
-                  onToggleSortDir={() =>
-                    setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-                  }
-                  showing={filtered.length}
-                  total={records.length}
-                  onExport={handleExport}
-                  onCopySummary={handleCopySummary}
-                  exportDisabled={filtered.length === 0}
-                />
-                {copyNote ? (
-                  <p className="admin-toast-inline" role="status">
-                    {copyNote}
-                  </p>
-                ) : null}
-
-                {emptyDataset ? (
-                  <ResponseEmptyState kind="empty" />
-                ) : filtered.length === 0 ? (
-                  <ResponseEmptyState kind="filtered" onReset={resetFilters} />
-                ) : (
-                  <ResponseTable
-                    records={filtered}
-                    onView={setViewRecord}
-                    onDelete={setDeleteTarget}
-                    highlightId={flashId}
-                  />
-                )}
-
-                <p className="admin-panel__footnote">
-                  Fields belonging to a section a respondent never unlocked are stored as{' '}
-                  <code>not_shown</code> rather than blank, so an unanswered question and an unasked
-                  question stay distinguishable in analysis.
-                </p>
-              </>
-            )}
-          </div>
+            </div>
+          ) : (
+            <ResponseViewsPanel
+              records={records}
+              filtered={filtered}
+              query={query}
+              onQueryChange={setQuery}
+              phase={phase}
+              onPhaseChange={setPhase}
+              section4={section4}
+              onSection4Change={setSection4}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSortKeyChange={setSortKey}
+              onToggleSortDir={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+              onExport={handleExport}
+              onCopySummary={() => void handleCopySummary()}
+              copyNote={copyNote}
+              exportDisabled={filtered.length === 0}
+              onView={setViewRecord}
+              onDelete={setDeleteTarget}
+              highlightId={flashId}
+              onResetFilters={resetFilters}
+              emptyDataset={emptyDataset}
+            />
+          )}
 
           <div className="admin-dashboard__back">
             <Link href="/">Back to the resident site</Link>
