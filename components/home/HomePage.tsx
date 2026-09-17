@@ -114,21 +114,11 @@ export function HomePage() {
                 pointerEvents: 'none',
               }}
             />
-            <div
-              style={{
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: 22,
-                display: 'flex',
-                pointerEvents: 'none',
-              }}
-            >
-              <div style={{ flex: 1, background: 'var(--dark-emerald)' }} />
-              <div style={{ flex: 1, background: 'var(--emerald-400)' }} />
-              <div style={{ flex: 1, background: 'var(--harvest-orange)' }} />
-              <div style={{ flex: 1, background: 'var(--bright-amber)' }} />
+            <div className="hero-stripe" aria-hidden="true">
+              <div className="hero-stripe__seg" style={{ background: 'var(--dark-emerald)' }} />
+              <div className="hero-stripe__seg" style={{ background: 'var(--emerald-400)' }} />
+              <div className="hero-stripe__seg" style={{ background: 'var(--harvest-orange)' }} />
+              <div className="hero-stripe__seg" style={{ background: 'var(--bright-amber)' }} />
             </div>
             <div
               style={{
@@ -318,78 +308,80 @@ export function HomePage() {
         </div>
       </div>
 
-      <div
-        id="contact"
-        style={{
-          maxWidth: 1120,
-          margin: '0 auto',
-          padding: 'clamp(48px, 8vw, 96px) clamp(16px, 4vw, 32px) 0',
-        }}
-      >
-        <RevealOnScroll>
-          <h2
-            style={{
-              margin: '0 0 clamp(16px, 2.4vw, 24px)',
-              color: 'var(--text-section-heading)',
-              textTransform: 'uppercase',
-              fontSize: 'clamp(20px, 4.5vw, 24px)',
-              fontWeight: 700,
-              letterSpacing: '.04em',
-            }}
-          >
-            For further inquiries or concerns
-          </h2>
-        </RevealOnScroll>
+      <div className="contact-band">
         <div
+          id="contact"
           style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 'clamp(16px, 2.4vw, 24px)',
-            alignItems: 'stretch',
+            maxWidth: 1120,
+            margin: '0 auto',
+            padding: '0 clamp(16px, 4vw, 32px)',
           }}
         >
-          <RevealOnScroll
-            className="lift"
+          <RevealOnScroll>
+            <h2
+              style={{
+                margin: '0 0 clamp(16px, 2.4vw, 24px)',
+                color: 'var(--text-section-heading)',
+                textTransform: 'uppercase',
+                fontSize: 'clamp(20px, 4.5vw, 24px)',
+                fontWeight: 700,
+                letterSpacing: '.04em',
+              }}
+            >
+              For further inquiries or concerns
+            </h2>
+          </RevealOnScroll>
+          <div
             style={{
-              flex: '1 1 260px',
-              minWidth: 0,
-              background: 'var(--card-fill-neutral)',
-              borderRadius: 16,
-              padding: 'clamp(20px, 3vw, 32px)',
               display: 'flex',
-              flexDirection: 'column',
-              gap: 14,
-              transition: 'transform 220ms ease-in-out',
+              flexWrap: 'wrap',
+              gap: 'clamp(16px, 2.4vw, 24px)',
+              alignItems: 'stretch',
             }}
           >
-            <p
+            <RevealOnScroll
+              className="lift"
               style={{
-                margin: 0,
-                color: 'var(--text-on-card-neutral)',
-                fontSize: 16,
-                lineHeight: 1.6,
-                textWrap: 'pretty',
+                flex: '1 1 260px',
+                minWidth: 0,
+                background: 'var(--card-fill-neutral)',
+                borderRadius: 16,
+                padding: 'clamp(20px, 3vw, 32px)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 14,
+                transition: 'transform 220ms ease-in-out',
               }}
             >
-              Have a question about this survey or the study behind it? Send us a message and we will
-              get back to you.
-            </p>
-            <p
-              style={{
-                margin: 0,
-                color: 'var(--text-on-card-neutral)',
-                fontSize: 16,
-                lineHeight: 1.6,
-                textWrap: 'pretty',
-              }}
-            >
-              This is also where you can reach out if you would like to know more about the study
-              before deciding whether to participate.
-            </p>
-          </RevealOnScroll>
-          <RevealOnScroll delayMs={80} style={{ flex: '1.4 1 380px', minWidth: 0, display: 'flex' }}>
-            <InquiryForm />
-          </RevealOnScroll>
+              <p
+                style={{
+                  margin: 0,
+                  color: 'var(--text-on-card-neutral)',
+                  fontSize: 16,
+                  lineHeight: 1.6,
+                  textWrap: 'pretty',
+                }}
+              >
+                Have a question about this survey or the study behind it? Send us a message and we will
+                get back to you.
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  color: 'var(--text-on-card-neutral)',
+                  fontSize: 16,
+                  lineHeight: 1.6,
+                  textWrap: 'pretty',
+                }}
+              >
+                This is also where you can reach out if you would like to know more about the study
+                before deciding whether to participate.
+              </p>
+            </RevealOnScroll>
+            <RevealOnScroll delayMs={80} style={{ flex: '1.4 1 380px', minWidth: 0, display: 'flex' }}>
+              <InquiryForm />
+            </RevealOnScroll>
+          </div>
         </div>
       </div>
     </>
