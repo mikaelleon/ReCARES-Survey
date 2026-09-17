@@ -30,3 +30,7 @@ Copy `.env.local.example` to `.env.local` and fill in Firebase values when you a
 | `/admin/dashboard` | Response management (auth stub) |
 
 The static design export remains in `/layout` as the visual source of truth.
+
+## Images
+
+Put site photos and other raster assets in [`public/images/`](public/images/). See that folder’s README for the checklist (hero photograph first). Files there are served from `/images/...`.

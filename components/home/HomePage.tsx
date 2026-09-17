@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { FaqAccordion } from '@/components/home/FaqAccordion';
 import { HeroCtas } from '@/components/home/HeroCtas';
 import { InquiryForm } from '@/components/home/InquiryForm';
@@ -91,21 +92,14 @@ export function HomePage() {
               justifyContent: 'center',
             }}
           >
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'var(--surface-2)',
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'flex-start',
-                padding: 20,
-                color: '#e5ebe8',
-                fontSize: 14,
-              }}
-            >
-              Drop the perimeter photograph
-            </div>
+            <Image
+              src="/images/h1.png"
+              alt="Camella Homes Tibig outdoor basketball court and community grounds"
+              fill
+              priority
+              sizes="(max-width: 1120px) 100vw, 1120px"
+              style={{ objectFit: 'cover', objectPosition: 'center' }}
+            />
             <div
               style={{
                 position: 'absolute',
