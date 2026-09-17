@@ -42,6 +42,14 @@ type SpeechRecognitionEventLike = {
 
 type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
 
+/** Dispatched to open the floating RAGbot panel (e.g. from the inquiry section). */
+export const OPEN_RAGBOT_EVENT = 'recares:open-ragbot';
+
+export function openRagBot(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(OPEN_RAGBOT_EVENT));
+}
+
 const WELCOME: ChatMessage = {
   id: 'welcome',
   role: 'bot',
@@ -101,6 +109,12 @@ export function RagBotChat() {
 
   useEffect(() => {
     setVoiceSupported(Boolean(getSpeechRecognitionCtor()));
+  }, []);
+
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(OPEN_RAGBOT_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_RAGBOT_EVENT, onOpen);
   }, []);
 
   useEffect(() => {

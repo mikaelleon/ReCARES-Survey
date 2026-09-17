@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { FaqAccordion } from '@/components/home/FaqAccordion';
 import { HeroCtas } from '@/components/home/HeroCtas';
+import { InquiryContactChoices } from '@/components/home/InquiryContactChoices';
 import { InquiryForm } from '@/components/home/InquiryForm';
 import { RevealOnScroll } from '@/components/home/RevealOnScroll';
 import { GoalCard } from '@/components/ui/GoalCard';
@@ -347,30 +348,7 @@ export function HomePage() {
                 transition: 'transform 220ms ease-in-out',
               }}
             >
-              <p
-                style={{
-                  margin: 0,
-                  color: 'var(--text-on-card-neutral)',
-                  fontSize: 16,
-                  lineHeight: 1.6,
-                  textWrap: 'pretty',
-                }}
-              >
-                Have a question about this survey or the study behind it? Send us a message and we will
-                get back to you.
-              </p>
-              <p
-                style={{
-                  margin: 0,
-                  color: 'var(--text-on-card-neutral)',
-                  fontSize: 16,
-                  lineHeight: 1.6,
-                  textWrap: 'pretty',
-                }}
-              >
-                This is also where you can reach out if you would like to know more about the study
-                before deciding whether to participate.
-              </p>
+              <InquiryContactChoices />
             </RevealOnScroll>
             <RevealOnScroll delayMs={80} style={{ flex: '1.4 1 380px', minWidth: 0, display: 'flex' }}>
               <InquiryForm />

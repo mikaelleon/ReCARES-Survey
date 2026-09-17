@@ -255,7 +255,7 @@ export const FAQ = [
   {
     question: 'Who can I contact if I have questions or concerns about the survey?',
     answer:
-      'Use the inquiry form on this page and a member of the proponent team will reply. Direct contact details for our academic adviser are pending and will be added before the survey goes live.',
+      'Use the inquiry form on this page to message the team, or chat with RAGbot for quick survey questions. Direct contact details for our academic adviser are pending and will be added before the survey goes live.',
   },
 ];
 
