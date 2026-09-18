@@ -270,7 +270,7 @@ export function FaqAccordion() {
             onAnimationEnd={() => setPulseCta(false)}
           >
             <Button variant="primary" href="/survey" fullWidth>
-              Start the survey.
+              Start the survey
             </Button>
           </div>
         </aside>

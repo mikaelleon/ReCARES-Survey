@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState, type CSSProperties } from 'react';
+import { SurveyConsentGate } from '@/components/survey/SurveyConsentGate';
 import { ScreeningForm } from '@/components/survey/ScreeningForm';
 import { LikertItem } from '@/components/survey/LikertItem';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Select } from '@/components/ui/Select';
+import type { LanguageValue } from '@/components/layout/LanguageToggle';
 import { submitSurveyResponse } from '@/lib/firebase/firestore';
 import { PERIMETER_PHASES } from '@/survey/config';
 import {
@@ -110,12 +112,13 @@ function buildDocJson(
   multi: Record<string, Record<string, boolean>>,
   s2: Record<string, string | number>,
   s4OptIn: S4OptIn,
+  language: LanguageValue,
 ): string {
   const g = computeGates(sc, s4OptIn);
   const doc: Record<string, unknown> = {
     submitted_at: '<server timestamp>',
     anonymous: true,
-    language: 'EN',
+    language,
   };
 
   SCREENING_FIELDS.forEach((field) => {
@@ -158,6 +161,7 @@ function buildSurveyResponse(
   multi: Record<string, Record<string, boolean>>,
   s2: Record<string, string | number>,
   s4OptIn: S4OptIn,
+  language: LanguageValue,
 ): SurveyResponse {
   const g = computeGates(sc, s4OptIn);
   const notShown: NotShown = 'not_shown';
@@ -190,7 +194,7 @@ function buildSurveyResponse(
   return {
     submittedAt: new Date().toISOString(),
     anonymous: true,
-    language: 'EN',
+    language,
     screening,
     section2,
     section3ExtendedShown: g.perimeter,
@@ -211,6 +215,8 @@ function buildSurveyResponse(
  */
 export function SurveyFlow() {
   const router = useRouter();
+  const [consentPassed, setConsentPassed] = useState(false);
+  const [language, setLanguage] = useState<LanguageValue>('EN');
   const [step, setStep] = useState(0);
   const [sc, setSc] = useState<Record<string, string>>({});
   const [multi, setMulti] = useState<Record<string, Record<string, boolean>>>({});
@@ -305,14 +311,14 @@ export function SurveyFlow() {
   }, [sc, multi, s2, gates.s4]);
 
   const docJson = useMemo(
-    () => buildDocJson(sc, multi, s2, s4OptIn),
-    [sc, multi, s2, s4OptIn],
+    () => buildDocJson(sc, multi, s2, s4OptIn, language),
+    [sc, multi, s2, s4OptIn, language],
   );
 
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      await submitSurveyResponse(buildSurveyResponse(sc, multi, s2, s4OptIn));
+      await submitSurveyResponse(buildSurveyResponse(sc, multi, s2, s4OptIn, language));
       router.push('/survey/thank-you');
     } finally {
       setSubmitting(false);
@@ -328,6 +334,16 @@ export function SurveyFlow() {
   const s4Open = gates.s4;
 
   const visibleS2Fields = S2_FIELDS;
+
+  if (!consentPassed) {
+    return (
+      <SurveyConsentGate
+        language={language}
+        onLanguageChange={setLanguage}
+        onContinue={() => setConsentPassed(true)}
+      />
+    );
+  }
 
   return (
     <div

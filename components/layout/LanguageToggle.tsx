@@ -7,11 +7,17 @@ export type LanguageValue = 'EN' | 'FIL';
 export interface LanguageToggleProps {
   value?: LanguageValue;
   onChange?: (value: LanguageValue) => void;
+  /** Optional display labels; defaults to EN / FIL codes. */
+  labels?: Partial<Record<LanguageValue, string>>;
 }
 
 const OPTIONS: LanguageValue[] = ['EN', 'FIL'];
 
-export function LanguageToggle({ value = 'EN', onChange }: LanguageToggleProps) {
+export function LanguageToggle({
+  value = 'EN',
+  onChange,
+  labels,
+}: LanguageToggleProps) {
   const containerStyle: CSSProperties = {
     display: 'inline-flex',
     gap: 8,
@@ -42,7 +48,7 @@ export function LanguageToggle({ value = 'EN', onChange }: LanguageToggleProps) 
             onClick={() => onChange?.(option)}
             style={buttonStyle}
           >
-            {option}
+            {labels?.[option] ?? option}
           </button>
         );
       })}

@@ -37,7 +37,7 @@ export function HeroCtas() {
     >
       <span className="hero-cta--primary">
         <Button variant="primary" onDark href="/survey">
-          Start the survey.
+          Start the survey
         </Button>
       </span>
       <span className="hero-cta--secondary">

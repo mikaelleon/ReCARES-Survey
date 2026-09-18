@@ -192,28 +192,7 @@ export function Navbar() {
         );
       })}
       <Link
-        href="/admin/signup"
-        style={{
-          fontFamily: 'var(--font-sans)',
-          minHeight: 36,
-          padding: '0 16px',
-          borderRadius: 999,
-          border: '1px solid rgba(255,255,255,.85)',
-          background: 'transparent',
-          color: 'var(--white)',
-          fontSize: 12,
-          fontWeight: 700,
-          letterSpacing: '.08em',
-          textTransform: 'uppercase',
-          textDecoration: 'none',
-          display: 'inline-flex',
-          alignItems: 'center',
-        }}
-      >
-        Sign up
-      </Link>
-      <Link
-        href="/admin/login"
+        href="/survey"
         style={{
           fontFamily: 'var(--font-sans)',
           minHeight: 36,
@@ -231,7 +210,7 @@ export function Navbar() {
           alignItems: 'center',
         }}
       >
-        Login
+        Start the survey
       </Link>
     </>
   );
@@ -396,33 +375,10 @@ export function Navbar() {
             })}
 
             <Link
-              href="/admin/signup"
+              href="/survey"
               onClick={() => setMenuOpen(false)}
               style={{
                 marginTop: 16,
-                fontFamily: 'var(--font-sans)',
-                minHeight: 44,
-                padding: '0 16px',
-                borderRadius: 999,
-                border: '1px solid rgba(255,255,255,.85)',
-                background: 'transparent',
-                color: 'var(--white)',
-                fontSize: 13,
-                fontWeight: 700,
-                letterSpacing: '.08em',
-                textTransform: 'uppercase',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              Sign up
-            </Link>
-            <Link
-              href="/admin/login"
-              onClick={() => setMenuOpen(false)}
-              style={{
                 fontFamily: 'var(--font-sans)',
                 minHeight: 44,
                 padding: '0 18px',
@@ -440,7 +396,7 @@ export function Navbar() {
                 justifyContent: 'center',
               }}
             >
-              Login
+              Start the survey
             </Link>
           </div>
         </div>
