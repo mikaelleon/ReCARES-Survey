@@ -40,7 +40,7 @@ export function InfoCard({
   };
 
   const iconSlotStyle: CSSProperties = {
-    flex: '0 0 200px',
+    flex: '0 0 220px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

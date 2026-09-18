@@ -8,12 +8,14 @@ const LOGO = {
   dark: '/images/ReCARES-LOGO_SVG/logo-darkmode.svg',
   /** Use on white or #e5ebe8 (page) backgrounds */
   light: '/images/ReCARES-LOGO_SVG/logo-lightmode.svg',
+  /** Compact mark — preferred on light page surfaces for About us */
+  favicon: '/images/ReCARES-LOGO_SVG/logo-favicon.svg',
 } as const;
 
-export type LogoSurface = 'dark' | 'light';
+export type LogoSurface = keyof typeof LOGO;
 
 export interface RecaresLogoProps {
-  /** `dark` → darkmode asset; `light` → lightmode asset */
+  /** Match asset to background: `dark` | `light` | `favicon` */
   surface: LogoSurface;
   size?: number;
   className?: string;
@@ -50,11 +52,15 @@ export function RecaresLogoForPage({
   size = 72,
   className,
   priority = false,
-}: Omit<RecaresLogoProps, 'surface'>) {
+  lightSurface = 'light',
+}: Omit<RecaresLogoProps, 'surface'> & {
+  /** Asset used when theme is light. About us uses `favicon`. */
+  lightSurface?: 'light' | 'favicon';
+}) {
   const { theme } = useTheme();
   return (
     <RecaresLogo
-      surface={theme === 'dark' ? 'dark' : 'light'}
+      surface={theme === 'dark' ? 'dark' : lightSurface}
       size={size}
       className={className}
       priority={priority}

@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { RecaresLogoForPage } from '@/components/brand/RecaresLogo';
 import { FaqAccordion } from '@/components/home/FaqAccordion';
 import { HeroCtas } from '@/components/home/HeroCtas';
 import { InquiryContactChoices } from '@/components/home/InquiryContactChoices';
@@ -8,53 +9,16 @@ import { GoalCard } from '@/components/ui/GoalCard';
 import { InfoCard } from '@/components/ui/InfoCard';
 import { Accessibility, MapPin, Shield } from 'lucide-react';
 
-function SurveyIcon() {
+function CamellaLogoMark() {
   return (
-    <svg
-      width={150}
-      height={150}
-      viewBox="0 0 64 64"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      style={{ color: 'var(--text-body)', background: 'transparent' }}
-    >
-      <path d="M16 12h32a3 3 0 0 1 3 3v37a3 3 0 0 1-3 3H16a3 3 0 0 1-3-3V15a3 3 0 0 1 3-3z" />
-      <path d="M25 12V9a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3z" />
-      <path d="M21 25h10" />
-      <path d="M21 33h22" />
-      <path d="M21 41h16" />
-      <path d="M38 22.5l3 3 6-6" />
-    </svg>
-  );
-}
-
-function AboutIcon() {
-  return (
-    <svg
-      width={130}
-      height={130}
-      viewBox="0 0 64 64"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      style={{ color: 'var(--text-body)', background: 'transparent' }}
-    >
-      <path d="M6 27 32 8l26 19" />
-      <path d="M11 25v29h42V25" />
-      <circle cx={32} cy={33} r={4} />
-      <path d="M25 48c0-4.2 3.1-7.5 7-7.5s7 3.3 7 7.5" />
-      <circle cx={21} cy={38} r={3.2} />
-      <path d="M16 50c0-3.4 2.3-6 5-6 1.3 0 2.5.6 3.4 1.6" />
-      <circle cx={43} cy={38} r={3.2} />
-      <path d="M48 50c0-3.4-2.3-6-5-6-1.3 0-2.5.6-3.4 1.6" />
-    </svg>
+    <Image
+      src="/images/Camella-LOGO.svg"
+      alt="Camella Homes"
+      width={200}
+      height={200}
+      unoptimized
+      style={{ display: 'block', width: 200, height: 200, objectFit: 'contain' }}
+    />
   );
 }
 
@@ -210,7 +174,7 @@ export function HomePage() {
             style={{ flex: '1 1 100%', minWidth: 0, display: 'flex', transition: 'transform 220ms ease-in-out' }}
           >
             <div data-ic="" style={{ display: 'flex', width: '100%' }}>
-              <InfoCard heading="What is this survey for?" iconSide="right" icon={<SurveyIcon />}>
+              <InfoCard heading="What is this survey for?" iconSide="right" icon={<CamellaLogoMark />}>
                 This survey is part of a research project by fourth-year Information Technology
                 students at the University of Batangas, Lipa Campus, working with the Camella Homes
                 Tibig Homeowners Association. It asks about your experience with the current HOA
@@ -228,7 +192,11 @@ export function HomePage() {
             style={{ flex: '1 1 100%', minWidth: 0, display: 'flex', transition: 'transform 220ms ease-in-out' }}
           >
             <div data-ic="" style={{ display: 'flex', width: '100%' }}>
-              <InfoCard heading="About us" iconSide="left" icon={<AboutIcon />}>
+              <InfoCard
+                heading="About us"
+                iconSide="left"
+                icon={<RecaresLogoForPage size={200} lightSurface="favicon" />}
+              >
                 ReCARES stands for Resident Centered Assistance for Reporting and Emergency System. We
                 are a team of fourth-year Information Technology students from the University of
                 Batangas, Lipa Campus, working on this as our capstone research project. We are
