@@ -52,9 +52,15 @@ export function Input({
     boxSizing: 'border-box',
   };
 
-  const captionStyle: CSSProperties = {
+  const helperStyle: CSSProperties = {
     fontSize: 'var(--text-caption-size)',
-    color: error ? 'var(--error-red)' : 'var(--text-caption)',
+    lineHeight: 1.5,
+    color: 'var(--text-caption)',
+  };
+
+  const errorStyle: CSSProperties = {
+    fontSize: 'var(--text-caption-size)',
+    color: 'var(--status-error)',
   };
 
   return (
@@ -63,12 +69,13 @@ export function Input({
         <label style={labelStyle}>
           {label}
           {required && (
-            <span style={{ color: 'var(--harvest-orange)' }} aria-label="required">
+            <span style={{ color: 'var(--status-error)' }} aria-label="required">
               *
             </span>
           )}
         </label>
       )}
+      {helperText ? <span style={helperStyle}>{helperText}</span> : null}
       <input
         type={type}
         placeholder={placeholder}
@@ -76,11 +83,7 @@ export function Input({
         onChange={onChange}
         style={inputStyle}
       />
-      {error ? (
-        <span style={captionStyle}>{error}</span>
-      ) : (
-        helperText && <span style={captionStyle}>{helperText}</span>
-      )}
+      {error ? <span style={errorStyle}>{error}</span> : null}
     </div>
   );
 }

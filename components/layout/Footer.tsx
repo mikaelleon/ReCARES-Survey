@@ -1,16 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { LanguageToggle } from '@/components/layout/LanguageToggle';
 import { RecaresLogo } from '@/components/brand/RecaresLogo';
-import { useState } from 'react';
 
 /**
  * Resident footer with a single proponent/admin access link (not in the nav).
+ * Language selection lives only on the survey consent gate — not in the footer.
  */
 export function Footer() {
-  const [lang, setLang] = useState<'EN' | 'FIL'>('EN');
-
   return (
     <footer
       style={{
@@ -152,43 +149,23 @@ export function Footer() {
           padding: '20px 0 28px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'center',
           gap: 16,
           flexWrap: 'wrap',
         }}
       >
-        <LanguageToggle
-          value={lang}
-          onChange={(v) => setLang(v)}
-        />
         <div
           style={{
             color: 'rgba(255,255,255,.75)',
             fontSize: 14,
             lineHeight: 1.5,
             textWrap: 'pretty',
+            textAlign: 'center',
           }}
         >
           Supervised by our academic adviser · the survey asks for no name and no account.
         </div>
       </div>
-      {lang === 'FIL' && (
-        <div
-          style={{
-            maxWidth: 1120,
-            margin: '0 auto 16px',
-            padding: '12px clamp(16px, 4vw, 32px)',
-            background: 'var(--bright-amber)',
-            color: 'var(--black)',
-            fontSize: 14,
-            borderRadius: 8,
-            animation: 'fadeIn 260ms ease-in-out both',
-          }}
-        >
-          Filipino translations are pending. Strings are shown in English for now; every string has
-          a Filipino counterpart in the final build.
-        </div>
-      )}
     </footer>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ChangeEventHandler, CSSProperties } from 'react';
+import { useId, type ChangeEventHandler, type CSSProperties } from 'react';
 
 export interface SelectProps {
   label?: string;
@@ -9,6 +9,9 @@ export interface SelectProps {
   onChange?: ChangeEventHandler<HTMLSelectElement>;
   placeholder?: string;
   required?: boolean;
+  error?: string | null;
+  helperText?: string | null;
+  id?: string;
 }
 
 export function Select({
@@ -18,7 +21,15 @@ export function Select({
   onChange,
   placeholder = 'Select…',
   required = false,
+  error = null,
+  helperText = null,
+  id,
 }: SelectProps) {
+  const autoId = useId();
+  const selectId = id ?? autoId;
+  const errorId = `${selectId}-error`;
+  const helperId = `${selectId}-helper`;
+
   const wrapperStyle: CSSProperties = {
     fontFamily: 'var(--font-sans)',
     display: 'flex',
@@ -40,7 +51,7 @@ export function Select({
     fontSize: 'var(--text-body-size)',
     color: value ? 'var(--text-body)' : 'var(--text-caption)',
     background: 'var(--surface-2)',
-    border: '1px solid transparent',
+    border: error ? '1px solid var(--error-red)' : '1px solid transparent',
     borderRadius: 'var(--radius-sm)',
     height: 44,
     padding: '0 14px',
@@ -50,15 +61,35 @@ export function Select({
     appearance: 'none',
   };
 
+  const describedBy = [helperText ? helperId : null, error ? errorId : null]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <div style={wrapperStyle}>
       {label && (
-        <label style={labelStyle}>
+        <label htmlFor={selectId} style={labelStyle}>
           {label}
-          {required && <span style={{ color: 'var(--harvest-orange)' }}>*</span>}
+          {required && (
+            <span style={{ color: 'var(--status-error)' }} aria-label="required">
+              *
+            </span>
+          )}
         </label>
       )}
-      <select value={value} onChange={onChange} style={selectStyle}>
+      {helperText ? (
+        <span id={helperId} style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--text-caption)' }}>
+          {helperText}
+        </span>
+      ) : null}
+      <select
+        id={selectId}
+        value={value}
+        onChange={onChange}
+        style={selectStyle}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy || undefined}
+      >
         <option value="" disabled hidden>
           {placeholder}
         </option>
@@ -68,6 +99,11 @@ export function Select({
           </option>
         ))}
       </select>
+      {error ? (
+        <span id={errorId} role="alert" style={{ fontSize: 14, color: 'var(--status-error)' }}>
+          {error}
+        </span>
+      ) : null}
     </div>
   );
 }

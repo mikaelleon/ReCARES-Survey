@@ -31,20 +31,16 @@ import {
 import type {
   LikertValue,
   NotShown,
-  ScreeningData,
   Section2Answers,
   SurveyResponse,
 } from '@/survey/schema';
+import {
+  toScreeningData,
+  validateScreeningStep,
+  type ScreeningErrors,
+} from '@/survey/validation';
 
 type S4OptIn = 'yes' | 'no' | null;
-
-const CIVIL_STATUS_MAP: Record<string, ScreeningData['civilStatus']> = {
-  Single: 'single',
-  Married: 'married',
-  Widowed: 'widowed',
-  Separated: 'separated',
-  Divorced: 'divorced',
-};
 
 function chipStyle(selected: boolean): CSSProperties {
   return {
@@ -64,27 +60,12 @@ function chipStyle(selected: boolean): CSSProperties {
   };
 }
 
-/** Map display-label screening answers into typed ScreeningData for gating helpers. */
-function toScreeningData(sc: Record<string, string>): ScreeningData {
-  return {
-    addrPhase: sc.addr_phase ?? '',
-    addrBlock: sc.addr_block,
-    addrLot: sc.addr_lot,
-    householdSize: (sc.household_size === '6 or more' ? '6+' : sc.household_size || '1') as ScreeningData['householdSize'],
-    childrenYn: sc.children_yn === 'Yes' ? 'yes' : 'no',
-    childrenCount: undefined,
-    civilStatus: CIVIL_STATUS_MAP[sc.civil_status ?? ''] ?? 'single',
-    sex: sc.sex === 'Male' ? 'male' : 'female',
-    ageRange: '18-25',
-    residentType: 'homeowner',
-    pwdSelf: sc.pwd_self === 'Yes' ? 'yes' : 'no',
-    pwdHousehold: sc.pwd_household === 'Yes' ? 'yes' : 'no',
-    primaryChannel: 'none',
-  };
-}
-
-function computeGates(sc: Record<string, string>, s4OptIn: S4OptIn) {
-  const data = toScreeningData(sc);
+function computeGates(
+  sc: Record<string, string>,
+  s4OptIn: S4OptIn,
+  multi: Record<string, Record<string, boolean>> = {},
+) {
+  const data = toScreeningData(sc, multi);
   const partnered = isPartneredCivilStatus(sc.civil_status ?? '');
   const perimeter = isPerimeterAdjacent(sc.addr_phase ?? '', PERIMETER_PHASES);
   const s4 = showSection4(data, s4OptIn === null ? undefined : s4OptIn);
@@ -114,7 +95,7 @@ function buildDocJson(
   s4OptIn: S4OptIn,
   language: LanguageValue,
 ): string {
-  const g = computeGates(sc, s4OptIn);
+  const g = computeGates(sc, s4OptIn, multi);
   const doc: Record<string, unknown> = {
     submitted_at: '<server timestamp>',
     anonymous: true,
@@ -163,7 +144,7 @@ function buildSurveyResponse(
   s4OptIn: S4OptIn,
   language: LanguageValue,
 ): SurveyResponse {
-  const g = computeGates(sc, s4OptIn);
+  const g = computeGates(sc, s4OptIn, multi);
   const notShown: NotShown = 'not_shown';
 
   const screening: SurveyResponse['screening'] = {};
@@ -223,12 +204,37 @@ export function SurveyFlow() {
   const [s2, setS2] = useState<Record<string, string | number>>({});
   const [s4OptIn, setS4OptIn] = useState<S4OptIn>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [screeningErrors, setScreeningErrors] = useState<ScreeningErrors>({});
 
   const currentStep = STEPS[step] ?? STEPS[0];
-  const gates = useMemo(() => computeGates(sc, s4OptIn), [sc, s4OptIn]);
+  const gates = useMemo(() => computeGates(sc, s4OptIn, multi), [sc, s4OptIn, multi]);
 
   const setScField = useCallback((id: string, value: string) => {
-    setSc((prev) => ({ ...prev, [id]: value }));
+    setSc((prev) => {
+      const next = { ...prev, [id]: value };
+      if (id === 'children_yn' && value !== 'Yes') {
+        delete next.children_count;
+      }
+      return next;
+    });
+    if (id === 'pwd_self' && value !== 'Yes') {
+      setMulti((prev) => {
+        if (!prev.disability_type) return prev;
+        const next = { ...prev };
+        delete next.disability_type;
+        return next;
+      });
+    }
+    setScreeningErrors((prev) => {
+      if (!prev[id] && !(id === 'children_yn' && prev.children_count) && !(id === 'pwd_self' && prev.disability_type)) {
+        return prev;
+      }
+      const next = { ...prev };
+      delete next[id];
+      if (id === 'children_yn') delete next.children_count;
+      if (id === 'pwd_self') delete next.disability_type;
+      return next;
+    });
   }, []);
 
   const toggleMulti = useCallback((id: string, option: string) => {
@@ -240,6 +246,12 @@ export function SurveyFlow() {
         current[option] = true;
       }
       return { ...prev, [id]: current };
+    });
+    setScreeningErrors((prev) => {
+      if (!prev[id]) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
     });
   }, []);
 
@@ -422,6 +434,7 @@ export function SurveyFlow() {
           multi={multi}
           onChange={setScField}
           onMultiToggle={toggleMulti}
+          errors={screeningErrors}
         />
       )}
 
@@ -877,7 +890,14 @@ export function SurveyFlow() {
         ) : (
           <Button
             variant="primary"
-            onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+            onClick={() => {
+              if (currentStep.key === 'screening') {
+                const nextErrors = validateScreeningStep(sc, multi);
+                setScreeningErrors(nextErrors);
+                if (Object.keys(nextErrors).length > 0) return;
+              }
+              setStep((s) => Math.min(STEPS.length - 1, s + 1));
+            }}
           >
             Continue
           </Button>
