@@ -177,50 +177,140 @@ export const S2_FIELDS = [
   },
 ] as const;
 
+/** Average seconds to read and answer one item, including subtext. */
+export const SECONDS_PER_ITEM = 15;
+
+/** Rounded minutes for a section's items (minimum 1). */
+export function estimateMinutes(itemCount: number): number {
+  return Math.max(1, Math.round((itemCount * SECONDS_PER_ITEM) / 60));
+}
+
 export const SECTIONS = [
-  { n: '1', t: 'Screening', always: true as const },
-  { n: '2', t: 'HOA access and office hours', always: true as const },
-  { n: '3', t: 'Perimeter and security — base items', always: true as const },
   {
-    n: '3+',
+    id: 'screening',
+    n: '1',
+    t: 'Screening',
+    always: true as const,
+    itemCount: 14,
+    itemCountConfirmed: true,
+  },
+  {
+    id: 's2',
+    n: '2',
+    t: 'HOA access and office hours',
+    always: true as const,
+    itemCount: 8,
+    itemCountConfirmed: true,
+  },
+  // TODO: placeholder count, update once this section's items are finalized
+  {
+    id: 's3a',
+    n: '3a',
+    t: 'Perimeter and security — base items',
+    always: true as const,
+    itemCount: 6,
+    itemCountConfirmed: false,
+  },
+  // TODO: placeholder count, update once this section's items are finalized
+  {
+    id: 's3b',
+    n: '3b',
     t: 'Perimeter and security — extended tier',
     key: 'perimeter' as const,
     why: 'Your phase is perimeter-adjacent.',
     whyNot: 'Your phase is not perimeter-adjacent.',
+    itemCount: 4,
+    itemCountConfirmed: false,
   },
+  // TODO: placeholder count, update once this section's items are finalized
   {
+    id: 's4',
     n: '4',
     t: 'Household and personal safety',
     key: 's4' as const,
     why: 'Opened by your civil status, or by your own opt-in.',
     whyNot: 'Skipped — you declined it, or have not opted in yet.',
+    itemCount: 6,
+    itemCountConfirmed: false,
   },
+  // TODO: placeholder count, update once this section's items are finalized
   {
+    id: 's5',
     n: '5',
     t: 'Children and youth safety',
     key: 's5' as const,
     why: 'You reported children in the household.',
     whyNot: 'No children reported in the household.',
+    itemCount: 5,
+    itemCountConfirmed: false,
   },
-  { n: '6', t: 'Reporting channels', always: true as const },
+  // TODO: placeholder count, update once this section's items are finalized
   {
+    id: 's6',
+    n: '6',
+    t: 'Reporting channels',
+    always: true as const,
+    itemCount: 5,
+    itemCountConfirmed: false,
+  },
+  // TODO: placeholder count, update once this section's items are finalized
+  {
+    id: 's7a',
     n: '7a',
     t: 'Accessibility — your own needs',
     key: 's7a' as const,
     why: 'You identified as a person with a disability.',
     whyNot: 'Not applicable from your screening answers.',
+    itemCount: 5,
+    itemCountConfirmed: false,
   },
+  // TODO: placeholder count, update once this section's items are finalized
   {
+    id: 's7b',
     n: '7b',
     t: 'Accessibility — household member',
     key: 's7b' as const,
     why: 'You reported a household member with a disability or mobility limitation.',
     whyNot: 'Not applicable from your screening answers.',
+    itemCount: 4,
+    itemCountConfirmed: false,
   },
-  { n: '7c', t: 'Accessibility — general', always: true as const },
-  { n: '8', t: 'Emergency response expectations', always: true as const },
-  { n: '9', t: 'Technology access and digital literacy', always: true as const },
-  { n: '10', t: 'Final comments', always: true as const },
+  // TODO: placeholder count, update once this section's items are finalized
+  {
+    id: 's7c',
+    n: '7c',
+    t: 'Accessibility — general',
+    always: true as const,
+    itemCount: 3,
+    itemCountConfirmed: false,
+  },
+  // TODO: placeholder count, update once this section's items are finalized
+  {
+    id: 's8',
+    n: '8',
+    t: 'Emergency response expectations',
+    always: true as const,
+    itemCount: 5,
+    itemCountConfirmed: false,
+  },
+  // TODO: placeholder count, update once this section's items are finalized
+  {
+    id: 's9',
+    n: '9',
+    t: 'Technology access and digital literacy',
+    always: true as const,
+    itemCount: 5,
+    itemCountConfirmed: false,
+  },
+  // TODO: placeholder count, update once this section's items are finalized
+  {
+    id: 's10',
+    n: '10',
+    t: 'Final comments',
+    always: true as const,
+    itemCount: 2,
+    itemCountConfirmed: false,
+  },
 ];
 
 export const FAQ = [

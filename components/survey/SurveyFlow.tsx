@@ -6,14 +6,23 @@ import { useCallback, useMemo, useState, type CSSProperties } from 'react';
 import { SurveyConsentGate } from '@/components/survey/SurveyConsentGate';
 import { ScreeningForm } from '@/components/survey/ScreeningForm';
 import { LikertItem } from '@/components/survey/LikertItem';
+import {
+  InterviewOptInCard,
+  INTERVIEW_DAYS,
+  validateInterviewOptIn,
+  type InterviewErrors,
+  type InterviewOptInValue,
+} from '@/components/survey/InterviewOptInCard';
+import { ReviewSectionCards, buildReviewSectionCards } from '@/components/survey/ReviewSectionCards';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Select } from '@/components/ui/Select';
 import type { LanguageValue } from '@/components/layout/LanguageToggle';
-import { submitSurveyResponse } from '@/lib/firebase/firestore';
+import { submitInterviewContact, submitSurveyResponse } from '@/lib/firebase/firestore';
 import { PERIMETER_PHASES } from '@/survey/config';
 import {
+  estimateMinutes,
   SCREENING_FIELDS,
   SECTIONS,
   S2_FIELDS,
@@ -88,61 +97,13 @@ function answerLabel(
   return v == null || v === '' ? 'Not answered' : String(v);
 }
 
-function buildDocJson(
-  sc: Record<string, string>,
-  multi: Record<string, Record<string, boolean>>,
-  s2: Record<string, string | number>,
-  s4OptIn: S4OptIn,
-  language: LanguageValue,
-): string {
-  const g = computeGates(sc, s4OptIn, multi);
-  const doc: Record<string, unknown> = {
-    submitted_at: '<server timestamp>',
-    anonymous: true,
-    language,
-  };
-
-  SCREENING_FIELDS.forEach((field) => {
-    if ('when' in field && field.when && !field.when(sc)) {
-      doc[field.id] = 'not_shown';
-      return;
-    }
-    if (field.id === 'disability_type') {
-      const keys = Object.keys(multi.disability_type ?? {});
-      doc[field.id] = keys.length ? keys : null;
-      return;
-    }
-    doc[field.id] = sc[field.id] || null;
-  });
-
-  S2_LIKERT.forEach((item) => {
-    doc[item.id] = s2[item.id] ?? null;
-  });
-  S2_FIELDS.forEach((field) => {
-    doc[field.id] = s2[field.id] ?? null;
-  });
-
-  doc.section_3_extended_shown = g.perimeter;
-  doc.section_4_shown = g.s4;
-  doc.section_5_shown = g.s5;
-  doc.section_7a_shown = g.s7a;
-  doc.section_7b_shown = g.s7b;
-
-  if (!g.s4) doc.s4_items = 'not_shown';
-  if (!g.s5) doc.s5_items = 'not_shown';
-  if (!g.s7a) doc.s7a_items = 'not_shown';
-  if (!g.s7b) doc.s7b_items = 'not_shown';
-  if (!g.perimeter) doc.s3_extended_items = 'not_shown';
-
-  return JSON.stringify(doc, null, 2);
-}
-
 function buildSurveyResponse(
   sc: Record<string, string>,
   multi: Record<string, Record<string, boolean>>,
   s2: Record<string, string | number>,
   s4OptIn: S4OptIn,
   language: LanguageValue,
+  interviewOptIn: boolean,
 ): SurveyResponse {
   const g = computeGates(sc, s4OptIn, multi);
   const notShown: NotShown = 'not_shown';
@@ -188,6 +149,7 @@ function buildSurveyResponse(
     s5_items: g.s5 ? null : notShown,
     s7a_items: g.s7a ? null : notShown,
     s7b_items: g.s7b ? null : notShown,
+    interviewOptIn,
   };
 }
 
@@ -205,6 +167,15 @@ export function SurveyFlow() {
   const [s4OptIn, setS4OptIn] = useState<S4OptIn>(null);
   const [submitting, setSubmitting] = useState(false);
   const [screeningErrors, setScreeningErrors] = useState<ScreeningErrors>({});
+  const [interview, setInterview] = useState<InterviewOptInValue>({
+    willingness: null,
+    email: '',
+    format: null,
+    days: {},
+    time: null,
+    timeOther: '',
+  });
+  const [interviewErrors, setInterviewErrors] = useState<InterviewErrors>({});
 
   const currentStep = STEPS[step] ?? STEPS[0];
   const gates = useMemo(() => computeGates(sc, s4OptIn, multi), [sc, s4OptIn, multi]);
@@ -261,76 +232,120 @@ export function SurveyFlow() {
 
   const planRows = useMemo(() => {
     return SECTIONS.map((section) => {
-      let shown = false;
-      if ('always' in section && section.always) {
-        shown = true;
-      } else if ('key' in section && section.key) {
-        shown = !!gates[section.key as keyof typeof gates];
-      }
+      const status: 'completed' | 'will_appear' | 'skipped' =
+        section.id === 'screening'
+          ? 'completed'
+          : 'always' in section && section.always
+            ? 'will_appear'
+            : 'key' in section && section.key && gates[section.key as keyof typeof gates]
+              ? 'will_appear'
+              : 'skipped';
+
+      const reason =
+        section.id === 'screening'
+          ? 'You already finished this section.'
+          : 'always' in section && section.always
+            ? 'Shown to every respondent.'
+            : status === 'will_appear'
+              ? section.why
+              : section.whyNot;
+
+      const minutes = estimateMinutes(section.itemCount);
+      const meta =
+        status === 'will_appear'
+          ? `${section.itemCount} question${section.itemCount === 1 ? '' : 's'} · about ${minutes} minute${minutes === 1 ? '' : 's'}`
+          : null;
+
+      const badge =
+        status === 'completed' ? 'Completed' : status === 'will_appear' ? 'Will appear' : 'Skipped';
+
+      const badgeStyle: CSSProperties = {
+        flex: '0 0 auto',
+        fontSize: 13,
+        fontWeight: 700,
+        letterSpacing: '.06em',
+        textTransform: 'uppercase',
+        padding: '6px 10px',
+        borderRadius: 8,
+        background:
+          status === 'will_appear'
+            ? 'var(--bright-amber)'
+            : status === 'completed'
+              ? 'var(--surface-2)'
+              : 'transparent',
+        color:
+          status === 'will_appear'
+            ? 'var(--black)'
+            : status === 'completed'
+              ? 'var(--text-body)'
+              : 'var(--text-caption)',
+        border:
+          status === 'will_appear'
+            ? '1px solid var(--bright-amber)'
+            : status === 'completed'
+              ? '1px solid var(--border-default)'
+              : '1px solid var(--border-default)',
+      };
+
       return {
+        id: section.id,
         n: section.n,
         t: section.t,
-        reason:
-          'always' in section && section.always
-            ? 'Shown to every respondent.'
-            : shown
-              ? section.why
-              : section.whyNot,
-        badge: shown ? 'Will appear' : 'Skipped',
-        badgeStyle: {
-          flex: '0 0 auto',
-          fontSize: 13,
-          fontWeight: 700,
-          letterSpacing: '.06em',
-          textTransform: 'uppercase' as const,
-          padding: '6px 10px',
-          borderRadius: 8,
-          background: shown ? 'var(--bright-amber)' : 'transparent',
-          color: shown ? 'var(--black)' : 'var(--text-caption)',
-          border: shown ? '1px solid var(--bright-amber)' : '1px solid var(--border-default)',
-        },
+        status,
+        reason,
+        meta,
+        badge,
+        badgeStyle,
       };
     });
   }, [gates]);
 
-  const reviewRows = useMemo(() => {
-    const screeningRows = SCREENING_FIELDS.filter(
-      (field) => !('when' in field) || !field.when || field.when(sc),
-    ).map((field) => ({
-      label: field.label,
-      value: answerLabel(field.id, sc, multi),
-    }));
+  const remainingMinutes = useMemo(
+    () =>
+      planRows
+        .filter((row) => row.status === 'will_appear')
+        .reduce((sum, row) => {
+          const section = SECTIONS.find((s) => s.id === row.id);
+          return sum + (section ? estimateMinutes(section.itemCount) : 0);
+        }, 0),
+    [planRows],
+  );
 
-    const likertRows = S2_LIKERT.map((item, index) => ({
-      label: `Section 2 item ${index + 1} — ${item.labels[0]} to ${item.labels[4]}`,
-      value: s2[item.id] ? `${String(s2[item.id])} of 5` : 'Not answered',
-    }));
-
-    const s2FieldRows = S2_FIELDS.map((field) => ({
-      label: field.label,
-      value: s2[field.id] != null && s2[field.id] !== '' ? String(s2[field.id]) : 'Not answered',
-    }));
-
-    return [
-      ...screeningRows,
-      ...likertRows,
-      ...s2FieldRows,
-      {
-        label: 'Section 4 — household and personal safety',
-        value: gates.s4 ? 'Included' : 'Skipped (stored as not_shown)',
-      },
-    ];
-  }, [sc, multi, s2, gates.s4]);
-
-  const docJson = useMemo(
-    () => buildDocJson(sc, multi, s2, s4OptIn, language),
-    [sc, multi, s2, s4OptIn, language],
+  const reviewCards = useMemo(
+    () =>
+      buildReviewSectionCards({
+        sc,
+        multi,
+        s2,
+        gates,
+        answerLabel,
+      }),
+    [sc, multi, s2, gates],
   );
 
   const handleSubmit = async () => {
+    const nextInterviewErrors = validateInterviewOptIn(interview);
+    setInterviewErrors(nextInterviewErrors);
+    if (Object.keys(nextInterviewErrors).length > 0) return;
+
+    const interviewOptIn = interview.willingness === 'yes';
     setSubmitting(true);
     try {
-      await submitSurveyResponse(buildSurveyResponse(sc, multi, s2, s4OptIn, language));
+      await submitSurveyResponse(
+        buildSurveyResponse(sc, multi, s2, s4OptIn, language, interviewOptIn),
+      );
+      if (interviewOptIn && interview.format && interview.time) {
+        await submitInterviewContact({
+          email: interview.email.trim(),
+          interviewFormat: interview.format,
+          preferredDays: INTERVIEW_DAYS.filter((day) => interview.days[day]),
+          preferredTime: interview.time,
+          ...(interview.time === 'Other'
+            ? { preferredTimeOther: interview.timeOther.trim() }
+            : {}),
+          submittedAt: new Date().toISOString(),
+        });
+      }
       router.push('/survey/thank-you');
     } finally {
       setSubmitting(false);
@@ -428,6 +443,24 @@ export function SurveyFlow() {
         {currentStep.intro}
       </p>
 
+      {currentStep.key === 'plan' && (
+        <p
+          style={{
+            margin: '10px 0 0',
+            color: 'var(--text-body)',
+            fontSize: 15,
+            lineHeight: 1.5,
+            textWrap: 'pretty',
+          }}
+        >
+          <strong>
+            Estimated time remaining: about {remainingMinutes}{' '}
+            {remainingMinutes === 1 ? 'minute' : 'minutes'}
+          </strong>
+          , based on the sections that apply to you.
+        </p>
+      )}
+
       {currentStep.key === 'screening' && (
         <ScreeningForm
           values={sc}
@@ -454,7 +487,7 @@ export function SurveyFlow() {
         >
           {planRows.map((row) => (
             <div
-              key={row.n}
+              key={row.id}
               style={{
                 display: 'flex',
                 gap: 16,
@@ -489,6 +522,19 @@ export function SurveyFlow() {
                 >
                   {row.reason}
                 </div>
+                {row.meta ? (
+                  <div
+                    style={{
+                      marginTop: 4,
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                      color: 'var(--text-body)',
+                      textWrap: 'pretty',
+                    }}
+                  >
+                    {row.meta}
+                  </div>
+                ) : null}
               </div>
               <div style={row.badgeStyle}>{row.badge}</div>
             </div>
@@ -750,72 +796,11 @@ export function SurveyFlow() {
 
       {currentStep.key === 'review' && (
         <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div
-            style={{
-              background: 'var(--surface-1)',
-              borderRadius: 16,
-              boxShadow: 'var(--shadow-card)',
-              padding: 'clamp(20px, 3vw, 32px)',
-              animation: 'riseIn 360ms ease-in-out both',
-            }}
-          >
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 700,
-                letterSpacing: '.06em',
-                textTransform: 'uppercase',
-                color: 'var(--text-section-heading)',
-                marginBottom: 16,
-              }}
-            >
-              Your answers
-            </div>
-            {reviewRows.map((row) => (
-              <div
-                key={row.label}
-                style={{
-                  display: 'flex',
-                  gap: 16,
-                  alignItems: 'flex-start',
-                  padding: '10px 0',
-                  borderBottom: '1px solid var(--border-subtle)',
-                  flexWrap: 'wrap',
-                }}
-              >
-                <div
-                  style={{
-                    flex: '1 1 220px',
-                    minWidth: 0,
-                    fontSize: 14,
-                    lineHeight: 1.5,
-                    color: 'var(--text-caption)',
-                    textWrap: 'pretty',
-                  }}
-                >
-                  {row.label}
-                </div>
-                <div
-                  style={{
-                    flex: '1 1 140px',
-                    minWidth: 0,
-                    fontSize: 16,
-                    color: 'var(--text-body)',
-                  }}
-                >
-                  {row.value}
-                </div>
-              </div>
-            ))}
-            <div style={{ marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Button variant="secondary" onClick={() => setStep(0)}>
-                Edit screening
-              </Button>
-              <Button variant="secondary" onClick={() => setStep(2)}>
-                Edit section 2
-              </Button>
-            </div>
-          </div>
+          <ReviewSectionCards
+            cards={reviewCards}
+            onEdit={(stepIndex) => setStep(stepIndex)}
+            onEditScreening={() => setStep(0)}
+          />
 
           <div
             style={{
@@ -825,48 +810,29 @@ export function SurveyFlow() {
               padding: 'clamp(20px, 3vw, 32px)',
             }}
           >
-            <div
+            <p
               style={{
+                margin: 0,
                 fontSize: 14,
-                fontWeight: 700,
-                letterSpacing: '.06em',
-                textTransform: 'uppercase',
-                color: 'var(--text-section-heading)',
-                marginBottom: 12,
-              }}
-            >
-              What gets stored
-            </div>
-            <div
-              style={{
-                fontSize: 14,
-                lineHeight: 1.5,
+                lineHeight: 1.55,
                 color: 'var(--text-caption)',
-                marginBottom: 16,
                 textWrap: 'pretty',
               }}
             >
-              On submit, one document is written to the Firebase responses collection. Fields in
-              sections your answers never unlocked are stored as not_shown, alongside a boolean flag
-              per gated section.
-            </div>
-            <pre
-              style={{
-                margin: 0,
-                overflow: 'auto',
-                maxHeight: 280,
-                background: 'var(--surface-2)',
-                borderRadius: 8,
-                padding: 16,
-                fontSize: 13,
-                lineHeight: 1.5,
-                color: 'var(--text-body)',
-                whiteSpace: 'pre-wrap',
-              }}
-            >
-              {docJson}
-            </pre>
+              Your answers help shape which features get built and which problems the system is
+              designed to solve. Results are shared with the Homeowners Association and our academic
+              adviser as combined numbers and patterns, not as individual responses.
+            </p>
           </div>
+
+          <InterviewOptInCard
+            value={interview}
+            errors={interviewErrors}
+            onChange={(next) => {
+              setInterview(next);
+              setInterviewErrors({});
+            }}
+          />
         </div>
       )}
 

@@ -44,6 +44,8 @@ export interface Section2Answers {
  * Full survey response document shape for a future Firestore write.
  * Gated section fields use `not_shown` when never unlocked; section*Shown
  * booleans record whether each gate was open at submit time.
+ * Interview contact details are never stored on this document — only the
+ * opt-in boolean. Contact fields go to `interview_contacts` separately.
  */
 export interface SurveyResponse {
   submittedAt: string;
@@ -64,4 +66,21 @@ export interface SurveyResponse {
   s5_items: unknown | NotShown;
   s7a_items: unknown | NotShown;
   s7b_items: unknown | NotShown;
+
+  /** Whether the respondent opted in to possible interview contact. */
+  interviewOptIn: boolean;
+}
+
+/**
+ * Separate Firestore document for interview scheduling contact.
+ * Written only when interviewOptIn is true; never linked to a response id.
+ */
+export interface InterviewContact {
+  email: string;
+  interviewFormat: 'Online' | 'Face-to-face';
+  preferredDays: string[];
+  preferredTime: 'Morning' | 'Afternoon' | 'Evening' | 'Other';
+  /** Free-text preferred time; only set when preferredTime is Other. */
+  preferredTimeOther?: string;
+  submittedAt: string;
 }
