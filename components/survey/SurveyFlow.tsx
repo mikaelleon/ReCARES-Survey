@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { SurveyConsentGate } from '@/components/survey/SurveyConsentGate';
 import { ScreeningForm } from '@/components/survey/ScreeningForm';
-import { LikertItem } from '@/components/survey/LikertItem';
+import { SectionItems, type AnswerValue } from '@/components/survey/SectionItems';
 import {
   InterviewOptInCard,
   INTERVIEW_DAYS,
@@ -24,11 +24,19 @@ import { PERIMETER_PHASES } from '@/survey/config';
 import {
   estimateMinutes,
   SCREENING_FIELDS,
+  SECTION_INTROS,
   SECTIONS,
-  S2_FIELDS,
-  S2_LIKERT,
   STEPS,
 } from '@/survey/content';
+import {
+  allSectionItems,
+  gatedSectionCount,
+  sectionContentShown,
+  sectionItems,
+  sectionQuestionCount,
+  showExtendedPool,
+  QUESTION_SECTIONS,
+} from '@/survey/questionnaire';
 import {
   isPartneredCivilStatus,
   isPerimeterAdjacent,
@@ -37,12 +45,7 @@ import {
   showSection7a,
   showSection7b,
 } from '@/survey/gatingLogic';
-import type {
-  LikertValue,
-  NotShown,
-  Section2Answers,
-  SurveyResponse,
-} from '@/survey/schema';
+import type { ItemAnswer, NotShown, SurveyResponse } from '@/survey/schema';
 import {
   toScreeningData,
   validateScreeningStep,
@@ -50,24 +53,6 @@ import {
 } from '@/survey/validation';
 
 type S4OptIn = 'yes' | 'no' | null;
-
-function chipStyle(selected: boolean): CSSProperties {
-  return {
-    minHeight: 44,
-    padding: '0 16px',
-    borderRadius: 8,
-    cursor: 'pointer',
-    fontFamily: 'var(--font-sans)',
-    fontSize: 15,
-    fontWeight: selected ? 700 : 400,
-    background: selected ? 'var(--bright-amber)' : 'var(--surface-2)',
-    color: selected ? 'var(--black)' : 'var(--text-body)',
-    border: selected ? '1px solid var(--bright-amber)' : '1px solid var(--border-default)',
-    transform: selected ? 'translateY(-1px)' : 'none',
-    transition:
-      'background var(--motion-duration) var(--motion-ease), transform var(--motion-duration) var(--motion-ease)',
-  };
-}
 
 function computeGates(
   sc: Record<string, string>,
@@ -97,16 +82,53 @@ function answerLabel(
   return v == null || v === '' ? 'Not answered' : String(v);
 }
 
+function sliceSection(
+  sectionId: string,
+  shown: boolean,
+  answers: Record<string, ItemAnswer>,
+): Record<string, ItemAnswer> | NotShown {
+  if (!shown) return 'not_shown';
+  const slice: Record<string, ItemAnswer> = {};
+  for (const item of allSectionItems(sectionId)) {
+    slice[item.id] = answers[item.id] ?? null;
+  }
+  return slice;
+}
+
+function packAnswers(
+  gates: ReturnType<typeof computeGates>,
+  raw: Record<string, AnswerValue>,
+): Record<string, ItemAnswer> {
+  const extended = showExtendedPool(gates);
+  const packed: Record<string, ItemAnswer> = {};
+  for (const sectionId of Object.keys(QUESTION_SECTIONS)) {
+    const shown = sectionContentShown(sectionId, gates);
+    for (const item of allSectionItems(sectionId)) {
+      if (!shown || (item.pool === 'extended' && !extended)) {
+        packed[item.id] = 'not_shown';
+        continue;
+      }
+      const value = raw[item.id];
+      packed[item.id] =
+        value === undefined || value === '' || (Array.isArray(value) && value.length === 0)
+          ? null
+          : value;
+    }
+  }
+  return packed;
+}
+
 function buildSurveyResponse(
   sc: Record<string, string>,
   multi: Record<string, Record<string, boolean>>,
-  s2: Record<string, string | number>,
+  answers: Record<string, AnswerValue>,
   s4OptIn: S4OptIn,
   language: LanguageValue,
   interviewOptIn: boolean,
 ): SurveyResponse {
   const g = computeGates(sc, s4OptIn, multi);
   const notShown: NotShown = 'not_shown';
+  const packed = packAnswers(g, answers);
 
   const screening: SurveyResponse['screening'] = {};
   SCREENING_FIELDS.forEach((field) => {
@@ -122,33 +144,24 @@ function buildSurveyResponse(
     screening[field.id] = sc[field.id] || null;
   });
 
-  const section2: Section2Answers = {
-    s2_adequacy: (s2.s2_adequacy as LikertValue) ?? null,
-    s2_frequency: (s2.s2_frequency as LikertValue) ?? null,
-    s2_satisfaction: (s2.s2_satisfaction as LikertValue) ?? null,
-    s2_effectiveness: (s2.s2_effectiveness as LikertValue) ?? null,
-    s2_agreement: (s2.s2_agreement as LikertValue) ?? null,
-    s2_printer_access: s2.s2_printer_access ? String(s2.s2_printer_access) : null,
-    s2_delay_days: s2.s2_delay_days != null ? String(s2.s2_delay_days) : null,
-    s2_abandonment: s2.s2_abandonment ? String(s2.s2_abandonment) : null,
-  };
-
   return {
     submittedAt: new Date().toISOString(),
     anonymous: true,
     language,
     screening,
-    section2,
+    answers: packed,
+    extendedPoolShown: showExtendedPool(g),
+    gatedSectionCount: gatedSectionCount(g),
     section3ExtendedShown: g.perimeter,
     section4Shown: g.s4,
     section5Shown: g.s5,
     section7aShown: g.s7a,
     section7bShown: g.s7b,
-    s3_extended_items: g.perimeter ? null : notShown,
-    s4_items: g.s4 ? null : notShown,
-    s5_items: g.s5 ? null : notShown,
-    s7a_items: g.s7a ? null : notShown,
-    s7b_items: g.s7b ? null : notShown,
+    s3_extended_items: sliceSection('s3b', g.perimeter, packed),
+    s4_items: sliceSection('s4', g.s4, packed),
+    s5_items: sliceSection('s5', g.s5, packed),
+    s7a_items: sliceSection('s7a', g.s7a, packed),
+    s7b_items: sliceSection('s7b', g.s7b, packed),
     interviewOptIn,
   };
 }
@@ -160,10 +173,10 @@ export function SurveyFlow() {
   const router = useRouter();
   const [consentPassed, setConsentPassed] = useState(false);
   const [language, setLanguage] = useState<LanguageValue>('EN');
-  const [step, setStep] = useState(0);
+  const [stepKey, setStepKey] = useState('screening');
   const [sc, setSc] = useState<Record<string, string>>({});
   const [multi, setMulti] = useState<Record<string, Record<string, boolean>>>({});
-  const [s2, setS2] = useState<Record<string, string | number>>({});
+  const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [s4OptIn, setS4OptIn] = useState<S4OptIn>(null);
   const [submitting, setSubmitting] = useState(false);
   const [screeningErrors, setScreeningErrors] = useState<ScreeningErrors>({});
@@ -177,8 +190,45 @@ export function SurveyFlow() {
   });
   const [interviewErrors, setInterviewErrors] = useState<InterviewErrors>({});
 
-  const currentStep = STEPS[step] ?? STEPS[0];
   const gates = useMemo(() => computeGates(sc, s4OptIn, multi), [sc, s4OptIn, multi]);
+  const extended = showExtendedPool(gates);
+
+  const flowSteps = useMemo(() => {
+    const screening = STEPS.find((step) => step.key === 'screening')!;
+    const plan = STEPS.find((step) => step.key === 'plan')!;
+    const review = STEPS.find((step) => step.key === 'review')!;
+    const middle = SECTIONS.filter((section) => section.id !== 'screening')
+      .filter((section) => {
+        if (section.id === 's4') return true;
+        if (section.id === 's3b') return gates.perimeter;
+        if (section.id === 's5') return gates.s5;
+        if (section.id === 's7a') return gates.s7a;
+        if (section.id === 's7b') return gates.s7b;
+        return true;
+      })
+      .map((section) => ({
+        key: section.id,
+        title: `Section ${section.n} — ${section.t}`,
+        intro: SECTION_INTROS[section.id] ?? '',
+      }));
+    return [screening, plan, ...middle, review];
+  }, [gates]);
+
+  useEffect(() => {
+    if (!flowSteps.some((step) => step.key === stepKey)) {
+      setStepKey('plan');
+    }
+  }, [flowSteps, stepKey]);
+
+  const stepIndex = Math.max(
+    0,
+    flowSteps.findIndex((step) => step.key === stepKey),
+  );
+  const currentStep = flowSteps[stepIndex] ?? flowSteps[0];
+
+  const setAnswer = useCallback((id: string, value: AnswerValue) => {
+    setAnswers((prev) => ({ ...prev, [id]: value }));
+  }, []);
 
   const setScField = useCallback((id: string, value: string) => {
     setSc((prev) => {
@@ -226,10 +276,6 @@ export function SurveyFlow() {
     });
   }, []);
 
-  const setS2Field = useCallback((id: string, value: string | number) => {
-    setS2((prev) => ({ ...prev, [id]: value }));
-  }, []);
-
   const planRows = useMemo(() => {
     return SECTIONS.map((section) => {
       const status: 'completed' | 'will_appear' | 'skipped' =
@@ -250,10 +296,11 @@ export function SurveyFlow() {
               ? section.why
               : section.whyNot;
 
-      const minutes = estimateMinutes(section.itemCount);
+      const count = sectionQuestionCount(section.id, extended);
+      const minutes = estimateMinutes(count);
       const meta =
         status === 'will_appear'
-          ? `${section.itemCount} question${section.itemCount === 1 ? '' : 's'} · about ${minutes} minute${minutes === 1 ? '' : 's'}`
+          ? `${count} question${count === 1 ? '' : 's'} · about ${minutes} minute${minutes === 1 ? '' : 's'}`
           : null;
 
       const badge =
@@ -298,17 +345,14 @@ export function SurveyFlow() {
         badgeStyle,
       };
     });
-  }, [gates]);
+  }, [gates, extended]);
 
   const remainingMinutes = useMemo(
     () =>
       planRows
         .filter((row) => row.status === 'will_appear')
-        .reduce((sum, row) => {
-          const section = SECTIONS.find((s) => s.id === row.id);
-          return sum + (section ? estimateMinutes(section.itemCount) : 0);
-        }, 0),
-    [planRows],
+        .reduce((sum, row) => sum + estimateMinutes(sectionQuestionCount(row.id, extended)), 0),
+    [planRows, extended],
   );
 
   const reviewCards = useMemo(
@@ -316,11 +360,12 @@ export function SurveyFlow() {
       buildReviewSectionCards({
         sc,
         multi,
-        s2,
+        answers,
         gates,
+        extended,
         answerLabel,
       }),
-    [sc, multi, s2, gates],
+    [sc, multi, answers, gates, extended],
   );
 
   const handleSubmit = async () => {
@@ -332,7 +377,7 @@ export function SurveyFlow() {
     setSubmitting(true);
     try {
       await submitSurveyResponse(
-        buildSurveyResponse(sc, multi, s2, s4OptIn, language, interviewOptIn),
+        buildSurveyResponse(sc, multi, answers, s4OptIn, language, interviewOptIn),
       );
       if (interviewOptIn && interview.format && interview.time) {
         await submitInterviewContact({
@@ -357,10 +402,8 @@ export function SurveyFlow() {
     : 'Your civil status does not open this section automatically, so we ask first instead of showing the questions.';
 
   const s4AskOptin = !gates.partnered && s4OptIn === null;
-  const s4Skipped = !gates.partnered && s4OptIn === 'no';
+  const s4Skipped = s4OptIn === 'no';
   const s4Open = gates.s4;
-
-  const visibleS2Fields = S2_FIELDS;
 
   if (!consentPassed) {
     return (
@@ -399,7 +442,7 @@ export function SurveyFlow() {
             color: 'var(--text-body)',
           }}
         >
-          Step {step + 1} of {STEPS.length}
+          Step {stepIndex + 1} of {flowSteps.length}
         </div>
         <Link
           href="/"
@@ -417,7 +460,7 @@ export function SurveyFlow() {
         </Link>
       </div>
 
-      <ProgressBar value={step + 1} max={STEPS.length} />
+      <ProgressBar value={stepIndex + 1} max={flowSteps.length} />
 
       <h1
         style={{
@@ -542,87 +585,17 @@ export function SurveyFlow() {
         </div>
       )}
 
-      {currentStep.key === 's2' && (
-        <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {S2_LIKERT.map((item) => (
-            <LikertItem
-              key={item.id}
-              question={item.q}
-              subtext={item.sub}
-              labels={[...item.labels]}
-              value={(s2[item.id] as number | null) ?? null}
-              onChange={(n) => setS2Field(item.id, n)}
-            />
-          ))}
-
-          <div
-            style={{
-              background: 'var(--surface-1)',
-              borderRadius: 16,
-              boxShadow: 'var(--shadow-card)',
-              padding: 'clamp(20px, 3vw, 32px)',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: 'clamp(16px, 2.4vw, 24px)',
-            }}
-          >
-            {visibleS2Fields.map((field) => {
-              const value = s2[field.id] != null ? String(s2[field.id]) : '';
-              const cellStyle: CSSProperties = {
-                gridColumn: 'wide' in field && field.wide ? '1 / -1' : 'auto',
-              };
-
-              return (
-                <div key={field.id} style={cellStyle}>
-                  {field.type === 'select' && (
-                    <Select
-                      label={field.label}
-                      options={[...field.options]}
-                      value={value}
-                      onChange={(e) => setS2Field(field.id, e.target.value)}
-                    />
-                  )}
-                  {field.type === 'number' && (
-                    <Input
-                      label={field.label}
-                      type="number"
-                      placeholder={'placeholder' in field ? field.placeholder : undefined}
-                      value={value}
-                      onChange={(e) => setS2Field(field.id, e.target.value)}
-                    />
-                  )}
-                  {field.type === 'radio' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <div
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 700,
-                          color: 'var(--text-body)',
-                          textWrap: 'pretty',
-                        }}
-                      >
-                        {field.label}
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {field.options.map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => setS2Field(field.id, option)}
-                            style={chipStyle(value === option)}
-                          >
-                            {option}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+            {currentStep.key !== 'screening' &&
+      currentStep.key !== 'plan' &&
+      currentStep.key !== 'review' &&
+      currentStep.key !== 's4' &&
+      QUESTION_SECTIONS[currentStep.key] ? (
+        <SectionItems
+          items={sectionItems(currentStep.key, extended)}
+          answers={answers}
+          onChange={setAnswer}
+        />
+      ) : null}
 
       {currentStep.key === 's4' && (
         <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -727,8 +700,7 @@ export function SurveyFlow() {
                   textWrap: 'pretty',
                 }}
               >
-                Every field in this section will be stored as not_shown, and section_4_shown will be
-                recorded as false. You can change your mind before you submit.
+                This section stays closed. You can change your mind before you submit.
               </div>
               <Button variant="secondary" onClick={() => setS4OptIn('yes')}>
                 Include it after all
@@ -737,6 +709,7 @@ export function SurveyFlow() {
           )}
 
           {s4Open && (
+            <>
             <div
               style={{
                 background: 'var(--surface-1)',
@@ -773,23 +746,14 @@ export function SurveyFlow() {
                   Skip this section
                 </Button>
               </div>
-              <div
-                style={{
-                  marginTop: 20,
-                  border: '1px dashed var(--border-structural)',
-                  borderRadius: 8,
-                  padding: 'clamp(16px, 3vw, 24px)',
-                  fontSize: 14,
-                  lineHeight: 1.5,
-                  color: 'var(--text-caption)',
-                  textWrap: 'pretty',
-                }}
-              >
-                Section 4 items are not written yet. This screen exists to lock the gate and decline
-                pattern that every gated section will reuse — Sections 3 extended, 5, 7a and 7b get
-                the same treatment once their items are drafted in the Section 2 format.
-              </div>
             </div>
+            <SectionItems
+              embedded
+              items={sectionItems('s4', extended)}
+              answers={answers}
+              onChange={setAnswer}
+            />
+            </>
           )}
         </div>
       )}
@@ -798,8 +762,8 @@ export function SurveyFlow() {
         <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <ReviewSectionCards
             cards={reviewCards}
-            onEdit={(stepIndex) => setStep(stepIndex)}
-            onEditScreening={() => setStep(0)}
+            onEdit={(key) => setStepKey(key)}
+            onEditScreening={() => setStepKey('screening')}
           />
 
           <div
@@ -846,7 +810,14 @@ export function SurveyFlow() {
           flexWrap: 'wrap',
         }}
       >
-        <Button variant="secondary" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>
+        <Button
+          variant="secondary"
+          disabled={stepIndex === 0}
+          onClick={() => {
+            const prev = flowSteps[stepIndex - 1];
+            if (prev) setStepKey(prev.key);
+          }}
+        >
           Back
         </Button>
         {currentStep.key === 'review' ? (
@@ -862,7 +833,8 @@ export function SurveyFlow() {
                 setScreeningErrors(nextErrors);
                 if (Object.keys(nextErrors).length > 0) return;
               }
-              setStep((s) => Math.min(STEPS.length - 1, s + 1));
+              const next = flowSteps[stepIndex + 1];
+              if (next) setStepKey(next.key);
             }}
           >
             Continue

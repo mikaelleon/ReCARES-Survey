@@ -5,6 +5,7 @@ export function isPerimeterAdjacent(phase: string, perimeterPhases: string[]): b
 }
 
 export function showSection4(data: ScreeningData, optInAnswer?: 'yes' | 'no'): boolean {
+  if (optInAnswer === 'no') return false;
   const partnered = ['married', 'widowed', 'separated', 'divorced'].includes(data.civilStatus);
   if (partnered) return true;
   return optInAnswer === 'yes';

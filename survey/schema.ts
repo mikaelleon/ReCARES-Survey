@@ -29,16 +29,8 @@ export type NotShown = 'not_shown';
 
 export type LikertValue = 1 | 2 | 3 | 4 | 5 | null;
 
-export interface Section2Answers {
-  s2_adequacy: LikertValue;
-  s2_frequency: LikertValue;
-  s2_satisfaction: LikertValue;
-  s2_effectiveness: LikertValue;
-  s2_agreement: LikertValue;
-  s2_printer_access: string | null;
-  s2_delay_days: string | null;
-  s2_abandonment: string | null;
-}
+/** One stored questionnaire answer. `not_shown` means the item was not offered. */
+export type ItemAnswer = number | string | string[] | NotShown | null;
 
 /**
  * Full survey response document shape for a future Firestore write.
@@ -53,7 +45,17 @@ export interface SurveyResponse {
   language: 'EN' | 'FIL';
 
   screening: ScreeningData | Record<string, string | string[] | NotShown | null>;
-  section2: Section2Answers;
+
+  /**
+   * Every questionnaire item. Shown answers are the value (or null if skipped).
+   * Items the respondent never saw are `not_shown` — closed sections and
+   * extended-pool items when the core-only path is active.
+   */
+  answers: Record<string, ItemAnswer>;
+  /** True when fewer than three gated sections apply, so extended items were offered. */
+  extendedPoolShown: boolean;
+  /** How many of s3b, s4, s5, s7a, s7b applied at submit time. */
+  gatedSectionCount: number;
 
   section3ExtendedShown: boolean;
   section4Shown: boolean;
@@ -61,11 +63,11 @@ export interface SurveyResponse {
   section7aShown: boolean;
   section7bShown: boolean;
 
-  s3_extended_items: unknown | NotShown;
-  s4_items: unknown | NotShown;
-  s5_items: unknown | NotShown;
-  s7a_items: unknown | NotShown;
-  s7b_items: unknown | NotShown;
+  s3_extended_items: Record<string, ItemAnswer> | NotShown;
+  s4_items: Record<string, ItemAnswer> | NotShown;
+  s5_items: Record<string, ItemAnswer> | NotShown;
+  s7a_items: Record<string, ItemAnswer> | NotShown;
+  s7b_items: Record<string, ItemAnswer> | NotShown;
 
   /** Whether the respondent opted in to possible interview contact. */
   interviewOptIn: boolean;

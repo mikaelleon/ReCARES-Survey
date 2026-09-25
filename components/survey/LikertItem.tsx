@@ -78,7 +78,7 @@ export function LikertItem({
                 key={n}
                 type="button"
                 onClick={() => onChange(n)}
-                aria-label={labels[n - 1]}
+                aria-label={labels[n - 1] || String(n)}
                 style={style}
               >
                 {n}
