@@ -1,88 +1,104 @@
 /**
- * Screening field IDs and typed survey payload shapes for Firestore.
+ * Needs-assessment schema, specification v2.
+ * Block, lot, street, exact age, and any respondent identifier are not fields.
  */
 
-export interface ScreeningData {
-  addrPhase: string;
-  addrBlock?: string;
-  addrLot?: string;
-  householdSize: '1' | '2' | '3' | '4' | '5' | '6+';
-  childrenYn: 'yes' | 'no';
-  childrenCount?: '1' | '2' | '3' | '4+';
-  civilStatus: 'single' | 'married' | 'widowed' | 'separated' | 'divorced';
-  sex: 'female' | 'male';
-  ageRange: '18-25' | '26-35' | '36-45' | '46-55' | '56+';
-  residentType: 'homeowner' | 'renter' | 'household_member' | 'live_in_staff';
-  pwdSelf: 'yes' | 'no';
-  disabilityType?: string;
-  pwdHousehold: 'yes' | 'no';
-  primaryChannel: 'in_person' | 'online_print' | 'representative' | 'none';
+export type AgreementScore = 1 | 2 | 3 | 4 | 5 | 99;
+export type LikelihoodScore = 1 | 2 | 3 | 4 | 5;
+
+export interface SurveyAnswers {
+  A1: 1 | 2 | 3 | 4 | 5 | 6;
+  A2:
+    | 'Phase 1'
+    | 'Phase 2'
+    | 'Phase 3'
+    | 'Phase 4 Heights'
+    | 'Phase 5 Highlands'
+    | 'Phase 6 Eastgrove'
+    | 'Not sure';
+  A3: '1' | '2' | '3' | '4' | '5' | '6+' | 'No one lives in the unit right now';
+  A4: 'yes' | 'no' | 'prefer_not_to_say';
+  A5: 'yes' | 'no';
+  A6: '18-24' | '25-34' | '35-44' | '45-54' | '55-64' | '65+' | 'prefer_not_to_say';
+  A7: 'female' | 'male' | 'prefer_not_to_say';
+  A8: 'single' | 'married' | 'living_with_partner' | 'widowed' | 'separated' | 'prefer_not_to_say';
+  A9: 'yes' | 'no' | 'prefer_not_to_say';
+  A10: 'i_do' | 'household_member' | 'caregiver_or_rep' | 'owner_or_landlord' | 'it_varies';
+  A11: 'walk_in' | 'phone' | 'facebook' | 'email_or_website' | 'through_neighbor_or_officer' | 'no_transaction_yet';
+
+  B1: string[];
+  /** 99 when R-B1 skips the item because B1 is "None of these". */
+  B2?: 'android' | 'ios' | 'other' | 'no_smartphone' | 99;
+  B3: 'wifi_broadband' | 'prepaid_mobile' | 'postpaid_mobile' | 'both' | 'no_regular_internet';
+  B4: 'several_times_a_day' | 'about_once_a_day' | 'few_times_a_week' | 'about_once_a_week_or_less' | 'rarely_or_never';
+  B5: 'weekly_or_more' | 'few_times_a_month' | 'few_times_a_year' | 'never';
+  B6?: number;
+  B7: AgreementScore;
+  B8: AgreementScore;
+  B9: AgreementScore;
+
+  F1: LikelihoodScore;
+  F2: LikelihoodScore;
+  F3: LikelihoodScore;
+  F4: LikelihoodScore;
+  F5: LikelihoodScore;
+  F6: LikelihoodScore;
+  F7: AgreementScore;
+  F8: string[];
+  F9: string[];
+  F10?: string;
+
+  S1: AgreementScore;
+  S2: AgreementScore;
+  S3: AgreementScore;
+
+  P1: string[];
+  P2: AgreementScore;
+  P3: AgreementScore;
+  P4?: number;
+  P5?: AgreementScore;
+
+  C1: 'requested' | 'affected' | 'both' | 'neither';
+  C2: AgreementScore;
+  C3: AgreementScore;
+
+  R1: AgreementScore;
+  R2: AgreementScore;
+  R3: 'deleted_after_verification' | 'kept_while_resident' | 'no_preference' | 'not_sure';
+
+  H1?: string[];
+  H2?: AgreementScore;
+  H3?: AgreementScore;
+  H4?: string;
+
+  T1?: string[];
+  T2?: AgreementScore;
+  T3?: AgreementScore;
+  T4?: string;
+
+  AC1?: string[];
+  AC2: AgreementScore;
+  AC3: AgreementScore;
+  AC4: 'the_person_themselves' | 'family_member' | 'caregiver_or_rep' | 'not_applicable';
+
+  O1: string[];
+  O1_other?: string;
+  O2?: string;
 }
 
-/** Partial screening while the respondent is still filling the form. */
-export type ScreeningDraft = Partial<ScreeningData> & {
-  disabilityTypes?: string[];
-};
-
-/** Marker for gated fields the respondent's conditions never unlocked. */
-export type NotShown = 'not_shown';
-
-export type LikertValue = 1 | 2 | 3 | 4 | 5 | null;
-
-/** One stored questionnaire answer. `not_shown` means the item was not offered. */
-export type ItemAnswer = number | string | string[] | NotShown | null;
-
-/**
- * Full survey response document shape for a future Firestore write.
- * Gated section fields use `not_shown` when never unlocked; section*Shown
- * booleans record whether each gate was open at submit time.
- * Interview contact details are never stored on this document — only the
- * opt-in boolean. Contact fields go to `interview_contacts` separately.
- */
-export interface SurveyResponse {
-  submittedAt: string;
-  anonymous: true;
-  language: 'EN' | 'FIL';
-
-  screening: ScreeningData | Record<string, string | string[] | NotShown | null>;
-
-  /**
-   * Every questionnaire item. Shown answers are the value (or null if skipped).
-   * Items the respondent never saw are `not_shown` — closed sections and
-   * extended-pool items when the core-only path is active.
-   */
-  answers: Record<string, ItemAnswer>;
-  /** True when fewer than three gated sections apply, so extended items were offered. */
-  extendedPoolShown: boolean;
-  /** How many of s3b, s4, s5, s7a, s7b applied at submit time. */
-  gatedSectionCount: number;
-
-  section3ExtendedShown: boolean;
-  section4Shown: boolean;
-  section5Shown: boolean;
-  section7aShown: boolean;
-  section7bShown: boolean;
-
-  s3_extended_items: Record<string, ItemAnswer> | NotShown;
-  s4_items: Record<string, ItemAnswer> | NotShown;
-  s5_items: Record<string, ItemAnswer> | NotShown;
-  s7a_items: Record<string, ItemAnswer> | NotShown;
-  s7b_items: Record<string, ItemAnswer> | NotShown;
-
-  /** Whether the respondent opted in to possible interview contact. */
-  interviewOptIn: boolean;
+export interface SurveyResponseDocument {
+  responseId: string;
+  submittedDate: string;
+  status: 'complete' | 'partial';
+  lastStepReached: number;
+  deviceClass: 'phone' | 'computer';
+  answers: Partial<SurveyAnswers>;
 }
 
-/**
- * Separate Firestore document for interview scheduling contact.
- * Written only when interviewOptIn is true; never linked to a response id.
- */
-export interface InterviewContact {
-  email: string;
-  interviewFormat: 'Online' | 'Face-to-face';
-  preferredDays: string[];
-  preferredTime: 'Morning' | 'Afternoon' | 'Evening' | 'Other';
-  /** Free-text preferred time; only set when preferredTime is Other. */
-  preferredTimeOther?: string;
-  submittedAt: string;
+export interface InterviewInvitation {
+  preferredName?: string;
+  contactMethod: string;
+  contactDetail: string;
+  residentType: 'homeowner' | 'tenant' | 'household_member' | 'caregiver';
+  consent: boolean;
 }

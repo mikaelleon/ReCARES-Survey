@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // A signed-in user may read and write only their own profile.
+    // Create is allowed for that UID only. These rules do not check the
+    // proponent access code; the app checks it before calling setDoc.
+    match /admins/{uid} {
+      allow read, update: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    // Residents are anonymous, so create stays open. Reads require a
+    // registered admin document, not merely a Firebase Auth user.
+    match /needsAssessmentResponses/{responseId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    match /interviewInterest/{invitationId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    match /responses/{responseId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    match /interview_contacts/{contactId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+  }
+}

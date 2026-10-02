@@ -6,27 +6,51 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { registerAdmin, signupErrorMessage } from '@/lib/firebase/auth';
 
 export default function AdminSignupPage() {
   const router = useRouter();
-  const { setUser } = useAuth();
+  const { reloadProfile } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [role, setRole] = useState('Proponent');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [passError, setPassError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = () => {
-    const errEmail = !email.trim() ? 'This field is required' : null;
-    const errPass = !password.trim() ? 'This field is required' : null;
-    setEmailError(errEmail);
-    setPassError(errPass);
-    if (errEmail || errPass) return;
+  const handleSubmit = async () => {
+    if (!name.trim() || !email.trim() || !code.trim() || !password || !password2) {
+      setFormError('Fill in every field.');
+      return;
+    }
+    if (password !== password2) {
+      setFormError('Passwords do not match.');
+      return;
+    }
+    if (password.length < 6) {
+      setFormError('Password must be at least 6 characters.');
+      return;
+    }
 
-    setUser({ email: email.trim(), name: name.trim() || undefined });
-    router.push('/admin/dashboard');
+    setBusy(true);
+    setFormError(null);
+    try {
+      await registerAdmin({
+        fullName: name,
+        email,
+        password,
+        role,
+        accessCode: code,
+      });
+      await reloadProfile();
+      router.push('/admin/dashboard');
+    } catch (error) {
+      setFormError(signupErrorMessage(error));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -105,7 +129,14 @@ export default function AdminSignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            error={emailError}
+          />
+          <Input
+            label="Role"
+            placeholder="Proponent"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            required
+            helperText="Replaces the course template's Programme field. Defaults to Proponent."
           />
           <Input
             label="Access code"
@@ -122,7 +153,6 @@ export default function AdminSignupPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            error={passError}
           />
           <Input
             label="Confirm password"
@@ -133,9 +163,15 @@ export default function AdminSignupPage() {
             required
           />
 
+          {formError ? (
+            <p role="alert" style={{ margin: 0, color: 'var(--bright-amber)', fontSize: 14 }}>
+              {formError}
+            </p>
+          ) : null}
+
           <div style={{ marginTop: 8 }}>
-            <Button variant="primary" onDark onClick={handleSubmit}>
-              Create account
+            <Button variant="primary" onDark onClick={handleSubmit} disabled={busy}>
+              {busy ? 'Creating account…' : 'Create account'}
             </Button>
           </div>
 

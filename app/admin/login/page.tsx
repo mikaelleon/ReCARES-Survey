@@ -5,25 +5,47 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { loginErrorMessage, loginWithEmail, loginWithGoogle } from '@/lib/firebase/auth';
 import { useAuth } from '@/lib/auth/AuthProvider';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { setUser } = useAuth();
+  const { reloadProfile } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [passError, setPassError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = () => {
-    const errEmail = !email.trim() ? 'This field is required' : null;
-    const errPass = !password.trim() ? 'This field is required' : null;
-    setEmailError(errEmail);
-    setPassError(errPass);
-    if (errEmail || errPass) return;
+  const handleSubmit = async () => {
+    if (!email.trim() || !password) {
+      setFormError('Enter your email and password.');
+      return;
+    }
+    setBusy(true);
+    setFormError(null);
+    try {
+      await loginWithEmail(email, password);
+      await reloadProfile();
+      router.push('/admin/dashboard');
+    } catch (error) {
+      setFormError(loginErrorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  };
 
-    setUser({ email: email.trim() });
-    router.push('/admin/dashboard');
+  const handleGoogle = async () => {
+    setBusy(true);
+    setFormError(null);
+    try {
+      const result = await loginWithGoogle();
+      await reloadProfile();
+      router.push(result === 'authorized' ? '/admin/dashboard' : '/admin/complete');
+    } catch (error) {
+      setFormError(loginErrorMessage(error));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -95,7 +117,6 @@ export default function AdminLoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            error={emailError}
           />
           <Input
             label="Password"
@@ -104,12 +125,20 @@ export default function AdminLoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            error={passError}
           />
 
-          <div style={{ marginTop: 8 }}>
-            <Button variant="primary" onDark onClick={handleSubmit}>
-              Log in
+          {formError ? (
+            <p role="alert" style={{ margin: 0, color: 'var(--bright-amber)', fontSize: 14 }}>
+              {formError}
+            </p>
+          ) : null}
+
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <Button variant="primary" onDark onClick={handleSubmit} disabled={busy}>
+              {busy ? 'Signing in…' : 'Log in'}
+            </Button>
+            <Button variant="secondary" onDark onClick={handleGoogle} disabled={busy}>
+              Continue with Google
             </Button>
           </div>
 

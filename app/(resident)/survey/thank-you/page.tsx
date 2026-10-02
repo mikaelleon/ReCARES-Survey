@@ -1,8 +1,15 @@
 import { Button } from '@/components/ui/Button';
 
-export default function ThankYouPage() {
+export default function ThankYouPage({
+  searchParams,
+}: {
+  searchParams?: { interview?: string };
+}) {
+  const interviewSent = searchParams?.interview === 'sent';
+
   return (
     <div
+      className="survey-flow"
       style={{
         maxWidth: 720,
         margin: '0 auto',
@@ -15,7 +22,6 @@ export default function ThankYouPage() {
           borderRadius: 16,
           boxShadow: 'var(--shadow-card)',
           padding: 'clamp(20px, 3vw, 32px)',
-          animation: 'riseIn 420ms ease-in-out both',
         }}
       >
         <h1
@@ -29,37 +35,28 @@ export default function ThankYouPage() {
         >
           Thank you.
         </h1>
-        <p
-          style={{
-            margin: '16px 0 0',
-            fontSize: 16,
-            lineHeight: 1.55,
-            color: 'var(--text-body)',
-            textWrap: 'pretty',
-          }}
-        >
-          Your response has been recorded. Your answers are combined with everyone else&apos;s and
-          compiled into a report for our academic adviser. If the results show this kind of system
-          would genuinely help the community, we plan to bring that report to the Homeowners
-          Association as part of proposing it formally.
+        <p className="na-intro">
+          {interviewSent
+            ? 'Your interview interest was saved separately from any survey answers.'
+            : 'Results will be reported only as group totals.'}
         </p>
-        <p
-          style={{
-            margin: '16px 0 0',
-            fontSize: 14,
-            lineHeight: 1.5,
-            color: 'var(--text-caption)',
-            textWrap: 'pretty',
-          }}
-        >
-          Nothing you submitted is attached to your name. If you have a question about the study, use
-          the inquiry form on the homepage.
-        </p>
-        <div style={{ marginTop: 28, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <Button variant="primary" href="/">
-            Back to the homepage
-          </Button>
-        </div>
+        {interviewSent ? null : (
+          <div style={{ marginTop: 28, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Button variant="secondary" href="/survey/interview">
+              Optional interview invitation
+            </Button>
+            <Button variant="primary" href="/">
+              Back to the homepage
+            </Button>
+          </div>
+        )}
+        {interviewSent ? (
+          <div style={{ marginTop: 28 }}>
+            <Button variant="primary" href="/">
+              Back to the homepage
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

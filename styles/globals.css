@@ -1980,3 +1980,123 @@ textarea:focus-visible,
   }
 }
 
+/* Needs-assessment survey v2. 16px type, 44px targets, borders at least 3:1. */
+.survey-flow {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.na-stack,
+.na-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 0;
+  margin: 16px 0 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+
+.na-sub {
+  margin: 8px 0 0;
+  padding: 12px;
+  border: 2px solid #3a3a3a;
+  border-radius: 8px;
+}
+
+[data-theme='dark'] .na-sub {
+  border-color: #e5ebe8;
+}
+
+.na-legend {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.45;
+  padding: 0;
+  margin: 0 0 8px;
+  color: var(--text-body);
+}
+
+.na-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 2px solid #3a3a3a;
+  border-radius: 8px;
+  background: var(--card-fill-neutral);
+  color: var(--text-body);
+  font-size: 16px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+[data-theme='dark'] .na-choice {
+  border-color: #e5ebe8;
+}
+
+.na-choice input {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  flex: 0 0 auto;
+  accent-color: var(--dark-emerald);
+}
+
+.na-choice:has(input:checked) {
+  font-weight: 700;
+  box-shadow: inset 4px 0 0 var(--bright-amber);
+}
+
+.na-choice:has(input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.na-choice--error {
+  border-color: var(--status-error);
+}
+
+.na-error {
+  margin: 8px 0 0;
+  color: var(--status-error);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.na-hint,
+.na-intro,
+.na-required-note {
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--text-body);
+}
+
+.na-input,
+.na-area {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 2px solid #3a3a3a;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+[data-theme='dark'] .na-input,
+[data-theme='dark'] .na-area {
+  border-color: #e5ebe8;
+}
+
+.na-area {
+  min-height: 120px;
+  resize: vertical;
+}
+

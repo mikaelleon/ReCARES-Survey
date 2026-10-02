@@ -2,465 +2,262 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { SurveyConsentGate } from '@/components/survey/SurveyConsentGate';
-import { ScreeningForm } from '@/components/survey/ScreeningForm';
-import { SectionItems, type AnswerValue } from '@/components/survey/SectionItems';
-import {
-  InterviewOptInCard,
-  INTERVIEW_DAYS,
-  validateInterviewOptIn,
-  type InterviewErrors,
-  type InterviewOptInValue,
-} from '@/components/survey/InterviewOptInCard';
-import { ReviewSectionCards, buildReviewSectionCards } from '@/components/survey/ReviewSectionCards';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { Select } from '@/components/ui/Select';
-import type { LanguageValue } from '@/components/layout/LanguageToggle';
-import { submitInterviewContact, submitSurveyResponse } from '@/lib/firebase/firestore';
-import { PERIMETER_PHASES } from '@/survey/config';
+import { REQUIRED_NOTE } from '@/components/survey/SurveyFields';
+import { STEP_TITLES, StepView } from '@/components/survey/SurveySteps';
+import { submitNeedsAssessment } from '@/lib/firebase/firestore';
+import { normalizeAnswers } from '@/survey/answers';
+import { isHomeownerBranch } from '@/survey/branching';
 import {
-  estimateMinutes,
-  SCREENING_FIELDS,
-  SECTION_INTROS,
-  SECTIONS,
-  STEPS,
-} from '@/survey/content';
-import {
-  allSectionItems,
-  gatedSectionCount,
-  sectionContentShown,
-  sectionItems,
-  sectionQuestionCount,
-  showExtendedPool,
-  QUESTION_SECTIONS,
-} from '@/survey/questionnaire';
-import {
-  isPartneredCivilStatus,
-  isPerimeterAdjacent,
-  showSection4,
-  showSection5,
-  showSection7a,
-  showSection7b,
-} from '@/survey/gatingLogic';
-import type { ItemAnswer, NotShown, SurveyResponse } from '@/survey/schema';
-import {
-  toScreeningData,
-  validateScreeningStep,
-  type ScreeningErrors,
-} from '@/survey/validation';
+  clearDraft,
+  deviceAlreadySubmitted,
+  markSubmittedOnDevice,
+  readDraft,
+  writeDraft,
+  type SurveyDraft,
+} from '@/survey/draft';
+import type { SurveyAnswers, SurveyResponseDocument } from '@/survey/schema';
+import { CHOOSE_ONE, validateStep } from '@/survey/validate';
 
-type S4OptIn = 'yes' | 'no' | null;
+type Screen = 'welcome' | 'consent' | 'x1' | 'x2' | 'step' | 'review';
 
-function computeGates(
-  sc: Record<string, string>,
-  s4OptIn: S4OptIn,
-  multi: Record<string, Record<string, boolean>> = {},
-) {
-  const data = toScreeningData(sc, multi);
-  const partnered = isPartneredCivilStatus(sc.civil_status ?? '');
-  const perimeter = isPerimeterAdjacent(sc.addr_phase ?? '', PERIMETER_PHASES);
-  const s4 = showSection4(data, s4OptIn === null ? undefined : s4OptIn);
-  const s5 = showSection5(data);
-  const s7a = showSection7a(data);
-  const s7b = showSection7b(data);
-  return { partnered, perimeter, s4, s5, s7a, s7b };
+const MIN_MS_BEFORE_SUBMIT = 30_000;
+
+function deviceClass(): 'phone' | 'computer' {
+  return window.matchMedia('(max-width: 767px)').matches ? 'phone' : 'computer';
 }
 
-function answerLabel(
-  id: string,
-  sc: Record<string, string>,
-  multi: Record<string, Record<string, boolean>>,
-): string {
-  if (id === 'disability_type') {
-    const keys = Object.keys(multi.disability_type ?? {});
-    return keys.length ? keys.join(', ') : 'Not answered';
-  }
-  const v = sc[id];
-  return v == null || v === '' ? 'Not answered' : String(v);
+function dateOnly(now = new Date()): string {
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
 }
 
-function sliceSection(
-  sectionId: string,
-  shown: boolean,
-  answers: Record<string, ItemAnswer>,
-): Record<string, ItemAnswer> | NotShown {
-  if (!shown) return 'not_shown';
-  const slice: Record<string, ItemAnswer> = {};
-  for (const item of allSectionItems(sectionId)) {
-    slice[item.id] = answers[item.id] ?? null;
-  }
-  return slice;
+function newResponseId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  return `r-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function packAnswers(
-  gates: ReturnType<typeof computeGates>,
-  raw: Record<string, AnswerValue>,
-): Record<string, ItemAnswer> {
-  const extended = showExtendedPool(gates);
-  const packed: Record<string, ItemAnswer> = {};
-  for (const sectionId of Object.keys(QUESTION_SECTIONS)) {
-    const shown = sectionContentShown(sectionId, gates);
-    for (const item of allSectionItems(sectionId)) {
-      if (!shown || (item.pool === 'extended' && !extended)) {
-        packed[item.id] = 'not_shown';
-        continue;
-      }
-      const value = raw[item.id];
-      packed[item.id] =
-        value === undefined || value === '' || (Array.isArray(value) && value.length === 0)
-          ? null
-          : value;
-    }
-  }
-  return packed;
-}
-
-function buildSurveyResponse(
-  sc: Record<string, string>,
-  multi: Record<string, Record<string, boolean>>,
-  answers: Record<string, AnswerValue>,
-  s4OptIn: S4OptIn,
-  language: LanguageValue,
-  interviewOptIn: boolean,
-): SurveyResponse {
-  const g = computeGates(sc, s4OptIn, multi);
-  const notShown: NotShown = 'not_shown';
-  const packed = packAnswers(g, answers);
-
-  const screening: SurveyResponse['screening'] = {};
-  SCREENING_FIELDS.forEach((field) => {
-    if ('when' in field && field.when && !field.when(sc)) {
-      screening[field.id] = notShown;
-      return;
-    }
-    if (field.id === 'disability_type') {
-      const keys = Object.keys(multi.disability_type ?? {});
-      screening[field.id] = keys.length ? keys : null;
-      return;
-    }
-    screening[field.id] = sc[field.id] || null;
-  });
-
-  return {
-    submittedAt: new Date().toISOString(),
-    anonymous: true,
-    language,
-    screening,
-    answers: packed,
-    extendedPoolShown: showExtendedPool(g),
-    gatedSectionCount: gatedSectionCount(g),
-    section3ExtendedShown: g.perimeter,
-    section4Shown: g.s4,
-    section5Shown: g.s5,
-    section7aShown: g.s7a,
-    section7bShown: g.s7b,
-    s3_extended_items: sliceSection('s3b', g.perimeter, packed),
-    s4_items: sliceSection('s4', g.s4, packed),
-    s5_items: sliceSection('s5', g.s5, packed),
-    s7a_items: sliceSection('s7a', g.s7a, packed),
-    s7b_items: sliceSection('s7b', g.s7b, packed),
-    interviewOptIn,
-  };
-}
-
-/**
- * Multi-step resident survey flow with gating, review, and Firestore submit stub.
- */
 export function SurveyFlow() {
   const router = useRouter();
-  const [consentPassed, setConsentPassed] = useState(false);
-  const [language, setLanguage] = useState<LanguageValue>('EN');
-  const [stepKey, setStepKey] = useState('screening');
-  const [sc, setSc] = useState<Record<string, string>>({});
-  const [multi, setMulti] = useState<Record<string, Record<string, boolean>>>({});
-  const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
-  const [s4OptIn, setS4OptIn] = useState<S4OptIn>(null);
+  const [ready, setReady] = useState(false);
+  const [screen, setScreen] = useState<Screen>('welcome');
+  const [step, setStep] = useState(1);
+  const [lastStepReached, setLastStepReached] = useState(0);
+  const [answers, setAnswers] = useState<Partial<SurveyAnswers>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [e1, setE1] = useState<'agree' | 'decline' | ''>('');
+  const [e2, setE2] = useState<'yes' | 'no' | ''>('');
+  const [consentedAt, setConsentedAt] = useState(0);
+  const [hasDraft, setHasDraft] = useState(false);
+  const [alreadySent, setAlreadySent] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [screeningErrors, setScreeningErrors] = useState<ScreeningErrors>({});
-  const [interview, setInterview] = useState<InterviewOptInValue>({
-    willingness: null,
-    email: '',
-    format: null,
-    days: {},
-    time: null,
-    timeOther: '',
-  });
-  const [interviewErrors, setInterviewErrors] = useState<InterviewErrors>({});
-
-  const gates = useMemo(() => computeGates(sc, s4OptIn, multi), [sc, s4OptIn, multi]);
-  const extended = showExtendedPool(gates);
-
-  const flowSteps = useMemo(() => {
-    const screening = STEPS.find((step) => step.key === 'screening')!;
-    const plan = STEPS.find((step) => step.key === 'plan')!;
-    const review = STEPS.find((step) => step.key === 'review')!;
-    const middle = SECTIONS.filter((section) => section.id !== 'screening')
-      .filter((section) => {
-        if (section.id === 's4') return true;
-        if (section.id === 's3b') return gates.perimeter;
-        if (section.id === 's5') return gates.s5;
-        if (section.id === 's7a') return gates.s7a;
-        if (section.id === 's7b') return gates.s7b;
-        return true;
-      })
-      .map((section) => ({
-        key: section.id,
-        title: `Section ${section.n} — ${section.t}`,
-        intro: SECTION_INTROS[section.id] ?? '',
-      }));
-    return [screening, plan, ...middle, review];
-  }, [gates]);
 
   useEffect(() => {
-    if (!flowSteps.some((step) => step.key === stepKey)) {
-      setStepKey('plan');
+    const draft = readDraft();
+    setHasDraft(Boolean(draft));
+    setAlreadySent(deviceAlreadySubmitted());
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    if (screen !== 'step' && screen !== 'review') return;
+    const draft: SurveyDraft = {
+      answers,
+      currentStep: screen === 'review' ? 14 : step,
+      lastStepReached,
+      consentedAt,
+    };
+    writeDraft(draft);
+  }, [ready, screen, step, answers, lastStepReached, consentedAt]);
+
+  const patch = (next: Partial<SurveyAnswers>) => {
+    setAnswers((prev) => normalizeAnswers({ ...prev, ...next }));
+    setErrors({});
+  };
+
+  const resume = () => {
+    const draft = readDraft();
+    if (!draft) {
+      setScreen('consent');
+      return;
     }
-  }, [flowSteps, stepKey]);
-
-  const stepIndex = Math.max(
-    0,
-    flowSteps.findIndex((step) => step.key === stepKey),
-  );
-  const currentStep = flowSteps[stepIndex] ?? flowSteps[0];
-
-  const setAnswer = useCallback((id: string, value: AnswerValue) => {
-    setAnswers((prev) => ({ ...prev, [id]: value }));
-  }, []);
-
-  const setScField = useCallback((id: string, value: string) => {
-    setSc((prev) => {
-      const next = { ...prev, [id]: value };
-      if (id === 'children_yn' && value !== 'Yes') {
-        delete next.children_count;
-      }
-      return next;
-    });
-    if (id === 'pwd_self' && value !== 'Yes') {
-      setMulti((prev) => {
-        if (!prev.disability_type) return prev;
-        const next = { ...prev };
-        delete next.disability_type;
-        return next;
-      });
+    setAnswers(normalizeAnswers(draft.answers));
+    setLastStepReached(draft.lastStepReached);
+    setConsentedAt(draft.consentedAt || Date.now());
+    if (draft.currentStep >= 14) {
+      setScreen('review');
+      setStep(13);
+    } else {
+      setStep(Math.min(13, Math.max(1, draft.currentStep)));
+      setScreen('step');
     }
-    setScreeningErrors((prev) => {
-      if (!prev[id] && !(id === 'children_yn' && prev.children_count) && !(id === 'pwd_self' && prev.disability_type)) {
-        return prev;
-      }
-      const next = { ...prev };
-      delete next[id];
-      if (id === 'children_yn') delete next.children_count;
-      if (id === 'pwd_self') delete next.disability_type;
-      return next;
-    });
-  }, []);
+  };
 
-  const toggleMulti = useCallback((id: string, option: string) => {
-    setMulti((prev) => {
-      const current = { ...(prev[id] ?? {}) };
-      if (current[option]) {
-        delete current[option];
-      } else {
-        current[option] = true;
-      }
-      return { ...prev, [id]: current };
-    });
-    setScreeningErrors((prev) => {
-      if (!prev[id]) return prev;
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
-  }, []);
+  const startOver = () => {
+    clearDraft();
+    setAnswers({});
+    setStep(1);
+    setLastStepReached(0);
+    setE1('');
+    setE2('');
+    setErrors({});
+    setHasDraft(false);
+    setScreen('consent');
+  };
 
-  const planRows = useMemo(() => {
-    return SECTIONS.map((section) => {
-      const status: 'completed' | 'will_appear' | 'skipped' =
-        section.id === 'screening'
-          ? 'completed'
-          : 'always' in section && section.always
-            ? 'will_appear'
-            : 'key' in section && section.key && gates[section.key as keyof typeof gates]
-              ? 'will_appear'
-              : 'skipped';
+  const continueConsent = () => {
+    if (!e1) {
+      setErrors({ E1: CHOOSE_ONE });
+      return;
+    }
+    if (e1 === 'decline') {
+      clearDraft();
+      setScreen('x1');
+      return;
+    }
+    if (!e2) {
+      setErrors({ E2: CHOOSE_ONE });
+      return;
+    }
+    if (e2 === 'no') {
+      clearDraft();
+      setScreen('x2');
+      return;
+    }
+    const now = Date.now();
+    setConsentedAt(now);
+    setLastStepReached(0);
+    setStep(1);
+    setScreen('step');
+    setErrors({});
+  };
 
-      const reason =
-        section.id === 'screening'
-          ? 'You already finished this section.'
-          : 'always' in section && section.always
-            ? 'Shown to every respondent.'
-            : status === 'will_appear'
-              ? section.why
-              : section.whyNot;
+  const continueStep = () => {
+    const nextErrors = validateStep(step, answers);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+    const normalized = normalizeAnswers(answers);
+    setAnswers(normalized);
+    setLastStepReached(step);
+    if (step >= 13) {
+      setScreen('review');
+      return;
+    }
+    setStep(step + 1);
+  };
 
-      const count = sectionQuestionCount(section.id, extended);
-      const minutes = estimateMinutes(count);
-      const meta =
-        status === 'will_appear'
-          ? `${count} question${count === 1 ? '' : 's'} · about ${minutes} minute${minutes === 1 ? '' : 's'}`
-          : null;
+  const back = () => {
+    setErrors({});
+    if (screen === 'review') {
+      setScreen('step');
+      setStep(13);
+      return;
+    }
+    if (screen === 'step' && step > 1) {
+      setStep(step - 1);
+      return;
+    }
+    if (screen === 'step') setScreen('consent');
+  };
 
-      const badge =
-        status === 'completed' ? 'Completed' : status === 'will_appear' ? 'Will appear' : 'Skipped';
-
-      const badgeStyle: CSSProperties = {
-        flex: '0 0 auto',
-        fontSize: 13,
-        fontWeight: 700,
-        letterSpacing: '.06em',
-        textTransform: 'uppercase',
-        padding: '6px 10px',
-        borderRadius: 8,
-        background:
-          status === 'will_appear'
-            ? 'var(--bright-amber)'
-            : status === 'completed'
-              ? 'var(--surface-2)'
-              : 'transparent',
-        color:
-          status === 'will_appear'
-            ? 'var(--black)'
-            : status === 'completed'
-              ? 'var(--text-body)'
-              : 'var(--text-caption)',
-        border:
-          status === 'will_appear'
-            ? '1px solid var(--bright-amber)'
-            : status === 'completed'
-              ? '1px solid var(--border-default)'
-              : '1px solid var(--border-default)',
-      };
-
-      return {
-        id: section.id,
-        n: section.n,
-        t: section.t,
-        status,
-        reason,
-        meta,
-        badge,
-        badgeStyle,
-      };
-    });
-  }, [gates, extended]);
-
-  const remainingMinutes = useMemo(
-    () =>
-      planRows
-        .filter((row) => row.status === 'will_appear')
-        .reduce((sum, row) => sum + estimateMinutes(sectionQuestionCount(row.id, extended)), 0),
-    [planRows, extended],
-  );
-
-  const reviewCards = useMemo(
-    () =>
-      buildReviewSectionCards({
-        sc,
-        multi,
-        answers,
-        gates,
-        extended,
-        answerLabel,
-      }),
-    [sc, multi, answers, gates, extended],
-  );
-
-  const handleSubmit = async () => {
-    const nextInterviewErrors = validateInterviewOptIn(interview);
-    setInterviewErrors(nextInterviewErrors);
-    if (Object.keys(nextInterviewErrors).length > 0) return;
-
-    const interviewOptIn = interview.willingness === 'yes';
+  const submit = async () => {
+    if (honeypot.trim()) {
+      setSubmitError('Please review your answers and try again.');
+      return;
+    }
+    if (Date.now() - consentedAt < MIN_MS_BEFORE_SUBMIT) {
+      setSubmitError('Please take a moment to review your answers before submitting.');
+      return;
+    }
+    const finalAnswers = normalizeAnswers(answers);
+    const document: SurveyResponseDocument = {
+      responseId: newResponseId(),
+      submittedDate: dateOnly(),
+      status: 'complete',
+      lastStepReached: 13,
+      deviceClass: deviceClass(),
+      answers: finalAnswers,
+    };
     setSubmitting(true);
+    setSubmitError('');
     try {
-      await submitSurveyResponse(
-        buildSurveyResponse(sc, multi, answers, s4OptIn, language, interviewOptIn),
-      );
-      if (interviewOptIn && interview.format && interview.time) {
-        await submitInterviewContact({
-          email: interview.email.trim(),
-          interviewFormat: interview.format,
-          preferredDays: INTERVIEW_DAYS.filter((day) => interview.days[day]),
-          preferredTime: interview.time,
-          ...(interview.time === 'Other'
-            ? { preferredTimeOther: interview.timeOther.trim() }
-            : {}),
-          submittedAt: new Date().toISOString(),
-        });
-      }
+      await submitNeedsAssessment(document);
+      clearDraft();
+      markSubmittedOnDevice();
       router.push('/survey/thank-you');
+    } catch {
+      setSubmitError('The response could not be saved. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const s4Reason = gates.partnered
-    ? 'Your civil status opens this section directly. You can still decline it in full.'
-    : 'Your civil status does not open this section automatically, so we ask first instead of showing the questions.';
+  if (!ready) return null;
 
-  const s4AskOptin = !gates.partnered && s4OptIn === null;
-  const s4Skipped = s4OptIn === 'no';
-  const s4Open = gates.s4;
-
-  if (!consentPassed) {
-    return (
-      <SurveyConsentGate
-        language={language}
-        onLanguageChange={setLanguage}
-        onContinue={() => setConsentPassed(true)}
-      />
-    );
-  }
+  const title =
+    screen === 'welcome'
+      ? 'Resident Needs Assessment Survey'
+      : screen === 'consent'
+        ? 'Consent and eligibility'
+        : screen === 'x1' || screen === 'x2'
+          ? 'Thank you'
+          : screen === 'review'
+            ? 'Review and submit'
+            : step === 11
+              ? isHomeownerBranch(answers)
+                ? 'Homeowner'
+                : 'Tenant and lessee'
+              : STEP_TITLES[step];
 
   return (
     <div
+      className="survey-flow"
       style={{
         maxWidth: 720,
         margin: '0 auto',
         padding: '8px clamp(16px, 4vw, 32px) clamp(48px, 8vw, 96px)',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 16,
-          marginBottom: 10,
-          flexWrap: 'wrap',
-        }}
-      >
-        <div
-          style={{
-            fontSize: 13,
-            fontWeight: 700,
-            letterSpacing: '.12em',
-            textTransform: 'uppercase',
-            color: 'var(--text-body)',
-          }}
-        >
-          Step {stepIndex + 1} of {flowSteps.length}
+      {screen === 'step' || screen === 'review' ? (
+        <>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 16,
+              marginBottom: 10,
+              flexWrap: 'wrap',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {screen === 'review' ? 'Review' : `Step ${step} of 13`}
+            </div>
+            <Link href="/" style={{ fontSize: 16, color: 'var(--text-caption)' }}>
+              Leave the survey
+            </Link>
+          </div>
+          {screen === 'step' ? <ProgressBar value={step} max={13} /> : <ProgressBar value={13} max={13} />}
+        </>
+      ) : (
+        <div style={{ marginBottom: 12 }}>
+          <Link href="/" style={{ fontSize: 16, color: 'var(--text-caption)' }}>
+            Leave the survey
+          </Link>
         </div>
-        <Link
-          href="/"
-          style={{
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-sans)',
-            fontSize: 14,
-            color: 'var(--text-caption)',
-            textDecoration: 'underline',
-          }}
-        >
-          Leave the survey
-        </Link>
-      </div>
-
-      <ProgressBar value={stepIndex + 1} max={flowSteps.length} />
+      )}
 
       <h1
         style={{
@@ -469,378 +266,190 @@ export function SurveyFlow() {
           fontSize: 'clamp(24px, 6vw, 32px)',
           fontWeight: 700,
           lineHeight: 1.25,
-          textWrap: 'pretty',
         }}
       >
-        {currentStep.title}
+        {title}
       </h1>
-      <p
-        style={{
-          margin: '10px 0 0',
-          color: 'var(--text-caption)',
-          fontSize: 14,
-          lineHeight: 1.5,
-          textWrap: 'pretty',
-        }}
-      >
-        {currentStep.intro}
-      </p>
 
-      {currentStep.key === 'plan' && (
-        <p
-          style={{
-            margin: '10px 0 0',
-            color: 'var(--text-body)',
-            fontSize: 15,
-            lineHeight: 1.5,
-            textWrap: 'pretty',
-          }}
-        >
-          <strong>
-            Estimated time remaining: about {remainingMinutes}{' '}
-            {remainingMinutes === 1 ? 'minute' : 'minutes'}
-          </strong>
-          , based on the sections that apply to you.
-        </p>
-      )}
-
-      {currentStep.key === 'screening' && (
-        <ScreeningForm
-          values={sc}
-          multi={multi}
-          onChange={setScField}
-          onMultiToggle={toggleMulti}
-          errors={screeningErrors}
-        />
-      )}
-
-      {currentStep.key === 'plan' && (
-        <div
-          style={{
-            marginTop: 28,
-            background: 'var(--surface-1)',
-            borderRadius: 16,
-            boxShadow: 'var(--shadow-card)',
-            padding: 'clamp(20px, 3vw, 32px)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-            animation: 'riseIn 360ms ease-in-out both',
-          }}
-        >
-          {planRows.map((row) => (
-            <div
-              key={row.id}
-              style={{
-                display: 'flex',
-                gap: 16,
-                alignItems: 'flex-start',
-                padding: '12px 0',
-                borderBottom: '1px solid var(--border-subtle)',
-                flexWrap: 'wrap',
-              }}
-            >
-              <div style={{ flex: '0 0 44px', fontSize: 14, fontWeight: 700, color: 'var(--text-caption)' }}>
-                {row.n}
-              </div>
-              <div style={{ flex: '1 1 220px', minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: 'var(--text-body)',
-                    textWrap: 'pretty',
-                  }}
-                >
-                  {row.t}
-                </div>
-                <div
-                  style={{
-                    marginTop: 4,
-                    fontSize: 14,
-                    lineHeight: 1.5,
-                    color: 'var(--text-caption)',
-                    textWrap: 'pretty',
-                  }}
-                >
-                  {row.reason}
-                </div>
-                {row.meta ? (
-                  <div
-                    style={{
-                      marginTop: 4,
-                      fontSize: 14,
-                      lineHeight: 1.5,
-                      color: 'var(--text-body)',
-                      textWrap: 'pretty',
-                    }}
-                  >
-                    {row.meta}
-                  </div>
-                ) : null}
-              </div>
-              <div style={row.badgeStyle}>{row.badge}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-            {currentStep.key !== 'screening' &&
-      currentStep.key !== 'plan' &&
-      currentStep.key !== 'review' &&
-      currentStep.key !== 's4' &&
-      QUESTION_SECTIONS[currentStep.key] ? (
-        <SectionItems
-          items={sectionItems(currentStep.key, extended)}
-          answers={answers}
-          onChange={setAnswer}
-        />
+      {screen === 'welcome' ? (
+        <>
+          {alreadySent ? (
+            <p className="na-intro">
+              A response was already sent from this device. Continue only if you are a different
+              person. This reminder cannot block a second response.
+            </p>
+          ) : null}
+          <p className="na-intro">
+            This survey is part of a capstone study by BSIT students of the University of Batangas,
+            Lipa Campus. The study looks at how online services could make everyday transactions
+            easier for residents of Camella Homes Tibig, including residents who find it hard to
+            visit the HOA office. The study team is exploring a possible collaboration with the
+            Homeowners Association. This is a student survey and is not an official HOA survey.
+          </p>
+          <p className="na-intro">The survey takes about 11 to 13 minutes. Your answers are anonymous.</p>
+          <p className="na-intro">
+            Questions about the study? Use the <Link href="/#contact">inquiry form</Link>.
+          </p>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 24 }}>
+            {hasDraft ? (
+              <Button variant="primary" onClick={resume}>
+                Resume where you stopped
+              </Button>
+            ) : null}
+            <Button variant={hasDraft ? 'secondary' : 'primary'} onClick={startOver}>
+              Start the survey
+            </Button>
+          </div>
+        </>
       ) : null}
 
-      {currentStep.key === 's4' && (
-        <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div
-            style={{
-              background: 'var(--surface-1)',
-              borderRadius: 16,
-              boxShadow: 'var(--shadow-card)',
-              padding: 'clamp(20px, 3vw, 32px)',
-              animation: 'riseIn 360ms ease-in-out both',
-            }}
-          >
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 700,
-                letterSpacing: '.06em',
-                textTransform: 'uppercase',
-                color: 'var(--text-caption)',
-              }}
-            >
-              Why you are seeing this
-            </div>
-            <div
-              style={{
-                marginTop: 8,
-                fontSize: 16,
-                lineHeight: 1.55,
-                color: 'var(--text-body)',
-                textWrap: 'pretty',
-              }}
-            >
-              {s4Reason}
-            </div>
+      {screen === 'consent' ? (
+        <>
+          <p className="na-required-note">{REQUIRED_NOTE}</p>
+          <p className="na-intro">
+            Your answers in this survey are anonymous. We do not ask for your name, and your
+            responses will be reported only as numbers and group totals, such as percentages and
+            averages, and not by name. No answer will be linked to you, your household, or your
+            unit. Written answers, if you choose to give any, will be summarized without names or
+            identifying details.
+          </p>
+          <p className="na-intro">
+            Some questions ask about your age, sex, civil status, and disability. You may choose
+            &quot;Prefer not to say&quot; for any of them. Taking part is voluntary. You may skip any
+            question you are not comfortable with or stop at any time. Your answers will be used
+            only for this study and handled in line with the Data Privacy Act of 2012 (Republic Act
+            10173).
+          </p>
+          <fieldset className="na-stack">
+            <legend className="na-legend">
+              I have read the information above and I agree to take part in this survey.{' '}
+              <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
+                *
+              </span>
+            </legend>
+            <label className="na-choice">
+              <input type="radio" name="E1" checked={e1 === 'agree'} onChange={() => setE1('agree')} />
+              <span>I agree</span>
+            </label>
+            <label className="na-choice">
+              <input
+                type="radio"
+                name="E1"
+                checked={e1 === 'decline'}
+                onChange={() => setE1('decline')}
+              />
+              <span>I do not agree</span>
+            </label>
+            {errors.E1 ? (
+              <p className="na-error" role="alert">
+                {errors.E1}
+              </p>
+            ) : null}
+          </fieldset>
+          <fieldset className="na-stack">
+            <legend className="na-legend">
+              I am 18 years old or older, and I own, rent, or live in a home in Camella Homes Tibig.{' '}
+              <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
+                *
+              </span>
+            </legend>
+            <label className="na-choice">
+              <input type="radio" name="E2" checked={e2 === 'yes'} onChange={() => setE2('yes')} />
+              <span>Yes</span>
+            </label>
+            <label className="na-choice">
+              <input type="radio" name="E2" checked={e2 === 'no'} onChange={() => setE2('no')} />
+              <span>No</span>
+            </label>
+            {errors.E2 ? (
+              <p className="na-error" role="alert">
+                {errors.E2}
+              </p>
+            ) : null}
+          </fieldset>
+          <div style={{ marginTop: 24 }}>
+            <Button variant="primary" onClick={continueConsent}>
+              Continue
+            </Button>
           </div>
+        </>
+      ) : null}
 
-          {s4AskOptin && (
-            <div
-              style={{
-                background: 'var(--surface-1)',
-                borderRadius: 16,
-                boxShadow: 'var(--shadow-card)',
-                padding: 'clamp(20px, 3vw, 32px)',
-                animation: 'riseIn 360ms ease-in-out both',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 18,
-                  fontWeight: 700,
-                  lineHeight: 1.4,
-                  color: 'var(--text-body)',
-                  textWrap: 'pretty',
-                }}
-              >
-                This section asks about safety inside your household, including situations between
-                people living in the same home. Would you like to answer it?
-              </div>
-              <div
-                style={{
-                  margin: '8px 0 20px',
-                  fontSize: 14,
-                  lineHeight: 1.5,
-                  color: 'var(--text-caption)',
-                  textWrap: 'pretty',
-                }}
-              >
-                Choosing no skips the whole section. It does not affect anything else in the survey,
-                and we are not told why you skipped it.
-              </div>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <Button variant="primary" onClick={() => setS4OptIn('yes')}>
-                  Yes, include this section
-                </Button>
-                <Button variant="secondary" onClick={() => setS4OptIn('no')}>
-                  No, skip this section
-                </Button>
-              </div>
-            </div>
-          )}
+      {screen === 'x1' ? (
+        <p className="na-intro">
+          Thank you for your time. You chose not to take part, so no answers were recorded.
+        </p>
+      ) : null}
+      {screen === 'x2' ? (
+        <p className="na-intro">
+          Thank you. This survey is only for adult owners, tenants, and household members of Camella
+          Homes Tibig.
+        </p>
+      ) : null}
 
-          {s4Skipped && (
-            <div
-              style={{
-                background: 'var(--surface-1)',
-                borderRadius: 16,
-                boxShadow: 'var(--shadow-card)',
-                padding: 'clamp(20px, 3vw, 32px)',
-                border: '1px solid var(--border-subtle)',
-                animation: 'riseIn 360ms ease-in-out both',
-              }}
-            >
-              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-body)' }}>
-                Section skipped
-              </div>
-              <div
-                style={{
-                  margin: '8px 0 20px',
-                  fontSize: 14,
-                  lineHeight: 1.5,
-                  color: 'var(--text-caption)',
-                  textWrap: 'pretty',
-                }}
-              >
-                This section stays closed. You can change your mind before you submit.
-              </div>
-              <Button variant="secondary" onClick={() => setS4OptIn('yes')}>
-                Include it after all
-              </Button>
-            </div>
-          )}
-
-          {s4Open && (
-            <>
-            <div
-              style={{
-                background: 'var(--surface-1)',
-                borderRadius: 16,
-                boxShadow: 'var(--shadow-card)',
-                padding: 'clamp(20px, 3vw, 32px)',
-                animation: 'riseIn 360ms ease-in-out both',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 16,
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  paddingBottom: 20,
-                  borderBottom: '1px solid var(--border-subtle)',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 14,
-                    lineHeight: 1.5,
-                    color: 'var(--text-caption)',
-                    maxWidth: 420,
-                    textWrap: 'pretty',
-                  }}
-                >
-                  You can leave this whole section without answering anything. The decline control
-                  stays visible above the questions, not only beside them.
-                </div>
-                <Button variant="secondary" onClick={() => setS4OptIn('no')}>
-                  Skip this section
-                </Button>
-              </div>
-            </div>
-            <SectionItems
-              embedded
-              items={sectionItems('s4', extended)}
-              answers={answers}
-              onChange={setAnswer}
-            />
-            </>
-          )}
-        </div>
-      )}
-
-      {currentStep.key === 'review' && (
-        <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <ReviewSectionCards
-            cards={reviewCards}
-            onEdit={(key) => setStepKey(key)}
-            onEditScreening={() => setStepKey('screening')}
-          />
-
+      {screen === 'step' ? (
+        <>
+          <StepView step={step} answers={answers} errors={errors} onPatch={patch} />
           <div
             style={{
-              background: 'var(--surface-1)',
-              borderRadius: 16,
-              boxShadow: 'var(--shadow-card)',
-              padding: 'clamp(20px, 3vw, 32px)',
+              marginTop: 28,
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 12,
+              flexWrap: 'wrap',
             }}
           >
-            <p
-              style={{
-                margin: 0,
-                fontSize: 14,
-                lineHeight: 1.55,
-                color: 'var(--text-caption)',
-                textWrap: 'pretty',
-              }}
-            >
-              Your answers help shape which features get built and which problems the system is
-              designed to solve. Results are shared with the Homeowners Association and our academic
-              adviser as combined numbers and patterns, not as individual responses.
+            <Button variant="secondary" onClick={back}>
+              Back
+            </Button>
+            <Button variant="primary" onClick={continueStep}>
+              Continue
+            </Button>
+          </div>
+        </>
+      ) : null}
+
+      {screen === 'review' ? (
+        <>
+          <p className="na-intro">
+            The survey is complete. Your answers are anonymous. You can go back to an earlier step
+            before you submit. This page does not list your answers, in case you are on a shared
+            device.
+          </p>
+          <label className="visually-hidden" htmlFor="company">
+            Company
+          </label>
+          <input
+            id="company"
+            className="visually-hidden"
+            tabIndex={-1}
+            autoComplete="off"
+            value={honeypot}
+            onChange={(event) => setHoneypot(event.target.value)}
+          />
+          {submitError ? (
+            <p className="na-error" role="alert">
+              {submitError}
             </p>
-          </div>
-
-          <InterviewOptInCard
-            value={interview}
-            errors={interviewErrors}
-            onChange={(next) => {
-              setInterview(next);
-              setInterviewErrors({});
-            }}
-          />
-        </div>
-      )}
-
-      <div
-        style={{
-          marginTop: 28,
-          display: 'flex',
-          gap: 12,
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-        }}
-      >
-        <Button
-          variant="secondary"
-          disabled={stepIndex === 0}
-          onClick={() => {
-            const prev = flowSteps[stepIndex - 1];
-            if (prev) setStepKey(prev.key);
-          }}
-        >
-          Back
-        </Button>
-        {currentStep.key === 'review' ? (
-          <Button variant="primary" disabled={submitting} onClick={handleSubmit}>
-            Submit my answers
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            onClick={() => {
-              if (currentStep.key === 'screening') {
-                const nextErrors = validateScreeningStep(sc, multi);
-                setScreeningErrors(nextErrors);
-                if (Object.keys(nextErrors).length > 0) return;
-              }
-              const next = flowSteps[stepIndex + 1];
-              if (next) setStepKey(next.key);
+          ) : null}
+          <div
+            style={{
+              marginTop: 28,
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 12,
+              flexWrap: 'wrap',
             }}
           >
-            Continue
-          </Button>
-        )}
-      </div>
+            <Button variant="secondary" onClick={back}>
+              Back
+            </Button>
+            <Button variant="primary" disabled={submitting} onClick={submit}>
+              Submit
+            </Button>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

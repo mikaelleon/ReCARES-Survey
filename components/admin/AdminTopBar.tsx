@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 function subtitleForPath(pathname: string): string {
+  if (pathname.includes('/complete')) return 'Finish access';
   if (pathname.includes('/dashboard')) return 'Response management';
   if (pathname.includes('/signup')) return 'Proponent signup';
   if (pathname.includes('/login')) return 'Proponent login';
@@ -31,8 +32,7 @@ export function AdminTopBar({
   const subtitle = subtitleForPath(pathname);
 
   const handleLogout = () => {
-    logout();
-    router.push('/');
+    void logout().then(() => router.push('/admin/login'));
   };
 
   return (

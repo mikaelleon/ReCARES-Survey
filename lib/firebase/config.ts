@@ -1,6 +1,8 @@
 'use client';
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -39,3 +41,17 @@ export function getFirebaseApp(): FirebaseApp | null {
 
 /** Convenience export — may be null until `.env.local` is configured. */
 export const app = typeof window !== 'undefined' ? getFirebaseApp() : null;
+
+/** Auth instance, or null when Firebase env vars are missing. */
+export function getFirebaseAuth(): Auth | null {
+  const firebaseApp = getFirebaseApp();
+  if (!firebaseApp) return null;
+  return getAuth(firebaseApp);
+}
+
+/** Firestore instance, or null when Firebase env vars are missing. */
+export function getFirestoreDb(): Firestore | null {
+  const firebaseApp = getFirebaseApp();
+  if (!firebaseApp) return null;
+  return getFirestore(firebaseApp);
+}

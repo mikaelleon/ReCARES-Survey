@@ -1,24 +1,30 @@
 'use client';
 
-import type { SurveyResponse, InterviewContact } from '@/survey/schema';
+import { addDoc, collection, doc, setDoc } from 'firebase/firestore';
+import { getFirestoreDb } from '@/lib/firebase/config';
+import type { InterviewInvitation, SurveyResponseDocument } from '@/survey/schema';
 
-/**
- * Firestore stubs for survey responses, interview contacts, and inquiries.
- * TODO: wire to Firestore once Firebase project is connected.
- */
-
-export async function submitSurveyResponse(data: SurveyResponse): Promise<void> {
-  // TODO: addDoc(collection(getFirestore(), 'responses'), data)
-  void data;
+function stripUndefined<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
 }
 
 /**
- * Writes interview contact info to a separate collection so emails never
- * land on the anonymous survey response document.
+ * Anonymous survey write. No auth user is attached.
+ * No-ops when Firebase env vars are missing so the resident flow can still finish locally.
  */
-export async function submitInterviewContact(data: InterviewContact): Promise<void> {
-  // TODO: addDoc(collection(getFirestore(), 'interview_contacts'), data)
-  void data;
+export async function submitNeedsAssessment(data: SurveyResponseDocument): Promise<void> {
+  const db = getFirestoreDb();
+  if (!db) return;
+  await setDoc(doc(db, 'needsAssessmentResponses', data.responseId), stripUndefined(data));
+}
+
+/**
+ * Separate collection. Must not include a survey response id or any survey answer.
+ */
+export async function submitInterviewInvitation(data: InterviewInvitation): Promise<void> {
+  const db = getFirestoreDb();
+  if (!db) return;
+  await addDoc(collection(db, 'interviewInterest'), stripUndefined(data));
 }
 
 export async function submitInquiry(data: {
@@ -26,11 +32,7 @@ export async function submitInquiry(data: {
   email: string;
   message: string;
 }): Promise<void> {
-  // TODO: addDoc(collection(getFirestore(), 'inquiries'), data)
+  // inquiries is not in the deployed rules yet, so this stays a no-op.
   void data;
 }
 
-export async function listSurveyResponses(): Promise<SurveyResponse[]> {
-  // TODO: getDocs(collection(getFirestore(), 'responses'))
-  return [];
-}

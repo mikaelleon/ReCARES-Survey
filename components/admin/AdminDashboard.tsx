@@ -26,7 +26,7 @@ type DemoState = 'data' | 'loading' | 'empty' | 'error';
  * Auth guard is client-side until middleware + Firebase session exist.
  */
 export function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, ready, logout } = useAuth();
   const searchParams = useSearchParams();
   const stateParam = searchParams.get('state');
   const demoState: DemoState =
@@ -138,9 +138,14 @@ export function AdminDashboard() {
     setTimeout(() => setFlashId(null), 900);
   }, [undo]);
 
-  // TODO: move auth guard to middleware.ts once Firebase Auth session handling exists.
+  if (!ready) {
+    return <p className="admin-dashboard__inner">Loading…</p>;
+  }
   if (!user) {
     redirect('/admin/login');
+  }
+  if (!user.authorized) {
+    redirect('/admin/complete');
   }
 
   const loading = demoState === 'loading';
@@ -150,6 +155,18 @@ export function AdminDashboard() {
   return (
     <div className="admin-dashboard">
       <div className="admin-dashboard__inner">
+        <section className="admin-section" aria-labelledby="admin-welcome-title">
+          <h1 id="admin-welcome-title" className="admin-section__title">
+            Welcome, {user.name || user.email}!
+          </h1>
+          <p className="admin-section__lead">Role: {user.role || 'Proponent'}</p>
+          <p className="admin-section__lead">Status: {user.status || 'active'}</p>
+          <p className="admin-section__lead">Signed in with: {user.signInMethod}</p>
+          <button type="button" className="admin-topbar__logout" onClick={() => void logout()}>
+            Logout
+          </button>
+        </section>
+
         <section className="admin-section" aria-labelledby="admin-overview-title">
           <h1 id="admin-overview-title" className="admin-section__title">
             Dashboard

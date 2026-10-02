@@ -1,7 +1,7 @@
 # Analysis: “Before we start” (Screening) Screen
 
 **Scope:** The first numbered survey step after the consent gate — titled **Before we start** in the product UI (`STEPS[0].key === 'screening'`).  
-**Primary sources:** screenshot of the live/UI step, `components/survey/SurveyFlow.tsx`, `components/survey/ScreeningForm.tsx`, `survey/content.ts`, `survey/gatingLogic.ts`, `survey/config.ts`, `survey/schema.ts`.  
+**Primary sources:** screenshot of the live/UI step, `components/survey/SurveyFlow.tsx`, `components/survey/ScreeningForm.tsx`, `survey/content.ts`, `survey/gatingLogic.ts`, `survey/schema.ts`.  
 **Date of analysis:** 18 Sep 2026.
 
 > **Naming note:** Do not confuse this screen with **Before You Begin**, the separate required acknowledgment gate (language + terms + data privacy) that runs *before* any numbered survey step. That gate is `SurveyConsentGate`. This document analyzes the **screening** step whose heading is still **Before we start**.
@@ -63,9 +63,9 @@ Then:
 
 | Pattern | Used for | Selected state |
 | --- | --- | --- |
-| Native-styled **Select** | Phase, household size, civil status, age, resident type, primary channel, conditional children count | Default “Select…” until chosen |
+| Native-styled **Select** | Phase, household size, civil status, age, resident type, primary channel | Default “Select…” until chosen |
 | **Text Input** | Block, Lot | Placeholder “Optional” |
-| **Chip / pill buttons** | Children Y/N, Sex, PWD self, PWD household | Bright amber fill + bold when selected |
+| **Chip / pill buttons** | Sex, PWD self, PWD household, construction / outside workers | Bright amber fill + bold when selected |
 | **Checkbox grid** | Disability type (only if PWD self = Yes) | Amber checked box |
 
 ---
@@ -78,46 +78,45 @@ Defined in `SCREENING_FIELDS` (`survey/content.ts`). Rendered by `ScreeningForm`
 
 | ID | Label | Control | Options / notes |
 | --- | --- | --- | --- |
-| `addr_phase` | Phase | Select | Phase 1–5. **Hint under field:** perimeter-adjacent phases unlock extended security tier; list marked as placeholder pending HOA confirmation. |
+| `addr_phase` | Phase | Select | Phase 1–5. Phase does not open or close any section. |
 | `addr_block` | Block | Text | Optional |
 | `addr_lot` | Lot | Text | Optional |
 | `household_size` | Household size | Select | 1, 2, 3, 4, 5, 6 or more |
-| `civil_status` | Civil status | Select | Single, Married, Widowed, Separated, Divorced |
-| `children_yn` | Children in household | Radio chips | Yes / No |
+| `civil_status` | Civil status | Select | Single, Married, Widowed, Separated, Divorced. Demographic only; it does not open a section. |
 | `sex` | Sex | Radio chips | Female / Male |
 | `age_range` | Age range | Select | 18–25 … 56 and above |
-| `resident_type` | Resident type | Select (wide) | Homeowner; Renter or lessee; Household member of a homeowner; Live-in household staff |
+| `resident_type` | Resident type | Select (wide) | Homeowner; Renter or lessee; Household member of a homeowner; Live-in household staff. **Renter or lessee** opens the tenant/lessee section. |
 | `pwd_self` | Person with disability (PWD) | Radio chips | Yes / No |
 | `pwd_household` | Household member has a disability or mobility limitation | Radio chips | Yes / No |
 | `primary_channel` | Primary channel currently used for HOA transactions | Select (wide) | In person; Online forms downloaded and printed; Through a household member or representative; Do not currently transact with the HOA |
+| `construction_work_yn` | Construction, renovation, or repair work that required outside workers | Radio chips | Yes / No. Yes opens the entrance-queue extended tier. The base entrance section is always shown. |
 
 ### 3.2 Conditionally visible
 
 | ID | Label | Shown when | Control |
 | --- | --- | --- | --- |
-| `children_count` | Number of children | `children_yn === 'Yes'` | Select: 1, 2, 3, 4 or more |
 | `disability_type` | Type of disability | `pwd_self === 'Yes'` | Multi-checkbox (wide): Physical or mobility; Visual; Hearing or communication; Intellectual or developmental; Psychosocial or mental health; Chronic illness affecting mobility; Multiple; Prefer not to say |
 
-In the provided screenshot, children = **No** and PWD fields are unset/default, so neither conditional block appears — matching the code.
+The construction question has no follow-up on this screen. It only decides whether the entrance-queue extended section appears later.
 
 ---
 
 ## 4. Downstream gating (why this screen exists)
 
-Screening answers are mapped through `toScreeningData` / `computeGates` in `SurveyFlow` and helpers in `survey/gatingLogic.ts` + `PERIMETER_PHASES` in `survey/config.ts`.
+Screening answers are mapped through `toScreeningData` / `computeGates` in `SurveyFlow` and helpers in `survey/gatingLogic.ts`.
 
 | Screening signal | Gate | Effect on later flow |
 | --- | --- | --- |
-| Phase ∈ `PERIMETER_PHASES` (currently **Phase 1**, **Phase 4**) | `perimeter` | Unlocks **Section 3 extended** (“Perimeter and security — extended tier”) on the survey plan |
-| Civil status ∈ Married / Widowed / Separated / Divorced | `s4` auto-open | **Section 4** (household & personal safety) appears without opt-in |
-| Civil status = Single (and similar non-partnered) | `s4` opt-in | Step 4 asks whether to enter Section 4; decline → stored as `not_shown` |
-| Children in household = Yes | `s5` | Unlocks **Section 5** (children and youth safety) |
-| PWD self = Yes | `s7a` | Unlocks **Section 7a** (accessibility — own needs); also reveals disability-type multi on this screen |
-| PWD household = Yes | `s7b` | Unlocks **Section 7b** (accessibility — household member) |
+| Resident type = Renter or lessee | `showTenantSection` | Unlocks **Renting or Leasing in Camella Homes Tibig** |
+| Construction / outside workers = Yes | `showEntranceQueueExtended` | Unlocks **Construction Worker and Security Permits**. The base entrance section is always shown. |
+| PWD self = Yes | `showSection7a` | Unlocks **Section 7a** (accessibility — own needs); also reveals disability-type multi on this screen |
+| PWD household = Yes | `showSection7b` | Unlocks **Section 7b** (accessibility — household member) |
 
-**Always-on sections** (not decided here, but listed on the next “plan” step): Screening itself, Section 2, Section 3 base, Section 6, 7c, 8, etc. per `SECTIONS` in `content.ts`.
+Civil status is stored and is not read for branching. Phase does not open a section.
 
-**Important implementation detail:** `toScreeningData` currently hard-maps several typed fields incompletely for gating (e.g. age/resident type/channel may be stubbed to fixed defaults in the mapper while display labels are stored in `sc`). Gates that matter today primarily use **phase, civil status, children, PWD flags** via the display-label path and `computeGates`. Any future reliance on full typed `ScreeningData` should reconcile that mapper with real form values.
+**Always-on sections** (not decided here, but listed on the next “plan” step): Screening itself, Section 2, entrance base, street closures, AI-assisted registration, data privacy, Section 6, 7c, 8, 9, and 10, per `SECTIONS` in `content.ts`. The new topic sections are empty stubs until their questions are written.
+
+**Important implementation detail:** `toScreeningData` maps every schema field from the form. Gates use resident type, the construction answer, and the two PWD flags. Civil status is demographic only.
 
 ---
 
@@ -141,7 +140,7 @@ On submit (later steps), gated-away fields are written as `not_shown` rather tha
 
 ### 5.3 Conditional field cleanup
 
-When a parent answer flips (e.g. children Yes → No), the child field may remain in `sc` / `multi` state even if hidden. Plan/review/submit logic often filters by `when`, but **stale values can linger in state** until overwritten. Worth hardening if analytics ever read raw `sc` without re-applying `when`.
+When a parent answer flips (PWD self Yes → No), the disability-type multi is cleared from `multi`. Plan, review, and submit still filter conditional fields with `when`.
 
 ---
 
@@ -151,22 +150,21 @@ When a parent answer flips (e.g. children Yes → No), the child field may remai
 
 1. **Clear routing purpose** — Intro tells residents why these questions exist.  
 2. **Anonymity framing** — “Nothing here asks for your name” reduces fear of identification for many residents.  
-3. **Progressive disclosure** — Children count and disability type only appear when relevant; keeps the default path shorter.  
+3. **Progressive disclosure** — Disability type appears only when the respondent identifies as a PWD.  
 4. **Chip radios** — Large touch targets (≥44px) suit mobile and older users.  
-5. **Wide full-bleed selects** for long labels (resident type, primary channel) avoid cramped columns.  
-6. **Perimeter hint** is honest that phase list / perimeter rule are HOA-confirmable config (`PERIMETER_PHASES`).  
+5. **Wide full-bleed selects** for long labels (resident type, primary channel, construction) avoid cramped columns.  
+6. **Phase is demographic** — it is collected and does not branch the survey.  
 7. **Separation from consent** — Legal/privacy acknowledgment is no longer mashed into the first data fields; screening can focus on routing.
 
 ### 6.2 Friction and UX risks
 
 1. **Title collision:** Consent is “Before You Begin”; screening is “Before we start.” Residents may feel they already finished a “before we start” moment. Consider renaming screening to something like **About your household** or **Section 1 — Screening**.  
-2. **No required validation:** Continue works with an empty form. Downstream gates then treat missing civil status / children / PWD as non-opening paths — easy to skip into a thin survey by accident.  
-3. **Phase hint is developer-facing:** “Placeholder list — confirm the real phases with the HOA” is useful for the team but may confuse residents. Prefer resident-safe helper copy; keep the HOA TODO in docs/config comments.  
-4. **Block / Lot optional but unlabeled as sensitive:** Optional address fragments may still re-identify households in a small subdivision when combined with phase. Privacy notice already covers address details; UI could soften with “optional — helps researchers understand phase coverage” without sounding like HOA enforcement.  
-5. **Binary sex only:** May need an inclusive third option depending on IRB / adviser guidance.  
-6. **PWD wording:** “Person with disability (PWD)” is clear for PH context; household question is long and may wrap awkwardly in a narrow column.  
-7. **Language of the form body:** Consent gate is bilingual; screening field labels/options remain English-only in `content.ts` even when `language === 'FIL'`. FIL users get Filipino legal copy then English fields — a consistency gap.  
-8. **Navbar CTA while in-survey:** “Start the survey” remains visible during the flow (per shell). Harmless but slightly odd mid-instrument.
+2. **Required fields are checked on Continue.** An empty form stays on screening and shows a written error under each missing field. Missing resident type, construction, and PWD answers would otherwise be treated as non-opening paths.  
+3. **Block / Lot optional but unlabeled as sensitive:** Optional address fragments may still re-identify households in a small subdivision when combined with phase. Privacy notice already covers address details; UI could soften with “optional — helps researchers understand phase coverage” without sounding like HOA enforcement.  
+4. **Binary sex only:** May need an inclusive third option depending on IRB / adviser guidance.  
+5. **PWD wording:** “Person with disability (PWD)” is clear for PH context; household question is long and may wrap awkwardly in a narrow column.  
+6. **Language of the form body:** Consent gate is bilingual; screening field labels/options remain English-only in `content.ts` even when `language === 'FIL'`. FIL users get Filipino legal copy then English fields — a consistency gap.  
+7. **Navbar CTA while in-survey:** “Start the survey” remains visible during the flow (per shell). Harmless but slightly odd mid-instrument.
 
 ### 6.3 Accessibility
 
@@ -175,7 +173,7 @@ When a parent answer flips (e.g. children Yes → No), the child field may remai
 - Multi disability uses `Checkbox` with visible labels.  
 - Progress is text + bar; ensure the bar has an accessible name (ProgressBar component).  
 - Focus styles depend on global `:focus-visible` tokens.  
-- No per-field “required” announcements because nothing is enforced yet.  
+- Required fields show a red asterisk and a written error after Continue.  
 - Amber-only selection state is supplemented by bold weight (not color alone) — good for the design-system rule.
 
 ### 6.4 Privacy / ethics alignment
@@ -183,8 +181,8 @@ When a parent answer flips (e.g. children Yes → No), the child field may remai
 | Topic | Status on this screen |
 | --- | --- |
 | Name | Not collected — matches intro |
-| Address-like data | Phase required for gating intent; block/lot optional |
-| Sensitive gates | PWD and civil status collected here to open later sensitive sections |
+| Address-like data | Phase, block, and lot are demographic. Block and lot are optional. Phase does not open a section. |
+| Sensitive gates | PWD answers open the accessibility sections. Resident type opens the tenant section. The construction answer opens the entrance-queue extended tier. Civil status does not open a section. |
 | Voluntary skip | Currently total skip possible via empty Continue — stronger than “skip any question”; may conflict with research completeness goals |
 | Retention / rights | Handled on prior consent gate, not repeated here |
 
@@ -210,8 +208,7 @@ app/(resident)/survey/page.tsx
 | `survey/content.ts` | Field definitions, options, hints, STEPS copy |
 | `components/survey/ScreeningForm.tsx` | Grid layout + control rendering + `when` filter |
 | `components/survey/SurveyFlow.tsx` | Step state, gating, plan/review/submit |
-| `survey/gatingLogic.ts` | Pure predicates for s4/s5/s7a/s7b/perimeter |
-| `survey/config.ts` | `PERIMETER_PHASES` |
+| `survey/gatingLogic.ts` | Pure predicates for tenant, entrance-queue extended, 7a, and 7b |
 | `survey/schema.ts` | Typed `ScreeningData` / `SurveyResponse` shapes |
 
 ---
@@ -221,14 +218,14 @@ app/(resident)/survey/page.tsx
 Prioritized checklist:
 
 1. **Rename** screening title to reduce collision with the consent screen.  
-2. **Add required-field rules** (at least phase, civil status, children Y/N, sex, age, resident type, both PWD questions, primary channel) with inline errors before Continue.  
+2. **Required fields** are checked on Continue in `validateScreeningStep` (phase, household size, civil status, sex, age, resident type, both PWD questions, primary channel, and the construction question).  
 3. **Localize** `SCREENING_FIELDS` labels/options for FIL.  
-4. **Confirm with HOA** real phase list and perimeter set; remove resident-facing “placeholder” language.  
+4. **Confirm with the HOA** that the phase list is the real subdivision list. Phase is demographic and does not branch the survey.  
 5. **Confirm retention** on the consent gate (still placeholder there).  
 6. **Clear dependent answers** when parent radios flip.  
 7. **Align `toScreeningData`** with actual form values for every typed field.  
 8. Consider **inclusive sex / prefer-not-to-say** options if the research protocol allows.  
-9. Optionally show a **short “why we ask”** note for PWD and civil status (they unlock sensitive sections later).  
+9. Optionally show a **short “why we ask”** note for the PWD questions, resident type, and the construction question (they unlock later sections).  
 10. Decide whether **block/lot** should stay optional forever or become unused for anonymity and dropped.
 
 ---
@@ -237,7 +234,7 @@ Prioritized checklist:
 
 The **Before we start** screen is a well-structured **screening / branching instrument**: card layout, progressive disclosure, and clear coupling to gated sections. Visually it matches the resident design system (emerald shell, amber selection, soft card, step progress).
 
-Its main product risks are **naming overlap** with the new consent gate, **no validation before Continue**, **English-only field copy under FIL language**, and a few **resident-facing developer placeholders** (phase list). Fixing those would make Section 1 feel finished rather than scaffolded, without changing the underlying gating model.
+Its main product risks are **naming overlap** with the new consent gate and **English-only field copy under FIL language**.
 
 ---
 
@@ -245,8 +242,6 @@ Its main product risks are **naming overlap** with the new consent gate, **no va
 
 Elements visible in the provided capture correspond 1:1 to the always-visible field set above, with:
 
-- Children = **No** (amber) → `children_count` hidden  
 - PWD radios unselected / unset → `disability_type` hidden  
-- Phase hint text visible under Phase  
 - Back disabled / Continue enabled  
-- Step label **1 of 5** confirming this is the numbered screening step, not the consent gate
+- Step label confirming this is the numbered screening step, not the consent gate
