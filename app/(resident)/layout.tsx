@@ -1,19 +1,9 @@
-import { Footer } from '@/components/layout/Footer';
-import { Navbar } from '@/components/layout/Navbar';
-import { ScrollToTop } from '@/components/layout/ScrollToTop';
-import { RagBotChat } from '@/components/ragbot/RagBotChat';
+import { ResidentChrome } from '@/components/layout/ResidentChrome';
 
 /**
- * Resident-facing chrome: navigation and footer on all public pages.
+ * Resident-facing chrome: navigation on public pages.
+ * Footer and RAGbot stay off survey routes.
  */
 export default function ResidentLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <Navbar />
-      {children}
-      <Footer />
-      <ScrollToTop />
-      <RagBotChat />
-    </>
-  );
+  return <ResidentChrome>{children}</ResidentChrome>;
 }
