@@ -191,7 +191,7 @@ export function SurveyFlow() {
       await submitNeedsAssessment(document);
       clearDraft();
       markSubmittedOnDevice();
-      router.push(finalAnswers.IV1 === 'yes' ? '/survey/thank-you?invite=1' : '/survey/thank-you');
+      router.push('/survey/thank-you');
     } catch {
       setSubmitError('The response could not be saved. Please try again.');
     } finally {

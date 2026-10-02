@@ -16,6 +16,7 @@ import { INCLUDE_SEX_AND_CIVIL_STATUS, TENANT_ANSWERS_NOT_SHARED_WITH_LANDLORD_O
 import { optionDisabled, toggleMulti } from '@/survey/exclusive';
 import { O1_CATEGORIES } from '@/survey/o1';
 import type { O1Details, SurveyAnswers } from '@/survey/schema';
+import { InterviewInvitationForm } from '@/components/survey/InterviewInvitationForm';
 import {
   LikertChoice,
   MultiChoice,
@@ -864,6 +865,7 @@ export function StepView({
         ]}
         onChange={(IV1) => onPatch({ IV1: IV1 as SurveyAnswers['IV1'] })}
       />
+      {answers.IV1 === 'yes' ? <InterviewInvitationForm variant="embedded" /> : null}
     </>
   );
 }

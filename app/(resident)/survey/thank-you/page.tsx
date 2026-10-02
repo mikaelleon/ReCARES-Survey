@@ -3,10 +3,9 @@ import { Button } from '@/components/ui/Button';
 export default function ThankYouPage({
   searchParams,
 }: {
-  searchParams?: { interview?: string; invite?: string };
+  searchParams?: { interview?: string };
 }) {
   const interviewSent = searchParams?.interview === 'sent';
-  const showInvite = searchParams?.invite === '1' && !interviewSent;
 
   return (
     <div
@@ -35,11 +34,6 @@ export default function ThankYouPage({
             : 'Results will be reported only as group totals.'}
         </p>
         <div style={{ marginTop: 28, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {showInvite ? (
-            <Button variant="secondary" href="/survey/interview">
-              Optional interview invitation
-            </Button>
-          ) : null}
           <Button variant="primary" href="/">
             Back to the homepage
           </Button>

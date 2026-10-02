@@ -125,10 +125,12 @@ export interface SurveyResponseDocument {
   answers: Partial<SurveyAnswers>;
 }
 
+/** Separate from SurveyResponseDocument. No response ID, no survey answers. */
 export interface InterviewInvitation {
-  preferredName?: string;
-  contactMethod: string;
-  contactDetail: string;
-  residentType: 'homeowner' | 'tenant' | 'household_member' | 'caregiver';
-  consent: boolean;
+  email: string;
+  interviewFormat: 'Online' | 'Face-to-face';
+  preferredDays: string[]; // e.g. ['Monday', 'Wednesday']
+  preferredTime: 'Morning' | 'Afternoon' | 'Evening' | 'Other';
+  preferredTimeOther?: string; // required only when preferredTime === 'Other'
+  submittedAt: string; // server timestamp (ISO or Firestore Timestamp serialized)
 }

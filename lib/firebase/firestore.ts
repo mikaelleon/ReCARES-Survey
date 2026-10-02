@@ -1,6 +1,6 @@
 'use client';
 
-import { addDoc, collection, doc, setDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase/config';
 import type { InterviewInvitation, SurveyResponseDocument } from '@/survey/schema';
 
@@ -21,10 +21,15 @@ export async function submitNeedsAssessment(data: SurveyResponseDocument): Promi
 /**
  * Separate collection. Must not include a survey response id or any survey answer.
  */
-export async function submitInterviewInvitation(data: InterviewInvitation): Promise<void> {
+export async function submitInterviewInvitation(
+  data: Omit<InterviewInvitation, 'submittedAt'>,
+): Promise<void> {
   const db = getFirestoreDb();
   if (!db) return;
-  await addDoc(collection(db, 'interviewInterest'), stripUndefined(data));
+  await addDoc(collection(db, 'interviewInterest'), {
+    ...stripUndefined(data),
+    submittedAt: serverTimestamp(),
+  });
 }
 
 export async function submitInquiry(data: {
