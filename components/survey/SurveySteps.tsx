@@ -106,7 +106,7 @@ export function StepView({
         />
         <SingleChoice
           code="A4"
-          question="Does another member of your household have a disability or mobility limitation?"
+          question="Do you or another member of your household have a disability or mobility limitation?"
           value={answers.A4}
           error={errors.A4}
           options={[
@@ -116,6 +116,37 @@ export function StepView({
           ]}
           onChange={(A4) => onPatch({ A4: A4 as SurveyAnswers['A4'] })}
         />
+        {showAC1(answers) ? (
+          <>
+            <MultiChoice
+              code="AC1"
+              question="What kind of difficulty applies to you or the household member? Select all that apply."
+              value={answers.AC1}
+              error={errors.AC1}
+              exclusiveId="prefer_not_to_say"
+              options={[
+                { id: 'difficulty_walking_climbing', label: 'Difficulty walking or climbing stairs' },
+                { id: 'uses_wheelchair_or_aid', label: 'Uses a wheelchair or mobility aid' },
+                { id: 'difficulty_seeing', label: 'Difficulty seeing' },
+                { id: 'difficulty_hearing', label: 'Difficulty hearing' },
+                { id: 'difficulty_reading_forms', label: 'Difficulty reading or understanding forms' },
+                { id: 'other', label: 'Other' },
+                { id: 'prefer_not_to_say', label: 'Prefer not to say' },
+              ]}
+              onChange={(AC1) => onPatch({ AC1 })}
+            />
+            {(answers.AC1 ?? []).includes('other') ? (
+              <TextField
+                code="AC1_other"
+                question="Other"
+                value={answers.AC1_other}
+                maxLength={200}
+                error={errors.AC1_other}
+                onChange={(AC1_other) => onPatch({ AC1_other })}
+              />
+            ) : null}
+          </>
+        ) : null}
         <SingleChoice
           code="A5"
           question="In the past 12 months, did you have construction, renovation, or repair work done that needed outside workers to enter the subdivision?"
@@ -181,18 +212,6 @@ export function StepView({
             />
           </>
         ) : null}
-        <SingleChoice
-          code="A9"
-          question="Are you a person with a disability (PWD)?"
-          value={answers.A9}
-          error={errors.A9}
-          options={[
-            { id: 'yes', label: 'Yes' },
-            { id: 'no', label: 'No' },
-            { id: 'prefer_not_to_say', label: 'Prefer not to say' },
-          ]}
-          onChange={(A9) => onPatch({ A9: A9 as SurveyAnswers['A9'] })}
-        />
         <SingleChoice
           code="A10"
           question="Who usually handles HOA transactions for your household?"
@@ -768,25 +787,6 @@ export function StepView({
         <p className="na-intro">
           These questions are voluntary. You may choose Prefer not to say for any of them.
         </p>
-        {showAC1(answers) ? (
-          <MultiChoice
-            code="AC1"
-            question="What kind of difficulty applies to you or the household member? Select all that apply."
-            value={answers.AC1}
-            error={errors.AC1}
-            exclusiveId="prefer_not_to_say"
-            options={[
-              { id: 'walking', label: 'Difficulty walking or climbing stairs' },
-              { id: 'wheelchair', label: 'Uses a wheelchair or mobility aid' },
-              { id: 'seeing', label: 'Difficulty seeing' },
-              { id: 'hearing', label: 'Difficulty hearing' },
-              { id: 'reading', label: 'Difficulty reading or understanding forms' },
-              { id: 'long_term', label: 'Another long-term condition that limits movement' },
-              { id: 'prefer_not_to_say', label: 'Prefer not to say' },
-            ]}
-            onChange={(AC1) => onPatch({ AC1 })}
-          />
-        ) : null}
         <LikertChoice
           code="AC2"
           scale="agreement"

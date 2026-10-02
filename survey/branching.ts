@@ -21,7 +21,7 @@ export function showP5(a: Partial<SurveyAnswers>): boolean {
 }
 
 export function showAC1(a: Partial<SurveyAnswers>): boolean {
-  return a.A4 === 'yes' || a.A9 === 'yes';
+  return a.A4 === 'yes';
 }
 
 export function showDeviceDependentItems(a: Partial<SurveyAnswers>): boolean {

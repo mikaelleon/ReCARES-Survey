@@ -21,7 +21,12 @@ export function normalizeAnswers(input: Partial<SurveyAnswers>): Partial<SurveyA
   }
 
   if (!showP5(next)) delete next.P5;
-  if (!showAC1(next)) delete next.AC1;
+  if (!showAC1(next)) {
+    delete next.AC1;
+    delete next.AC1_other;
+  } else if (!(next.AC1 ?? []).includes('other')) {
+    delete next.AC1_other;
+  }
   if (!(next.O1 ?? []).includes('other')) delete next.O1_other;
 
   return next;

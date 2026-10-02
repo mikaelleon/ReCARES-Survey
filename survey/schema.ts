@@ -18,11 +18,13 @@ export interface SurveyAnswers {
     | 'Not sure';
   A3: '1' | '2' | '3' | '4' | '5' | '6+' | 'No one lives in the unit right now';
   A4: 'yes' | 'no' | 'prefer_not_to_say';
+  /** Shown on Screen 2, under A4, only when A4 is yes. */
+  AC1?: string[];
+  AC1_other?: string;
   A5: 'yes' | 'no';
   A6: '18-24' | '25-34' | '35-44' | '45-54' | '55-64' | '65+' | 'prefer_not_to_say';
   A7: 'female' | 'male' | 'prefer_not_to_say';
   A8: 'single' | 'married' | 'living_with_partner' | 'widowed' | 'separated' | 'prefer_not_to_say';
-  A9: 'yes' | 'no' | 'prefer_not_to_say';
   A10: 'i_do' | 'household_member' | 'caregiver_or_rep' | 'owner_or_landlord' | 'it_varies';
   A11: 'walk_in' | 'phone' | 'facebook' | 'email_or_website' | 'through_neighbor_or_officer' | 'no_transaction_yet';
 
@@ -76,7 +78,6 @@ export interface SurveyAnswers {
   T3?: AgreementScore;
   T4?: string;
 
-  AC1?: string[];
   AC2: AgreementScore;
   AC3: AgreementScore;
   AC4: 'the_person_themselves' | 'family_member' | 'caregiver_or_rep' | 'not_applicable';

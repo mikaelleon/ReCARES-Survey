@@ -24,6 +24,10 @@ export function validateStep(step: number, a: Partial<SurveyAnswers>): Record<st
     need('A3', missingChoice(a.A3));
     if (!isOwnerLivingElsewhere(a) && a.A3 === VACANT) need('A3', true);
     need('A4', missingChoice(a.A4));
+    if (showAC1(a)) need('AC1', !a.AC1 || a.AC1.length === 0, CHOOSE_ANY);
+    if (a.AC1_other != null && a.AC1_other.length > 200) {
+      errors.AC1_other = 'Please use 200 characters or fewer.';
+    }
     need('A5', missingChoice(a.A5));
   }
 
@@ -33,7 +37,6 @@ export function validateStep(step: number, a: Partial<SurveyAnswers>): Record<st
       need('A7', missingChoice(a.A7));
       need('A8', missingChoice(a.A8));
     }
-    need('A9', missingChoice(a.A9));
     need('A10', missingChoice(a.A10));
     need('A11', missingChoice(a.A11));
   }
@@ -122,7 +125,6 @@ export function validateStep(step: number, a: Partial<SurveyAnswers>): Record<st
   }
 
   if (step === 12) {
-    if (showAC1(a)) need('AC1', !a.AC1 || a.AC1.length === 0, CHOOSE_ANY);
     need('AC2', missingChoice(a.AC2));
     need('AC3', missingChoice(a.AC3));
     need('AC4', missingChoice(a.AC4));
