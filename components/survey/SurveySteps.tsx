@@ -8,17 +8,20 @@ import {
   showAC1,
   showDeviceDependentItems,
   showOwnerLandlordOption,
+  showH3,
+  showP2P3,
   showP5,
 } from '@/survey/branching';
 import { INCLUDE_SEX_AND_CIVIL_STATUS, TENANT_ANSWERS_NOT_SHARED_WITH_LANDLORD_OR_HOA } from '@/survey/flags';
-import type { SurveyAnswers } from '@/survey/schema';
+import { optionDisabled, toggleMulti } from '@/survey/exclusive';
+import { O1_CATEGORIES } from '@/survey/o1';
+import type { O1Details, SurveyAnswers } from '@/survey/schema';
 import {
   LikertChoice,
   MultiChoice,
   NumberField,
   REQUIRED_NOTE,
   ResidentTypeField,
-  SelectChoice,
   SingleChoice,
   TextField,
 } from '@/components/survey/SurveyFields';
@@ -70,19 +73,37 @@ export function StepView({
   if (step === 1) {
     return (
       <>
-        <p className="na-required-note">{REQUIRED_NOTE}</p>
-        <p className="na-intro">
-          Your answer to the first question decides which questions you will see. Nothing here asks
-          for your name. You may choose &apos;Prefer not to say&apos; for personal questions.
+        <p className="na-required-note" style={{ color: 'var(--text-body)', fontSize: 16, lineHeight: 1.45 }}>
+          {REQUIRED_NOTE}
         </p>
+        <p className="na-intro" style={{ color: 'var(--text-body)', fontSize: 16, lineHeight: 1.45 }}>
+          Your answers in this pre-screening form decides which sets of questions would be shown to
+          you.
+          <br />
+          You may choose &apos;Prefer not to say&apos; for personal questions.
+        </p>
+        <div className="survey-bento">
         <ResidentTypeField
           value={answers.A1}
           error={errors.A1}
           onChange={(A1) => onPatch({ A1: A1 as SurveyAnswers['A1'] })}
         />
+        <div className="bento-col">
+        <SingleChoice
+          code="A3"
+          question="How many people live in the unit?"
+          columns={2}
+          value={answers.A3}
+          error={errors.A3}
+          options={a3Options.map((option) =>
+            option.id === 'No one lives in the unit right now' ? { ...option, wide: true } : option,
+          )}
+          onChange={(A3) => onPatch({ A3: A3 as SurveyAnswers['A3'] })}
+        />
         <SingleChoice
           code="A2"
           question="Which phase do you live in?"
+          columns={2}
           value={answers.A2}
           error={errors.A2}
           options={[
@@ -92,18 +113,13 @@ export function StepView({
             { id: 'Phase 4 Heights', label: 'Phase 4 Heights' },
             { id: 'Phase 5 Highlands', label: 'Phase 5 Highlands' },
             { id: 'Phase 6 Eastgrove', label: 'Phase 6 Eastgrove' },
-            { id: 'Not sure', label: 'Not sure' },
+            { id: 'Not sure', label: 'Not sure', wide: true },
           ]}
           onChange={(A2) => onPatch({ A2: A2 as SurveyAnswers['A2'] })}
         />
-        <SelectChoice
-          code="A3"
-          question="How many people live in the unit?"
-          value={answers.A3}
-          error={errors.A3}
-          options={a3Options}
-          onChange={(A3) => onPatch({ A3: A3 as SurveyAnswers['A3'] })}
-        />
+        </div>
+        </div>
+        <div className="bento-pair">
         <SingleChoice
           code="A4"
           question="Do you or another member of your household have a disability or mobility limitation?"
@@ -116,6 +132,18 @@ export function StepView({
           ]}
           onChange={(A4) => onPatch({ A4: A4 as SurveyAnswers['A4'] })}
         />
+        <SingleChoice
+          code="A5"
+          question="In the past 12 months, did you have construction, renovation, or repair work done that needed outside workers to enter the subdivision?"
+          value={answers.A5}
+          error={errors.A5}
+          options={[
+            { id: 'yes', label: 'Yes' },
+            { id: 'no', label: 'No' },
+          ]}
+          onChange={(A5) => onPatch({ A5: A5 as SurveyAnswers['A5'] })}
+        />
+        </div>
         {showAC1(answers) ? (
           <>
             <MultiChoice
@@ -147,17 +175,6 @@ export function StepView({
             ) : null}
           </>
         ) : null}
-        <SingleChoice
-          code="A5"
-          question="In the past 12 months, did you have construction, renovation, or repair work done that needed outside workers to enter the subdivision?"
-          value={answers.A5}
-          error={errors.A5}
-          options={[
-            { id: 'yes', label: 'Yes' },
-            { id: 'no', label: 'No' },
-          ]}
-          onChange={(A5) => onPatch({ A5: A5 as SurveyAnswers['A5'] })}
-        />
       </>
     );
   }
@@ -165,8 +182,10 @@ export function StepView({
   if (step === 2) {
     return (
       <>
-        <SelectChoice
+        <div className="survey-bento">
+        <SingleChoice
           code="A6"
+          columns={2}
           question="What is your age range?"
           value={answers.A6}
           error={errors.A6}
@@ -177,12 +196,11 @@ export function StepView({
             { id: '45-54', label: '45 to 54' },
             { id: '55-64', label: '55 to 64' },
             { id: '65+', label: '65 and above' },
-            { id: 'prefer_not_to_say', label: 'Prefer not to say' },
+            { id: 'prefer_not_to_say', label: 'Prefer not to say', wide: true },
           ]}
           onChange={(A6) => onPatch({ A6: A6 as SurveyAnswers['A6'] })}
         />
         {INCLUDE_SEX_AND_CIVIL_STATUS ? (
-          <>
             <SingleChoice
               code="A7"
               question="Sex"
@@ -195,8 +213,12 @@ export function StepView({
               ]}
               onChange={(A7) => onPatch({ A7: A7 as SurveyAnswers['A7'] })}
             />
-            <SelectChoice
+        ) : null}
+        </div>
+        {INCLUDE_SEX_AND_CIVIL_STATUS ? (
+            <SingleChoice
               code="A8"
+              columns={2}
               question="Civil status"
               value={answers.A8}
               error={errors.A8}
@@ -210,7 +232,6 @@ export function StepView({
               ]}
               onChange={(A8) => onPatch({ A8: A8 as SurveyAnswers['A8'] })}
             />
-          </>
         ) : null}
         <SingleChoice
           code="A10"
@@ -221,8 +242,9 @@ export function StepView({
           hint={answers.A10 && answers.A10 !== 'i_do' ? A10_NOTE : undefined}
           onChange={(A10) => onPatch({ A10: A10 as SurveyAnswers['A10'] })}
         />
-        <SelectChoice
+        <SingleChoice
           code="A11"
+          columns={2}
           question="Which channel do you mainly use for HOA transactions?"
           value={answers.A11}
           error={errors.A11}
@@ -328,19 +350,27 @@ export function StepView({
     return (
       <>
         {!showDeviceDependentItems(answers) ? <p className="na-hint">{ASSISTED_NOTE}</p> : null}
-        <NumberField
+        <SingleChoice
           code="B6"
+          columns={2}
           question="About how much do you spend on mobile data or internet each month, in pesos?"
           value={answers.B6}
-          min={0}
-          max={10000}
           error={errors.B6}
-          onChange={(B6) => onPatch({ B6 })}
+          options={[
+            { id: 'none', label: 'None' },
+            { id: 'under_100', label: 'Under 100' },
+            { id: '100_299', label: '100 to 299' },
+            { id: '300_499', label: '300 to 499' },
+            { id: '500_999', label: '500 to 999' },
+            { id: '1000_1999', label: '1,000 to 1,999' },
+            { id: '2000_plus', label: '2,000 or more' },
+            { id: 'not_sure', label: 'Not sure' },
+          ]}
+          onChange={(B6) => onPatch({ B6: B6 as SurveyAnswers['B6'] })}
         />
         <LikertChoice
           code="B7"
           scale="agreement"
-          withNotApplicable
           question="My internet connection is stable enough to finish an online form without interruption."
           value={answers.B7}
           error={errors.B7}
@@ -351,18 +381,16 @@ export function StepView({
             <LikertChoice
               code="B8"
               scale="agreement"
-              withNotApplicable
               question="I avoid installing new apps because of limited phone storage or mobile data."
-              value={answers.B8 === 99 ? undefined : answers.B8}
+              value={typeof answers.B8 === 'number' ? answers.B8 : undefined}
               error={errors.B8}
               onChange={(B8) => onPatch({ B8: B8 as SurveyAnswers['B8'] })}
             />
             <LikertChoice
               code="B9"
               scale="agreement"
-              withNotApplicable
               question="I am comfortable opening a website on my phone browser instead of installing an app."
-              value={answers.B9 === 99 ? undefined : answers.B9}
+              value={typeof answers.B9 === 'number' ? answers.B9 : undefined}
               error={errors.B9}
               onChange={(B9) => onPatch({ B9: B9 as SurveyAnswers['B9'] })}
             />
@@ -499,7 +527,6 @@ export function StepView({
         <LikertChoice
           code="S1"
           scale="agreement"
-          withNotApplicable
           question="The HOA office hours make it hard for me to do my transactions."
           value={answers.S1}
           error={errors.S1}
@@ -508,7 +535,6 @@ export function StepView({
         <LikertChoice
           code="S2"
           scale="agreement"
-          withNotApplicable
           question="I have to visit the HOA office in person even for simple matters."
           value={answers.S2}
           error={errors.S2}
@@ -517,7 +543,6 @@ export function StepView({
         <LikertChoice
           code="S3"
           scale="agreement"
-          withNotApplicable
           question="I receive a response to my concerns within a reasonable time."
           value={answers.S3}
           error={errors.S3}
@@ -545,24 +570,26 @@ export function StepView({
           ]}
           onChange={(P1) => onPatch({ P1 })}
         />
-        <LikertChoice
-          code="P2"
-          scale="agreement"
-          withNotApplicable
-          question="Waiting at the gate to get a permit or pass takes too long for my visitors, workers, or drivers."
-          value={answers.P2}
-          error={errors.P2}
-          onChange={(P2) => onPatch({ P2: P2 as SurveyAnswers['P2'] })}
-        />
-        <LikertChoice
-          code="P3"
-          scale="agreement"
-          withNotApplicable
-          question="Leaving an ID at the gate is inconvenient for my household or guests."
-          value={answers.P3}
-          error={errors.P3}
-          onChange={(P3) => onPatch({ P3: P3 as SurveyAnswers['P3'] })}
-        />
+        {showP2P3(answers) ? (
+          <>
+            <LikertChoice
+              code="P2"
+              scale="agreement"
+              question="Waiting at the gate to get a permit or pass takes too long for my visitors, workers, or drivers."
+              value={typeof answers.P2 === 'number' ? answers.P2 : undefined}
+              error={errors.P2}
+              onChange={(P2) => onPatch({ P2: P2 as SurveyAnswers['P2'] })}
+            />
+            <LikertChoice
+              code="P3"
+              scale="agreement"
+              question="Leaving an ID at the gate is inconvenient for my household or guests."
+              value={typeof answers.P3 === 'number' ? answers.P3 : undefined}
+              error={errors.P3}
+              onChange={(P3) => onPatch({ P3: P3 as SurveyAnswers['P3'] })}
+            />
+          </>
+        ) : null}
         <NumberField
           code="P4"
           question="About how many minutes does a typical wait at the gate take?"
@@ -576,7 +603,6 @@ export function StepView({
           <LikertChoice
             code="P5"
             scale="agreement"
-            withNotApplicable
             question="Getting my construction or repair workers approved to enter takes too many steps."
             value={answers.P5}
             error={errors.P5}
@@ -607,7 +633,6 @@ export function StepView({
         <LikertChoice
           code="C2"
           scale="agreement"
-          withNotApplicable
           question="The process of getting a street or event closure permit is clear."
           value={answers.C2}
           error={errors.C2}
@@ -616,7 +641,6 @@ export function StepView({
         <LikertChoice
           code="C3"
           scale="agreement"
-          withNotApplicable
           question="Notices about street closures and rerouting reach me in time."
           value={answers.C3}
           error={errors.C3}
@@ -636,7 +660,6 @@ export function StepView({
         <LikertChoice
           code="R1"
           scale="agreement"
-          withNotApplicable
           question="I am comfortable uploading a photo of my valid ID to a secure online form."
           value={answers.R1}
           error={errors.R1}
@@ -645,7 +668,6 @@ export function StepView({
         <LikertChoice
           code="R2"
           scale="agreement"
-          withNotApplicable
           question="I trust that only authorized HOA personnel would be able to see my ID."
           value={answers.R2}
           error={errors.R2}
@@ -691,21 +713,21 @@ export function StepView({
         <LikertChoice
           code="H2"
           scale="agreement"
-          withNotApplicable
           question="Completing HOA clearances, forms, and permits needs more office visits than it should."
           value={answers.H2}
           error={errors.H2}
           onChange={(H2) => onPatch({ H2: H2 as SurveyAnswers['H2'] })}
         />
-        <LikertChoice
-          code="H3"
-          scale="agreement"
-          withNotApplicable
-          question="Registering or authorizing a tenant with the HOA is easy."
-          value={answers.H3}
-          error={errors.H3}
-          onChange={(H3) => onPatch({ H3: H3 as SurveyAnswers['H3'] })}
-        />
+        {showH3(answers) ? (
+          <LikertChoice
+            code="H3"
+            scale="agreement"
+            question="Registering or authorizing a tenant with the HOA is easy."
+            value={typeof answers.H3 === 'number' ? answers.H3 : undefined}
+            error={errors.H3}
+            onChange={(H3) => onPatch({ H3: H3 as SurveyAnswers['H3'] })}
+          />
+        ) : null}
         <TextField
           code="H4"
           question="Describe one HOA transaction that took the longest, and why."
@@ -746,7 +768,6 @@ export function StepView({
         <LikertChoice
           code="T2"
           scale="agreement"
-          withNotApplicable
           question="The HOA's forms and requirements for tenants are clear."
           value={answers.T2}
           error={errors.T2}
@@ -755,7 +776,6 @@ export function StepView({
         <LikertChoice
           code="T3"
           scale="agreement"
-          withNotApplicable
           question="Completing HOA requirements as a tenant takes more steps than it should, such as needing the owner's documents or signature."
           value={answers.T3}
           error={errors.T3}
@@ -790,7 +810,6 @@ export function StepView({
         <LikertChoice
           code="AC2"
           scale="agreement"
-          withNotApplicable
           question="Going to the HOA office in person is difficult for me or for someone in my household."
           value={answers.AC2}
           error={errors.AC2}
@@ -799,7 +818,6 @@ export function StepView({
         <LikertChoice
           code="AC3"
           scale="agreement"
-          withNotApplicable
           question="Larger text, higher contrast, or screen reader support would help me or someone in my household use an online form."
           value={answers.AC3}
           error={errors.AC3}
@@ -825,37 +843,7 @@ export function StepView({
   return (
     <>
       <p className="na-intro">This last part helps us find problems we may have missed.</p>
-      <MultiChoice
-        code="O1"
-        question="Besides what was asked, which of these HOA-related problems have you experienced? Select all that apply."
-        value={answers.O1}
-        error={errors.O1}
-        exclusiveId="none_of_these"
-        options={[
-          { id: 'garbage', label: 'Garbage collection' },
-          { id: 'street_lights', label: 'Street lights' },
-          { id: 'roads', label: 'Roads or drainage' },
-          { id: 'noise', label: 'Noise or curfew concerns' },
-          { id: 'parking', label: 'Parking' },
-          { id: 'security', label: 'Security patrol' },
-          { id: 'billing', label: 'Billing or dues' },
-          { id: 'renovation', label: 'Renovation permits' },
-          { id: 'pets', label: 'Pet or animal concerns' },
-          { id: 'none_of_these', label: 'None of these' },
-          { id: 'other', label: 'Other' },
-        ]}
-        onChange={(O1) => onPatch({ O1 })}
-      />
-      {(answers.O1 ?? []).includes('other') ? (
-        <TextField
-          code="O1_other"
-          question="Other problem"
-          value={answers.O1_other}
-          maxLength={200}
-          error={errors.O1_other}
-          onChange={(O1_other) => onPatch({ O1_other })}
-        />
-      ) : null}
+      <O1Field answers={answers} error={errors.O1} onPatch={onPatch} />
       <TextField
         code="O2"
         question="Is there any other problem with HOA services that you would like us to know about?"
@@ -865,7 +853,127 @@ export function StepView({
         error={errors.O2}
         onChange={(O2) => onPatch({ O2 })}
       />
+      <SingleChoice
+        code="IV1"
+        question="Would you be open to being contacted for a possible follow-up interview?"
+        value={answers.IV1}
+        error={errors.IV1}
+        options={[
+          { id: 'yes', label: 'Yes' },
+          { id: 'no', label: 'No' },
+        ]}
+        onChange={(IV1) => onPatch({ IV1: IV1 as SurveyAnswers['IV1'] })}
+      />
     </>
+  );
+}
+
+function O1Field({
+  answers,
+  error,
+  onPatch,
+}: {
+  answers: Partial<SurveyAnswers>;
+  error?: string;
+  onPatch: (patch: Patch) => void;
+}) {
+  const selected = answers.O1 ?? [];
+  const details = answers.O1Details ?? {};
+  const options = [
+    ...O1_CATEGORIES.map((category) => ({ id: category.id, label: category.label })),
+    { id: 'none_of_these', label: 'None of these' },
+    { id: 'other', label: 'Other' },
+  ];
+
+  const setDetails = (next: O1Details) => onPatch({ O1Details: next });
+
+  return (
+    <div className={error ? 'survey-card survey-card--error' : 'survey-card'}>
+      <div className="na-q" id="O1-label">
+        Besides what was asked, which of these HOA-related problems have you experienced? Select all
+        that apply.{' '}
+        <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
+          *
+        </span>
+      </div>
+      <div className="na-checks" role="group" aria-labelledby="O1-label">
+        {options.map((option) => {
+          const checked = selected.includes(option.id);
+          const disabled = optionDisabled(selected, option.id, 'none_of_these');
+          const category = O1_CATEGORIES.find((item) => item.id === option.id);
+          const picks = category ? (details[category.id] ?? []) : [];
+          const otherKey = category ? (`${category.id}_other` as const) : null;
+          return (
+            <div key={option.id}>
+              <label className="na-check">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={disabled}
+                  onChange={() => onPatch({ O1: toggleMulti(selected, option.id, 'none_of_these') })}
+                />
+                <span className="na-box" aria-hidden="true">
+                  {checked ? '✓' : ''}
+                </span>
+                <span>{option.label}</span>
+              </label>
+              {checked && category ? (
+                <div className="na-sub" style={{ marginLeft: 28 }}>
+                  {category.items.map((item) => {
+                    const itemChecked = picks.includes(item);
+                    return (
+                      <label key={item} className="na-check">
+                        <input
+                          type="checkbox"
+                          checked={itemChecked}
+                          onChange={() =>
+                            setDetails({
+                              ...details,
+                              [category.id]: toggleMulti(picks, item),
+                            })
+                          }
+                        />
+                        <span className="na-box" aria-hidden="true">
+                          {itemChecked ? '✓' : ''}
+                        </span>
+                        <span>{item}</span>
+                      </label>
+                    );
+                  })}
+                  {picks.includes('Other') && otherKey ? (
+                    <textarea
+                      className="na-area"
+                      maxLength={200}
+                      aria-label={`${category.label} other`}
+                      value={details[otherKey] ?? ''}
+                      onChange={(event) =>
+                        setDetails({ ...details, [otherKey]: event.target.value })
+                      }
+                    />
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+      {selected.includes('other') ? (
+        <textarea
+          className="na-area"
+          style={{ marginTop: 12 }}
+          maxLength={200}
+          aria-label="Other problem"
+          placeholder="Other problem"
+          value={answers.O1_other ?? ''}
+          onChange={(event) => onPatch({ O1_other: event.target.value })}
+        />
+      ) : null}
+      {error ? (
+        <p className="na-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
   );
 }
 

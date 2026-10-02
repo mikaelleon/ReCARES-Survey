@@ -55,15 +55,7 @@ export default function InterviewPage() {
         padding: 'clamp(24px, 5vw, 48px) clamp(16px, 4vw, 32px) clamp(48px, 8vw, 96px)',
       }}
     >
-      <h1
-        style={{
-          margin: 0,
-          color: 'var(--text-headline)',
-          fontSize: 'clamp(24px, 6vw, 32px)',
-          fontWeight: 700,
-          lineHeight: 1.25,
-        }}
-      >
+      <h1 className="survey-title" style={{ margin: 0 }}>
         Interview invitation
       </h1>
       <p className="na-intro">
@@ -76,8 +68,9 @@ export default function InterviewPage() {
         A red asterisk (*) means you need to answer that question before you can continue.
       </p>
 
-      <div className="na-stack">
-        <label className="na-legend" htmlFor="preferred-name">
+      <div className="survey-questions">
+      <div className="survey-card">
+        <label className="na-q" htmlFor="preferred-name">
           Preferred name
         </label>
         <input
@@ -88,28 +81,30 @@ export default function InterviewPage() {
         />
       </div>
 
-      <fieldset className="na-stack">
-        <legend className="na-legend">
+      <div className="survey-card">
+        <div className="na-q" id="contact-method-label">
           Preferred contact method{' '}
           <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
             *
           </span>
-        </legend>
-        {METHODS.map((method) => (
-          <label key={method} className="na-choice">
-            <input
-              type="radio"
-              name="contactMethod"
-              checked={contactMethod === method}
-              onChange={() => setContactMethod(method)}
-            />
-            <span>{method}</span>
-          </label>
-        ))}
-      </fieldset>
+        </div>
+        <div className="na-chips" role="radiogroup" aria-labelledby="contact-method-label">
+          {METHODS.map((method) => (
+            <button
+              key={method}
+              type="button"
+              className="na-chip"
+              aria-pressed={contactMethod === method}
+              onClick={() => setContactMethod(method)}
+            >
+              {method}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <div className="na-stack">
-        <label className="na-legend" htmlFor="contact-detail">
+      <div className="survey-card">
+        <label className="na-q" htmlFor="contact-detail">
           Contact detail{' '}
           <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
             *
@@ -123,28 +118,33 @@ export default function InterviewPage() {
         />
       </div>
 
-      <fieldset className="na-stack">
-        <legend className="na-legend">
+      <div className="survey-card">
+        <div className="na-q" id="resident-type-label">
           Resident type{' '}
           <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
             *
           </span>
-        </legend>
-        {TYPES.map((type) => (
-          <label key={type.id} className="na-choice">
-            <input
-              type="radio"
-              name="residentType"
-              checked={residentType === type.id}
-              onChange={() => setResidentType(type.id)}
-            />
-            <span>{type.label}</span>
-          </label>
-        ))}
-      </fieldset>
+        </div>
+        <div className="na-chips" role="radiogroup" aria-labelledby="resident-type-label">
+          {TYPES.map((type) => (
+            <button
+              key={type.id}
+              type="button"
+              className="na-chip"
+              aria-pressed={residentType === type.id}
+              onClick={() => setResidentType(type.id)}
+            >
+              {type.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <label className="na-choice" style={{ marginTop: 16 }}>
+      <label className="na-check" style={{ marginTop: 16 }}>
         <input type="checkbox" checked={consent} onChange={() => setConsent((value) => !value)} />
+        <span className="na-box" aria-hidden="true">
+          {consent ? '✓' : ''}
+        </span>
         <span>
           I agree to be contacted for a possible interview.{' '}
           <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
@@ -152,6 +152,7 @@ export default function InterviewPage() {
           </span>
         </span>
       </label>
+      </div>
 
       {error ? (
         <p className="na-error" role="alert">

@@ -20,6 +20,16 @@ export function showP5(a: Partial<SurveyAnswers>): boolean {
   return a.A5 === 'yes';
 }
 
+/** Skip P2 and P3 when the respondent brought no one through the gate. */
+export function showP2P3(a: Partial<SurveyAnswers>): boolean {
+  return !(a.P1 ?? []).includes('none_of_these');
+}
+
+/** H3 only when H1 shows a tenant registration or authorization. */
+export function showH3(a: Partial<SurveyAnswers>): boolean {
+  return (a.H1 ?? []).includes('tenant_registration');
+}
+
 export function showAC1(a: Partial<SurveyAnswers>): boolean {
   return a.A4 === 'yes';
 }

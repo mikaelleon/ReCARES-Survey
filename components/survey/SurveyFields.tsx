@@ -14,8 +14,6 @@ const AGREEMENT = [
   { id: '5', label: 'Strongly agree' },
 ] as const;
 
-const AGREEMENT_NA = [...AGREEMENT, { id: '99', label: 'Not applicable' }] as const;
-
 const LIKELIHOOD = [
   { id: '1', label: 'Very unlikely' },
   { id: '2', label: 'Unlikely' },
@@ -24,9 +22,17 @@ const LIKELIHOOD = [
   { id: '5', label: 'Very likely' },
 ] as const;
 
-function Legend({ text, required }: { text: string; required?: boolean }) {
+function Question({
+  id,
+  text,
+  required,
+}: {
+  id: string;
+  text: string;
+  required?: boolean;
+}) {
   return (
-    <legend className="na-legend">
+    <div className="na-q" id={id}>
       {text}
       {required ? (
         <>
@@ -37,7 +43,7 @@ function Legend({ text, required }: { text: string; required?: boolean }) {
           <span className="visually-hidden"> required</span>
         </>
       ) : null}
-    </legend>
+    </div>
   );
 }
 
@@ -50,6 +56,47 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
+function Card({
+  error,
+  className,
+  children,
+}: {
+  error?: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`${error ? 'survey-card survey-card--error' : 'survey-card'}${className ? ` ${className}` : ''}`}>
+      {children}
+    </div>
+  );
+}
+
+type ChoiceOption = { id: string; label: string; hint?: string; wide?: boolean };
+
+function RadioMark({
+  name,
+  option,
+  checked,
+  onChange,
+}: {
+  name: string;
+  option: ChoiceOption;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <label className={option.wide ? 'na-radio na-radio-wide' : 'na-radio'}>
+      <input type="radio" name={name} value={option.id} checked={checked} onChange={onChange} />
+      <span className="na-dot" aria-hidden="true" />
+      <span className="na-radio-copy">
+        <span>{option.label}</span>
+        {option.hint ? <span className="na-radio-hint">{option.hint}</span> : null}
+      </span>
+    </label>
+  );
+}
+
 export function SingleChoice({
   code,
   question,
@@ -59,35 +106,41 @@ export function SingleChoice({
   error,
   onChange,
   hint,
+  columns = 1,
+  className,
 }: {
   code: string;
   question: string;
   required?: boolean;
   value?: string;
-  options: readonly { id: string; label: string }[];
+  options: readonly ChoiceOption[];
   error?: string;
   onChange: (value: string) => void;
   hint?: string;
+  columns?: 1 | 2;
+  className?: string;
 }) {
   const errorId = `${code}-error`;
+  const labelId = `${code}-label`;
   return (
-    <fieldset className="na-stack" aria-describedby={error ? errorId : undefined}>
-      <Legend text={question} required={required} />
-      {hint ? <p className="na-hint">{hint}</p> : null}
-      {options.map((option) => (
-        <label key={option.id} className={`na-choice${error ? ' na-choice--error' : ''}`}>
-          <input
-            type="radio"
-            name={code}
-            value={option.id}
-            checked={value === option.id}
-            onChange={() => onChange(option.id)}
-          />
-          <span>{option.label}</span>
-        </label>
-      ))}
-      <FieldError id={errorId} message={error} />
-    </fieldset>
+    <Card error={error} className={className}>
+      <div role="radiogroup" aria-labelledby={labelId} aria-describedby={error ? errorId : undefined}>
+        <Question id={labelId} text={question} required={required} />
+        {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{hint}</p> : null}
+        <div className={columns === 2 ? 'na-radios na-radios--2' : 'na-radios'}>
+          {options.map((option) => (
+            <RadioMark
+              key={option.id}
+              name={code}
+              option={option}
+              checked={value === option.id}
+              onChange={() => onChange(option.id)}
+            />
+          ))}
+        </div>
+        <FieldError id={errorId} message={error} />
+      </div>
+    </Card>
   );
 }
 
@@ -115,29 +168,37 @@ export function MultiChoice({
   hint?: string;
 }) {
   const errorId = `${code}-error`;
+  const labelId = `${code}-label`;
   return (
-    <fieldset className="na-stack" aria-describedby={error ? errorId : undefined}>
-      <Legend text={question} required={required} />
-      {hint ? <p className="na-hint">{hint}</p> : null}
-      {options.map((option) => {
-        const disabled = optionDisabled(value, option.id, exclusiveId, maxNonExclusive);
-        const checked = (value ?? []).includes(option.id);
-        return (
-          <label key={option.id} className={`na-choice${error ? ' na-choice--error' : ''}`}>
-            <input
-              type="checkbox"
-              name={code}
-              value={option.id}
-              checked={checked}
-              disabled={disabled}
-              onChange={() => onChange(toggleMulti(value, option.id, exclusiveId, maxNonExclusive))}
-            />
-            <span>{option.label}</span>
-          </label>
-        );
-      })}
-      <FieldError id={errorId} message={error} />
-    </fieldset>
+    <Card error={error}>
+      <div role="group" aria-labelledby={labelId} aria-describedby={error ? errorId : undefined}>
+        <Question id={labelId} text={question} required={required} />
+        {hint ? <p className="na-hint">{hint}</p> : null}
+        <div className="na-checks">
+          {options.map((option) => {
+            const disabled = optionDisabled(value, option.id, exclusiveId, maxNonExclusive);
+            const checked = (value ?? []).includes(option.id);
+            return (
+              <label key={option.id} className="na-check">
+                <input
+                  type="checkbox"
+                  name={code}
+                  value={option.id}
+                  checked={checked}
+                  disabled={disabled}
+                  onChange={() => onChange(toggleMulti(value, option.id, exclusiveId, maxNonExclusive))}
+                />
+                <span className="na-box" aria-hidden="true">
+                  {checked ? '✓' : ''}
+                </span>
+                <span>{option.label}</span>
+              </label>
+            );
+          })}
+        </div>
+        <FieldError id={errorId} message={error} />
+      </div>
+    </Card>
   );
 }
 
@@ -145,7 +206,6 @@ export function LikertChoice({
   code,
   question,
   scale,
-  withNotApplicable = false,
   value,
   error,
   onChange,
@@ -153,22 +213,41 @@ export function LikertChoice({
   code: string;
   question: string;
   scale: 'agreement' | 'likelihood';
-  withNotApplicable?: boolean;
   value?: number;
   error?: string;
   onChange: (value: number) => void;
 }) {
-  const options =
-    scale === 'likelihood' ? LIKELIHOOD : withNotApplicable ? AGREEMENT_NA : AGREEMENT;
+  const options = scale === 'likelihood' ? LIKELIHOOD : AGREEMENT;
+  const errorId = `${code}-error`;
+  const labelId = `${code}-label`;
   return (
-    <SingleChoice
-      code={code}
-      question={question}
-      value={value == null ? undefined : String(value)}
-      options={options}
-      error={error}
-      onChange={(next) => onChange(Number(next))}
-    />
+    <Card error={error}>
+      <div role="radiogroup" aria-labelledby={labelId} aria-describedby={error ? errorId : undefined}>
+        <Question id={labelId} text={question} required />
+        <div className="na-likert">
+          {options.map((option) => {
+            const selected = String(value) === option.id;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                className="na-likert-btn"
+                aria-pressed={selected}
+                aria-label={option.label}
+                onClick={() => onChange(Number(option.id))}
+              >
+                {option.id}
+              </button>
+            );
+          })}
+        </div>
+        <div className="na-likert-ends">
+          <span>{options[0].label}</span>
+          <span>{options.find((option) => option.id === '5')?.label}</span>
+        </div>
+        <FieldError id={errorId} message={error} />
+      </div>
+    </Card>
   );
 }
 
@@ -194,8 +273,8 @@ export function NumberField({
   const errorId = `${code}-error`;
   const inputId = `${code}-input`;
   return (
-    <div className="na-stack">
-      <label className="na-legend" htmlFor={inputId}>
+    <Card error={error}>
+      <label className="na-q" htmlFor={inputId}>
         {question}
         {required ? (
           <>
@@ -209,7 +288,7 @@ export function NumberField({
       </label>
       <input
         id={inputId}
-        className="na-input"
+        className={error ? 'na-input na-input--error' : 'na-input'}
         type="number"
         inputMode="numeric"
         min={min}
@@ -229,7 +308,7 @@ export function NumberField({
         }}
       />
       <FieldError id={errorId} message={error} />
-    </div>
+    </Card>
   );
 }
 
@@ -255,8 +334,8 @@ export function TextField({
   const errorId = `${code}-error`;
   const inputId = `${code}-input`;
   return (
-    <div className="na-stack">
-      <label className="na-legend" htmlFor={inputId}>
+    <Card error={error}>
+      <label className="na-q" htmlFor={inputId}>
         {question}
         {required ? (
           <>
@@ -268,10 +347,10 @@ export function TextField({
           </>
         ) : null}
       </label>
-      {hint ? <p className="na-hint">{hint}</p> : null}
+      {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{hint}</p> : null}
       <textarea
         id={inputId}
-        className="na-area"
+        className={error ? 'na-area na-area--error' : 'na-area'}
         maxLength={maxLength}
         value={value ?? ''}
         aria-invalid={error ? true : undefined}
@@ -279,7 +358,7 @@ export function TextField({
         onChange={(event) => onChange(event.target.value)}
       />
       <FieldError id={errorId} message={error} />
-    </div>
+    </Card>
   );
 }
 
@@ -303,8 +382,8 @@ export function SelectChoice({
   const errorId = `${code}-error`;
   const inputId = `${code}-input`;
   return (
-    <div className="na-stack">
-      <label className="na-legend" htmlFor={inputId}>
+    <Card error={error}>
+      <label className="na-q" htmlFor={inputId}>
         {question}
         {required ? (
           <>
@@ -318,7 +397,7 @@ export function SelectChoice({
       </label>
       <select
         id={inputId}
-        className="na-input"
+        className={error ? 'na-input na-input--error' : 'na-input'}
         value={value ?? ''}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
@@ -334,16 +413,9 @@ export function SelectChoice({
         ))}
       </select>
       <FieldError id={errorId} message={error} />
-    </div>
+    </Card>
   );
 }
-
-const A1_STANDALONE: { id: number; label: string }[] = [
-  { id: 1, label: 'Homeowner living in the unit' },
-  { id: 4, label: 'Family or household member of a homeowner' },
-  { id: 5, label: 'Tenant or lessee' },
-  { id: 6, label: 'Family or household member of a tenant or lessee' },
-];
 
 export function ResidentTypeField({
   value,
@@ -355,34 +427,58 @@ export function ResidentTypeField({
   onChange: (value: number) => void;
 }) {
   const errorId = 'A1-error';
-  const radio = (id: number, label: string) => (
-    <label key={id} className={`na-choice${error ? ' na-choice--error' : ''}`}>
-      <input
-        type="radio"
-        name="A1"
-        value={id}
-        checked={value === id}
-        onChange={() => onChange(id)}
-      />
-      <span>{label}</span>
-    </label>
-  );
 
   return (
-    <fieldset className="na-stack" aria-describedby={error ? errorId : undefined}>
-      <Legend text="Which best describes you?" required />
-      {radio(A1_STANDALONE[0].id, A1_STANDALONE[0].label)}
-      <fieldset className="na-sub">
-        <legend className="na-legend">Homeowner who does not live in the unit</legend>
-        {radio(2, 'OFW homeowner (the owner works abroad)')}
-        {radio(3, 'Absentee homeowner (the owner lives elsewhere in the Philippines)')}
-      </fieldset>
-      {A1_STANDALONE.slice(1).map((option) => radio(option.id, option.label))}
-      <FieldError id={errorId} message={error} />
-    </fieldset>
+    <Card error={error} className="bento-tall">
+      <div role="radiogroup" aria-labelledby="A1-label" aria-describedby={error ? errorId : undefined}>
+        <Question id="A1-label" text="Which best describes you?" required />
+        <div className="na-radios">
+          <RadioMark
+            name="A1"
+            option={{ id: '1', label: 'Homeowner living in the unit' }}
+            checked={value === 1}
+            onChange={() => onChange(1)}
+          />
+          <fieldset className="na-sub">
+            <legend className="na-sub-legend">Homeowner who does not live in the unit</legend>
+            <RadioMark
+              name="A1"
+              option={{ id: '2', label: 'OFW homeowner', hint: '(the owner works abroad)' }}
+              checked={value === 2}
+              onChange={() => onChange(2)}
+            />
+            <RadioMark
+              name="A1"
+              option={{
+                id: '3',
+                label: 'Absentee homeowner',
+                hint: '(the owner lives elsewhere in the Philippines)',
+              }}
+              checked={value === 3}
+              onChange={() => onChange(3)}
+            />
+          </fieldset>
+          <RadioMark
+            name="A1"
+            option={{ id: '4', label: 'Family or household member of a homeowner' }}
+            checked={value === 4}
+            onChange={() => onChange(4)}
+          />
+          <RadioMark
+            name="A1"
+            option={{ id: '5', label: 'Tenant or lessee' }}
+            checked={value === 5}
+            onChange={() => onChange(5)}
+          />
+          <RadioMark
+            name="A1"
+            option={{ id: '6', label: 'Family or household member of a tenant or lessee' }}
+            checked={value === 6}
+            onChange={() => onChange(6)}
+          />
+        </div>
+        <FieldError id={errorId} message={error} />
+      </div>
+    </Card>
   );
-}
-
-export function Block({ children }: { children: ReactNode }) {
-  return <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{children}</div>;
 }

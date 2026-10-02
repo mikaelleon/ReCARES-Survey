@@ -1,4 +1,4 @@
-import { showAC1, showDeviceDependentItems, showP5, isHomeownerBranch, isTenantBranch, isOwnerLivingElsewhere } from '@/survey/branching';
+import { showAC1, showDeviceDependentItems, showH3, showP2P3, showP5, isHomeownerBranch, isTenantBranch, isOwnerLivingElsewhere } from '@/survey/branching';
 import { INCLUDE_SEX_AND_CIVIL_STATUS } from '@/survey/flags';
 import type { SurveyAnswers } from '@/survey/schema';
 
@@ -8,7 +8,7 @@ export const CHOOSE_ANY = 'Please select at least one answer to continue.';
 const VACANT = 'No one lives in the unit right now';
 
 function missingChoice(value: unknown): boolean {
-  return value == null || value === '';
+  return value == null || value === '' || value === 'not_shown';
 }
 
 export function validateStep(step: number, a: Partial<SurveyAnswers>): Record<string, string> {
@@ -50,9 +50,7 @@ export function validateStep(step: number, a: Partial<SurveyAnswers>): Record<st
   }
 
   if (step === 4) {
-    if (a.B6 != null && (typeof a.B6 !== 'number' || !Number.isInteger(a.B6) || a.B6 < 0 || a.B6 > 10000)) {
-      errors.B6 = 'Please enter a whole number from 0 to 10,000.';
-    }
+    need('B6', missingChoice(a.B6));
     need('B7', missingChoice(a.B7));
     if (showDeviceDependentItems(a)) {
       need('B8', missingChoice(a.B8));
@@ -86,8 +84,10 @@ export function validateStep(step: number, a: Partial<SurveyAnswers>): Record<st
 
   if (step === 8) {
     need('P1', !a.P1 || a.P1.length === 0, CHOOSE_ANY);
-    need('P2', missingChoice(a.P2));
-    need('P3', missingChoice(a.P3));
+    if (showP2P3(a)) {
+      need('P2', missingChoice(a.P2));
+      need('P3', missingChoice(a.P3));
+    }
     if (a.P4 != null && (typeof a.P4 !== 'number' || !Number.isInteger(a.P4) || a.P4 < 0 || a.P4 > 180)) {
       errors.P4 = 'Please enter a whole number from 0 to 180.';
     }
@@ -109,7 +109,7 @@ export function validateStep(step: number, a: Partial<SurveyAnswers>): Record<st
   if (step === 11 && isHomeownerBranch(a)) {
     need('H1', !a.H1 || a.H1.length === 0, CHOOSE_ANY);
     need('H2', missingChoice(a.H2));
-    need('H3', missingChoice(a.H3));
+    if (showH3(a)) need('H3', missingChoice(a.H3));
     if (a.H4 != null && a.H4.length > 300) errors.H4 = 'Please use 300 characters or fewer.';
   }
 
@@ -136,6 +136,7 @@ export function validateStep(step: number, a: Partial<SurveyAnswers>): Record<st
     if (a.O1_other != null && a.O1_other.length > 200) {
       errors.O1_other = 'Please use 200 characters or fewer.';
     }
+    need('IV1', missingChoice(a.IV1));
   }
 
   return errors;
