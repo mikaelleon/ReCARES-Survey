@@ -6,6 +6,8 @@ import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import { ResponseDetailDrawer } from '@/components/admin/ResponseDetailDrawer';
 import { ResponseEmptyState } from '@/components/admin/ResponseEmptyState';
 import { ResponseViewsPanel } from '@/components/admin/ResponseViewsPanel';
+import { AddWidgetModal } from '@/components/dashboard/AddWidgetModal';
+import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
 import {
   ResponsesToolbar,
   type BranchFilter,
@@ -13,20 +15,29 @@ import {
   type SortKey,
 } from '@/components/dashboard/ResponsesToolbar';
 import { buildCsv, buildSummaryText } from '@/lib/admin/analytics';
+import {
+  DEFAULT_DATE_RANGE,
+  filterRecordsByDateRange,
+  loadStoredDateRange,
+  storeDateRange,
+  type DateRangeValue,
+} from '@/lib/admin/dateRange';
 import type { SampleRecord } from '@/lib/admin/sampleResponses';
+import {
+  DEFAULT_SUMMARY_WIDGETS,
+  normalizeSummaryWidgets,
+} from '@/lib/admin/summaryWidgets';
 import { useSurveyResponses } from '@/lib/admin/useSurveyResponses';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { saveSummaryWidgets } from '@/lib/firebase/auth';
 import { useQueryParam } from '@/lib/navigation/useQueryParam';
 
 type DemoState = 'data' | 'loading' | 'empty' | 'error';
 
-/**
- * Responses analysis — Summary / Question / Individual.
- */
-export default function AdminResponsesPage() {
-  const { can } = useAuth();
+function ResponsesContent() {
+  const { can, user, reloadProfile } = useAuth();
   const canResponses = can('responsesDashboard');
-  const { records, setRecords, status, source } = useSurveyResponses();
+  const { records, setRecords, status, source, usingDemoSample } = useSurveyResponses();
   const stateParam = useQueryParam('state');
   const demoState: DemoState =
     stateParam === 'loading' || stateParam === 'empty' || stateParam === 'error'
@@ -41,6 +52,11 @@ export default function AdminResponsesPage() {
   const [branch, setBranch] = useState<BranchFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey>('submitted');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [dateRange, setDateRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
+  const [summaryWidgets, setSummaryWidgets] = useState<string[]>([
+    ...DEFAULT_SUMMARY_WIDGETS,
+  ]);
+  const [widgetModalOpen, setWidgetModalOpen] = useState(false);
   const [viewRecord, setViewRecord] = useState<SampleRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SampleRecord | null>(null);
   const [undo, setUndo] = useState<{ record: SampleRecord; index: number } | null>(null);
@@ -49,11 +65,26 @@ export default function AdminResponsesPage() {
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    setDateRange(loadStoredDateRange());
+  }, []);
+
+  useEffect(() => {
+    if (user?.summaryWidgets) {
+      setSummaryWidgets(
+        normalizeSummaryWidgets(user.summaryWidgets, { allowEmpty: true }),
+      );
+    }
+  }, [user?.summaryWidgets]);
+
+  useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query.trim().toLowerCase()), 160);
     return () => clearTimeout(t);
   }, [query]);
 
-  const workingRecords = demoState === 'empty' ? [] : records;
+  const workingRecords = useMemo(() => {
+    const base = demoState === 'empty' ? [] : records;
+    return filterRecordsByDateRange(base, dateRange);
+  }, [demoState, records, dateRange]);
 
   const filtered = useMemo(() => {
     let list = [...workingRecords];
@@ -80,6 +111,36 @@ export default function AdminResponsesPage() {
     setPhase('');
     setBranch('all');
   }, []);
+
+  const handleDateChange = useCallback((next: DateRangeValue) => {
+    setDateRange(next);
+    storeDateRange(next);
+  }, []);
+
+  const persistWidgets = useCallback(
+    async (next: string[]) => {
+      const normalized = normalizeSummaryWidgets(next, { allowEmpty: true });
+      setSummaryWidgets(normalized);
+      if (!user?.uid) return;
+      try {
+        await saveSummaryWidgets(user.uid, normalized);
+        await reloadProfile();
+      } catch (error) {
+        console.warn('Could not save summaryWidgets', error);
+      }
+    },
+    [user?.uid, reloadProfile],
+  );
+
+  const handleToggleWidget = useCallback(
+    (id: string) => {
+      const next = summaryWidgets.includes(id)
+        ? summaryWidgets.filter((w) => w !== id)
+        : [...summaryWidgets, id];
+      void persistWidgets(next.length ? next : []);
+    },
+    [summaryWidgets, persistWidgets],
+  );
 
   const handleExport = useCallback(() => {
     if (filtered.length === 0) return;
@@ -133,14 +194,20 @@ export default function AdminResponsesPage() {
   }, [undo, setRecords]);
 
   return (
-    <AdminAppShell>
+    <>
       <section className="admin-section" aria-labelledby="admin-responses-title">
         <h1 id="admin-responses-title" className="admin-section__title">
           Responses
         </h1>
         <p className="admin-section__lead">
-          Browse aggregates by question, or step through each submission. Source:{' '}
-          {source === 'firestore' ? 'Firestore' : 'sample stub (no live docs yet)'}.
+          Browse aggregates by question, or step through each submission.
+          {usingDemoSample
+            ? ' Demo sample mode (?demo=sample) — not live Firestore.'
+            : source === 'firestore'
+              ? ''
+              : source === 'error'
+                ? ' Live Firestore query failed — showing empty until reload succeeds.'
+                : ' Firestore unavailable — showing empty until config/auth is ready.'}
         </p>
 
         {!canResponses ? (
@@ -149,6 +216,7 @@ export default function AdminResponsesPage() {
           </p>
         ) : (
           <>
+            <DateRangePicker value={dateRange} onChange={handleDateChange} />
             <ResponsesToolbar
               query={query}
               onQueryChange={setQuery}
@@ -195,11 +263,21 @@ export default function AdminResponsesPage() {
                 highlightId={flashId}
                 onResetFilters={resetFilters}
                 emptyDataset={workingRecords.length === 0}
+                summaryWidgets={summaryWidgets}
+                onOpenWidgetPicker={() => setWidgetModalOpen(true)}
+                onRemoveWidget={(id) => handleToggleWidget(id)}
               />
             )}
           </>
         )}
       </section>
+
+      <AddWidgetModal
+        open={widgetModalOpen}
+        selectedIds={summaryWidgets}
+        onClose={() => setWidgetModalOpen(false)}
+        onToggle={handleToggleWidget}
+      />
 
       <ResponseDetailDrawer record={viewRecord} onClose={() => setViewRecord(null)} />
       <DeleteConfirmModal
@@ -216,6 +294,18 @@ export default function AdminResponsesPage() {
           </button>
         </div>
       ) : null}
+    </>
+  );
+}
+
+/**
+ * Responses analysis — Summary / Question / Individual.
+ * Hook runs inside AdminAppShell (SurveyResponsesProvider).
+ */
+export default function AdminResponsesPage() {
+  return (
+    <AdminAppShell>
+      <ResponsesContent />
     </AdminAppShell>
   );
 }

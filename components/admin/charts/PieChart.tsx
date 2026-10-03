@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { CountBucket } from '@/lib/admin/analytics';
 
 const PIE_COLORS = [
@@ -31,8 +32,13 @@ function arcPath(
   return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${large} 0 ${end.x} ${end.y} Z`;
 }
 
+function tipText(b: CountBucket): string {
+  const noun = b.count === 1 ? 'response' : 'responses';
+  return `${b.label}: ${b.count} ${noun}, ${b.pct}%`;
+}
+
 /**
- * Google Forms–style pie with external legend and slice % labels.
+ * Google Forms–style pie with external legend and immediate slice hover tip.
  */
 export function PieChart({
   buckets,
@@ -46,28 +52,41 @@ export function PieChart({
   const cx = size / 2;
   const cy = size / 2;
   const r = 88;
+  const [tip, setTip] = useState<string | null>(null);
 
   if (active.length === 0) {
     return <p className="gf-chart-empty">No responses yet for this question.</p>;
   }
+
+  const colorOf = (label: string) => {
+    const idx = buckets.findIndex((b) => b.label === label);
+    return PIE_COLORS[(idx < 0 ? 0 : idx) % PIE_COLORS.length];
+  };
 
   if (active.length === 1) {
     const only = active[0];
     const color = PIE_COLORS[0];
     return (
       <div className="gf-pie">
-        <svg viewBox={`0 0 ${size} ${size}`} className="gf-pie__svg" aria-hidden="true">
-          <circle
-            cx={cx}
-            cy={cy}
-            r={r}
-            fill={color}
-            style={{ opacity: animate ? 1 : 0, transition: 'opacity 480ms ease' }}
-          />
-          <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" className="gf-pie__label">
-            {only.pct}%
-          </text>
-        </svg>
+        <div className="gf-pie__chart">
+          <svg viewBox={`0 0 ${size} ${size}`} className="gf-pie__svg" aria-hidden="true">
+            <circle
+              cx={cx}
+              cy={cy}
+              r={r}
+              fill={color}
+              style={{ opacity: animate ? 1 : 0, transition: 'opacity 480ms ease' }}
+              onMouseEnter={() => setTip(tipText(only))}
+              onMouseLeave={() => setTip(null)}
+            >
+              <title>{tipText(only)}</title>
+            </circle>
+            <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" className="gf-pie__label">
+              {only.pct}%
+            </text>
+          </svg>
+          {tip ? <div className="gf-pie__tip" role="status">{tip}</div> : null}
+        </div>
         <ul className="gf-pie__legend">
           {buckets.map((b, i) => (
             <li key={b.label} className="gf-pie__legend-item">
@@ -86,8 +105,9 @@ export function PieChart({
   }
 
   let angle = 0;
+  const totalActive = active.reduce((s, x) => s + x.count, 0);
   const slices = active.map((b) => {
-    const sweep = (b.count / active.reduce((s, x) => s + x.count, 0)) * 360;
+    const sweep = (b.count / totalActive) * 360;
     const start = angle;
     const end = angle + sweep;
     angle = end;
@@ -96,45 +116,49 @@ export function PieChart({
     return { ...b, start, end, mid, labelPos, showLabel: sweep >= 18 };
   });
 
-  const colorOf = (label: string) => {
-    const idx = buckets.findIndex((b) => b.label === label);
-    return PIE_COLORS[(idx < 0 ? 0 : idx) % PIE_COLORS.length];
-  };
-
   return (
     <div className="gf-pie">
-      <svg
-        viewBox={`0 0 ${size} ${size}`}
-        className="gf-pie__svg"
-        role="img"
-        aria-label="Pie chart of response distribution"
-      >
-        {slices.map((s) => (
-          <path
-            key={s.label}
-            d={arcPath(cx, cy, r, s.start, s.end)}
-            fill={colorOf(s.label)}
-            style={{
-              opacity: animate ? 1 : 0,
-              transition: 'opacity 480ms ease',
-            }}
-          />
-        ))}
-        {slices.map((s) =>
-          s.showLabel ? (
-            <text
-              key={`${s.label}-pct`}
-              x={s.labelPos.x}
-              y={s.labelPos.y}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="gf-pie__label"
+      <div className="gf-pie__chart">
+        <svg
+          viewBox={`0 0 ${size} ${size}`}
+          className="gf-pie__svg"
+          role="img"
+          aria-label="Pie chart of response distribution"
+        >
+          {slices.map((s) => (
+            <path
+              key={s.label}
+              d={arcPath(cx, cy, r, s.start, s.end)}
+              fill={colorOf(s.label)}
+              style={{
+                opacity: animate ? 1 : 0,
+                transition: 'opacity 480ms ease',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={() => setTip(tipText(s))}
+              onMouseLeave={() => setTip(null)}
             >
-              {s.pct}%
-            </text>
-          ) : null,
-        )}
-      </svg>
+              <title>{tipText(s)}</title>
+            </path>
+          ))}
+          {slices.map((s) =>
+            s.showLabel ? (
+              <text
+                key={`${s.label}-pct`}
+                x={s.labelPos.x}
+                y={s.labelPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="gf-pie__label"
+                pointerEvents="none"
+              >
+                {s.pct}%
+              </text>
+            ) : null,
+          )}
+        </svg>
+        {tip ? <div className="gf-pie__tip" role="status">{tip}</div> : null}
+      </div>
       <ul className="gf-pie__legend">
         {buckets.map((b) => (
           <li key={b.label} className="gf-pie__legend-item">

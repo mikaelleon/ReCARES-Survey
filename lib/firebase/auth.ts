@@ -27,6 +27,7 @@ import {
   type AdminRole,
   type AdminStatus,
 } from '@/lib/admin/access';
+import { normalizeSummaryWidgets } from '@/lib/admin/summaryWidgets';
 import { getFirebaseAuth, getFirestoreDb } from '@/lib/firebase/config';
 
 export type { AdminProfile, AdminInvite, AdminRole, AdminStatus, AdminPermissions };
@@ -112,6 +113,10 @@ export function mapAdminDoc(data: Record<string, unknown>): AdminProfile {
     role: normalizedRole,
     status,
     permissions,
+    summaryWidgets:
+      data.summaryWidgets === undefined
+        ? normalizeSummaryWidgets(undefined)
+        : normalizeSummaryWidgets(data.summaryWidgets, { allowEmpty: true }),
     createdAt: (data.createdAt as AdminProfile['createdAt']) ?? null,
     approvedAt: (data.approvedAt as AdminProfile['approvedAt']) ?? null,
     approvedBy: typeof data.approvedBy === 'string' ? data.approvedBy : undefined,
@@ -119,6 +124,15 @@ export function mapAdminDoc(data: Record<string, unknown>): AdminProfile {
     removedBy: typeof data.removedBy === 'string' ? data.removedBy : undefined,
     inviteId: typeof data.inviteId === 'string' ? data.inviteId : undefined,
   };
+}
+
+/** Persist per-admin Summary widget pins (self-update; rules allow non-privileged keys). */
+export async function saveSummaryWidgets(uid: string, widgetIds: string[]): Promise<void> {
+  const db = getFirestoreDb();
+  if (!db) throw new Error(NOT_CONFIGURED);
+  await updateDoc(doc(db, 'admins', uid), {
+    summaryWidgets: normalizeSummaryWidgets(widgetIds, { allowEmpty: true }),
+  });
 }
 
 export async function getAdminProfile(uid: string): Promise<AdminProfile | null> {

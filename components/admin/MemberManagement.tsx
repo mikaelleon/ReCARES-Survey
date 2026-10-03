@@ -1,6 +1,7 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -73,6 +74,15 @@ function RoleSelect({
   );
 }
 
+function memberInitials(name?: string, email?: string): string {
+  const base = (name || email || '?').trim();
+  const parts = base.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase();
+  }
+  return base.slice(0, 2).toUpperCase();
+}
+
 /**
  * Superadmin-only: pending approvals, active members table, invite create/list.
  */
@@ -95,7 +105,15 @@ export function MemberManagement() {
   const [inviteRole, setInviteRole] = useState<AdminRole>('admin');
   const [invitePerms, setInvitePerms] = useState<AdminPermissions>(emptyPermissions());
   const [lastInviteLink, setLastInviteLink] = useState<string | null>(null);
+  const inviteSectionRef = useRef<HTMLDivElement | null>(null);
   const inviteEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteEmail.trim());
+
+  const focusCreateInvite = () => {
+    inviteSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.setTimeout(() => {
+      document.getElementById('invite-email')?.focus();
+    }, 280);
+  };
 
   const refresh = useCallback(async () => {
     const [p, a, i] = await Promise.all([
@@ -246,134 +264,132 @@ export function MemberManagement() {
       </div>
 
       <div className="admin-panel" style={{ marginBottom: 24 }}>
-        <h2 className="admin-section__title admin-section__title--h2" style={{ marginTop: 0 }}>
-          Active members
-        </h2>
+        <div className="admin-member-card__head">
+          <h2 className="admin-section__title admin-section__title--h2" style={{ marginTop: 0 }}>
+            Active members
+          </h2>
+          <Button variant="primary" size="sm" onClick={focusCreateInvite}>
+            <Plus size={16} strokeWidth={2.2} aria-hidden="true" />
+            Add Member
+          </Button>
+        </div>
         {active.length === 0 ? (
           <p style={{ color: 'var(--text-caption)', fontSize: 14 }}>No active members.</p>
         ) : (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th scope="col">Name</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Role</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {active.map((row) => {
-                  const open = editingUid === row.uid;
-                  return (
-                    <Fragment key={row.uid}>
-                      <tr>
-                        <th scope="row">{row.fullName || 'Unnamed'}</th>
-                        <td>{row.email}</td>
-                        <td>
-                          <StatusBadge tone={row.role === 'superadmin' ? 'amber' : 'emerald'}>
-                            {row.role || '—'}
-                          </StatusBadge>
-                        </td>
-                        <td>
-                          <StatusBadge tone="emerald">{row.status}</StatusBadge>
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="ghost-btn admin-action"
-                            onClick={() => setEditingUid(open ? null : row.uid)}
+          <ul className="admin-member-list">
+            {active.map((row) => {
+              const open = editingUid === row.uid;
+              return (
+                <Fragment key={row.uid}>
+                  <li className="admin-member-list__item">
+                    <span className="admin-avatar" aria-hidden="true">
+                      {memberInitials(row.fullName, row.email)}
+                    </span>
+                    <div className="admin-member-list__meta">
+                      <div className="admin-member-list__name">{row.fullName || 'Unnamed'}</div>
+                      <div className="admin-member-list__email">{row.email}</div>
+                    </div>
+                    <div className="admin-member-list__pills">
+                      <StatusBadge tone={row.role === 'superadmin' ? 'amber' : 'emerald'}>
+                        {row.role || '—'}
+                      </StatusBadge>
+                      <StatusBadge tone="emerald">{row.status}</StatusBadge>
+                    </div>
+                    <button
+                      type="button"
+                      className="ghost-btn admin-action"
+                      onClick={() => setEditingUid(open ? null : row.uid)}
+                    >
+                      {open ? 'Close' : 'Edit'}
+                    </button>
+                  </li>
+                  {open ? (
+                    <li className="admin-member-list__edit">
+                      <div className="admin-member-edit">
+                        <label style={{ fontSize: 14 }}>
+                          Role{' '}
+                          <RoleSelect
+                            value={editRole[row.uid] || 'admin'}
+                            onChange={(role) =>
+                              setEditRole((prev) => ({ ...prev, [row.uid]: role }))
+                            }
+                            disabled={row.uid === user.uid}
+                          />
+                        </label>
+                        <PermissionChecks
+                          value={editPerms[row.uid] || emptyPermissions()}
+                          onChange={(next) =>
+                            setEditPerms((prev) => ({ ...prev, [row.uid]: next }))
+                          }
+                        />
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            disabled={busy}
+                            onClick={() =>
+                              void run(
+                                () =>
+                                  updateActiveMember({
+                                    uid: row.uid,
+                                    role: editRole[row.uid] || 'admin',
+                                    permissions: editPerms[row.uid] || emptyPermissions(),
+                                  }),
+                                `Updated ${row.email}.`,
+                              )
+                            }
                           >
-                            {open ? 'Close' : 'Edit'}
-                          </button>
-                        </td>
-                      </tr>
-                      {open ? (
-                        <tr className="admin-table__edit-row">
-                          <td colSpan={5}>
-                            <div className="admin-member-edit">
-                              <label style={{ fontSize: 14 }}>
-                                Role{' '}
-                                <RoleSelect
-                                  value={editRole[row.uid] || 'admin'}
-                                  onChange={(role) =>
-                                    setEditRole((prev) => ({ ...prev, [row.uid]: role }))
-                                  }
-                                  disabled={row.uid === user.uid}
-                                />
-                              </label>
-                              <PermissionChecks
-                                value={editPerms[row.uid] || emptyPermissions()}
-                                onChange={(next) =>
-                                  setEditPerms((prev) => ({ ...prev, [row.uid]: next }))
+                            Save changes
+                          </Button>
+                          {row.uid !== user.uid ? (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              disabled={busy}
+                              onClick={() => {
+                                if (
+                                  !window.confirm(
+                                    `Remove access for ${row.email}? This is a soft removal (status: removed).`,
+                                  )
+                                ) {
+                                  return;
                                 }
-                              />
-                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                <Button
-                                  variant="primary"
-                                  size="sm"
-                                  disabled={busy}
-                                  onClick={() =>
-                                    void run(
-                                      () =>
-                                        updateActiveMember({
-                                          uid: row.uid,
-                                          role: editRole[row.uid] || 'admin',
-                                          permissions: editPerms[row.uid] || emptyPermissions(),
-                                        }),
-                                      `Updated ${row.email}.`,
-                                    )
-                                  }
-                                >
-                                  Save changes
-                                </Button>
-                                {row.uid !== user.uid ? (
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    disabled={busy}
-                                    onClick={() => {
-                                      if (
-                                        !window.confirm(
-                                          `Remove access for ${row.email}? This is a soft removal (status: removed).`,
-                                        )
-                                      ) {
-                                        return;
-                                      }
-                                      void run(
-                                        () =>
-                                          removeActiveMember({
-                                            uid: row.uid,
-                                            removedBy: user.uid,
-                                          }),
-                                        `Removed ${row.email}.`,
-                                      ).then(() => setEditingUid(null));
-                                    }}
-                                  >
-                                    Remove
-                                  </Button>
-                                ) : null}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : null}
-                    </Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                                void run(
+                                  () =>
+                                    removeActiveMember({
+                                      uid: row.uid,
+                                      removedBy: user.uid,
+                                    }),
+                                  `Removed ${row.email}.`,
+                                ).then(() => setEditingUid(null));
+                              }}
+                            >
+                              Remove
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </li>
+                  ) : null}
+                </Fragment>
+              );
+            })}
+          </ul>
         )}
       </div>
 
-      <div className="admin-panel" style={{ marginBottom: 24 }}>
+      <div
+        ref={inviteSectionRef}
+        id="create-invite"
+        className="admin-panel"
+        style={{ marginBottom: 24 }}
+      >
         <h2 className="admin-section__title admin-section__title--h2" style={{ marginTop: 0 }}>
           Create invite
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 420 }}>
           <Input
+            id="invite-email"
             label="Email"
             type="email"
             value={inviteEmail}

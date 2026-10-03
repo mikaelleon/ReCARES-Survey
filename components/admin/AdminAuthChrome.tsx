@@ -18,7 +18,7 @@ function subtitleForPath(pathname: string): string {
 
 /**
  * Minimal top chrome for login / signup / pending / removed / complete.
- * No EN/FIL — admin surfaces are English-only.
+ * Separate from the active-app Donezo-style top bar.
  */
 export function AdminAuthChrome() {
   const pathname = usePathname() || '';
@@ -31,11 +31,11 @@ export function AdminAuthChrome() {
   };
 
   return (
-    <header className="admin-topbar">
-      <div className="admin-topbar__brand">
+    <header className="admin-authbar">
+      <div className="admin-authbar__brand">
         <Link
           href={user ? '#' : '/'}
-          className="admin-topbar__logo"
+          className="admin-authbar__logo"
           onClick={(event) => {
             if (!user) return;
             event.preventDefault();
@@ -52,14 +52,14 @@ export function AdminAuthChrome() {
         >
           ReCARES Survey
         </Link>
-        <span className="admin-topbar__sub">{subtitle}</span>
+        <span className="admin-authbar__sub">{subtitle}</span>
       </div>
-      <div className="admin-topbar__actions">
+      <div className="admin-authbar__actions">
         <ThemeToggle aria-label={themeLabel} onClick={toggleTheme} onDark />
         {user ? (
           <>
-            <span className="admin-topbar__email">{user.email}</span>
-            <button type="button" className="admin-topbar__logout" onClick={handleLogout}>
+            <span className="admin-authbar__email">{user.email}</span>
+            <button type="button" className="admin-authbar__logout" onClick={handleLogout}>
               Log out
             </button>
           </>

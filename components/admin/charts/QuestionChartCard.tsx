@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Copy } from 'lucide-react';
+import { Copy, X } from 'lucide-react';
 import { HorizontalBars } from '@/components/admin/charts/HorizontalBars';
 import { PieChart } from '@/components/admin/charts/PieChart';
 import type { CountBucket } from '@/lib/admin/analytics';
@@ -29,7 +29,7 @@ function useInViewOnce<T extends HTMLElement>() {
 }
 
 /**
- * Forms-style question card: title, response count, chart, copy action.
+ * Forms-style question card: title, chart, copy action.
  */
 export function QuestionChartCard({
   title,
@@ -37,12 +37,14 @@ export function QuestionChartCard({
   kind,
   buckets,
   compact = false,
+  onRemove,
 }: {
   title: string;
   responseCount: number;
   kind: ChartKind;
   buckets: CountBucket[];
   compact?: boolean;
+  onRemove?: () => void;
 }) {
   const { ref, seen } = useInViewOnce<HTMLElement>();
   const [copied, setCopied] = useState(false);
@@ -64,19 +66,29 @@ export function QuestionChartCard({
       <header className="gf-card__head">
         <div className="gf-card__titles">
           <h3 className="gf-card__title">{title}</h3>
-          <p className="gf-card__meta">
-            {responseCount} {responseCount === 1 ? 'response' : 'responses'}
-          </p>
         </div>
-        <button
-          type="button"
-          className="gf-card__copy"
-          onClick={() => void handleCopy()}
-          aria-label={`Copy chart for ${title}`}
-        >
-          <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
-          {copied ? 'Copied' : 'Copy chart'}
-        </button>
+        <div className="gf-card__head-actions">
+          <button
+            type="button"
+            className="gf-card__copy"
+            onClick={() => void handleCopy()}
+            aria-label={`Copy chart for ${title}`}
+          >
+            <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
+            {copied ? 'Copied' : 'Copy chart'}
+          </button>
+          {onRemove ? (
+            <button
+              type="button"
+              className="gf-card__remove"
+              onClick={onRemove}
+              aria-label={`Remove ${title} from Summary`}
+              title="Remove from Summary"
+            >
+              <X size={16} strokeWidth={2.2} aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
       </header>
       <div className="gf-card__body">
         {kind === 'pie' ? (

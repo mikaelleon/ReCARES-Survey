@@ -29,6 +29,8 @@ export interface AdminProfile {
   role: AdminRole | null;
   status: AdminStatus;
   permissions: AdminPermissions;
+  /** Per-admin pinned Summary chart ids (Responses page). */
+  summaryWidgets?: string[];
   createdAt?: Timestamp | null;
   approvedAt?: Timestamp | null;
   approvedBy?: string;

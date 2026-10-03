@@ -1,11 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreVertical, Plus } from 'lucide-react';
 import { QuestionChartCard } from '@/components/admin/charts/QuestionChartCard';
 import { GatedSectionChips } from '@/components/admin/GatedSectionChips';
 import { ResponseEmptyState } from '@/components/admin/ResponseEmptyState';
 import { ResponseTable } from '@/components/admin/ResponseTable';
+import { Button } from '@/components/ui/Button';
 import { LIKERT_LABELS, type SampleRecord } from '@/lib/admin/sampleResponses';
 import {
   RESPONSE_QUESTIONS,
@@ -23,27 +24,34 @@ const TABS: { id: ResponseViewTab; label: string }[] = [
   { id: 'individual', label: 'Individual' },
 ];
 
+const PIE_SET = new Set<string>(SUMMARY_PIE_IDS);
+const FULL_SET = new Set<string>(SUMMARY_FULL_IDS);
+const LIKERT_SET = new Set<string>(SUMMARY_LIKERT_IDS);
+
 function ChartById({
   id,
   records,
   responseCount,
   compact = false,
+  onRemove,
 }: {
   id: string;
   records: SampleRecord[];
   responseCount: number;
   compact?: boolean;
+  onRemove?: () => void;
 }) {
   const q = getQuestionById(id);
   if (!q) return null;
   return (
-    <div>
+    <div className="gf-bento__cell">
       <QuestionChartCard
         title={q.title}
         responseCount={responseCount}
         kind={q.kind}
         buckets={q.buckets(records)}
         compact={compact}
+        onRemove={onRemove}
       />
       {q.hint ? <p className="gf-chart-hint">{q.hint}</p> : null}
     </div>
@@ -66,6 +74,9 @@ export function ResponseViewsPanel({
   highlightId,
   onResetFilters,
   emptyDataset,
+  summaryWidgets,
+  onOpenWidgetPicker,
+  onRemoveWidget,
 }: {
   records: SampleRecord[];
   filtered: SampleRecord[];
@@ -78,6 +89,9 @@ export function ResponseViewsPanel({
   highlightId: string | null;
   onResetFilters: () => void;
   emptyDataset: boolean;
+  summaryWidgets: string[];
+  onOpenWidgetPicker: () => void;
+  onRemoveWidget: (id: string) => void;
 }) {
   const [tab, setTab] = useState<ResponseViewTab>('summary');
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -86,6 +100,13 @@ export function ResponseViewsPanel({
 
   const chartSource = filtered.length > 0 ? filtered : records;
   const responseCount = chartSource.length;
+
+  const pieWidgets = summaryWidgets.filter((id) => PIE_SET.has(id));
+  const fullWidgets = summaryWidgets.filter((id) => FULL_SET.has(id));
+  const likertWidgets = summaryWidgets.filter((id) => LIKERT_SET.has(id));
+  const otherWidgets = summaryWidgets.filter(
+    (id) => !PIE_SET.has(id) && !FULL_SET.has(id) && !LIKERT_SET.has(id),
+  );
 
   const safeQuestionIndex = Math.min(questionIndex, RESPONSE_QUESTIONS.length - 1);
   const currentQuestion = RESPONSE_QUESTIONS[safeQuestionIndex];
@@ -109,17 +130,30 @@ export function ResponseViewsPanel({
 
   return (
     <div className="admin-panel gf-panel">
-      <header className="gf-panel__head">
-        <h3 className="gf-panel__count">
-          {responseCount} {responseCount === 1 ? 'response' : 'responses'}
-          {filtered.length !== records.length ? (
-            <span className="gf-panel__count-note">
-              {' '}
-              (filtered from {records.length})
-            </span>
-          ) : null}
-        </h3>
+      <header className="gf-panel__head gf-panel__head--tabs-only">
+        <div className="gf-tabs" role="tablist" aria-label="Response views">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              id={`gf-tab-${t.id}`}
+              aria-selected={tab === t.id}
+              aria-controls={`gf-panel-${t.id}`}
+              className={`gf-tabs__tab${tab === t.id ? ' gf-tabs__tab--active' : ''}`}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
         <div className="gf-panel__actions">
+          {tab === 'summary' ? (
+            <Button variant="secondary" size="sm" onClick={onOpenWidgetPicker}>
+              <Plus size={16} strokeWidth={2.2} aria-hidden="true" />
+              Add widget
+            </Button>
+          ) : null}
           <div className="gf-panel__menu-wrap">
             <button
               type="button"
@@ -159,23 +193,6 @@ export function ResponseViewsPanel({
         </div>
       </header>
 
-      <div className="gf-tabs" role="tablist" aria-label="Response views">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            id={`gf-tab-${t.id}`}
-            aria-selected={tab === t.id}
-            aria-controls={`gf-panel-${t.id}`}
-            className={`gf-tabs__tab${tab === t.id ? ' gf-tabs__tab--active' : ''}`}
-            onClick={() => setTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
       {copyNote ? (
         <p className="admin-toast-inline" role="status">
           {copyNote}
@@ -192,40 +209,69 @@ export function ResponseViewsPanel({
           <div className="gf-summary">
             {filtered.length === 0 ? (
               <ResponseEmptyState kind="filtered" onReset={onResetFilters} />
+            ) : summaryWidgets.length === 0 ? (
+              <div className="gf-summary__empty-widgets">
+                <p>No widgets pinned. Add charts to build your Summary view.</p>
+                <Button variant="primary" onClick={onOpenWidgetPicker}>
+                  Add widget
+                </Button>
+              </div>
             ) : (
               <div className="gf-bento">
-                <div className="gf-bento__pies">
-                  {SUMMARY_PIE_IDS.map((id) => (
-                    <ChartById
-                      key={id}
-                      id={id}
-                      records={chartSource}
-                      responseCount={responseCount}
-                      compact
-                    />
-                  ))}
-                </div>
-                <div className="gf-bento__full">
-                  {SUMMARY_FULL_IDS.map((id) => (
-                    <ChartById
-                      key={id}
-                      id={id}
-                      records={chartSource}
-                      responseCount={responseCount}
-                    />
-                  ))}
-                </div>
-                <div className="gf-bento__likert">
-                  {SUMMARY_LIKERT_IDS.map((id, index) => (
-                    <ChartById
-                      key={id}
-                      id={id}
-                      records={chartSource}
-                      responseCount={responseCount}
-                      compact={index < SUMMARY_LIKERT_IDS.length - 1 || SUMMARY_LIKERT_IDS.length % 2 === 0}
-                    />
-                  ))}
-                </div>
+                {pieWidgets.length > 0 ? (
+                  <div className="gf-bento__pies">
+                    {pieWidgets.map((id) => (
+                      <ChartById
+                        key={id}
+                        id={id}
+                        records={chartSource}
+                        responseCount={responseCount}
+                        compact
+                        onRemove={() => onRemoveWidget(id)}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                {fullWidgets.length > 0 ? (
+                  <div className="gf-bento__full">
+                    {fullWidgets.map((id) => (
+                      <ChartById
+                        key={id}
+                        id={id}
+                        records={chartSource}
+                        responseCount={responseCount}
+                        onRemove={() => onRemoveWidget(id)}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                {likertWidgets.length > 0 ? (
+                  <div className="gf-bento__likert">
+                    {likertWidgets.map((id) => (
+                      <ChartById
+                        key={id}
+                        id={id}
+                        records={chartSource}
+                        responseCount={responseCount}
+                        compact
+                        onRemove={() => onRemoveWidget(id)}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                {otherWidgets.length > 0 ? (
+                  <div className="gf-bento__full">
+                    {otherWidgets.map((id) => (
+                      <ChartById
+                        key={id}
+                        id={id}
+                        records={chartSource}
+                        responseCount={responseCount}
+                        onRemove={() => onRemoveWidget(id)}
+                      />
+                    ))}
+                  </div>
+                ) : null}
               </div>
             )}
           </div>
@@ -398,7 +444,8 @@ export function ResponseViewsPanel({
       <p className="admin-panel__footnote">
         Fields belonging to a section a respondent never unlocked are stored as{' '}
         <code>not_shown</code> rather than blank, so an unanswered question and an unasked
-        question stay distinguishable in analysis.
+        question stay distinguishable in analysis. Toolbar + tabs stay top-left (F/Z scan)
+        on purpose.
       </p>
     </div>
   );

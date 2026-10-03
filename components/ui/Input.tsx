@@ -3,6 +3,7 @@
 import type { ChangeEventHandler, CSSProperties } from 'react';
 
 export interface InputProps {
+  id?: string;
   label?: string;
   placeholder?: string;
   value?: string;
@@ -14,6 +15,7 @@ export interface InputProps {
 }
 
 export function Input({
+  id,
   label,
   placeholder,
   value,
@@ -66,7 +68,7 @@ export function Input({
   return (
     <div style={wrapperStyle}>
       {label && (
-        <label style={labelStyle}>
+        <label htmlFor={id} style={labelStyle}>
           {label}
           {required && (
             <span style={{ color: 'var(--status-error)' }} aria-label="required">
@@ -77,6 +79,7 @@ export function Input({
       )}
       {helperText ? <span style={helperStyle}>{helperText}</span> : null}
       <input
+        id={id}
         type={type}
         placeholder={placeholder}
         value={value}

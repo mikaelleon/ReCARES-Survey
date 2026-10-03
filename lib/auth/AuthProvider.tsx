@@ -18,6 +18,7 @@ import {
   type AdminRole,
   type DashboardPermissionKey,
 } from '@/lib/admin/access';
+import { DEFAULT_SUMMARY_WIDGETS } from '@/lib/admin/summaryWidgets';
 import { logoutAdmin, resolveAdminProfile, signInMethodLabel } from '@/lib/firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase/config';
 
@@ -29,6 +30,8 @@ export interface AdminUser {
   status?: string;
   requestedRole?: string;
   permissions: AdminPermissions;
+  /** Per-admin Summary widget pins. */
+  summaryWidgets: string[];
   accessState: AdminAccessState;
   /** Display label for the current provider (Email and Password or Google). */
   signInMethod: string;
@@ -83,6 +86,7 @@ async function sessionFromUid(
       status: profile?.status,
       requestedRole: profile?.requestedRole,
       permissions: profile?.permissions ?? {},
+      summaryWidgets: profile?.summaryWidgets ?? [...DEFAULT_SUMMARY_WIDGETS],
       accessState,
       signInMethod: signInMethodLabel(providerId),
       hasProfile: Boolean(profile),
@@ -153,6 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             signInMethod: signInMethodLabel(firebaseUser.providerData[0]?.providerId),
             hasProfile: false,
             authorized: false,
+            summaryWidgets: [...DEFAULT_SUMMARY_WIDGETS],
           });
           setReady(true);
         });

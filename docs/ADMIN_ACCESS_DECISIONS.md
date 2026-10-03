@@ -74,3 +74,27 @@ Secondary risk: email/password Auth UID ≠ Google Auth UID, each creating its o
 | Tenant / Homeowner | `tenant` / `homeowner` | Branch unlocks (A1). |
 
 Do not treat “PWD screening” as interchangeable with “Accessibility path.”
+
+## 7. Summary widgets, date range, trends, sample-size gauge
+
+| Item | Decision |
+|------|----------|
+| Summary widgets | Per-admin `summaryWidgets: string[]` on `admins/{uid}`. Default = 4 pies + 2 full-width charts. Self-update allowed by existing rules (non-privileged keys). |
+| Date range | Session-stored; filters Dashboard + Responses charts/stats together. Active preset = Dark Emerald filled tab. |
+| Trend captions | Only when `source === 'firestore'` and a prior period of equal length exists. No invented deltas on sample stub. |
+| Target gauge (“8 of N”) | **Blocked** until research team supplies a real sample-size target. Do not invent N. Same radial-ring shape as Donezo “Project Progress” when unblocked. |
+| UX check (Kimberly) | Timed task: “how many renters so far” / “did communication quality move” — confirm Summary pins make that faster than all-nine-at-once. |
+
+## 8. Donezo-style chrome (what transfers / what does not)
+
+| Item | Decision |
+|------|----------|
+| Identity | Top bar: avatar initials, name, email, notification bell (empty state until real alerts exist), account menu (role/status, theme, log out). |
+| Sidebar footer | “Back to resident site” only — no session block. |
+| Dashboard title | Plain H1 “Dashboard” alone — no Welcome line. Name/email only in top-bar avatar menu. |
+| Stat row | Soft bento four-up: Total Respondents (Dark Emerald `#13693F` hero) + Total Homeowners + Total PWD Residents + Total Tenants. Trends only when Firestore prior period exists. |
+| Response data | Shared `SurveyResponsesProvider` → `needsAssessmentResponses` only. **No silent SAMPLE fallback.** Empty collection = 0. Opt-in demo only via `?demo=sample`. |
+| Homeowner / Tenant KPIs | Branch groups from A1: homeowner = options 1–4 (incl. household member of homeowner); tenant = options 5–6 (incl. household member of tenant). Captions + `title` tooltips say so. |
+| “Pin Summary widgets” copy | Keep — Add Widget picker is implemented on Responses Summary. |
+| Active members | Avatar list + role/status pills + “+ Add Member” scroll/focus to Create invite. |
+| Do not invent | Reminders, task lists, weekly bar chart (until volume), Time Tracker, mobile-app promo. |
