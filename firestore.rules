@@ -45,13 +45,37 @@ service cloud.firestore {
         && request.resource.data.role == inviteDoc(request.resource.data.inviteId).role;
     }
 
+    // Manual Console bootstrap often uses the wrong document ID. Allow copying an
+    // already-active profile for this email onto admins/{auth.uid}.
+    function linkingFromExistingEmailDoc() {
+      return request.resource.data.keys().hasAll([
+          'linkedFromDocumentId', 'fullName', 'email', 'requestedRole',
+          'role', 'status', 'permissions'
+        ])
+        && request.resource.data.status == 'active'
+        && (request.resource.data.role == 'admin'
+          || request.resource.data.role == 'superadmin')
+        && emailMatches(request.resource.data.email)
+        && exists(/databases/$(database)/documents/admins/$(request.resource.data.linkedFromDocumentId))
+        && get(/databases/$(database)/documents/admins/$(request.resource.data.linkedFromDocumentId)).data.email
+          == request.auth.token.email
+        && get(/databases/$(database)/documents/admins/$(request.resource.data.linkedFromDocumentId)).data.status
+          == 'active'
+        && get(/databases/$(database)/documents/admins/$(request.resource.data.linkedFromDocumentId)).data.role
+          == request.resource.data.role;
+    }
+
     match /admins/{uid} {
       allow read: if request.auth != null
-        && (request.auth.uid == uid || isActiveSuperadmin(request.auth.uid));
+        && (
+          request.auth.uid == uid
+          || emailMatches(resource.data.email)
+          || isActiveSuperadmin(request.auth.uid)
+        );
 
       allow create: if request.auth != null
         && request.auth.uid == uid
-        && (creatingPendingSelf() || creatingFromInvite());
+        && (creatingPendingSelf() || creatingFromInvite() || linkingFromExistingEmailDoc());
 
       allow update: if request.auth != null && (
         isActiveSuperadmin(request.auth.uid) ||

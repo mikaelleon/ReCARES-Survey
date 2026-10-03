@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { LanguageToggle } from '@/components/layout/LanguageToggle';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
-import { pathForAccessState } from '@/lib/admin/access';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { goToAdminLogin, goToAdminPath } from '@/lib/firebase/auth';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 function subtitleForPath(pathname: string): string {
@@ -29,29 +29,42 @@ export function AdminTopBar({
   onLangChange: (value: 'EN' | 'FIL') => void;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { user, logout } = useAuth();
   const { toggleTheme, themeLabel } = useTheme();
   const subtitle = subtitleForPath(pathname);
 
   const handleLogout = () => {
-    void logout().then(() => router.push('/admin/login'));
+    void logout().then(() => goToAdminLogin());
   };
+
+  const homeHref =
+    user?.accessState === 'active'
+      ? '/admin/dashboard/'
+      : user?.accessState === 'pending'
+        ? '/admin/pending/'
+        : user?.accessState === 'removed'
+          ? '/admin/removed/'
+          : user
+            ? '/admin/complete/'
+            : '/';
 
   return (
     <header className="admin-topbar">
       <div className="admin-topbar__brand">
         <Link
-          href={
-            user
-              ? user.accessState === 'active'
-                ? '/admin/dashboard'
-                : pathForAccessState(user.accessState) === '/admin/login'
-                  ? '/admin/complete'
-                  : pathForAccessState(user.accessState)
-              : '/'
-          }
+          href={homeHref}
           className="admin-topbar__logo"
+          onClick={(event) => {
+            if (!user || user.accessState === 'active') return;
+            event.preventDefault();
+            goToAdminPath(
+              user.accessState === 'pending'
+                ? '/admin/pending'
+                : user.accessState === 'removed'
+                  ? '/admin/removed'
+                  : '/admin/complete',
+            );
+          }}
         >
           ReCARES Survey
         </Link>

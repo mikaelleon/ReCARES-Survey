@@ -5,6 +5,7 @@ import { FirestoreBlockedNotice } from '@/components/admin/FirestoreBlockedNotic
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useAdminRouteGate } from '@/lib/auth/useAdminRouteGate';
+import { goToAdminLogin } from '@/lib/firebase/auth';
 
 export default function AdminPendingPage() {
   const { logout } = useAuth();
@@ -48,9 +49,7 @@ export default function AdminPendingPage() {
             <Button
               variant="secondary"
               onClick={() => {
-                void logout().then(() => {
-                  window.location.assign('/admin/login/');
-                });
+                void logout().then(() => goToAdminLogin());
               }}
             >
               Log out

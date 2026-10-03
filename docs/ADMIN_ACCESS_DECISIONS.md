@@ -10,8 +10,9 @@ Before anyone uses self-registration for access, create the first `admins/{uid}`
 
 | Field | Value |
 |-------|--------|
+| **Document ID** | **Firebase Auth UID** (Authentication → Users → copy UID). Not Auto-ID. |
 | `fullName` | (name) |
-| `email` | (must match Auth email) |
+| `email` | (must match Auth email exactly, usually lowercase) |
 | `requestedRole` | `superadmin` |
 | `role` | `superadmin` |
 | `status` | `active` |
@@ -19,7 +20,11 @@ Before anyone uses self-registration for access, create the first `admins/{uid}`
 | `createdAt` | timestamp |
 | `approvedAt` | timestamp |
 
+If the document was created with the wrong ID, signing in as that email will attempt to **relink** the active profile onto `admins/{authUid}` (see `linkingFromExistingEmailDoc` in `firestore.rules`).
+
 **Not chosen:** empty-collection self-assign of `role: 'superadmin'` (race risk on concurrent first signups).
+
+**Brave / ad blockers:** Shields must allow `firestore.googleapis.com` or the app cannot read the admin profile and will stay on Finish access.
 
 ## 2. Hard delete vs soft removal
 

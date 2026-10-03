@@ -1,6 +1,6 @@
 'use client';
 
-const AGENT_ID = 'agent_3301m3zjyaq9e3rr5ee8qqnfahaa';
+const AGENT_ID = 'agent_5001m3znwnmnfhvsvfp2wpza517v';
 
 /** Try to open the ElevenLabs ConvAI bubble (shadow DOM launcher). */
 export function openChatWidget(): void {

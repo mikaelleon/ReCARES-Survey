@@ -135,6 +135,72 @@ export async function getAdminProfile(uid: string): Promise<AdminProfile | null>
   }
 }
 
+async function findAdminProfileByEmail(
+  email: string,
+): Promise<{ id: string; profile: AdminProfile } | null> {
+  const db = getFirestoreDb();
+  if (!db || !email.trim()) return null;
+  const normalized = email.trim().toLowerCase();
+  // Try exact + lowercase; Auth token email is usually lowercased.
+  for (const candidate of Array.from(new Set([email.trim(), normalized]))) {
+    const snap = await getDocs(
+      query(collection(db, 'admins'), where('email', '==', candidate)),
+    );
+    if (snap.empty) continue;
+    const match =
+      snap.docs.find((item) => {
+        const mapped = mapAdminDoc(item.data() as Record<string, unknown>);
+        return mapped.status === 'active' && (mapped.role === 'admin' || mapped.role === 'superadmin');
+      }) ?? snap.docs[0];
+    return {
+      id: match.id,
+      profile: mapAdminDoc(match.data() as Record<string, unknown>),
+    };
+  }
+  return null;
+}
+
+/**
+ * Load admins/{uid}. If missing (common Console bootstrap mistake: wrong document ID),
+ * find an active profile by email and copy it onto admins/{uid}.
+ */
+export async function resolveAdminProfile(
+  uid: string,
+  email: string,
+): Promise<AdminProfile | null> {
+  const byUid = await getAdminProfile(uid);
+  if (byUid) return byUid;
+
+  const byEmail = await findAdminProfileByEmail(email);
+  if (!byEmail) return null;
+
+  if (byEmail.id === uid) return byEmail.profile;
+
+  // Relink onto the Auth UID so security rules (isActiveAdmin / isSuperadmin) work.
+  if (
+    byEmail.profile.status === 'active' &&
+    (byEmail.profile.role === 'admin' || byEmail.profile.role === 'superadmin')
+  ) {
+    const db = getFirestoreDb();
+    if (!db) return byEmail.profile;
+    await setDoc(doc(db, 'admins', uid), {
+      fullName: byEmail.profile.fullName,
+      email: email.trim() || byEmail.profile.email,
+      requestedRole: byEmail.profile.requestedRole || byEmail.profile.role || 'Proponent',
+      role: byEmail.profile.role,
+      status: 'active',
+      permissions: byEmail.profile.permissions || {},
+      createdAt: byEmail.profile.createdAt ?? serverTimestamp(),
+      approvedAt: byEmail.profile.approvedAt ?? serverTimestamp(),
+      approvedBy: byEmail.profile.approvedBy ?? byEmail.id,
+      linkedFromDocumentId: byEmail.id,
+    });
+    return (await getAdminProfile(uid)) ?? byEmail.profile;
+  }
+
+  return byEmail.profile;
+}
+
 export async function getInvite(inviteId: string): Promise<(AdminInvite & { id: string }) | null> {
   const db = getFirestoreDb();
   if (!db) return null;
@@ -320,14 +386,20 @@ export async function loginWithGoogle(): Promise<GoogleLoginResult> {
   const provider = new GoogleAuthProvider();
   const credential = await signInWithPopup(auth, provider);
   const user = credential.user;
-  const profile = await getAdminProfile(user.uid);
-  if (profile) {
-    return getAdminAccessState(profile);
+  const email = user.email ?? '';
+  try {
+    const profile = await resolveAdminProfile(user.uid, email);
+    if (profile) {
+      return getAdminAccessState(profile);
+    }
+  } catch (error) {
+    console.warn('loginWithGoogle profile resolve failed', error);
+    throw error;
   }
 
-  const email = (user.email ?? '').toLowerCase();
-  if (email) {
-    const invite = await findUnusedInviteByEmail(email);
+  const emailKey = email.trim().toLowerCase();
+  if (emailKey) {
+    const invite = await findUnusedInviteByEmail(emailKey);
     if (invite) {
       await writeActiveFromInvite(
         user.uid,
@@ -345,6 +417,17 @@ export async function logoutAdmin(): Promise<void> {
   const auth = getFirebaseAuth();
   if (!auth) return;
   await signOut(auth);
+}
+
+/** Full navigation reset after logout (static export + trailingSlash). */
+export function goToAdminLogin(): void {
+  window.location.assign('/admin/login/');
+}
+
+export function goToAdminPath(path: string): void {
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  const withSlash = normalized.endsWith('/') ? normalized : `${normalized}/`;
+  window.location.assign(withSlash);
 }
 
 export function currentAuthUser(): User | null {

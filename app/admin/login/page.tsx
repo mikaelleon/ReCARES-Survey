@@ -1,42 +1,57 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { getAdminAccessState, pathForAccessState } from '@/lib/admin/access';
+import { getAdminAccessState } from '@/lib/admin/access';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import {
-  getAdminProfile,
+  goToAdminPath,
   loginErrorMessage,
   loginWithEmail,
   loginWithGoogle,
+  resolveAdminProfile,
 } from '@/lib/firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase/config';
 
+function routeForAccess(state: ReturnType<typeof getAdminAccessState>): void {
+  if (state === 'active') {
+    goToAdminPath('/admin/dashboard');
+    return;
+  }
+  if (state === 'pending') {
+    goToAdminPath('/admin/pending');
+    return;
+  }
+  if (state === 'removed') {
+    goToAdminPath('/admin/removed');
+    return;
+  }
+  goToAdminPath('/admin/complete');
+}
+
 export default function AdminLoginPage() {
-  const router = useRouter();
-  const { reloadProfile } = useAuth();
+  const { user, ready, reloadProfile } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const routeAfterLogin = async () => {
+  useEffect(() => {
+    if (!ready || !user) return;
+    routeForAccess(user.accessState);
+  }, [ready, user]);
+
+  const finishLogin = async () => {
     await reloadProfile();
-    const uid = getFirebaseAuth()?.currentUser?.uid;
-    if (!uid) {
-      router.push('/admin/login');
+    const authUser = getFirebaseAuth()?.currentUser;
+    if (!authUser) {
+      goToAdminPath('/admin/login');
       return;
     }
-    const profile = await getAdminProfile(uid);
-    const state = getAdminAccessState(profile);
-    if (state === 'unauthenticated') {
-      router.push('/admin/complete');
-      return;
-    }
-    router.push(pathForAccessState(state));
+    const profile = await resolveAdminProfile(authUser.uid, authUser.email ?? '');
+    routeForAccess(getAdminAccessState(profile));
   };
 
   const handleSubmit = async () => {
@@ -48,10 +63,9 @@ export default function AdminLoginPage() {
     setFormError(null);
     try {
       await loginWithEmail(email, password);
-      await routeAfterLogin();
+      await finishLogin();
     } catch (error) {
       setFormError(loginErrorMessage(error));
-    } finally {
       setBusy(false);
     }
   };
@@ -62,20 +76,11 @@ export default function AdminLoginPage() {
     try {
       const result = await loginWithGoogle();
       await reloadProfile();
-      if (result === 'needs-access-code') {
-        router.push('/admin/complete');
-      } else if (result === 'pending') {
-        router.push('/admin/pending');
-      } else if (result === 'removed') {
-        router.push('/admin/removed');
-      } else if (result === 'active') {
-        router.push('/admin/dashboard');
-      } else {
-        router.push('/admin/complete');
-      }
+      routeForAccess(result === 'needs-access-code' || result === 'unauthenticated' ? 'unauthenticated' : result);
     } catch (error) {
-      setFormError(loginErrorMessage(error));
-    } finally {
+      setFormError(
+        `${loginErrorMessage(error)} If you use Brave, turn Shields down for this site so Firestore can load.`,
+      );
       setBusy(false);
     }
   };
@@ -139,7 +144,7 @@ export default function AdminLoginPage() {
               letterSpacing: '.04em',
             }}
           >
-            Proponent log in
+            Proponent login
           </h1>
 
           <Input
@@ -174,63 +179,21 @@ export default function AdminLoginPage() {
             </Button>
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              gap: 16,
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              paddingTop: 4,
-            }}
-          >
-            <button
-              type="button"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
-                fontFamily: 'var(--font-sans)',
-                fontSize: 14,
-                color: 'rgba(255,255,255,.8)',
-                textDecoration: 'underline',
-                transition: 'color 220ms ease-in-out',
-              }}
-            >
-              Forgot password
-            </button>
-            <Link
-              href="/admin/signup"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
-                fontFamily: 'var(--font-sans)',
-                fontSize: 14,
-                color: 'rgba(255,255,255,.8)',
-                textDecoration: 'underline',
-                transition: 'color 220ms ease-in-out',
-              }}
-            >
-              Don&apos;t have an account? Sign up
-            </Link>
-          </div>
-        </div>
-
-        <div style={{ textAlign: 'center', marginTop: 20 }}>
           <Link
-            href="/"
+            href="/admin/signup/"
             style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
               fontFamily: 'var(--font-sans)',
               fontSize: 14,
-              color: 'var(--text-caption)',
+              color: 'rgba(255,255,255,.8)',
               textDecoration: 'underline',
             }}
           >
+            Create an account
+          </Link>
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
+          <Link href="/" style={{ fontSize: 14, color: 'var(--text-caption)' }}>
             Back to the resident site
           </Link>
         </div>

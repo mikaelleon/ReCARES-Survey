@@ -18,7 +18,7 @@ import {
   type AdminRole,
   type DashboardPermissionKey,
 } from '@/lib/admin/access';
-import { getAdminProfile, logoutAdmin, signInMethodLabel } from '@/lib/firebase/auth';
+import { logoutAdmin, resolveAdminProfile, signInMethodLabel } from '@/lib/firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase/config';
 
 export interface AdminUser {
@@ -63,10 +63,10 @@ async function sessionFromUid(
   let profile = null;
   let firestoreError: string | null = null;
   try {
-    profile = await getAdminProfile(uid);
+    profile = await resolveAdminProfile(uid, email);
     if (!profile) {
       await new Promise((resolve) => setTimeout(resolve, 400));
-      profile = await getAdminProfile(uid);
+      profile = await resolveAdminProfile(uid, email);
     }
   } catch {
     firestoreError = FIRESTORE_BLOCKED_MESSAGE;
