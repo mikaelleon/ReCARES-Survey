@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   CalendarCheck,
   CheckCircle2,
@@ -9,12 +9,7 @@ import {
   MessageCircle,
   Trash2,
 } from 'lucide-react';
-import {
-  deleteInterviewInvite,
-  listInterviewInvites,
-  updateInterviewContactStatus,
-  type InterviewInviteRow,
-} from '@/lib/firebase/interviewManage';
+import type { InterviewInviteRow } from '@/lib/firebase/interviewManage';
 import type { InterviewContactStatus } from '@/survey/schema';
 
 const COLUMNS: {
@@ -65,28 +60,21 @@ function emailInitials(email: string): string {
 }
 
 /**
- * Interview Invites Kanban — separate from Members & Invites.
- * Cards use InterviewInvitation fields only (never anonymous survey answers).
+ * Interview Invites Kanban — presentation only; data/actions from parent.
  */
-export function InterviewBoard() {
-  const [rows, setRows] = useState<InterviewInviteRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [note, setNote] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    const next = await listInterviewInvites();
-    setRows(next);
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    void refresh()
-      .catch(() => setError('Could not load interview invites from Firestore.'))
-      .finally(() => setLoading(false));
-  }, [refresh]);
-
+export function InterviewBoard({
+  rows,
+  busyId,
+  onMarkContacted,
+  onConfirm,
+  onWithdraw,
+}: {
+  rows: InterviewInviteRow[];
+  busyId: string | null;
+  onMarkContacted: (id: string, email: string) => void;
+  onConfirm: (id: string, email: string) => void;
+  onWithdraw: (id: string, email: string) => void;
+}) {
   const byColumn = useMemo(() => {
     const map: Record<InterviewContactStatus, InterviewInviteRow[]> = {
       not_contacted: [],
@@ -99,43 +87,8 @@ export function InterviewBoard() {
     return map;
   }, [rows]);
 
-  const run = async (id: string, action: () => Promise<void>, success: string) => {
-    setBusyId(id);
-    setError(null);
-    setNote(null);
-    try {
-      await action();
-      await refresh();
-      setNote(success);
-    } catch {
-      setError('That action failed. Check your connection and permissions.');
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  if (loading) {
-    return <p className="admin-section__lead">Loading interview invites…</p>;
-  }
-
   return (
     <div className="interview-board">
-      <p className="admin-section__lead">
-        Resident-provided contact preferences only. These records are never joined to anonymous
-        survey responses.
-      </p>
-
-      {error ? (
-        <p className="na-error" role="alert">
-          {error}
-        </p>
-      ) : null}
-      {note ? (
-        <p role="status" className="admin-kanban-note">
-          {note}
-        </p>
-      ) : null}
-
       <div className="admin-kanban" role="region" aria-label="Interview invites pipeline">
         <div className="admin-kanban__scroller">
           {COLUMNS.map((col) => {
@@ -212,17 +165,7 @@ export function InterviewBoard() {
                               type="button"
                               className="admin-kanban-icon-btn admin-kanban-icon-btn--primary"
                               disabled={busyId === row.id}
-                              onClick={() =>
-                                void run(
-                                  row.id,
-                                  () =>
-                                    updateInterviewContactStatus(
-                                      row.id,
-                                      'pending_confirmation',
-                                    ),
-                                  `Marked ${row.email} as contacted.`,
-                                )
-                              }
+                              onClick={() => onMarkContacted(row.id, row.email)}
                             >
                               Mark Contacted
                             </button>
@@ -232,13 +175,7 @@ export function InterviewBoard() {
                               type="button"
                               className="admin-kanban-icon-btn admin-kanban-icon-btn--primary"
                               disabled={busyId === row.id}
-                              onClick={() =>
-                                void run(
-                                  row.id,
-                                  () => updateInterviewContactStatus(row.id, 'confirmed'),
-                                  `Confirmed interview for ${row.email}.`,
-                                )
-                              }
+                              onClick={() => onConfirm(row.id, row.email)}
                             >
                               <CheckCircle2 size={14} aria-hidden="true" />
                               Confirm
@@ -258,11 +195,7 @@ export function InterviewBoard() {
                               ) {
                                 return;
                               }
-                              void run(
-                                row.id,
-                                () => deleteInterviewInvite(row.id),
-                                `Withdrew invite for ${row.email}.`,
-                              );
+                              onWithdraw(row.id, row.email);
                             }}
                           >
                             <Trash2 size={14} aria-hidden="true" />
