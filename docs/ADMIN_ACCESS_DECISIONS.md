@@ -85,7 +85,7 @@ Do not treat “PWD screening” as interchangeable with “Accessibility path.�
 | Date range | Session-stored; filters Dashboard + Responses together. Active preset = Dark Emerald fill. `submittedDate` is YYYY-MM-DD — parse as **local** day (`parseSubmittedAt`), not UTC midnight. |
 | Dashboard empty | loading = skeleton; empty range = muted “—” + phase empty copy; never bold 0 flash. All-time 0 = no Firestore docs yet (stub removed). |
 | Trend captions | Only when `source === 'firestore'` and a prior period of equal length exists. No invented deltas on sample stub. |
-| Target gauge (“8 of N”) | **Blocked** until research team supplies a real sample-size target. Do not invent N. Same radial-ring shape as Donezo “Project Progress” when unblocked. |
+| Target progress (Total Respondents) | **Unblocked at N = 100** — horizontal bar under the hero KPI shows progress toward 100 target respondents (caption: “N of 100 target respondents”). Change `RESPONDENT_TARGET` in `DashboardStatGrid` if research revises the sample size. |
 | UX check (Kimberly) | Timed task: “how many renters so far” / “did communication quality move” — confirm Summary pins make that faster than all-nine-at-once. |
 
 ## 8. Donezo-style chrome (what transfers / what does not)

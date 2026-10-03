@@ -12,6 +12,9 @@ import {
 import { FIELD_CODE_HELP, FieldCodeHint } from '@/components/admin/FieldCodeHint';
 import type { DashboardKpis } from '@/lib/admin/analytics';
 
+/** Research sample-size target for Total Respondents progress. */
+const RESPONDENT_TARGET = 100;
+
 function TrendIcon({ caption }: { caption: string }) {
   if (caption.startsWith('+')) {
     return <ArrowUpRight size={14} strokeWidth={2.4} aria-hidden="true" />;
@@ -49,16 +52,6 @@ export function DashboardStatGrid({
     );
   }
 
-  const trendOr = (fallback: string) =>
-    periodTrend ? (
-      <span className="dash-stat__trend">
-        <TrendIcon caption={periodTrend} />
-        {periodTrend}
-      </span>
-    ) : (
-      fallback
-    );
-
   const valueNode = (n: number) =>
     empty ? <span className="dash-stat__empty">—</span> : <>{n}</>;
 
@@ -71,9 +64,46 @@ export function DashboardStatGrid({
           </span>
           <div className="dash-stat__label">Total Respondents</div>
         </div>
-        <div className="dash-stat__value">{valueNode(kpis.total)}</div>
+        <div className="dash-stat__value-row">
+          <div className="dash-stat__value">{valueNode(kpis.total)}</div>
+          {!empty ? (
+            <span className="dash-stat__share">
+              {Math.min(kpis.total, RESPONDENT_TARGET)}/{RESPONDENT_TARGET}
+            </span>
+          ) : null}
+        </div>
+        <div
+          className="dash-stat__bar"
+          role="progressbar"
+          aria-label={`Respondents toward target of ${RESPONDENT_TARGET}`}
+          aria-valuemin={0}
+          aria-valuemax={RESPONDENT_TARGET}
+          aria-valuenow={empty ? 0 : Math.min(kpis.total, RESPONDENT_TARGET)}
+        >
+          <div
+            className="dash-stat__bar-fill"
+            style={{
+              width: empty
+                ? '0%'
+                : `${Math.min(100, Math.round((kpis.total / RESPONDENT_TARGET) * 100))}%`,
+            }}
+          />
+        </div>
         <div className="dash-stat__caption">
-          {empty ? 'No data yet in this date range' : trendOr('In selected date range')}
+          {empty ? (
+            'No data yet in this date range'
+          ) : periodTrend ? (
+            <span className="dash-stat__trend">
+              <TrendIcon caption={periodTrend} />
+              {periodTrend}
+              <span className="dash-stat__trend-sep" aria-hidden="true">
+                ·
+              </span>
+              {kpis.total} of {RESPONDENT_TARGET} target
+            </span>
+          ) : (
+            `${kpis.total} of ${RESPONDENT_TARGET} target respondents`
+          )}
         </div>
       </div>
 

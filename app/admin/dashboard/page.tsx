@@ -47,27 +47,15 @@ function DashboardContent() {
   const { can, user } = useAuth();
   const { records, status, source, usingDemoSample } = useSurveyResponses();
   const [dateRange, setDateRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
 
   useEffect(() => {
     setDateRange(loadStoredDateRange());
   }, []);
 
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(query.trim().toLowerCase()), 160);
-    return () => clearTimeout(t);
-  }, [query]);
-
-  const ranged = useMemo(() => {
-    let list = filterRecordsByDateRange(records, dateRange);
-    if (debouncedQuery) {
-      list = list.filter((r) =>
-        [r.id, r.phase, r.resident, r.pwd].join(' ').toLowerCase().includes(debouncedQuery),
-      );
-    }
-    return list;
-  }, [records, dateRange, debouncedQuery]);
+  const ranged = useMemo(
+    () => filterRecordsByDateRange(records, dateRange),
+    [records, dateRange],
+  );
   const kpis = useMemo(() => computeKpis(ranged), [ranged]);
   const phases = useMemo(() => phaseBuckets(ranged), [ranged]);
   const canResponses = can('responsesDashboard');
@@ -104,8 +92,6 @@ function DashboardContent() {
               Dashboard <span className="dash-page__greet">· Hi, {greetName}!</span>
             </h1>
             <DashboardHeaderTools
-              query={query}
-              onQueryChange={setQuery}
               dateRange={dateRange}
               onDateRangeChange={(next) => {
                 setDateRange(next);
