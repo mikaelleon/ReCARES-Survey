@@ -1,57 +1,36 @@
 'use client';
 
 /**
- * Compact gated-section tags for table/card rows.
+ * Compact gated-branch tags for table/card rows (live survey v2).
  */
 export function GatedSectionChips({
-  ext,
-  s4,
-  s5,
-  s7a,
-  s7b,
+  homeowner,
+  tenant,
+  accessibility,
+  permitsExtended,
+  deviceDependent,
 }: {
-  ext: boolean;
-  s4: boolean;
-  s5: boolean;
-  s7a: boolean;
-  s7b: boolean;
+  homeowner: boolean;
+  tenant: boolean;
+  accessibility: boolean;
+  permitsExtended: boolean;
+  deviceDependent: boolean;
 }) {
-  const chips: { key: string; label: string; sensitive?: boolean; title: string }[] = [];
-  if (ext) {
-    chips.push({
-      key: 'ext',
-      label: '3ext',
-      title: 'Section 3 extended was shown',
-    });
+  const chips: { key: string; label: string; title: string }[] = [];
+  if (homeowner) {
+    chips.push({ key: 'h', label: 'H', title: 'Homeowner branch was shown' });
   }
-  if (s4) {
-    chips.push({
-      key: 's4',
-      label: '4',
-      sensitive: true,
-      title: 'Section 4 (household and personal safety) was shown — sensitive gate',
-    });
+  if (tenant) {
+    chips.push({ key: 't', label: 'T', title: 'Tenant / lessee branch was shown' });
   }
-  if (s5) {
-    chips.push({
-      key: 's5',
-      label: '5',
-      title: 'Section 5 (children and youth safety) was shown',
-    });
+  if (accessibility) {
+    chips.push({ key: 'ac', label: 'AC', title: 'Accessibility items were shown' });
   }
-  if (s7a) {
-    chips.push({
-      key: 's7a',
-      label: '7a',
-      title: 'Section 7a (own accessibility needs) was shown',
-    });
+  if (permitsExtended) {
+    chips.push({ key: 'p', label: 'P+', title: 'Permit follow-ups were shown' });
   }
-  if (s7b) {
-    chips.push({
-      key: 's7b',
-      label: '7b',
-      title: 'Section 7b (household accessibility) was shown',
-    });
+  if (deviceDependent) {
+    chips.push({ key: 'b', label: 'B+', title: 'Device-dependent digital items were shown' });
   }
 
   if (chips.length === 0) {
@@ -62,11 +41,7 @@ export function GatedSectionChips({
     <ul className="admin-chips">
       {chips.map((c) => (
         <li key={c.key}>
-          <span
-            className={`admin-chip${c.sensitive ? ' admin-chip--sensitive' : ''}`}
-            title={c.title}
-            aria-label={c.title}
-          >
+          <span className="admin-chip" title={c.title} aria-label={c.title}>
             {c.label}
           </span>
         </li>

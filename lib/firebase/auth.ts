@@ -135,29 +135,77 @@ export async function getAdminProfile(uid: string): Promise<AdminProfile | null>
   }
 }
 
-async function findAdminProfileByEmail(
+const EMAIL_ALREADY_REGISTERED =
+  'An account with this email already exists. Please log in with your original sign-in method.';
+
+async function queryAdminsByEmail(
   email: string,
-): Promise<{ id: string; profile: AdminProfile } | null> {
+): Promise<{ id: string; profile: AdminProfile }[]> {
   const db = getFirestoreDb();
-  if (!db || !email.trim()) return null;
+  if (!db || !email.trim()) return [];
   const normalized = email.trim().toLowerCase();
-  // Try exact + lowercase; Auth token email is usually lowercased.
+  const seen = new Set<string>();
+  const out: { id: string; profile: AdminProfile }[] = [];
   for (const candidate of Array.from(new Set([email.trim(), normalized]))) {
     const snap = await getDocs(
       query(collection(db, 'admins'), where('email', '==', candidate)),
     );
-    if (snap.empty) continue;
-    const match =
-      snap.docs.find((item) => {
-        const mapped = mapAdminDoc(item.data() as Record<string, unknown>);
-        return mapped.status === 'active' && (mapped.role === 'admin' || mapped.role === 'superadmin');
-      }) ?? snap.docs[0];
-    return {
-      id: match.id,
-      profile: mapAdminDoc(match.data() as Record<string, unknown>),
-    };
+    for (const item of snap.docs) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      out.push({
+        id: item.id,
+        profile: mapAdminDoc(item.data() as Record<string, unknown>),
+      });
+    }
   }
-  return null;
+  return out;
+}
+
+async function findAdminProfileByEmail(
+  email: string,
+): Promise<{ id: string; profile: AdminProfile } | null> {
+  const matches = await queryAdminsByEmail(email);
+  if (matches.length === 0) return null;
+  return (
+    matches.find(
+      (item) =>
+        item.profile.status === 'active' &&
+        (item.profile.role === 'admin' || item.profile.role === 'superadmin'),
+    ) ?? matches[0]
+  );
+}
+
+/** Block a second admins doc for the same email (different Auth UID). */
+export async function assertEmailFreeForNewAdmin(
+  email: string,
+  exceptUid?: string,
+): Promise<void> {
+  const matches = await queryAdminsByEmail(email);
+  const conflict = matches.find((item) => item.id !== exceptUid);
+  if (conflict) {
+    throw new Error(EMAIL_ALREADY_REGISTERED);
+  }
+}
+
+/** Soft-remove other active admins docs that share this email (wrong bootstrap IDs). */
+async function retireDuplicateEmailDocs(uid: string, email: string): Promise<void> {
+  const db = getFirestoreDb();
+  if (!db || !email.trim()) return;
+  const matches = await queryAdminsByEmail(email);
+  for (const match of matches) {
+    if (match.id === uid || match.profile.status !== 'active') continue;
+    try {
+      await updateDoc(doc(db, 'admins', match.id), {
+        status: 'removed',
+        removedAt: serverTimestamp(),
+        removedBy: uid,
+        supersededByUid: uid,
+      });
+    } catch (error) {
+      console.warn('Could not retire duplicate admin doc', match.id, error);
+    }
+  }
 }
 
 /**
@@ -169,7 +217,12 @@ export async function resolveAdminProfile(
   email: string,
 ): Promise<AdminProfile | null> {
   const byUid = await getAdminProfile(uid);
-  if (byUid) return byUid;
+  if (byUid) {
+    if (byUid.status === 'active') {
+      await retireDuplicateEmailDocs(uid, email || byUid.email);
+    }
+    return byUid;
+  }
 
   const byEmail = await findAdminProfileByEmail(email);
   if (!byEmail) return null;
@@ -185,7 +238,7 @@ export async function resolveAdminProfile(
     if (!db) return byEmail.profile;
     await setDoc(doc(db, 'admins', uid), {
       fullName: byEmail.profile.fullName,
-      email: email.trim() || byEmail.profile.email,
+      email: (email.trim() || byEmail.profile.email).toLowerCase(),
       requestedRole: byEmail.profile.requestedRole || byEmail.profile.role || 'Proponent',
       role: byEmail.profile.role,
       status: 'active',
@@ -195,6 +248,7 @@ export async function resolveAdminProfile(
       approvedBy: byEmail.profile.approvedBy ?? byEmail.id,
       linkedFromDocumentId: byEmail.id,
     });
+    await retireDuplicateEmailDocs(uid, email || byEmail.profile.email);
     return (await getAdminProfile(uid)) ?? byEmail.profile;
   }
 
@@ -283,12 +337,13 @@ export async function registerAdmin(params: {
     throw new Error('Invalid access code.');
   }
   const { auth, db } = requireServices();
+  await assertEmailFreeForNewAdmin(params.email);
   const credential = await createUserWithEmailAndPassword(
     auth,
     params.email.trim(),
     params.password,
   );
-  const email = (credential.user.email ?? params.email).trim();
+  const email = (credential.user.email ?? params.email).trim().toLowerCase();
   await setDoc(doc(db, 'admins', credential.user.uid), {
     fullName: params.fullName.trim(),
     email,
@@ -311,12 +366,13 @@ export async function registerAdminFromInvite(params: {
   inviteId: string;
 }): Promise<void> {
   const { auth } = requireServices();
+  await assertEmailFreeForNewAdmin(params.email);
   const credential = await createUserWithEmailAndPassword(
     auth,
     params.email.trim(),
     params.password,
   );
-  const email = (credential.user.email ?? params.email).trim();
+  const email = (credential.user.email ?? params.email).trim().toLowerCase();
 
   const invite = await getInvite(params.inviteId);
   if (!invite || invite.used) {
@@ -354,6 +410,7 @@ export async function completeGoogleAdmin(params: {
   }
   const existing = await getDoc(doc(db, 'admins', user.uid));
   if (existing.exists()) return;
+  await assertEmailFreeForNewAdmin(user.email ?? '', user.uid);
   await setDoc(doc(db, 'admins', user.uid), {
     fullName: user.displayName?.trim() || 'Proponent',
     email: (user.email ?? '').toLowerCase(),
@@ -401,6 +458,7 @@ export async function loginWithGoogle(): Promise<GoogleLoginResult> {
   if (emailKey) {
     const invite = await findUnusedInviteByEmail(emailKey);
     if (invite) {
+      await assertEmailFreeForNewAdmin(email, user.uid);
       await writeActiveFromInvite(
         user.uid,
         user.displayName?.trim() || 'Proponent',
@@ -465,13 +523,14 @@ export function signupErrorMessage(error: unknown): string {
       error.message === 'Invalid access code.' ||
       error.message === 'This invite link is no longer valid.' ||
       error.message === 'This invite was issued for a different email address.' ||
+      error.message === EMAIL_ALREADY_REGISTERED ||
       error.message === NOT_CONFIGURED
     ) {
       return error.message;
     }
   }
   if (code === 'auth/email-already-in-use') {
-    return 'An account with that email already exists.';
+    return EMAIL_ALREADY_REGISTERED;
   }
   if (code === 'auth/invalid-email') {
     return 'Enter a valid email address.';

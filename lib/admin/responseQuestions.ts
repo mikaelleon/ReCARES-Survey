@@ -1,10 +1,14 @@
 import {
+  communicationByResident,
+  type CountBucket,
+} from '@/lib/admin/analytics';
+import {
   LIKERT_LABELS,
   PHASE_OPTIONS,
+  RESIDENT_OPTIONS,
   type SampleRecord,
   type SampleSection2,
 } from '@/lib/admin/sampleResponses';
-import type { CountBucket } from '@/lib/admin/analytics';
 
 export type ChartKind = 'pie' | 'hbar';
 
@@ -14,6 +18,8 @@ export interface ResponseQuestion {
   kind: ChartKind;
   /** For checkbox-style questions, denominator stays total respondents. */
   multiSelect?: boolean;
+  /** Optional note under the chart (e.g. cross-filter explanation). */
+  hint?: string;
   buckets: (records: SampleRecord[]) => CountBucket[];
 }
 
@@ -70,13 +76,6 @@ function likertBuckets(
   });
 }
 
-const RESIDENT_OPTIONS = [
-  'Homeowner',
-  'Renter or lessee',
-  'Household member of a homeowner',
-  'Live-in household staff',
-] as const;
-
 /**
  * Forms-style question catalog for Summary / Question views.
  */
@@ -107,17 +106,24 @@ export const RESPONSE_QUESTIONS: ResponseQuestion[] = [
   },
   {
     id: 'gated',
-    title: 'Which gated sections were shown?',
+    title: 'Which gated branches were shown?',
     kind: 'hbar',
     multiSelect: true,
     buckets: (records) =>
       multiFlag(records, [
-        { label: 'Section 3 extended', pred: (r) => r.ext },
-        { label: 'Section 4 (personal safety)', pred: (r) => r.s4 },
-        { label: 'Section 5 (children in household)', pred: (r) => r.s5 },
-        { label: 'Section 7a (own accessibility)', pred: (r) => r.s7a },
-        { label: 'Section 7b (household accessibility)', pred: (r) => r.s7b },
+        { label: 'Homeowner', pred: (r) => r.homeowner },
+        { label: 'Tenant / lessee', pred: (r) => r.tenant },
+        { label: 'Accessibility', pred: (r) => r.accessibility },
+        { label: 'Permits extended', pred: (r) => r.permitsExtended },
+        { label: 'Device-dependent digital', pred: (r) => r.deviceDependent },
       ]),
+  },
+  {
+    id: 'comm-by-resident',
+    title: 'Communication quality — mean by resident type',
+    kind: 'hbar',
+    hint: 'Cross-filter: average of the five communication Likert items, grouped by resident type. Bar length = mean × 20 (5.0 → 100%).',
+    buckets: (records) => communicationByResident(records),
   },
   ...LIKERT_LABELS.map(
     ({ key, label }): ResponseQuestion => ({
@@ -137,3 +143,11 @@ export function chartTextForCopy(
   const lines = buckets.map((b) => `${b.label}: ${b.count} (${b.pct}%)`);
   return [`${title}`, `${responseCount} responses`, ...lines].join('\n');
 }
+
+export function getQuestionById(id: string): ResponseQuestion | undefined {
+  return RESPONSE_QUESTIONS.find((q) => q.id === id);
+}
+
+export const SUMMARY_PIE_IDS = ['phase', 'resident', 'pwd', 'language'] as const;
+export const SUMMARY_FULL_IDS = ['gated', 'comm-by-resident'] as const;
+export const SUMMARY_LIKERT_IDS = LIKERT_LABELS.map((l) => l.key);

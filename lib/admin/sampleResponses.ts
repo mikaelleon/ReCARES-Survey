@@ -1,5 +1,6 @@
 /**
  * Sample proponent dashboard records (stub until Firestore).
+ * Shape matches live survey v2 gates — not the retired Section 4/5 instrument.
  */
 
 export type LikertValue = 1 | 2 | 3 | 4 | 5;
@@ -21,11 +22,16 @@ export interface SampleRecord {
   phase: string;
   resident: string;
   pwd: 'Yes' | 'No';
-  s4: boolean;
-  s5: boolean;
-  s7a: boolean;
-  s7b: boolean;
-  ext: boolean;
+  /** Homeowner branch (H) shown */
+  homeowner: boolean;
+  /** Tenant/lessee branch (T) shown */
+  tenant: boolean;
+  /** Accessibility items unlocked (A4 yes / AC) */
+  accessibility: boolean;
+  /** Permit follow-ups shown (P2/P3) */
+  permitsExtended: boolean;
+  /** Device-dependent digital items shown (B8/B9) */
+  deviceDependent: boolean;
   language: 'EN' | 'FIL';
   section2: SampleSection2;
   /** Screening / gate notes for detail drawer */
@@ -38,13 +44,13 @@ export const SAMPLE_RESPONSES: SampleRecord[] = [
     submittedAt: '2026-09-14T09:12:00+08:00',
     ts: '14 Sep 2026, 09:12',
     phase: 'Phase 1',
-    resident: 'Homeowner',
+    resident: 'Homeowner living in the unit',
     pwd: 'No',
-    s4: true,
-    s5: true,
-    s7a: false,
-    s7b: true,
-    ext: true,
+    homeowner: true,
+    tenant: false,
+    accessibility: false,
+    permitsExtended: true,
+    deviceDependent: true,
     language: 'EN',
     section2: {
       s2_adequacy: 4,
@@ -54,10 +60,9 @@ export const SAMPLE_RESPONSES: SampleRecord[] = [
       s2_agreement: 4,
     },
     screeningNotes: [
-      'Household size 4 · children yes',
-      'Civil status married → Section 4 opened',
-      'PWD household member → Section 7b shown',
-      'Section 3 extended unlocked',
+      'Homeowner branch → H shown',
+      'Permit follow-ups unlocked',
+      'Smartphone in B1 → device-dependent items shown',
     ],
   },
   {
@@ -65,13 +70,13 @@ export const SAMPLE_RESPONSES: SampleRecord[] = [
     submittedAt: '2026-09-14T11:40:00+08:00',
     ts: '14 Sep 2026, 11:40',
     phase: 'Phase 3',
-    resident: 'Renter or lessee',
+    resident: 'Tenant or lessee',
     pwd: 'No',
-    s4: false,
-    s5: false,
-    s7a: false,
-    s7b: false,
-    ext: false,
+    homeowner: false,
+    tenant: true,
+    accessibility: false,
+    permitsExtended: false,
+    deviceDependent: true,
     language: 'EN',
     section2: {
       s2_adequacy: 3,
@@ -80,24 +85,20 @@ export const SAMPLE_RESPONSES: SampleRecord[] = [
       s2_effectiveness: 2,
       s2_agreement: 3,
     },
-    screeningNotes: [
-      'Household size 2 · children no',
-      'Civil status single · declined Section 4 opt-in',
-      'Gated sections stored as not_shown',
-    ],
+    screeningNotes: ['Tenant branch → T shown', 'Core digital + privacy sections'],
   },
   {
     id: 'RC-0143',
     submittedAt: '2026-09-14T16:05:00+08:00',
     ts: '14 Sep 2026, 16:05',
-    phase: 'Phase 4',
-    resident: 'Homeowner',
+    phase: 'Phase 4 Heights',
+    resident: 'Homeowner living in the unit',
     pwd: 'Yes',
-    s4: true,
-    s5: true,
-    s7a: true,
-    s7b: false,
-    ext: true,
+    homeowner: true,
+    tenant: false,
+    accessibility: true,
+    permitsExtended: true,
+    deviceDependent: true,
     language: 'FIL',
     section2: {
       s2_adequacy: 5,
@@ -107,9 +108,9 @@ export const SAMPLE_RESPONSES: SampleRecord[] = [
       s2_agreement: 5,
     },
     screeningNotes: [
-      'Self-identified PWD → Section 7a shown',
-      'Children in household → Section 5 shown',
-      'Section 4 answered',
+      'A4 yes → accessibility items shown',
+      'Homeowner branch',
+      'Street closures + AI ID-validation + data privacy in core flow',
     ],
   },
   {
@@ -117,13 +118,13 @@ export const SAMPLE_RESPONSES: SampleRecord[] = [
     submittedAt: '2026-09-15T08:22:00+08:00',
     ts: '15 Sep 2026, 08:22',
     phase: 'Phase 2',
-    resident: 'Household member of a homeowner',
+    resident: 'Family or household member of a homeowner',
     pwd: 'No',
-    s4: true,
-    s5: false,
-    s7a: false,
-    s7b: true,
-    ext: false,
+    homeowner: true,
+    tenant: false,
+    accessibility: true,
+    permitsExtended: false,
+    deviceDependent: false,
     language: 'EN',
     section2: {
       s2_adequacy: 3,
@@ -133,23 +134,23 @@ export const SAMPLE_RESPONSES: SampleRecord[] = [
       s2_agreement: 3,
     },
     screeningNotes: [
-      'Opted into Section 4',
-      'PWD household member → Section 7b',
-      'No children → Section 5 not_shown',
+      'Homeowner-related branch',
+      'B1 none → device-dependent items not_shown',
+      'Accessibility unlocked for household needs',
     ],
   },
   {
     id: 'RC-0145',
     submittedAt: '2026-09-15T13:58:00+08:00',
     ts: '15 Sep 2026, 13:58',
-    phase: 'Phase 5',
-    resident: 'Live-in household staff',
+    phase: 'Phase 5 Highlands',
+    resident: 'OFW homeowner',
     pwd: 'No',
-    s4: false,
-    s5: false,
-    s7a: false,
-    s7b: false,
-    ext: false,
+    homeowner: true,
+    tenant: false,
+    accessibility: false,
+    permitsExtended: false,
+    deviceDependent: true,
     language: 'EN',
     section2: {
       s2_adequacy: 2,
@@ -158,23 +159,20 @@ export const SAMPLE_RESPONSES: SampleRecord[] = [
       s2_effectiveness: 2,
       s2_agreement: 3,
     },
-    screeningNotes: [
-      'Minimal gated unlocks',
-      'Core sections only',
-    ],
+    screeningNotes: ['OFW homeowner → H shown', 'Minimal permit follow-ups'],
   },
   {
     id: 'RC-0146',
     submittedAt: '2026-09-16T10:05:00+08:00',
     ts: '16 Sep 2026, 10:05',
     phase: 'Phase 1',
-    resident: 'Homeowner',
+    resident: 'Family or household member of a tenant or lessee',
     pwd: 'No',
-    s4: true,
-    s5: true,
-    s7a: false,
-    s7b: false,
-    ext: true,
+    homeowner: false,
+    tenant: true,
+    accessibility: false,
+    permitsExtended: true,
+    deviceDependent: true,
     language: 'EN',
     section2: {
       s2_adequacy: 4,
@@ -183,24 +181,20 @@ export const SAMPLE_RESPONSES: SampleRecord[] = [
       s2_effectiveness: 4,
       s2_agreement: 4,
     },
-    screeningNotes: [
-      'Phase 1 homeowner',
-      'Children yes → Section 5',
-      'Section 4 via civil status',
-    ],
+    screeningNotes: ['Tenant-related branch → T shown', 'Entrance/visitor permits extended'],
   },
   {
     id: 'RC-0147',
     submittedAt: '2026-09-16T18:40:00+08:00',
     ts: '16 Sep 2026, 18:40',
     phase: 'Phase 2',
-    resident: 'Renter or lessee',
+    resident: 'Tenant or lessee',
     pwd: 'Yes',
-    s4: false,
-    s5: false,
-    s7a: true,
-    s7b: true,
-    ext: false,
+    homeowner: false,
+    tenant: true,
+    accessibility: true,
+    permitsExtended: false,
+    deviceDependent: true,
     language: 'FIL',
     section2: {
       s2_adequacy: 3,
@@ -209,23 +203,20 @@ export const SAMPLE_RESPONSES: SampleRecord[] = [
       s2_effectiveness: 3,
       s2_agreement: 3,
     },
-    screeningNotes: [
-      'Self + household PWD flags',
-      'Declined Section 4 opt-in',
-    ],
+    screeningNotes: ['Tenant branch', 'PWD / accessibility path'],
   },
   {
     id: 'RC-0148',
     submittedAt: '2026-09-17T07:15:00+08:00',
     ts: '17 Sep 2026, 07:15',
     phase: 'Phase 3',
-    resident: 'Homeowner',
+    resident: 'Absentee homeowner',
     pwd: 'No',
-    s4: true,
-    s5: true,
-    s7a: false,
-    s7b: false,
-    ext: true,
+    homeowner: true,
+    tenant: false,
+    accessibility: false,
+    permitsExtended: true,
+    deviceDependent: true,
     language: 'EN',
     section2: {
       s2_adequacy: 5,
@@ -235,8 +226,8 @@ export const SAMPLE_RESPONSES: SampleRecord[] = [
       s2_agreement: 4,
     },
     screeningNotes: [
-      'Recent submission',
-      'Extended Section 3 + safety sections',
+      'Absentee homeowner → H shown',
+      'Street closures, AI ID-validation, data privacy always in core path',
     ],
   },
 ];
@@ -245,8 +236,19 @@ export const PHASE_OPTIONS = [
   'Phase 1',
   'Phase 2',
   'Phase 3',
-  'Phase 4',
-  'Phase 5',
+  'Phase 4 Heights',
+  'Phase 5 Highlands',
+  'Phase 6 Eastgrove',
+  'Not sure',
+] as const;
+
+export const RESIDENT_OPTIONS = [
+  'Homeowner living in the unit',
+  'OFW homeowner',
+  'Absentee homeowner',
+  'Family or household member of a homeowner',
+  'Tenant or lessee',
+  'Family or household member of a tenant or lessee',
 ] as const;
 
 export const LIKERT_LABELS: { key: keyof SampleSection2; label: string }[] = [

@@ -44,3 +44,33 @@ If the document was created with the wrong ID, signing in as that email will att
 4. Mark invite `used` (email match, `used: false` → `true` only).
 
 Do **not** deploy `allow read: if request.auth != null` on invites.
+
+## 4. Section 4 / Section 5 on the dashboard (investigation)
+
+**Finding: neither stale Firestore production rows nor an undeployed survey rebuild.**
+
+| Check | Result |
+|-------|--------|
+| Live survey instrument (`survey/schema.ts`, `survey/review.ts`) | No Section 4 (personal safety / VAWC) or Section 5 (children). Current path: About → Digital → Facebook/comms → Security → Permits → Street closures → AI ID-validation / privacy → Homeowner **or** Tenant → Accessibility → Open problems. |
+| Dashboard data source | `SAMPLE_RESPONSES` stub in `lib/admin/sampleResponses.ts` — not `needsAssessmentResponses` in Firestore. |
+| Why Section 4/5 appeared | Stub records still modeled the pre-title-defense gated sections (`s4` / `s5`). |
+
+**Fix applied:** rewrite the stub model and KPI/gate charts to live branches (homeowner, tenant/lessee, accessibility, permits extended, device-dependent). No “created after X” Firestore filter — production response wiring is still stubbed.
+
+## 5. Duplicate Active Members (same email)
+
+**Likely cause (confirmed in code):** Console bootstrap with a wrong document ID, then Google/email login runs `resolveAdminProfile`, which **copies** the active profile onto `admins/{authUid}` via `linkedFromDocumentId` and previously left the original doc `active`. List view then showed two Kimberly Aliwate rows.
+
+Secondary risk: email/password Auth UID ≠ Google Auth UID, each creating its own `admins` doc (registration did not check email uniqueness).
+
+**Fix applied:** after relink, soft-remove the superseded doc; block new `admins` creates when another doc already has that email; list dedupes by email preferring the linked Auth-UID row.
+
+## 6. Dashboard “Live branch coverage” vs Responses gated chart
+
+| Label | Source field | Meaning |
+|-------|--------------|---------|
+| Accessibility path (Dashboard) / Accessibility (Responses) | `accessibility` / survey `A4 === yes` gate | **Same gate.** Dashboard KPI is the summary count; Responses chart is the multi-flag breakdown including this gate. |
+| PWD screening (Yes) (Dashboard) / PWD pie (Responses) | `pwd === 'Yes'` only | **Screening answer**, not a branch unlock. Does **not** OR-in accessibility (old `pwd \|\| accessibility` double-count removed). |
+| Tenant / Homeowner | `tenant` / `homeowner` | Branch unlocks (A1). |
+
+Do not treat “PWD screening” as interchangeable with “Accessibility path.”

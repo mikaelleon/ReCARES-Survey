@@ -1,27 +1,36 @@
 'use client';
 
-import { useState } from 'react';
-import { AdminTopBar } from '@/components/admin/AdminTopBar';
+import { usePathname } from 'next/navigation';
+import { AdminAuthChrome } from '@/components/admin/AdminAuthChrome';
 import { FirestoreBlockedNotice } from '@/components/admin/FirestoreBlockedNotice';
 import { useAuth } from '@/lib/auth/AuthProvider';
 
+const APP_PREFIXES = [
+  '/admin/dashboard',
+  '/admin/responses',
+  '/admin/interviews',
+  '/admin/members',
+];
+
+function isAppRoute(pathname: string): boolean {
+  return APP_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
 /**
- * Admin chrome — sticky header shared by login, signup, and dashboard.
- * No Suspense wrapper: static export + useSearchParams Suspense caused React #318.
+ * Admin chrome. Auth gates use a slim top bar (no EN/FIL).
+ * Active app pages supply their own sidebar via AdminAppShell.
  */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [lang, setLang] = useState<'EN' | 'FIL'>('EN');
+  const pathname = usePathname() || '';
   const { firestoreError } = useAuth();
+  const app = isAppRoute(pathname);
 
   return (
     <div className="admin-shell">
-      <AdminTopBar lang={lang} onLangChange={setLang} />
-      {lang === 'FIL' ? (
-        <div className="admin-fil-banner" role="status">
-          Filipino translations are pending. Dashboard and auth strings stay in English for now.
-        </div>
-      ) : null}
-      {firestoreError ? (
+      {app ? null : <AdminAuthChrome />}
+      {!app && firestoreError ? (
         <div style={{ maxWidth: 720, margin: '12px auto 0', padding: '0 16px' }}>
           <FirestoreBlockedNotice message={firestoreError} />
         </div>

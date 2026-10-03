@@ -28,7 +28,7 @@ export function ResponseTable({
               <th scope="col">Phase</th>
               <th scope="col">Resident type</th>
               <th scope="col">PWD</th>
-              <th scope="col">Gated sections</th>
+              <th scope="col">Gated branches</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
@@ -50,11 +50,11 @@ export function ResponseTable({
                 <td>{r.pwd}</td>
                 <td>
                   <GatedSectionChips
-                    ext={r.ext}
-                    s4={r.s4}
-                    s5={r.s5}
-                    s7a={r.s7a}
-                    s7b={r.s7b}
+                    homeowner={r.homeowner}
+                    tenant={r.tenant}
+                    accessibility={r.accessibility}
+                    permitsExtended={r.permitsExtended}
+                    deviceDependent={r.deviceDependent}
                   />
                 </td>
                 <td>
@@ -111,11 +111,11 @@ export function ResponseTable({
               </div>
             </dl>
             <GatedSectionChips
-              ext={r.ext}
-              s4={r.s4}
-              s5={r.s5}
-              s7a={r.s7a}
-              s7b={r.s7b}
+              homeowner={r.homeowner}
+              tenant={r.tenant}
+              accessibility={r.accessibility}
+              permitsExtended={r.permitsExtended}
+              deviceDependent={r.deviceDependent}
             />
             <div className="admin-row-actions">
               <button type="button" className="ghost-btn admin-action" onClick={() => onView(r)}>

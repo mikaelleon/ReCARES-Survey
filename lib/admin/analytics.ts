@@ -25,11 +25,15 @@ export interface LikertMean {
 
 export interface DashboardKpis {
   total: number;
-  section4Count: number;
-  section4Pct: number;
+  last7DaysCount: number;
+  tenantCount: number;
+  tenantPct: number;
+  homeownerCount: number;
+  homeownerPct: number;
+  accessibilityCount: number;
+  accessibilityPct: number;
   pwdRelatedCount: number;
   pwdRelatedPct: number;
-  last7DaysCount: number;
 }
 
 function pct(part: number, total: number): number {
@@ -37,8 +41,14 @@ function pct(part: number, total: number): number {
   return Math.round((part / total) * 100);
 }
 
+/** Screening field only (A4 = yes). Not the same as accessibility-path gate. */
+export function isPwdScreeningYes(r: SampleRecord): boolean {
+  return r.pwd === 'Yes';
+}
+
+/** @deprecated Use isPwdScreeningYes — old helper double-counted accessibility. */
 export function isPwdRelated(r: SampleRecord): boolean {
-  return r.pwd === 'Yes' || r.s7b || r.s7a;
+  return isPwdScreeningYes(r);
 }
 
 export function computeKpis(
@@ -46,21 +56,29 @@ export function computeKpis(
   now = new Date(),
 ): DashboardKpis {
   const total = records.length;
-  const section4Count = records.filter((r) => r.s4).length;
-  const pwdRelatedCount = records.filter(isPwdRelated).length;
   const weekMs = 7 * 24 * 60 * 60 * 1000;
   const last7DaysCount = records.filter((r) => {
     const t = new Date(r.submittedAt).getTime();
     return now.getTime() - t <= weekMs;
   }).length;
+  const tenantCount = records.filter((r) => r.tenant).length;
+  const homeownerCount = records.filter((r) => r.homeowner).length;
+  /** Same flag as Responses chart label "Accessibility". */
+  const accessibilityCount = records.filter((r) => r.accessibility).length;
+  /** Distinct cut: screening Yes only (does not OR-in accessibility). */
+  const pwdRelatedCount = records.filter(isPwdScreeningYes).length;
 
   return {
     total,
-    section4Count,
-    section4Pct: pct(section4Count, total),
+    last7DaysCount,
+    tenantCount,
+    tenantPct: pct(tenantCount, total),
+    homeownerCount,
+    homeownerPct: pct(homeownerCount, total),
+    accessibilityCount,
+    accessibilityPct: pct(accessibilityCount, total),
     pwdRelatedCount,
     pwdRelatedPct: pct(pwdRelatedCount, total),
-    last7DaysCount,
   };
 }
 
@@ -89,11 +107,11 @@ export function countByResident(records: SampleRecord[]): CountBucket[] {
 export function gateCoverage(records: SampleRecord[]): GateCoverage[] {
   const total = records.length;
   const defs: { key: string; label: string; pred: (r: SampleRecord) => boolean }[] = [
-    { key: 'ext', label: '3 extended', pred: (r) => r.ext },
-    { key: 's4', label: 'Section 4', pred: (r) => r.s4 },
-    { key: 's5', label: 'Section 5', pred: (r) => r.s5 },
-    { key: 's7a', label: 'Section 7a', pred: (r) => r.s7a },
-    { key: 's7b', label: 'Section 7b', pred: (r) => r.s7b },
+    { key: 'homeowner', label: 'Homeowner', pred: (r) => r.homeowner },
+    { key: 'tenant', label: 'Tenant/lessee', pred: (r) => r.tenant },
+    { key: 'accessibility', label: 'Accessibility', pred: (r) => r.accessibility },
+    { key: 'permits', label: 'Permits extended', pred: (r) => r.permitsExtended },
+    { key: 'device', label: 'Device-dependent', pred: (r) => r.deviceDependent },
   ];
   return defs.map((d) => {
     const count = records.filter(d.pred).length;
@@ -112,6 +130,30 @@ export function likertMeans(records: SampleRecord[]): LikertMean[] {
   });
 }
 
+/** Mean communication-quality score (all Likert keys) by resident type. */
+export function communicationByResident(records: SampleRecord[]): CountBucket[] {
+  const groups = new Map<string, { sum: number; n: number }>();
+  for (const r of records) {
+    const keys = LIKERT_LABELS.map((l) => l.key);
+    const avg = keys.reduce((acc, k) => acc + r.section2[k], 0) / keys.length;
+    const cur = groups.get(r.resident) ?? { sum: 0, n: 0 };
+    cur.sum += avg;
+    cur.n += 1;
+    groups.set(r.resident, cur);
+  }
+  return Array.from(groups.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([label, { sum, n }]) => {
+      const mean = n ? Math.round((sum / n) * 10) / 10 : 0;
+      return {
+        label,
+        count: n,
+        /** Reuse pct slot as mean×20 so bar charts have a 0–100-ish scale (mean 5 → 100). */
+        pct: Math.round(mean * 20),
+      };
+    });
+}
+
 export function formatKpiCaption(count: number, total: number, pctValue: number): string {
   return `${count} of ${total} · ${pctValue}%`;
 }
@@ -123,43 +165,45 @@ export function buildCsv(records: SampleRecord[]): string {
     'phase',
     'resident',
     'pwd',
-    'section3_extended',
-    'section4',
-    'section5',
-    'section7a',
-    'section7b',
+    'homeowner',
+    'tenant',
+    'accessibility',
+    'permitsExtended',
+    'deviceDependent',
     'language',
+    ...LIKERT_LABELS.map((l) => l.key),
   ];
   const rows = records.map((r) =>
     [
       r.id,
       r.submittedAt,
       r.phase,
-      `"${r.resident.replace(/"/g, '""')}"`,
+      r.resident,
       r.pwd,
-      r.ext ? '1' : '0',
-      r.s4 ? '1' : '0',
-      r.s5 ? '1' : '0',
-      r.s7a ? '1' : '0',
-      r.s7b ? '1' : '0',
+      r.homeowner,
+      r.tenant,
+      r.accessibility,
+      r.permitsExtended,
+      r.deviceDependent,
       r.language,
-    ].join(','),
+      ...LIKERT_LABELS.map((l) => r.section2[l.key]),
+    ]
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(','),
   );
   return [header.join(','), ...rows].join('\n');
 }
 
-export function buildSummaryText(
-  kpis: DashboardKpis,
-  byPhase: CountBucket[],
-): string {
-  const phaseLines = byPhase.map((b) => `  ${b.label}: ${b.count} (${b.pct}%)`).join('\n');
+export function buildSummaryText(records: SampleRecord[]): string {
+  const kpis = computeKpis(records);
   return [
     'ReCARES dashboard summary (aggregates only)',
-    `Total responses: ${kpis.total}`,
-    `Section 4 shown: ${kpis.section4Count} (${kpis.section4Pct}%)`,
-    `PWD-related: ${kpis.pwdRelatedCount} (${kpis.pwdRelatedPct}%)`,
+    `Responses: ${kpis.total}`,
     `Last 7 days: ${kpis.last7DaysCount}`,
-    'By phase:',
-    phaseLines,
+    `Tenant/lessee branch: ${kpis.tenantCount} (${kpis.tenantPct}%)`,
+    `Homeowner branch: ${kpis.homeownerCount} (${kpis.homeownerPct}%)`,
+    `Accessibility path: ${kpis.accessibilityCount} (${kpis.accessibilityPct}%)`,
+    `PWD screening (Yes): ${kpis.pwdRelatedCount} (${kpis.pwdRelatedPct}%)`,
+    `Accessibility path: ${kpis.accessibilityCount} (${kpis.accessibilityPct}%)`,
   ].join('\n');
 }

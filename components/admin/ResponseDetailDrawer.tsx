@@ -26,11 +26,11 @@ export function ResponseDetailDrawer({
   if (!record) return null;
 
   const gates = [
-    { label: 'Section 3 extended', shown: record.ext },
-    { label: 'Section 4 (personal safety)', shown: record.s4, sensitive: true },
-    { label: 'Section 5 (children)', shown: record.s5 },
-    { label: 'Section 7a (own accessibility)', shown: record.s7a },
-    { label: 'Section 7b (household accessibility)', shown: record.s7b },
+    { label: 'Homeowner branch', shown: record.homeowner },
+    { label: 'Tenant / lessee branch', shown: record.tenant },
+    { label: 'Accessibility', shown: record.accessibility },
+    { label: 'Permits extended', shown: record.permitsExtended },
+    { label: 'Device-dependent digital', shown: record.deviceDependent },
   ];
 
   return (
@@ -79,13 +79,10 @@ export function ResponseDetailDrawer({
             </div>
           </dl>
 
-          <h3 className="admin-drawer__h">Gated sections</h3>
+          <h3 className="admin-drawer__h">Gated branches</h3>
           <ul className="admin-drawer__gates">
             {gates.map((g) => (
-              <li
-                key={g.label}
-                className={g.sensitive && g.shown ? 'admin-drawer__gate--sensitive' : undefined}
-              >
+              <li key={g.label}>
                 <span>{g.label}</span>
                 <span>{g.shown ? 'Shown' : 'not_shown'}</span>
               </li>
@@ -94,11 +91,11 @@ export function ResponseDetailDrawer({
 
           <div className="admin-drawer__chips">
             <GatedSectionChips
-              ext={record.ext}
-              s4={record.s4}
-              s5={record.s5}
-              s7a={record.s7a}
-              s7b={record.s7b}
+              homeowner={record.homeowner}
+              tenant={record.tenant}
+              accessibility={record.accessibility}
+              permitsExtended={record.permitsExtended}
+              deviceDependent={record.deviceDependent}
             />
           </div>
 
@@ -109,7 +106,7 @@ export function ResponseDetailDrawer({
             ))}
           </ul>
 
-          <h3 className="admin-drawer__h">Section 2 (stub)</h3>
+          <h3 className="admin-drawer__h">Communication quality (stub)</h3>
           <ul className="admin-drawer__notes">
             <li>Adequacy: {record.section2.s2_adequacy}</li>
             <li>Frequency: {record.section2.s2_frequency}</li>

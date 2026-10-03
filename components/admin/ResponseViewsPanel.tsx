@@ -1,19 +1,19 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, FileSpreadsheet, MoreVertical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
 import { QuestionChartCard } from '@/components/admin/charts/QuestionChartCard';
 import { GatedSectionChips } from '@/components/admin/GatedSectionChips';
 import { ResponseEmptyState } from '@/components/admin/ResponseEmptyState';
 import { ResponseTable } from '@/components/admin/ResponseTable';
-import {
-  ResponseToolbar,
-  type Section4Filter,
-  type SortDir,
-  type SortKey,
-} from '@/components/admin/ResponseToolbar';
 import { LIKERT_LABELS, type SampleRecord } from '@/lib/admin/sampleResponses';
-import { RESPONSE_QUESTIONS } from '@/lib/admin/responseQuestions';
+import {
+  RESPONSE_QUESTIONS,
+  SUMMARY_FULL_IDS,
+  SUMMARY_LIKERT_IDS,
+  SUMMARY_PIE_IDS,
+  getQuestionById,
+} from '@/lib/admin/responseQuestions';
 
 export type ResponseViewTab = 'summary' | 'question' | 'individual';
 
@@ -23,25 +23,43 @@ const TABS: { id: ResponseViewTab; label: string }[] = [
   { id: 'individual', label: 'Individual' },
 ];
 
+function ChartById({
+  id,
+  records,
+  responseCount,
+  compact = false,
+}: {
+  id: string;
+  records: SampleRecord[];
+  responseCount: number;
+  compact?: boolean;
+}) {
+  const q = getQuestionById(id);
+  if (!q) return null;
+  return (
+    <div>
+      <QuestionChartCard
+        title={q.title}
+        responseCount={responseCount}
+        kind={q.kind}
+        buckets={q.buckets(records)}
+        compact={compact}
+      />
+      {q.hint ? <p className="gf-chart-hint">{q.hint}</p> : null}
+    </div>
+  );
+}
+
 /**
  * Google Forms–style response views: Summary, Question, Individual.
+ * Page-level filters live in ResponsesToolbar above this panel.
  */
 export function ResponseViewsPanel({
   records,
   filtered,
-  query,
-  onQueryChange,
-  phase,
-  onPhaseChange,
-  section4,
-  onSection4Change,
-  sortKey,
-  sortDir,
-  onSortKeyChange,
-  onToggleSortDir,
-  onExport,
   onCopySummary,
   copyNote,
+  onExport,
   exportDisabled,
   onView,
   onDelete,
@@ -51,19 +69,9 @@ export function ResponseViewsPanel({
 }: {
   records: SampleRecord[];
   filtered: SampleRecord[];
-  query: string;
-  onQueryChange: (v: string) => void;
-  phase: string;
-  onPhaseChange: (v: string) => void;
-  section4: Section4Filter;
-  onSection4Change: (v: Section4Filter) => void;
-  sortKey: SortKey;
-  sortDir: SortDir;
-  onSortKeyChange: (v: SortKey) => void;
-  onToggleSortDir: () => void;
-  onExport: () => void;
   onCopySummary: () => void;
   copyNote: string | null;
+  onExport: () => void;
   exportDisabled: boolean;
   onView: (r: SampleRecord) => void;
   onDelete: (r: SampleRecord) => void;
@@ -112,15 +120,6 @@ export function ResponseViewsPanel({
           ) : null}
         </h3>
         <div className="gf-panel__actions">
-          <button
-            type="button"
-            className="gf-panel__sheets"
-            onClick={onExport}
-            disabled={exportDisabled}
-          >
-            <FileSpreadsheet size={18} strokeWidth={2.2} aria-hidden="true" />
-            Export CSV
-          </button>
           <div className="gf-panel__menu-wrap">
             <button
               type="button"
@@ -191,36 +190,42 @@ export function ResponseViewsPanel({
       >
         {tab === 'summary' ? (
           <div className="gf-summary">
-            <ResponseToolbar
-              query={query}
-              onQueryChange={onQueryChange}
-              phase={phase}
-              onPhaseChange={onPhaseChange}
-              section4={section4}
-              onSection4Change={onSection4Change}
-              sortKey={sortKey}
-              sortDir={sortDir}
-              onSortKeyChange={onSortKeyChange}
-              onToggleSortDir={onToggleSortDir}
-              showing={filtered.length}
-              total={records.length}
-              onExport={onExport}
-              onCopySummary={onCopySummary}
-              exportDisabled={exportDisabled}
-            />
             {filtered.length === 0 ? (
               <ResponseEmptyState kind="filtered" onReset={onResetFilters} />
             ) : (
-              <div className="gf-summary__stack">
-                {RESPONSE_QUESTIONS.map((q) => (
-                  <QuestionChartCard
-                    key={q.id}
-                    title={q.title}
-                    responseCount={responseCount}
-                    kind={q.kind}
-                    buckets={q.buckets(chartSource)}
-                  />
-                ))}
+              <div className="gf-bento">
+                <div className="gf-bento__pies">
+                  {SUMMARY_PIE_IDS.map((id) => (
+                    <ChartById
+                      key={id}
+                      id={id}
+                      records={chartSource}
+                      responseCount={responseCount}
+                      compact
+                    />
+                  ))}
+                </div>
+                <div className="gf-bento__full">
+                  {SUMMARY_FULL_IDS.map((id) => (
+                    <ChartById
+                      key={id}
+                      id={id}
+                      records={chartSource}
+                      responseCount={responseCount}
+                    />
+                  ))}
+                </div>
+                <div className="gf-bento__likert">
+                  {SUMMARY_LIKERT_IDS.map((id, index) => (
+                    <ChartById
+                      key={id}
+                      id={id}
+                      records={chartSource}
+                      responseCount={responseCount}
+                      compact={index < SUMMARY_LIKERT_IDS.length - 1 || SUMMARY_LIKERT_IDS.length % 2 === 0}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -246,9 +251,7 @@ export function ResponseViewsPanel({
                 className="gf-pager__btn"
                 disabled={safeQuestionIndex >= RESPONSE_QUESTIONS.length - 1}
                 onClick={() =>
-                  setQuestionIndex((i) =>
-                    Math.min(RESPONSE_QUESTIONS.length - 1, i + 1),
-                  )
+                  setQuestionIndex((i) => Math.min(RESPONSE_QUESTIONS.length - 1, i + 1))
                 }
                 aria-label="Next question"
               >
@@ -258,11 +261,10 @@ export function ResponseViewsPanel({
             {filtered.length === 0 ? (
               <ResponseEmptyState kind="filtered" onReset={onResetFilters} />
             ) : currentQuestion ? (
-              <QuestionChartCard
-                title={currentQuestion.title}
+              <ChartById
+                id={currentQuestion.id}
+                records={chartSource}
                 responseCount={responseCount}
-                kind={currentQuestion.kind}
-                buckets={currentQuestion.buckets(chartSource)}
               />
             ) : null}
           </div>
@@ -270,23 +272,6 @@ export function ResponseViewsPanel({
 
         {tab === 'individual' ? (
           <div className="gf-individual">
-            <ResponseToolbar
-              query={query}
-              onQueryChange={onQueryChange}
-              phase={phase}
-              onPhaseChange={onPhaseChange}
-              section4={section4}
-              onSection4Change={onSection4Change}
-              sortKey={sortKey}
-              sortDir={sortDir}
-              onSortKeyChange={onSortKeyChange}
-              onToggleSortDir={onToggleSortDir}
-              showing={filtered.length}
-              total={records.length}
-              onExport={onExport}
-              onCopySummary={onCopySummary}
-              exportDisabled={exportDisabled}
-            />
             {filtered.length === 0 ? (
               <ResponseEmptyState kind="filtered" onReset={onResetFilters} />
             ) : (
@@ -309,9 +294,7 @@ export function ResponseViewsPanel({
                     className="gf-pager__btn"
                     disabled={safeIndividualIndex >= filtered.length - 1}
                     onClick={() =>
-                      setIndividualIndex((i) =>
-                        Math.min(filtered.length - 1, i + 1),
-                      )
+                      setIndividualIndex((i) => Math.min(filtered.length - 1, i + 1))
                     }
                     aria-label="Next response"
                   >
@@ -362,19 +345,17 @@ export function ResponseViewsPanel({
                       </div>
                     </dl>
                     <div className="gf-individual__block">
-                      <h4 className="gf-individual__sub">Gated sections</h4>
+                      <h4 className="gf-individual__sub">Gated branches</h4>
                       <GatedSectionChips
-                        ext={individualDetail.ext}
-                        s4={individualDetail.s4}
-                        s5={individualDetail.s5}
-                        s7a={individualDetail.s7a}
-                        s7b={individualDetail.s7b}
+                        homeowner={individualDetail.homeowner}
+                        tenant={individualDetail.tenant}
+                        accessibility={individualDetail.accessibility}
+                        permitsExtended={individualDetail.permitsExtended}
+                        deviceDependent={individualDetail.deviceDependent}
                       />
                     </div>
                     <div className="gf-individual__block">
-                      <h4 className="gf-individual__sub">
-                        Communication quality (Section 2)
-                      </h4>
+                      <h4 className="gf-individual__sub">Communication quality</h4>
                       <ul className="gf-individual__likert">
                         {LIKERT_LABELS.map(({ key, label }) => (
                           <li key={key}>

@@ -20,7 +20,10 @@ import {
 import { mapAdminDoc } from '@/lib/firebase/auth';
 import { getFirestoreDb } from '@/lib/firebase/config';
 
-export type AdminMemberRow = AdminProfile & { uid: string };
+export type AdminMemberRow = AdminProfile & {
+  uid: string;
+  linkedFromDocumentId?: string;
+};
 export type InviteRow = AdminInvite & { id: string };
 
 function requireDb() {
@@ -34,10 +37,33 @@ export async function listAdminsByStatus(
 ): Promise<AdminMemberRow[]> {
   const db = requireDb();
   const snap = await getDocs(query(collection(db, 'admins'), where('status', '==', status)));
-  return snap.docs.map((item) => ({
+  const rows = snap.docs.map((item) => ({
     uid: item.id,
     ...mapAdminDoc(item.data() as Record<string, unknown>),
+    linkedFromDocumentId:
+      typeof (item.data() as Record<string, unknown>).linkedFromDocumentId === 'string'
+        ? String((item.data() as Record<string, unknown>).linkedFromDocumentId)
+        : undefined,
   }));
+
+  // Prefer the Auth-UID doc when a superseded bootstrap doc still shows as active.
+  const superseded = new Set(
+    rows
+      .map((row) => row.linkedFromDocumentId)
+      .filter((id): id is string => Boolean(id)),
+  );
+  const byEmail = new Map<string, AdminMemberRow>();
+  for (const row of rows) {
+    if (superseded.has(row.uid)) continue;
+    const key = row.email.trim().toLowerCase() || row.uid;
+    const prev = byEmail.get(key);
+    if (!prev || row.linkedFromDocumentId) {
+      byEmail.set(key, row);
+    }
+  }
+  return Array.from(byEmail.values()).sort((a, b) =>
+    (a.fullName || a.email).localeCompare(b.fullName || b.email),
+  );
 }
 
 export async function listInvites(): Promise<InviteRow[]> {

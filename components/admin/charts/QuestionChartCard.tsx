@@ -36,11 +36,13 @@ export function QuestionChartCard({
   responseCount,
   kind,
   buckets,
+  compact = false,
 }: {
   title: string;
   responseCount: number;
   kind: ChartKind;
   buckets: CountBucket[];
+  compact?: boolean;
 }) {
   const { ref, seen } = useInViewOnce<HTMLElement>();
   const [copied, setCopied] = useState(false);
@@ -58,7 +60,7 @@ export function QuestionChartCard({
   };
 
   return (
-    <article ref={ref} className="gf-card">
+    <article ref={ref} className={`gf-card${compact ? ' gf-card--compact' : ''}`}>
       <header className="gf-card__head">
         <div className="gf-card__titles">
           <h3 className="gf-card__title">{title}</h3>

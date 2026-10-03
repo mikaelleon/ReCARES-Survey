@@ -50,8 +50,41 @@ interface StatDef {
   delay: string;
 }
 
+function StatGroup({
+  title,
+  stats,
+  reduced,
+}: {
+  title: string;
+  stats: StatDef[];
+  reduced: boolean;
+}) {
+  return (
+    <div className="admin-stat-group">
+      <h3 className="admin-stat-group__title">{title}</h3>
+      <div className="admin-stat-grid">
+        {stats.map((s) => (
+          <div
+            key={s.label}
+            className="stat-card admin-stat"
+            style={{ animationDelay: s.delay }}
+          >
+            <div className="admin-stat__label">{s.label}</div>
+            <div className="admin-stat__value">
+              <AnimatedNumber value={s.value} reduced={reduced} />
+            </div>
+            <div className="admin-stat__caption">{s.caption}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /**
- * KPI strip for the dashboard overview.
+ * KPI strip: overall activity vs live gated-branch breakdowns.
+ * Accessibility path = same gate as Responses “Accessibility”.
+ * PWD screening = A4 Yes only (not OR accessibility).
  */
 export function DashboardStatGrid({
   kpis,
@@ -72,50 +105,52 @@ export function DashboardStatGrid({
     );
   }
 
-  const stats: StatDef[] = [
+  const activity: StatDef[] = [
     {
       label: 'Responses',
       value: kpis.total,
-      caption: kpis.last7DaysCount
-        ? `${kpis.last7DaysCount} in the last 7 days`
-        : 'No submissions in the last 7 days',
+      caption: 'Same query as the Responses page',
       delay: '0ms',
-    },
-    {
-      label: 'Section 4 shown',
-      value: kpis.section4Count,
-      caption: formatKpiCaption(kpis.section4Count, kpis.total, kpis.section4Pct),
-      delay: '60ms',
-    },
-    {
-      label: 'PWD-related',
-      value: kpis.pwdRelatedCount,
-      caption: formatKpiCaption(kpis.pwdRelatedCount, kpis.total, kpis.pwdRelatedPct),
-      delay: '120ms',
     },
     {
       label: 'Last 7 days',
       value: kpis.last7DaysCount,
       caption: 'Submissions in the rolling week',
-      delay: '180ms',
+      delay: '60ms',
+    },
+    {
+      label: 'PWD screening (Yes)',
+      value: kpis.pwdRelatedCount,
+      caption: `Screening A4 only · ${formatKpiCaption(kpis.pwdRelatedCount, kpis.total, kpis.pwdRelatedPct)}`,
+      delay: '120ms',
+    },
+  ];
+
+  const branches: StatDef[] = [
+    {
+      label: 'Tenant / lessee',
+      value: kpis.tenantCount,
+      caption: formatKpiCaption(kpis.tenantCount, kpis.total, kpis.tenantPct),
+      delay: '0ms',
+    },
+    {
+      label: 'Homeowner branch',
+      value: kpis.homeownerCount,
+      caption: formatKpiCaption(kpis.homeownerCount, kpis.total, kpis.homeownerPct),
+      delay: '60ms',
+    },
+    {
+      label: 'Accessibility path',
+      value: kpis.accessibilityCount,
+      caption: `Same gate as Responses → Accessibility · ${formatKpiCaption(kpis.accessibilityCount, kpis.total, kpis.accessibilityPct)}`,
+      delay: '120ms',
     },
   ];
 
   return (
-    <div className="admin-stat-grid">
-      {stats.map((s) => (
-        <div
-          key={s.label}
-          className="stat-card admin-stat"
-          style={{ animationDelay: s.delay }}
-        >
-          <div className="admin-stat__label">{s.label}</div>
-          <div className="admin-stat__value">
-            <AnimatedNumber value={s.value} reduced={reduced} />
-          </div>
-          <div className="admin-stat__caption">{s.caption}</div>
-        </div>
-      ))}
+    <div className="admin-stat-groups">
+      <StatGroup title="Overall activity" stats={activity} reduced={reduced} />
+      <StatGroup title="Live branch coverage" stats={branches} reduced={reduced} />
     </div>
   );
 }
