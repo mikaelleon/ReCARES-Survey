@@ -53,6 +53,13 @@ export function DateRangePicker({
       {value.preset === 'custom' ? (
         <div
           className={`date-range__custom${customPending || customInverted ? ' is-pending' : ''}`}
+          title={
+            customInverted
+              ? 'From cannot be later than To. Fix the dates before the range applies.'
+              : customPending
+                ? 'Showing all-time data until both dates are set.'
+                : formatRangeLabel(value)
+          }
         >
           <p className="date-range__custom-title">Custom range</p>
           <div className="date-range__custom-fields">

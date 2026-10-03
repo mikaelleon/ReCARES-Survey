@@ -1,6 +1,5 @@
 'use client';
 
-import { ListFilter } from 'lucide-react';
 import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
 import type { DateRangeValue } from '@/lib/admin/dateRange';
 
@@ -10,7 +9,7 @@ export interface DashboardHeaderToolsProps {
 }
 
 /**
- * Dashboard header filter — always-open date range (replaces collapsed filter + search).
+ * Dashboard header filter — always-open date range presets.
  */
 export function DashboardHeaderTools({
   dateRange,
@@ -18,9 +17,6 @@ export function DashboardHeaderTools({
 }: DashboardHeaderToolsProps) {
   return (
     <div className="dash-page__tools" aria-label="Dashboard filters">
-      <span className="dash-page__filter-btn is-active" aria-hidden="true">
-        <ListFilter size={18} strokeWidth={2.25} />
-      </span>
       <div className="dash-page__filter-open">
         <DateRangePicker value={dateRange} onChange={onDateRangeChange} />
       </div>
