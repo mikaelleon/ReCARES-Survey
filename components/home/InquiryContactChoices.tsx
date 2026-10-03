@@ -1,7 +1,7 @@
 'use client';
 
 import { MessageCircle } from 'lucide-react';
-import { openRagBot } from '@/components/ragbot/RagBotChat';
+import { openChatWidget } from '@/components/ChatWidget';
 import { Button } from '@/components/ui/Button';
 
 /**
@@ -64,7 +64,7 @@ export function InquiryContactChoices() {
           type="button"
           variant="secondary"
           icon={<MessageCircle size={18} strokeWidth={2.4} aria-hidden="true" />}
-          onClick={() => openRagBot()}
+          onClick={() => openChatWidget()}
         >
           Chat with RAGbot
         </Button>

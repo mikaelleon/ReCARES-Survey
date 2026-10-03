@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Lato, Poppins } from 'next/font/google';
+import Script from 'next/script';
+import { ChatWidget } from '@/components/ChatWidget';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
 import '@/styles/globals.css';
@@ -73,6 +75,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
+        <ChatWidget />
+        <Script
+          src="https://unpkg.com/@elevenlabs/convai-widget-embed"
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );

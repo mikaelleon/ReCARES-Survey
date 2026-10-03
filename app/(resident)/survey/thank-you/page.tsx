@@ -1,11 +1,11 @@
+'use client';
+
+import { useQueryParam } from '@/lib/navigation/useQueryParam';
 import { Button } from '@/components/ui/Button';
 
-export default function ThankYouPage({
-  searchParams,
-}: {
-  searchParams?: { interview?: string };
-}) {
-  const interviewSent = searchParams?.interview === 'sent';
+export default function ThankYouPage() {
+  const interview = useQueryParam('interview');
+  const interviewSent = interview === 'sent';
 
   return (
     <div

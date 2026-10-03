@@ -5,8 +5,15 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { loginErrorMessage, loginWithEmail, loginWithGoogle } from '@/lib/firebase/auth';
+import { getAdminAccessState, pathForAccessState } from '@/lib/admin/access';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import {
+  getAdminProfile,
+  loginErrorMessage,
+  loginWithEmail,
+  loginWithGoogle,
+} from '@/lib/firebase/auth';
+import { getFirebaseAuth } from '@/lib/firebase/config';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -15,6 +22,22 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const routeAfterLogin = async () => {
+    await reloadProfile();
+    const uid = getFirebaseAuth()?.currentUser?.uid;
+    if (!uid) {
+      router.push('/admin/login');
+      return;
+    }
+    const profile = await getAdminProfile(uid);
+    const state = getAdminAccessState(profile);
+    if (state === 'unauthenticated') {
+      router.push('/admin/complete');
+      return;
+    }
+    router.push(pathForAccessState(state));
+  };
 
   const handleSubmit = async () => {
     if (!email.trim() || !password) {
@@ -25,8 +48,7 @@ export default function AdminLoginPage() {
     setFormError(null);
     try {
       await loginWithEmail(email, password);
-      await reloadProfile();
-      router.push('/admin/dashboard');
+      await routeAfterLogin();
     } catch (error) {
       setFormError(loginErrorMessage(error));
     } finally {
@@ -40,7 +62,17 @@ export default function AdminLoginPage() {
     try {
       const result = await loginWithGoogle();
       await reloadProfile();
-      router.push(result === 'authorized' ? '/admin/dashboard' : '/admin/complete');
+      if (result === 'needs-access-code') {
+        router.push('/admin/complete');
+      } else if (result === 'pending') {
+        router.push('/admin/pending');
+      } else if (result === 'removed') {
+        router.push('/admin/removed');
+      } else if (result === 'active') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/admin/complete');
+      }
     } catch (error) {
       setFormError(loginErrorMessage(error));
     } finally {

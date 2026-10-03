@@ -6,14 +6,21 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { registerAdmin, signupErrorMessage } from '@/lib/firebase/auth';
+import { useQueryParam } from '@/lib/navigation/useQueryParam';
+import {
+  registerAdmin,
+  registerAdminFromInvite,
+  signupErrorMessage,
+} from '@/lib/firebase/auth';
 
 export default function AdminSignupPage() {
   const router = useRouter();
+  const inviteId = useQueryParam('invite')?.trim() || '';
   const { reloadProfile } = useAuth();
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('Proponent');
+  const [requestedRole, setRequestedRole] = useState('Proponent');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
@@ -21,7 +28,11 @@ export default function AdminSignupPage() {
   const [busy, setBusy] = useState(false);
 
   const handleSubmit = async () => {
-    if (!name.trim() || !email.trim() || !code.trim() || !password || !password2) {
+    if (!name.trim() || !email.trim() || !password || !password2) {
+      setFormError('Fill in every field.');
+      return;
+    }
+    if (!inviteId && (!code.trim() || !requestedRole.trim())) {
       setFormError('Fill in every field.');
       return;
     }
@@ -37,15 +48,26 @@ export default function AdminSignupPage() {
     setBusy(true);
     setFormError(null);
     try {
-      await registerAdmin({
-        fullName: name,
-        email,
-        password,
-        role,
-        accessCode: code,
-      });
-      await reloadProfile();
-      router.push('/admin/dashboard');
+      if (inviteId) {
+        await registerAdminFromInvite({
+          fullName: name,
+          email,
+          password,
+          inviteId,
+        });
+        await reloadProfile();
+        router.push('/admin/dashboard');
+      } else {
+        await registerAdmin({
+          fullName: name,
+          email,
+          password,
+          requestedRole,
+          accessCode: code,
+        });
+        await reloadProfile();
+        router.push('/admin/pending');
+      }
     } catch (error) {
       setFormError(signupErrorMessage(error));
     } finally {
@@ -112,8 +134,20 @@ export default function AdminSignupPage() {
               letterSpacing: '.04em',
             }}
           >
-            Create proponent account
+            {inviteId ? 'Accept invite' : 'Create proponent account'}
           </h1>
+
+          {inviteId ? (
+            <p style={{ margin: 0, color: 'rgba(255,255,255,.85)', fontSize: 14, lineHeight: 1.5 }}>
+              You were invited. Use the same email the invite was issued for. Access is granted
+              immediately after signup.
+            </p>
+          ) : (
+            <p style={{ margin: 0, color: 'rgba(255,255,255,.85)', fontSize: 14, lineHeight: 1.5 }}>
+              Self-registration creates a pending account. A superadmin must approve you before the
+              dashboard opens.
+            </p>
+          )}
 
           <Input
             label="Name"
@@ -130,22 +164,26 @@ export default function AdminSignupPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <Input
-            label="Role"
-            placeholder="Proponent"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            required
-            helperText="Replaces the course template's Programme field. Defaults to Proponent."
-          />
-          <Input
-            label="Access code"
-            placeholder="Shared with the proponent team"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-            helperText="Signup is gated: this tier can read every survey response, including the personal-safety section."
-          />
+          {!inviteId ? (
+            <>
+              <Input
+                label="Requested role"
+                placeholder="Proponent"
+                value={requestedRole}
+                onChange={(e) => setRequestedRole(e.target.value)}
+                required
+                helperText="Shown to the superadmin during approval. Does not grant access by itself."
+              />
+              <Input
+                label="Access code"
+                placeholder="Shared with the proponent team"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                required
+                helperText="Required for self-registration. Access stays pending until approved."
+              />
+            </>
+          ) : null}
           <Input
             label="Password"
             type="password"
@@ -171,7 +209,7 @@ export default function AdminSignupPage() {
 
           <div style={{ marginTop: 8 }}>
             <Button variant="primary" onDark onClick={handleSubmit} disabled={busy}>
-              {busy ? 'Creating account…' : 'Create account'}
+              {busy ? 'Creating account…' : inviteId ? 'Create account from invite' : 'Create account'}
             </Button>
           </div>
 

@@ -1,31 +1,28 @@
 'use client';
 
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { useState } from 'react';
+import { FirestoreBlockedNotice } from '@/components/admin/FirestoreBlockedNotice';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { useAdminRouteGate } from '@/lib/auth/useAdminRouteGate';
 import { completeGoogleAdmin, signupErrorMessage } from '@/lib/firebase/auth';
 
 /**
  * Access-code gate for a Google account that has no admins profile yet.
+ * Creates a pending profile (not immediately active).
  */
 export default function AdminCompletePage() {
-  const { user, ready, reloadProfile } = useAuth();
-  const [role, setRole] = useState('Proponent');
+  const { reloadProfile } = useAuth();
+  const { ready, user, allowRender, firestoreError } = useAdminRouteGate('signed-in-no-profile');
+  const [requestedRole, setRequestedRole] = useState('Proponent');
   const [code, setCode] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  if (!ready) {
+  if (!ready || !allowRender || !user) {
     return <p style={{ padding: 32 }}>Loading…</p>;
-  }
-  if (!user) {
-    redirect('/admin/login');
-  }
-  if (user.authorized) {
-    redirect('/admin/dashboard');
   }
 
   const handleSubmit = async () => {
@@ -36,9 +33,9 @@ export default function AdminCompletePage() {
     setBusy(true);
     setFormError(null);
     try {
-      await completeGoogleAdmin({ role, accessCode: code });
+      await completeGoogleAdmin({ requestedRole, accessCode: code });
       await reloadProfile();
-      window.location.assign('/admin/dashboard');
+      window.location.assign('/admin/pending/');
     } catch (error) {
       setFormError(signupErrorMessage(error));
     } finally {
@@ -57,6 +54,7 @@ export default function AdminCompletePage() {
       }}
     >
       <div style={{ width: '100%', maxWidth: 440 }}>
+        <FirestoreBlockedNotice message={firestoreError} />
         <div
           data-auth=""
           style={{
@@ -83,15 +81,20 @@ export default function AdminCompletePage() {
             Finish proponent access
           </h1>
           <p style={{ margin: 0, color: 'rgba(255,255,255,.85)', fontSize: 14, lineHeight: 1.5 }}>
-            Google confirmed who you are. An access code is still required before this account can
-            open survey responses.
+            Google confirmed who you are. Enter the access code to submit a pending access request.
+            A superadmin must approve you before the dashboard opens.
+          </p>
+          <p style={{ margin: 0, color: 'rgba(255,255,255,.75)', fontSize: 13, lineHeight: 1.45 }}>
+            Signed in as {user.email}. If your <code style={{ color: 'var(--bright-amber)' }}>admins</code>{' '}
+            document already exists, its document ID must match your Auth UID — then refresh after
+            allowing Firestore in the browser (Brave Shields off for this site).
           </p>
           <Input
-            label="Role"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
+            label="Requested role"
+            value={requestedRole}
+            onChange={(e) => setRequestedRole(e.target.value)}
             required
-            helperText="Defaults to Proponent. Edit it if this account needs a different label."
+            helperText="Shown to the superadmin during approval. Does not grant access by itself."
           />
           <Input
             label="Access code"
@@ -104,8 +107,13 @@ export default function AdminCompletePage() {
               {formError}
             </p>
           ) : null}
-          <Button variant="primary" onDark onClick={handleSubmit} disabled={busy}>
-            {busy ? 'Saving…' : 'Continue'}
+          <Button
+            variant="primary"
+            onDark
+            onClick={handleSubmit}
+            disabled={busy || Boolean(firestoreError)}
+          >
+            {busy ? 'Saving…' : 'Submit for approval'}
           </Button>
         </div>
         <div style={{ textAlign: 'center', marginTop: 20 }}>

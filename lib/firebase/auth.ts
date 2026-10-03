@@ -8,15 +8,29 @@ import {
   signOut,
   type User,
 } from 'firebase/auth';
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+import {
+  getAdminAccessState,
+  type AdminInvite,
+  type AdminPermissions,
+  type AdminProfile,
+  type AdminRole,
+  type AdminStatus,
+} from '@/lib/admin/access';
 import { getFirebaseAuth, getFirestoreDb } from '@/lib/firebase/config';
 
-export interface AdminProfile {
-  fullName: string;
-  email: string;
-  role: string;
-  status: string;
-}
+export type { AdminProfile, AdminInvite, AdminRole, AdminStatus, AdminPermissions };
+export { getAdminAccessState } from '@/lib/admin/access';
 
 const NOT_CONFIGURED = 'Firebase is not configured. Add the project keys to .env.local.';
 
@@ -30,9 +44,8 @@ function requireServices() {
 }
 
 /**
- * Client-side access-code check. Firestore rules do not currently test this
- * code; anyone who is already signed in can still create their own admins doc
- * by calling Firestore directly. Keep the real code in env, not in source.
+ * Client-side access-code check. Firestore rules do not test this code.
+ * Keep the real code in env, not in source.
  */
 export function isValidAccessCode(accessCode: string): boolean {
   const expected = process.env.NEXT_PUBLIC_ADMIN_ACCESS_CODE?.trim();
@@ -40,51 +53,229 @@ export function isValidAccessCode(accessCode: string): boolean {
   return accessCode.trim() === expected;
 }
 
-export async function getAdminProfile(uid: string): Promise<AdminProfile | null> {
-  const db = getFirestoreDb();
-  if (!db) return null;
-  const snapshot = await getDoc(doc(db, 'admins', uid));
-  if (!snapshot.exists()) return null;
-  const data = snapshot.data();
+function parsePermissions(raw: unknown): AdminPermissions {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: AdminPermissions = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof value === 'boolean') out[key] = value;
+  }
+  return out;
+}
+
+function parseRole(raw: unknown): AdminRole | null {
+  if (raw === 'superadmin' || raw === 'admin') return raw;
+  return null;
+}
+
+function parseStatus(raw: unknown): AdminStatus {
+  if (raw === 'pending' || raw === 'active' || raw === 'removed') return raw;
+  // Legacy docs that only had status: 'active' as a free string
+  if (raw === 'active' || raw === undefined || raw === '') return 'active';
+  return 'pending';
+}
+
+export function mapAdminDoc(data: Record<string, unknown>): AdminProfile {
+  const legacyRole = typeof data.role === 'string' ? data.role : '';
+  const requestedRole =
+    typeof data.requestedRole === 'string'
+      ? data.requestedRole
+      : legacyRole && legacyRole !== 'superadmin' && legacyRole !== 'admin'
+        ? legacyRole
+        : legacyRole || '';
+
+  const role = parseRole(data.role);
+  // Legacy free-text role with status active → treat as admin with empty permissions
+  // until a superadmin edits them. Superadmin bootstrap uses role: 'superadmin'.
+  let normalizedRole = role;
+  let status = parseStatus(data.status);
+  if (!normalizedRole && status === 'active' && legacyRole === 'superadmin') {
+    normalizedRole = 'superadmin';
+  } else if (!normalizedRole && status === 'active' && (legacyRole === 'admin' || legacyRole === 'Proponent' || legacyRole)) {
+    // Old profiles were immediately active with a free-text role label.
+    normalizedRole = legacyRole === 'superadmin' ? 'superadmin' : 'admin';
+  }
+
+  let permissions = parsePermissions(data.permissions);
+  // Legacy immediately-active profiles had no permissions map — keep responses usable.
+  if (
+    status === 'active' &&
+    normalizedRole === 'admin' &&
+    Object.keys(permissions).length === 0
+  ) {
+    permissions = { responsesDashboard: true, interviewInvites: false };
+  }
+
   return {
     fullName: typeof data.fullName === 'string' ? data.fullName : '',
     email: typeof data.email === 'string' ? data.email : '',
-    role: typeof data.role === 'string' ? data.role : '',
-    status: typeof data.status === 'string' ? data.status : '',
+    requestedRole,
+    role: normalizedRole,
+    status,
+    permissions,
+    createdAt: (data.createdAt as AdminProfile['createdAt']) ?? null,
+    approvedAt: (data.approvedAt as AdminProfile['approvedAt']) ?? null,
+    approvedBy: typeof data.approvedBy === 'string' ? data.approvedBy : undefined,
+    removedAt: (data.removedAt as AdminProfile['removedAt']) ?? null,
+    removedBy: typeof data.removedBy === 'string' ? data.removedBy : undefined,
+    inviteId: typeof data.inviteId === 'string' ? data.inviteId : undefined,
   };
 }
 
+export async function getAdminProfile(uid: string): Promise<AdminProfile | null> {
+  const db = getFirestoreDb();
+  if (!db) return null;
+  try {
+    const snapshot = await getDoc(doc(db, 'admins', uid));
+    if (!snapshot.exists()) return null;
+    return mapAdminDoc(snapshot.data() as Record<string, unknown>);
+  } catch (error) {
+    // Brave Shields / ad blockers often surface as failed Firestore network calls.
+    console.warn('getAdminProfile failed', error);
+    throw error;
+  }
+}
+
+export async function getInvite(inviteId: string): Promise<(AdminInvite & { id: string }) | null> {
+  const db = getFirestoreDb();
+  if (!db) return null;
+  const snapshot = await getDoc(doc(db, 'invites', inviteId));
+  if (!snapshot.exists()) return null;
+  const data = snapshot.data() as Record<string, unknown>;
+  return {
+    id: snapshot.id,
+    email: typeof data.email === 'string' ? data.email : '',
+    role: data.role === 'superadmin' ? 'superadmin' : 'admin',
+    permissions: parsePermissions(data.permissions),
+    createdAt: (data.createdAt as AdminInvite['createdAt']) ?? null,
+    createdBy: typeof data.createdBy === 'string' ? data.createdBy : '',
+    used: Boolean(data.used),
+    usedAt: (data.usedAt as AdminInvite['usedAt']) ?? null,
+  };
+}
+
+async function findUnusedInviteByEmail(email: string): Promise<(AdminInvite & { id: string }) | null> {
+  const db = getFirestoreDb();
+  if (!db) return null;
+  const q = query(
+    collection(db, 'invites'),
+    where('email', '==', email.trim().toLowerCase()),
+    where('used', '==', false),
+  );
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  const first = snap.docs[0];
+  const data = first.data() as Record<string, unknown>;
+  return {
+    id: first.id,
+    email: typeof data.email === 'string' ? data.email : '',
+    role: data.role === 'superadmin' ? 'superadmin' : 'admin',
+    permissions: parsePermissions(data.permissions),
+    createdAt: (data.createdAt as AdminInvite['createdAt']) ?? null,
+    createdBy: typeof data.createdBy === 'string' ? data.createdBy : '',
+    used: Boolean(data.used),
+    usedAt: (data.usedAt as AdminInvite['usedAt']) ?? null,
+  };
+}
+
+async function writeActiveFromInvite(
+  uid: string,
+  fullName: string,
+  email: string,
+  invite: AdminInvite & { id: string },
+): Promise<void> {
+  const { db } = requireServices();
+  // Persist the Auth email so rules can match request.auth.token.email.
+  await setDoc(doc(db, 'admins', uid), {
+    fullName: fullName.trim(),
+    email: email.trim(),
+    requestedRole: invite.role,
+    role: invite.role,
+    status: 'active',
+    permissions: invite.permissions,
+    createdAt: serverTimestamp(),
+    approvedAt: serverTimestamp(),
+    approvedBy: invite.createdBy,
+    inviteId: invite.id,
+  });
+  await updateDoc(doc(db, 'invites', invite.id), {
+    used: true,
+    usedAt: serverTimestamp(),
+  });
+}
+
 /**
- * Email/password registration plus the matching admins profile.
- * Password stays in Firebase Authentication only.
+ * Self-registration without invite → pending until a superadmin approves.
  */
 export async function registerAdmin(params: {
   fullName: string;
   email: string;
   password: string;
-  role: string;
+  requestedRole: string;
   accessCode: string;
 }): Promise<void> {
   if (!isValidAccessCode(params.accessCode)) {
     throw new Error('Invalid access code.');
   }
   const { auth, db } = requireServices();
-  const credential = await createUserWithEmailAndPassword(auth, params.email.trim(), params.password);
+  const credential = await createUserWithEmailAndPassword(
+    auth,
+    params.email.trim(),
+    params.password,
+  );
+  const email = (credential.user.email ?? params.email).trim();
   await setDoc(doc(db, 'admins', credential.user.uid), {
     fullName: params.fullName.trim(),
-    email: params.email.trim(),
-    role: params.role.trim() || 'Proponent',
-    status: 'active',
+    email,
+    requestedRole: params.requestedRole.trim() || 'Proponent',
+    role: null,
+    status: 'pending',
+    permissions: {},
     createdAt: serverTimestamp(),
   });
 }
 
 /**
- * Finish a Google sign-in that has no admins document yet.
- * Does not set a password.
+ * Signup via invite link. Auth account is created first so invite read rules
+ * can match request.auth.token.email (see docs/ADMIN_ACCESS_DECISIONS.md).
+ */
+export async function registerAdminFromInvite(params: {
+  fullName: string;
+  email: string;
+  password: string;
+  inviteId: string;
+}): Promise<void> {
+  const { auth } = requireServices();
+  const credential = await createUserWithEmailAndPassword(
+    auth,
+    params.email.trim(),
+    params.password,
+  );
+  const email = (credential.user.email ?? params.email).trim();
+
+  const invite = await getInvite(params.inviteId);
+  if (!invite || invite.used) {
+    await credential.user.delete().catch(() => undefined);
+    throw new Error('This invite link is no longer valid.');
+  }
+  if (invite.email.trim().toLowerCase() !== email.toLowerCase()) {
+    await credential.user.delete().catch(() => undefined);
+    throw new Error('This invite was issued for a different email address.');
+  }
+
+  try {
+    await writeActiveFromInvite(credential.user.uid, params.fullName, email, invite);
+  } catch (error) {
+    await credential.user.delete().catch(() => undefined);
+    throw error;
+  }
+}
+
+/**
+ * Finish a Google sign-in that has no admins document yet (access-code path).
+ * Creates a pending profile — not immediately active.
  */
 export async function completeGoogleAdmin(params: {
-  role: string;
+  requestedRole: string;
   accessCode: string;
 }): Promise<void> {
   if (!isValidAccessCode(params.accessCode)) {
@@ -99,25 +290,55 @@ export async function completeGoogleAdmin(params: {
   if (existing.exists()) return;
   await setDoc(doc(db, 'admins', user.uid), {
     fullName: user.displayName?.trim() || 'Proponent',
-    email: user.email ?? '',
-    role: params.role.trim() || 'Proponent',
-    status: 'active',
+    email: (user.email ?? '').toLowerCase(),
+    requestedRole: params.requestedRole.trim() || 'Proponent',
+    role: null,
+    status: 'pending',
+    permissions: {},
     createdAt: serverTimestamp(),
   });
 }
 
 export async function loginWithEmail(email: string, password: string): Promise<void> {
   const { auth } = requireServices();
-  await signInWithEmailAndPassword(auth, email.trim(), password);
+  await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
 }
 
-/** Returns whether this Google account already has an admins profile. */
-export async function loginWithGoogle(): Promise<'authorized' | 'needs-access-code'> {
+export type GoogleLoginResult =
+  | 'active'
+  | 'pending'
+  | 'removed'
+  | 'needs-access-code'
+  | 'unauthenticated';
+
+/**
+ * Google sign-in. If no admins doc, try matching unused invite by email;
+ * otherwise send the user to the access-code completion screen.
+ */
+export async function loginWithGoogle(): Promise<GoogleLoginResult> {
   const { auth } = requireServices();
   const provider = new GoogleAuthProvider();
   const credential = await signInWithPopup(auth, provider);
-  const profile = await getAdminProfile(credential.user.uid);
-  return profile ? 'authorized' : 'needs-access-code';
+  const user = credential.user;
+  const profile = await getAdminProfile(user.uid);
+  if (profile) {
+    return getAdminAccessState(profile);
+  }
+
+  const email = (user.email ?? '').toLowerCase();
+  if (email) {
+    const invite = await findUnusedInviteByEmail(email);
+    if (invite) {
+      await writeActiveFromInvite(
+        user.uid,
+        user.displayName?.trim() || 'Proponent',
+        email,
+        invite,
+      );
+      return 'active';
+    }
+  }
+  return 'needs-access-code';
 }
 
 export async function logoutAdmin(): Promise<void> {
@@ -156,11 +377,15 @@ export function loginErrorMessage(error: unknown): string {
 
 export function signupErrorMessage(error: unknown): string {
   const code = firebaseCode(error);
-  if (error instanceof Error && error.message === 'Invalid access code.') {
-    return 'Invalid access code.';
-  }
-  if (error instanceof Error && error.message === NOT_CONFIGURED) {
-    return error.message;
+  if (error instanceof Error) {
+    if (
+      error.message === 'Invalid access code.' ||
+      error.message === 'This invite link is no longer valid.' ||
+      error.message === 'This invite was issued for a different email address.' ||
+      error.message === NOT_CONFIGURED
+    ) {
+      return error.message;
+    }
   }
   if (code === 'auth/email-already-in-use') {
     return 'An account with that email already exists.';
@@ -170,6 +395,9 @@ export function signupErrorMessage(error: unknown): string {
   }
   if (code === 'auth/weak-password') {
     return 'Password must be at least 6 characters.';
+  }
+  if (code === 'permission-denied' || code === 'unavailable') {
+    return 'Could not reach Firestore. Disable Brave Shields / ad blockers for this site and try again.';
   }
   return 'Could not create the account. Try again.';
 }

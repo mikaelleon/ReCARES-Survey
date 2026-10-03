@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { DashboardStatGrid } from '@/components/admin/DashboardStatGrid';
 import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
+import { FirestoreBlockedNotice } from '@/components/admin/FirestoreBlockedNotice';
+import { MemberManagement } from '@/components/admin/MemberManagement';
 import { ResponseDetailDrawer } from '@/components/admin/ResponseDetailDrawer';
 import { ResponseEmptyState } from '@/components/admin/ResponseEmptyState';
 import { ResponseViewsPanel } from '@/components/admin/ResponseViewsPanel';
@@ -17,7 +18,8 @@ import {
 } from '@/lib/admin/analytics';
 import { SAMPLE_RESPONSES, type SampleRecord } from '@/lib/admin/sampleResponses';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { redirect } from 'next/navigation';
+import { useAdminRouteGate } from '@/lib/auth/useAdminRouteGate';
+import { useQueryParam } from '@/lib/navigation/useQueryParam';
 
 type DemoState = 'data' | 'loading' | 'empty' | 'error';
 
@@ -26,9 +28,11 @@ type DemoState = 'data' | 'loading' | 'empty' | 'error';
  * Auth guard is client-side until middleware + Firebase session exist.
  */
 export function AdminDashboard() {
-  const { user, ready, logout } = useAuth();
-  const searchParams = useSearchParams();
-  const stateParam = searchParams.get('state');
+  const { logout, can, isSuperadmin } = useAuth();
+  const { ready, user, allowRender, firestoreError } = useAdminRouteGate('active');
+  const stateParam = useQueryParam('state');
+  const canResponses = can('responsesDashboard');
+  const canInterview = can('interviewInvites');
   const demoState: DemoState =
     stateParam === 'loading' || stateParam === 'empty' || stateParam === 'error'
       ? stateParam
@@ -138,14 +142,8 @@ export function AdminDashboard() {
     setTimeout(() => setFlashId(null), 900);
   }, [undo]);
 
-  if (!ready) {
+  if (!ready || !allowRender || !user) {
     return <p className="admin-dashboard__inner">Loading…</p>;
-  }
-  if (!user) {
-    redirect('/admin/login');
-  }
-  if (!user.authorized) {
-    redirect('/admin/complete');
   }
 
   const loading = demoState === 'loading';
@@ -155,11 +153,12 @@ export function AdminDashboard() {
   return (
     <div className="admin-dashboard">
       <div className="admin-dashboard__inner">
+        <FirestoreBlockedNotice message={firestoreError} />
         <section className="admin-section" aria-labelledby="admin-welcome-title">
           <h1 id="admin-welcome-title" className="admin-section__title">
             Welcome, {user.name || user.email}!
           </h1>
-          <p className="admin-section__lead">Role: {user.role || 'Proponent'}</p>
+          <p className="admin-section__lead">Role: {user.role || '—'}</p>
           <p className="admin-section__lead">Status: {user.status || 'active'}</p>
           <p className="admin-section__lead">Signed in with: {user.signInMethod}</p>
           <button type="button" className="admin-topbar__logout" onClick={() => void logout()}>
@@ -167,72 +166,97 @@ export function AdminDashboard() {
           </button>
         </section>
 
-        <section className="admin-section" aria-labelledby="admin-overview-title">
-          <h1 id="admin-overview-title" className="admin-section__title">
-            Dashboard
-          </h1>
-          <p className="admin-section__lead">
-            Aggregate coverage for the Camella Homes Tibig needs assessment. Use Summary, Question,
-            and Individual views below for Forms-style response analysis.
-          </p>
+        {canResponses ? (
+          <>
+            <section className="admin-section" aria-labelledby="admin-overview-title">
+              <h1 id="admin-overview-title" className="admin-section__title">
+                Dashboard
+              </h1>
+              <p className="admin-section__lead">
+                Aggregate coverage for the Camella Homes Tibig needs assessment. Use Summary, Question,
+                and Individual views below for Forms-style response analysis.
+              </p>
 
-          <DashboardStatGrid kpis={kpis} loading={loading} />
-        </section>
+              <DashboardStatGrid kpis={kpis} loading={loading} />
+            </section>
 
-        <section className="admin-section" aria-labelledby="admin-responses-title">
-          <h2 id="admin-responses-title" className="admin-section__title admin-section__title--h2">
-            Responses
-          </h2>
-          <p className="admin-section__lead">
-            Browse aggregates by question, or step through each submission. Gated fields the
-            respondent never unlocked stay <code>not_shown</code>.
-          </p>
+            <section className="admin-section" aria-labelledby="admin-responses-title">
+              <h2 id="admin-responses-title" className="admin-section__title admin-section__title--h2">
+                Responses
+              </h2>
+              <p className="admin-section__lead">
+                Browse aggregates by question, or step through each submission. Gated fields the
+                respondent never unlocked stay <code>not_shown</code>.
+              </p>
 
-          {error ? (
-            <div className="admin-panel">
-              <ResponseEmptyState
-                kind="error"
-                onReset={() => window.location.assign('/admin/dashboard')}
-              />
-            </div>
-          ) : loading ? (
-            <div className="admin-panel">
-              <div className="admin-table-skel" aria-hidden="true">
-                <div className="admin-table-skel__row" />
-                <div className="admin-table-skel__row" />
-                <div className="admin-table-skel__row" />
-              </div>
-            </div>
-          ) : (
-            <ResponseViewsPanel
-              records={records}
-              filtered={filtered}
-              query={query}
-              onQueryChange={setQuery}
-              phase={phase}
-              onPhaseChange={setPhase}
-              section4={section4}
-              onSection4Change={setSection4}
-              sortKey={sortKey}
-              sortDir={sortDir}
-              onSortKeyChange={setSortKey}
-              onToggleSortDir={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
-              onExport={handleExport}
-              onCopySummary={() => void handleCopySummary()}
-              copyNote={copyNote}
-              exportDisabled={filtered.length === 0}
-              onView={setViewRecord}
-              onDelete={setDeleteTarget}
-              highlightId={flashId}
-              onResetFilters={resetFilters}
-              emptyDataset={emptyDataset}
-            />
-          )}
+              {error ? (
+                <div className="admin-panel">
+                  <ResponseEmptyState
+                    kind="error"
+                    onReset={() => window.location.assign('/admin/dashboard')}
+                  />
+                </div>
+              ) : loading ? (
+                <div className="admin-panel">
+                  <div className="admin-table-skel" aria-hidden="true">
+                    <div className="admin-table-skel__row" />
+                    <div className="admin-table-skel__row" />
+                    <div className="admin-table-skel__row" />
+                  </div>
+                </div>
+              ) : (
+                <ResponseViewsPanel
+                  records={records}
+                  filtered={filtered}
+                  query={query}
+                  onQueryChange={setQuery}
+                  phase={phase}
+                  onPhaseChange={setPhase}
+                  section4={section4}
+                  onSection4Change={setSection4}
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onSortKeyChange={setSortKey}
+                  onToggleSortDir={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+                  onExport={handleExport}
+                  onCopySummary={() => void handleCopySummary()}
+                  copyNote={copyNote}
+                  exportDisabled={filtered.length === 0}
+                  onView={setViewRecord}
+                  onDelete={setDeleteTarget}
+                  highlightId={flashId}
+                  onResetFilters={resetFilters}
+                  emptyDataset={emptyDataset}
+                />
+              )}
+            </section>
+          </>
+        ) : (
+          <section className="admin-section">
+            <p className="admin-section__lead">
+              You do not have permission to view the responses dashboard. Ask a superadmin if you
+              need access.
+            </p>
+          </section>
+        )}
 
-          <div className="admin-dashboard__back">
-            <Link href="/">Back to the resident site</Link>
-          </div>
-        </section>
+        {canInterview ? (
+          <section className="admin-section" aria-labelledby="admin-interview-title">
+            <h2 id="admin-interview-title" className="admin-section__title admin-section__title--h2">
+              Interview invites
+            </h2>
+            <p className="admin-section__lead">
+              Interview interest documents live in the <code>interviewInterest</code> collection.
+              A dedicated viewer can be wired here later; permission gate is already enforced.
+            </p>
+          </section>
+        ) : null}
+
+        {isSuperadmin ? <MemberManagement /> : null}
+
+        <div className="admin-dashboard__back">
+          <Link href="/">Back to the resident site</Link>
+        </div>
       </div>
 
       <ResponseDetailDrawer record={viewRecord} onClose={() => setViewRecord(null)} />

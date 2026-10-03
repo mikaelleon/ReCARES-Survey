@@ -4,11 +4,14 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { LanguageToggle } from '@/components/layout/LanguageToggle';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { pathForAccessState } from '@/lib/admin/access';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 function subtitleForPath(pathname: string): string {
   if (pathname.includes('/complete')) return 'Finish access';
+  if (pathname.includes('/pending')) return 'Awaiting approval';
+  if (pathname.includes('/removed')) return 'Access removed';
   if (pathname.includes('/dashboard')) return 'Response management';
   if (pathname.includes('/signup')) return 'Proponent signup';
   if (pathname.includes('/login')) return 'Proponent login';
@@ -38,7 +41,18 @@ export function AdminTopBar({
   return (
     <header className="admin-topbar">
       <div className="admin-topbar__brand">
-        <Link href={user ? '/admin/dashboard' : '/'} className="admin-topbar__logo">
+        <Link
+          href={
+            user
+              ? user.accessState === 'active'
+                ? '/admin/dashboard'
+                : pathForAccessState(user.accessState) === '/admin/login'
+                  ? '/admin/complete'
+                  : pathForAccessState(user.accessState)
+              : '/'
+          }
+          className="admin-topbar__logo"
+        >
           ReCARES Survey
         </Link>
         <span className="admin-topbar__sub">{subtitle}</span>

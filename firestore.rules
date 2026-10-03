@@ -2,39 +2,110 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // A signed-in user may read and write only their own profile.
-    // Create is allowed for that UID only. These rules do not check the
-    // proponent access code; the app checks it before calling setDoc.
+    function adminDoc(uid) {
+      return get(/databases/$(database)/documents/admins/$(uid)).data;
+    }
+
+    function isActiveSuperadmin(uid) {
+      return exists(/databases/$(database)/documents/admins/$(uid))
+        && adminDoc(uid).role == 'superadmin'
+        && adminDoc(uid).status == 'active';
+    }
+
+    function isActiveAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && adminDoc(request.auth.uid).status == 'active';
+    }
+
+    function inviteDoc(inviteId) {
+      return get(/databases/$(database)/documents/invites/$(inviteId)).data;
+    }
+
+    function emailMatches(stored) {
+      // Auth emails are normalized; invites/admins store the Auth email string.
+      return stored == request.auth.token.email;
+    }
+
+    function creatingPendingSelf() {
+      return request.resource.data.status == 'pending'
+        && request.resource.data.role == null
+        && emailMatches(request.resource.data.email)
+        && request.resource.data.keys().hasAll([
+          'fullName', 'email', 'requestedRole', 'role', 'status', 'permissions', 'createdAt'
+        ]);
+    }
+
+    function creatingFromInvite() {
+      return request.resource.data.keys().hasAll(['inviteId'])
+        && request.resource.data.status == 'active'
+        && emailMatches(request.resource.data.email)
+        && emailMatches(inviteDoc(request.resource.data.inviteId).email)
+        && inviteDoc(request.resource.data.inviteId).used == false
+        && request.resource.data.role == inviteDoc(request.resource.data.inviteId).role;
+    }
+
     match /admins/{uid} {
-      allow read, update: if request.auth != null && request.auth.uid == uid;
-      allow create: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null
+        && (request.auth.uid == uid || isActiveSuperadmin(request.auth.uid));
+
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && (creatingPendingSelf() || creatingFromInvite());
+
+      allow update: if request.auth != null && (
+        isActiveSuperadmin(request.auth.uid) ||
+        (request.auth.uid == uid
+          && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['role', 'status', 'permissions', 'approvedAt', 'approvedBy', 'removedAt', 'removedBy', 'inviteId']))
+      );
+
+      // Pending reject only. Active members use status: 'removed' (soft).
+      allow delete: if request.auth != null
+        && isActiveSuperadmin(request.auth.uid)
+        && resource.data.status == 'pending';
+    }
+
+    // Tight invite rules: no open read for every signed-in user.
+    match /invites/{inviteId} {
+      allow read: if request.auth != null && (
+        isActiveSuperadmin(request.auth.uid)
+        || emailMatches(resource.data.email)
+      );
+
+      allow create: if request.auth != null && isActiveSuperadmin(request.auth.uid);
+
+      allow update: if request.auth != null && (
+        isActiveSuperadmin(request.auth.uid)
+        || (
+          emailMatches(resource.data.email)
+          && resource.data.used == false
+          && request.resource.data.used == true
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedAt'])
+        )
+      );
+
       allow delete: if false;
     }
 
-    // Residents are anonymous, so create stays open. Reads require a
-    // registered admin document, not merely a Firebase Auth user.
     match /needsAssessmentResponses/{responseId} {
       allow create: if true;
-      allow read, update, delete: if request.auth != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow read, update, delete: if isActiveAdmin();
     }
 
     match /interviewInterest/{invitationId} {
       allow create: if true;
-      allow read, update, delete: if request.auth != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow read, update, delete: if isActiveAdmin();
     }
 
     match /responses/{responseId} {
       allow create: if true;
-      allow read, update, delete: if request.auth != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow read, update, delete: if isActiveAdmin();
     }
 
     match /interview_contacts/{contactId} {
       allow create: if true;
-      allow read, update, delete: if request.auth != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow read, update, delete: if isActiveAdmin();
     }
   }
 }
