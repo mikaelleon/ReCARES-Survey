@@ -330,11 +330,12 @@ textarea:focus-visible,
   border: 0;
 }
 
-/* Floating utilities: scroll-top left of RAGbot FAB */
+/* Floating utilities: scroll-top stacked above ElevenLabs ConvAI bar */
 .scroll-top {
+  --scroll-top-widget-clearance: 92px; /* ConvAI “Start a call” pill height + gap */
   position: fixed;
-  right: calc(20px + 56px + 12px);
-  bottom: 20px;
+  right: 20px;
+  bottom: calc(20px + var(--scroll-top-widget-clearance));
   z-index: 40;
   width: 48px;
   height: 48px;
@@ -602,8 +603,8 @@ textarea:focus-visible,
 
 @media (max-width: 480px) {
   .scroll-top {
-    right: calc(16px + 56px + 10px);
-    bottom: 16px;
+    right: 16px;
+    bottom: calc(16px + var(--scroll-top-widget-clearance));
   }
 
   .ragbot {
