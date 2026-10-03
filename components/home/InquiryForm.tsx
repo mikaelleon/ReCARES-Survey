@@ -52,6 +52,12 @@ export function InquiryForm() {
         ['--text-caption' as string]: 'rgba(255,255,255,.75)',
         ['--error-red' as string]: 'var(--bright-amber)',
         ['--status-error' as string]: 'var(--bright-amber)',
+        /* Field tokens stay dark-on-light; labels use --text-body (white) above */
+        ['--field-bg' as string]: '#ffffff',
+        ['--field-text' as string]: '#0b0b0b',
+        ['--field-placeholder' as string]: 'rgba(11,11,11,.52)',
+        ['--field-border' as string]: 'rgba(0,0,0,.28)',
+        ['--field-caret' as string]: '#0b0b0b',
         background: 'var(--card-fill-brand)',
         borderRadius: 16,
         padding: 'clamp(20px, 3vw, 32px)',

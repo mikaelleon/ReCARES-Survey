@@ -146,7 +146,11 @@ export function InterviewInvitationForm({
         </p>
       )}
 
-      <div className={embedded ? undefined : 'survey-questions'}>
+      <div
+        className={
+          embedded ? 'interview-invite-fields' : 'survey-questions interview-invite-fields'
+        }
+      >
         <div className="survey-card">
           <label className="na-q" htmlFor="interview-email">
             Email address{' '}
@@ -154,7 +158,7 @@ export function InterviewInvitationForm({
               *
             </span>
           </label>
-          <p className="na-hint" style={{ marginTop: 4, marginBottom: 12 }}>
+          <p className="na-hint">
             Your email is stored separately from your survey answers and is used only to contact
             you about a possible interview.
           </p>
@@ -241,7 +245,7 @@ export function InterviewInvitationForm({
             ))}
           </div>
           {preferredTime === 'Other' ? (
-            <div style={{ marginTop: 16 }}>
+            <div className="interview-invite-fields__other">
               <label className="na-q" htmlFor="preferred-time-other">
                 Specific time{' '}
                 <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
@@ -266,7 +270,9 @@ export function InterviewInvitationForm({
         </p>
       ) : null}
 
-      <div className={embedded ? undefined : 'survey-actions'} style={embedded ? { marginTop: 16 } : undefined}>
+      <div
+        className={embedded ? 'interview-invite-actions' : 'survey-actions'}
+      >
         {!embedded && onBack ? (
           <Button variant="secondary" onClick={onBack}>
             Back

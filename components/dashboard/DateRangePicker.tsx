@@ -2,6 +2,8 @@
 
 import {
   formatRangeLabel,
+  isCustomInverted,
+  isCustomPending,
   type DatePreset,
   type DateRangeValue,
 } from '@/lib/admin/dateRange';
@@ -15,6 +17,8 @@ const PRESETS: { id: DatePreset; label: string }[] = [
 
 /**
  * Lightweight date-range control shared by Dashboard + Responses (session-stored).
+ * Incomplete Custom falls back to all-time and shows a pending cue.
+ * Inverted From/To shows an error and does not apply the range.
  */
 export function DateRangePicker({
   value,
@@ -23,6 +27,9 @@ export function DateRangePicker({
   value: DateRangeValue;
   onChange: (next: DateRangeValue) => void;
 }) {
+  const customPending = isCustomPending(value);
+  const customInverted = isCustomInverted(value);
+
   return (
     <div className="date-range" role="group" aria-label="Date range">
       <div className="date-range__presets">
@@ -44,31 +51,47 @@ export function DateRangePicker({
         ))}
       </div>
       {value.preset === 'custom' ? (
-        <div className="date-range__custom">
-          <label>
-            From
-            <input
-              type="date"
-              value={value.start ?? ''}
-              onChange={(e) =>
-                onChange({ ...value, preset: 'custom', start: e.target.value || null })
-              }
-            />
-          </label>
-          <label>
-            To
-            <input
-              type="date"
-              value={value.end ?? ''}
-              onChange={(e) =>
-                onChange({ ...value, preset: 'custom', end: e.target.value || null })
-              }
-            />
-          </label>
+        <div
+          className={`date-range__custom${customPending || customInverted ? ' is-pending' : ''}`}
+        >
+          <p className="date-range__custom-title">Custom range</p>
+          <div className="date-range__custom-fields">
+            <label>
+              From
+              <input
+                type="date"
+                value={value.start ?? ''}
+                aria-invalid={customInverted || undefined}
+                onChange={(e) =>
+                  onChange({ ...value, preset: 'custom', start: e.target.value || null })
+                }
+              />
+            </label>
+            <label>
+              To
+              <input
+                type="date"
+                value={value.end ?? ''}
+                aria-invalid={customInverted || undefined}
+                onChange={(e) =>
+                  onChange({ ...value, preset: 'custom', end: e.target.value || null })
+                }
+              />
+            </label>
+          </div>
+          {customInverted ? (
+            <p className="date-range__error" role="alert">
+              From cannot be later than To. Fix the dates before the range applies.
+            </p>
+          ) : customPending ? (
+            <p className="date-range__pending" role="status">
+              Showing all-time data until both dates are set.
+            </p>
+          ) : (
+            <p className="date-range__applied">{formatRangeLabel(value)}</p>
+          )}
         </div>
-      ) : (
-        <p className="date-range__label">{formatRangeLabel(value)}</p>
-      )}
+      ) : null}
     </div>
   );
 }

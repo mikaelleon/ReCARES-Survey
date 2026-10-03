@@ -1,12 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
+import { DashboardAnalyticsSections } from '@/components/admin/DashboardAnalyticsSections';
+import { DashboardExtendedStats } from '@/components/admin/DashboardExtendedStats';
+import { DashboardQuickActions } from '@/components/admin/DashboardQuickActions';
 import { DashboardStatGrid } from '@/components/admin/DashboardStatGrid';
-import { PhaseBarChart } from '@/components/admin/charts/PhaseBarChart';
-import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
+import { RecentSubmissionsTable } from '@/components/admin/RecentSubmissionsTable';
+import { DashboardHeaderTools } from '@/components/admin/DashboardHeaderTools';
+import { RecentActivityCard } from '@/components/admin/RecentActivityCard';
 import { computeKpis } from '@/lib/admin/analytics';
 import {
   DEFAULT_DATE_RANGE,
@@ -34,22 +36,46 @@ function phaseBuckets(records: { phase: string }[]) {
   });
 }
 
+function firstName(name?: string, email?: string): string {
+  const base = (name || '').trim();
+  if (base) return base.split(/\s+/)[0] ?? base;
+  const local = (email || '').split('@')[0] || 'there';
+  return local;
+}
+
 function DashboardContent() {
-  const { can } = useAuth();
+  const { can, user } = useAuth();
   const { records, status, source, usingDemoSample } = useSurveyResponses();
   const [dateRange, setDateRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
 
   useEffect(() => {
     setDateRange(loadStoredDateRange());
   }, []);
 
-  const ranged = useMemo(
-    () => filterRecordsByDateRange(records, dateRange),
-    [records, dateRange],
-  );
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim().toLowerCase()), 160);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const ranged = useMemo(() => {
+    let list = filterRecordsByDateRange(records, dateRange);
+    if (debouncedQuery) {
+      list = list.filter((r) =>
+        [r.id, r.phase, r.resident, r.pwd].join(' ').toLowerCase().includes(debouncedQuery),
+      );
+    }
+    return list;
+  }, [records, dateRange, debouncedQuery]);
   const kpis = useMemo(() => computeKpis(ranged), [ranged]);
   const phases = useMemo(() => phaseBuckets(ranged), [ranged]);
   const canResponses = can('responsesDashboard');
+
+  const loading = status === 'loading';
+  const empty = !loading && status !== 'error' && ranged.length === 0;
+  const allTimeCount = records.length;
+  const greetName = firstName(user?.name, user?.email);
 
   const periodTrend = useMemo(() => {
     if (source !== 'firestore' || usingDemoSample) return null;
@@ -73,19 +99,20 @@ function DashboardContent() {
         </p>
       ) : (
         <>
-          <div className="dash-page__pill">
-            <DateRangePicker
-              value={dateRange}
-              onChange={(next) => {
+          <div className="dash-page__header">
+            <h1 id="admin-overview-title" className="dash-page__title">
+              Dashboard <span className="dash-page__greet">· Hi, {greetName}!</span>
+            </h1>
+            <DashboardHeaderTools
+              query={query}
+              onQueryChange={setQuery}
+              dateRange={dateRange}
+              onDateRangeChange={(next) => {
                 setDateRange(next);
                 storeDateRange(next);
               }}
             />
           </div>
-
-          <h1 id="admin-overview-title" className="dash-page__title">
-            Dashboard
-          </h1>
 
           {status === 'error' && !usingDemoSample ? (
             <p className="na-error" role="alert">
@@ -99,33 +126,37 @@ function DashboardContent() {
             </p>
           ) : null}
 
-          <DashboardStatGrid
-            kpis={kpis}
-            loading={status === 'loading'}
-            periodTrend={periodTrend}
-          />
+          <div className="dash-bento">
+            <div className="dash-bento__main">
+              <div className="dash-bento__kpis">
+                <DashboardStatGrid
+                  kpis={kpis}
+                  loading={loading}
+                  empty={empty}
+                  periodTrend={periodTrend}
+                />
+                <DashboardExtendedStats records={ranged} loading={loading} empty={empty} />
+              </div>
 
-          <div className="dash-analytics">
-            <h2 className="dash-analytics__title">Analytics by Phase</h2>
-            <div className="dash-analytics__row">
-              <div className="dash-panel dash-panel--chart">
-                {status === 'loading' ? (
-                  <div className="dash-stat--skeleton" style={{ minHeight: 220 }} />
-                ) : (
-                  <PhaseBarChart buckets={phases} />
-                )}
-              </div>
-              <div className="dash-panel dash-panel--aside">
-                <p className="dash-panel__aside-lead">
-                  Drill into any question, pin Summary widgets, and export filtered rows on
-                  Responses.
-                </p>
-                <Link href="/admin/responses/" className="dash-panel__aside-link">
-                  Open Responses
-                  <ArrowRight size={16} strokeWidth={2.2} aria-hidden="true" />
-                </Link>
-              </div>
+              <DashboardAnalyticsSections
+                records={ranged}
+                phases={phases}
+                loading={loading}
+                empty={empty}
+                allTimeCount={allTimeCount}
+              />
             </div>
+
+            <aside className="dash-bento__rail">
+              <RecentActivityCard limit={3} />
+              <RecentSubmissionsTable
+                records={ranged}
+                limit={3}
+                loading={loading}
+                variant="panel"
+              />
+              <DashboardQuickActions />
+            </aside>
           </div>
         </>
       )}
@@ -134,12 +165,11 @@ function DashboardContent() {
 }
 
 /**
- * Soft bento Dashboard — same Firestore response set as Responses.
- * Hook runs inside AdminAppShell (SurveyResponsesProvider).
+ * Dashboard — bento quick summary over live Firestore responses.
  */
 export default function AdminDashboardPage() {
   return (
-    <AdminAppShell>
+    <AdminAppShell fitViewport>
       <DashboardContent />
     </AdminAppShell>
   );

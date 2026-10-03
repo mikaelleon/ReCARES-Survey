@@ -18,8 +18,18 @@ function asLikert(value: unknown, fallback: LikertValue = 3): LikertValue {
 }
 
 function formatTs(iso: string): string {
-  const d = new Date(iso);
+  // Date-only YYYY-MM-DD → local calendar day (avoid UTC midnight shift).
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(iso)
+    ? new Date(`${iso}T12:00:00`)
+    : new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    return d.toLocaleDateString('en-PH', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
   return d.toLocaleString('en-PH', {
     day: '2-digit',
     month: 'short',
@@ -66,6 +76,9 @@ export function mapSurveyDocToSample(
     deviceDependent: showDeviceDependentItems(a),
     language,
     section2,
+    answers: a,
+    deviceClass: doc.deviceClass === 'computer' ? 'computer' : 'phone',
+    status: doc.status === 'partial' ? 'partial' : 'complete',
     screeningNotes: [
       `Status ${doc.status}`,
       `Last step ${doc.lastStepReached}`,

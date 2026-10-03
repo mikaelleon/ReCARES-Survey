@@ -1,4 +1,9 @@
 import {
+  DEFAULT_EXTENDED_WIDGETS,
+  EXTENDED_WIDGET_IDS,
+  EXTENDED_WIDGET_META,
+} from '@/lib/admin/extendedWidgets';
+import {
   RESPONSE_QUESTIONS,
   SUMMARY_FULL_IDS,
   SUMMARY_PIE_IDS,
@@ -7,16 +12,31 @@ import {
 export const DEFAULT_SUMMARY_WIDGETS: string[] = [
   ...SUMMARY_PIE_IDS,
   ...SUMMARY_FULL_IDS,
+  ...DEFAULT_EXTENDED_WIDGETS,
 ];
 
-export type WidgetTag = 'Resident Profile' | 'Branch Coverage' | 'Communication Quality';
+export type WidgetTag =
+  | 'Resident Profile'
+  | 'Branch Coverage'
+  | 'Communication Quality'
+  | 'Feature Priority'
+  | 'Digital Access'
+  | 'Service Quality'
+  | 'Permits'
+  | 'Accessibility'
+  | 'Open Discovery'
+  | 'Privacy & AI'
+  | 'Recruitment'
+  | 'Response Health';
+
+export type WidgetKind = 'pie' | 'hbar' | 'stat' | 'gauge' | 'composite';
 
 export interface SummaryWidgetMeta {
   id: string;
   title: string;
   description: string;
   tag: WidgetTag;
-  kind: 'pie' | 'hbar';
+  kind: WidgetKind;
 }
 
 function tagFor(id: string): WidgetTag {
@@ -34,7 +54,7 @@ function descriptionFor(id: string, title: string): string {
   return `Breakdown of ${title.toLowerCase()}.`;
 }
 
-export const SUMMARY_WIDGET_CATALOG: SummaryWidgetMeta[] = RESPONSE_QUESTIONS.map((q) => ({
+const BASE_CATALOG: SummaryWidgetMeta[] = RESPONSE_QUESTIONS.map((q) => ({
   id: q.id,
   title: q.title,
   description: descriptionFor(q.id, q.title),
@@ -42,14 +62,23 @@ export const SUMMARY_WIDGET_CATALOG: SummaryWidgetMeta[] = RESPONSE_QUESTIONS.ma
   kind: q.kind,
 }));
 
+export const SUMMARY_WIDGET_CATALOG: SummaryWidgetMeta[] = [
+  ...BASE_CATALOG,
+  ...EXTENDED_WIDGET_META,
+];
+
+const VALID_IDS = new Set<string>([
+  ...RESPONSE_QUESTIONS.map((q) => q.id),
+  ...EXTENDED_WIDGET_IDS,
+]);
+
 export function normalizeSummaryWidgets(
   raw: unknown,
   opts?: { allowEmpty?: boolean },
 ): string[] {
   if (raw === undefined || raw === null) return [...DEFAULT_SUMMARY_WIDGETS];
   if (!Array.isArray(raw)) return [...DEFAULT_SUMMARY_WIDGETS];
-  const valid = new Set(RESPONSE_QUESTIONS.map((q) => q.id));
-  const cleaned = raw.filter((id): id is string => typeof id === 'string' && valid.has(id));
+  const cleaned = raw.filter((id): id is string => typeof id === 'string' && VALID_IDS.has(id));
   if (cleaned.length === 0) {
     return opts?.allowEmpty ? [] : [...DEFAULT_SUMMARY_WIDGETS];
   }

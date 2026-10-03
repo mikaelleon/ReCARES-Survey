@@ -5,18 +5,28 @@ import { usePathname } from 'next/navigation';
 import {
   useEffect,
   useId,
+  useRef,
+  useState,
   type ComponentType,
   type SVGProps,
 } from 'react';
 import {
   ArrowLeft,
   BarChart3,
+  Bell,
   CalendarHeart,
+  ChevronLeft,
+  ChevronUp,
   LayoutDashboard,
+  LogOut,
   Users,
   X,
 } from 'lucide-react';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { goToAdminLogin } from '@/lib/firebase/auth';
+import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type IconType = ComponentType<SVGProps<SVGSVGElement> & { size?: number | string; strokeWidth?: number | string }>;
 
@@ -26,24 +36,46 @@ function isActivePath(pathname: string, href: string): boolean {
   return normalized === target;
 }
 
+function initials(name?: string, email?: string): string {
+  const base = (name || email || '?').trim();
+  const parts = base.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase();
+  }
+  return base.slice(0, 2).toUpperCase();
+}
+
 /**
  * Persistent left nav for active proponent / superadmin app pages.
- * Desktop: fixed sidebar. Mobile: drawer controlled by AdminTopBar.
- * Identity / logout live in AdminTopBar — footer is navigation only.
+ * Desktop: fixed sidebar (collapsible to icon-only). Mobile: drawer.
+ * Account, notifications, and theme live in the footer above resident link.
  */
 export function SidebarNav({
   open,
   onOpenChange,
+  collapsed = false,
+  onCollapsedChange,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }) {
   const pathname = usePathname() || '';
-  const { user, isSuperadmin } = useAuth();
+  const { user, isSuperadmin, logout } = useAuth();
+  const { toggleTheme, themeLabel } = useTheme();
   const titleId = useId();
+  const menuId = useId();
+  const bellId = useId();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const bellRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     onOpenChange(false);
+    setMenuOpen(false);
+    setBellOpen(false);
   }, [pathname, onOpenChange]);
 
   useEffect(() => {
@@ -68,6 +100,31 @@ export function SidebarNav({
     };
   }, [open, onOpenChange]);
 
+  useEffect(() => {
+    if (!menuOpen && !bellOpen) return;
+    const onPointer = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (menuOpen && menuRef.current && !menuRef.current.contains(target)) {
+        setMenuOpen(false);
+      }
+      if (bellOpen && bellRef.current && !bellRef.current.contains(target)) {
+        setBellOpen(false);
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        setBellOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', onPointer);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onPointer);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [menuOpen, bellOpen]);
+
   if (!user) return null;
 
   const links: { href: string; label: string; Icon: IconType }[] = [
@@ -75,6 +132,16 @@ export function SidebarNav({
     { href: '/admin/responses/', label: 'Responses', Icon: BarChart3 },
     { href: '/admin/interviews/', label: 'Interview Invites', Icon: CalendarHeart },
   ];
+
+  const displayName = user.name || user.email;
+  const roleTone = user.role === 'superadmin' ? 'amber' : 'emerald';
+  const statusTone =
+    user.status === 'active' ? 'emerald' : user.status === 'removed' ? 'danger' : 'neutral';
+
+  const handleLogout = () => {
+    setMenuOpen(false);
+    void logout().then(() => goToAdminLogin());
+  };
 
   return (
     <>
@@ -89,7 +156,7 @@ export function SidebarNav({
 
       <aside
         id="admin-sidebar-panel"
-        className={`admin-sidebar${open ? ' is-open' : ''}`}
+        className={`admin-sidebar${open ? ' is-open' : ''}${collapsed ? ' is-collapsed' : ''}`}
         aria-label="Admin navigation"
       >
         <div className="admin-sidebar__brand">
@@ -97,9 +164,28 @@ export function SidebarNav({
             href="/admin/dashboard/"
             className="admin-sidebar__logo"
             onClick={() => onOpenChange(false)}
+            title="ReCARES Survey Administration"
           >
-            ReCARES Survey
+            <span className="admin-sidebar__logo-name">ReCARES</span>
+            <span className="admin-sidebar__logo-sub">Survey Administration</span>
           </Link>
+          {onCollapsedChange ? (
+            <button
+              type="button"
+              className="admin-sidebar__collapse"
+              onClick={() => onCollapsedChange(!collapsed)}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-expanded={!collapsed}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <ChevronLeft
+                size={18}
+                strokeWidth={2.2}
+                aria-hidden="true"
+                className={collapsed ? 'is-flipped' : undefined}
+              />
+            </button>
+          ) : null}
           <button
             type="button"
             className="admin-sidebar__close"
@@ -125,10 +211,11 @@ export function SidebarNav({
                 href={href}
                 className={`admin-sidebar__link${active ? ' is-active' : ''}`}
                 aria-current={active ? 'page' : undefined}
+                title={collapsed ? label : undefined}
                 onClick={() => onOpenChange(false)}
               >
                 <Icon className="admin-sidebar__icon" size={18} strokeWidth={2.2} aria-hidden="true" />
-                <span>{label}</span>
+                <span className="admin-sidebar__link-label">{label}</span>
               </Link>
             );
           })}
@@ -141,19 +228,103 @@ export function SidebarNav({
                 href="/admin/members/"
                 className={`admin-sidebar__link${isActivePath(pathname, '/admin/members/') ? ' is-active' : ''}`}
                 aria-current={isActivePath(pathname, '/admin/members/') ? 'page' : undefined}
+                title={collapsed ? 'Members & Invites' : undefined}
                 onClick={() => onOpenChange(false)}
               >
                 <Users className="admin-sidebar__icon" size={18} strokeWidth={2.2} aria-hidden="true" />
-                <span>Members &amp; Invites</span>
+                <span className="admin-sidebar__link-label">Members &amp; Invites</span>
               </Link>
             </>
           ) : null}
         </nav>
 
         <div className="admin-sidebar__footer">
-          <Link href="/" className="admin-sidebar__resident" onClick={() => onOpenChange(false)}>
+          <div className="admin-sidebar__account-row">
+            <div className="admin-sidebar__account-tools">
+              <div className="admin-sidebar__bell-wrap" ref={bellRef}>
+                <button
+                  type="button"
+                  className="admin-sidebar__icon-btn"
+                  aria-label="Notifications"
+                  aria-expanded={bellOpen}
+                  aria-controls={bellId}
+                  onClick={() => {
+                    setBellOpen((v) => !v);
+                    setMenuOpen(false);
+                  }}
+                >
+                  <Bell size={18} strokeWidth={2.2} aria-hidden="true" />
+                </button>
+                {bellOpen ? (
+                  <div id={bellId} className="admin-sidebar__popover" role="status">
+                    <p className="admin-sidebar__popover-title">Notifications</p>
+                    <p className="admin-sidebar__popover-empty">No notifications yet.</p>
+                  </div>
+                ) : null}
+              </div>
+
+              <ThemeToggle aria-label={themeLabel} onClick={toggleTheme} onDark />
+            </div>
+
+            <div className="admin-sidebar__account" ref={menuRef}>
+              <button
+                type="button"
+                className="admin-sidebar__user"
+                aria-expanded={menuOpen}
+                aria-controls={menuId}
+                title={collapsed ? displayName : undefined}
+                onClick={() => {
+                  setMenuOpen((v) => !v);
+                  setBellOpen(false);
+                }}
+              >
+                <span className="admin-avatar admin-avatar--on-dark" aria-hidden="true">
+                  {initials(user.name, user.email)}
+                </span>
+                <span className="admin-sidebar__user-text">
+                  <span className="admin-sidebar__user-name">{displayName}</span>
+                  <span className="admin-sidebar__user-email">{user.email}</span>
+                </span>
+                <ChevronUp
+                  size={16}
+                  strokeWidth={2.2}
+                  aria-hidden="true"
+                  className={`admin-sidebar__chevron${menuOpen ? ' is-open' : ''}`}
+                />
+              </button>
+              {menuOpen ? (
+                <div
+                  id={menuId}
+                  className="admin-sidebar__popover admin-sidebar__popover--account"
+                  role="menu"
+                >
+                  <div className="admin-sidebar__badges">
+                    <StatusBadge tone={roleTone}>{user.role || '—'}</StatusBadge>
+                    <StatusBadge tone={statusTone}>{user.status || 'active'}</StatusBadge>
+                  </div>
+                  <p className="admin-sidebar__method">Signed in with {user.signInMethod}</p>
+                  <button
+                    type="button"
+                    className="admin-sidebar__logout"
+                    role="menuitem"
+                    onClick={handleLogout}
+                  >
+                    <LogOut size={16} strokeWidth={2.2} aria-hidden="true" />
+                    <span>Log out</span>
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <Link
+            href="/"
+            className="admin-sidebar__resident"
+            title={collapsed ? 'Back to resident site' : undefined}
+            onClick={() => onOpenChange(false)}
+          >
             <ArrowLeft size={16} strokeWidth={2.2} aria-hidden="true" />
-            <span>Back to resident site</span>
+            <span className="admin-sidebar__resident-label">Back to resident site</span>
           </Link>
         </div>
       </aside>

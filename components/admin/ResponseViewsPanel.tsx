@@ -1,12 +1,18 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, MoreVertical, Plus } from 'lucide-react';
+import { ExtendedWidgetCard } from '@/components/admin/charts/ExtendedWidgetCard';
 import { QuestionChartCard } from '@/components/admin/charts/QuestionChartCard';
 import { GatedSectionChips } from '@/components/admin/GatedSectionChips';
 import { ResponseEmptyState } from '@/components/admin/ResponseEmptyState';
 import { ResponseTable } from '@/components/admin/ResponseTable';
 import { Button } from '@/components/ui/Button';
+import {
+  EXTENDED_COMPACT_IDS,
+  EXTENDED_FULL_IDS,
+  isExtendedWidgetId,
+} from '@/lib/admin/extendedWidgets';
 import { LIKERT_LABELS, type SampleRecord } from '@/lib/admin/sampleResponses';
 import {
   RESPONSE_QUESTIONS,
@@ -25,8 +31,9 @@ const TABS: { id: ResponseViewTab; label: string }[] = [
 ];
 
 const PIE_SET = new Set<string>(SUMMARY_PIE_IDS);
-const FULL_SET = new Set<string>(SUMMARY_FULL_IDS);
+const FULL_SET = new Set<string>([...SUMMARY_FULL_IDS, ...EXTENDED_FULL_IDS]);
 const LIKERT_SET = new Set<string>(SUMMARY_LIKERT_IDS);
+const EXT_COMPACT_SET = new Set<string>(EXTENDED_COMPACT_IDS);
 
 function ChartById({
   id,
@@ -41,10 +48,22 @@ function ChartById({
   compact?: boolean;
   onRemove?: () => void;
 }) {
+  if (isExtendedWidgetId(id)) {
+    return (
+      <div className="gf-bento__cell" id={`summary-widget-${id}`}>
+        <ExtendedWidgetCard
+          id={id}
+          records={records}
+          compact={compact}
+          onRemove={onRemove}
+        />
+      </div>
+    );
+  }
   const q = getQuestionById(id);
   if (!q) return null;
   return (
-    <div className="gf-bento__cell">
+    <div className="gf-bento__cell" id={`summary-widget-${id}`}>
       <QuestionChartCard
         title={q.title}
         responseCount={responseCount}
@@ -77,6 +96,8 @@ export function ResponseViewsPanel({
   summaryWidgets,
   onOpenWidgetPicker,
   onRemoveWidget,
+  initialTab,
+  focusResponseId,
 }: {
   records: SampleRecord[];
   filtered: SampleRecord[];
@@ -92,11 +113,32 @@ export function ResponseViewsPanel({
   summaryWidgets: string[];
   onOpenWidgetPicker: () => void;
   onRemoveWidget: (id: string) => void;
+  initialTab?: ResponseViewTab;
+  focusResponseId?: string | null;
 }) {
-  const [tab, setTab] = useState<ResponseViewTab>('summary');
+  const [tab, setTab] = useState<ResponseViewTab>(initialTab ?? 'summary');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [individualIndex, setIndividualIndex] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (
+      initialTab === 'summary' ||
+      initialTab === 'question' ||
+      initialTab === 'individual'
+    ) {
+      setTab(initialTab);
+    }
+  }, [initialTab]);
+
+  useEffect(() => {
+    if (!focusResponseId) return;
+    const idx = filtered.findIndex((r) => r.id === focusResponseId);
+    if (idx >= 0) {
+      setTab('individual');
+      setIndividualIndex(idx);
+    }
+  }, [focusResponseId, filtered]);
 
   const chartSource = filtered.length > 0 ? filtered : records;
   const responseCount = chartSource.length;
@@ -104,8 +146,13 @@ export function ResponseViewsPanel({
   const pieWidgets = summaryWidgets.filter((id) => PIE_SET.has(id));
   const fullWidgets = summaryWidgets.filter((id) => FULL_SET.has(id));
   const likertWidgets = summaryWidgets.filter((id) => LIKERT_SET.has(id));
+  const extCompactWidgets = summaryWidgets.filter((id) => EXT_COMPACT_SET.has(id));
   const otherWidgets = summaryWidgets.filter(
-    (id) => !PIE_SET.has(id) && !FULL_SET.has(id) && !LIKERT_SET.has(id),
+    (id) =>
+      !PIE_SET.has(id) &&
+      !FULL_SET.has(id) &&
+      !LIKERT_SET.has(id) &&
+      !EXT_COMPACT_SET.has(id),
   );
 
   const safeQuestionIndex = Math.min(questionIndex, RESPONSE_QUESTIONS.length - 1);
@@ -240,6 +287,20 @@ export function ResponseViewsPanel({
                         id={id}
                         records={chartSource}
                         responseCount={responseCount}
+                        onRemove={() => onRemoveWidget(id)}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                {extCompactWidgets.length > 0 ? (
+                  <div className="gf-bento__likert">
+                    {extCompactWidgets.map((id) => (
+                      <ChartById
+                        key={id}
+                        id={id}
+                        records={chartSource}
+                        responseCount={responseCount}
+                        compact
                         onRemove={() => onRemoveWidget(id)}
                       />
                     ))}

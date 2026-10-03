@@ -34,6 +34,8 @@ export interface AdminProfile {
   createdAt?: Timestamp | null;
   approvedAt?: Timestamp | null;
   approvedBy?: string;
+  /** Role / permissions edits (and other non-status updates). */
+  updatedAt?: Timestamp | null;
   removedAt?: Timestamp | null;
   removedBy?: string;
   /** Set when the profile was created from an invite (rules audit). */

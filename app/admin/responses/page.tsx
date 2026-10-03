@@ -23,14 +23,17 @@ import {
   type DateRangeValue,
 } from '@/lib/admin/dateRange';
 import type { SampleRecord } from '@/lib/admin/sampleResponses';
+import { isExtendedWidgetId } from '@/lib/admin/extendedWidgets';
 import {
   DEFAULT_SUMMARY_WIDGETS,
   normalizeSummaryWidgets,
+  SUMMARY_WIDGET_CATALOG,
 } from '@/lib/admin/summaryWidgets';
 import { useSurveyResponses } from '@/lib/admin/useSurveyResponses';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { saveSummaryWidgets } from '@/lib/firebase/auth';
 import { useQueryParam } from '@/lib/navigation/useQueryParam';
+import type { ResponseViewTab } from '@/components/admin/ResponseViewsPanel';
 
 type DemoState = 'data' | 'loading' | 'empty' | 'error';
 
@@ -39,6 +42,15 @@ function ResponsesContent() {
   const canResponses = can('responsesDashboard');
   const { records, setRecords, status, source, usingDemoSample } = useSurveyResponses();
   const stateParam = useQueryParam('state');
+  const focusParam = useQueryParam('focus');
+  const tabParam = useQueryParam('tab');
+  const responseIdParam = useQueryParam('responseId');
+  const initialTab: ResponseViewTab | undefined =
+    tabParam === 'summary' || tabParam === 'question' || tabParam === 'individual'
+      ? tabParam
+      : responseIdParam
+        ? 'individual'
+        : undefined;
   const demoState: DemoState =
     stateParam === 'loading' || stateParam === 'empty' || stateParam === 'error'
       ? stateParam
@@ -57,6 +69,8 @@ function ResponsesContent() {
     ...DEFAULT_SUMMARY_WIDGETS,
   ]);
   const [widgetModalOpen, setWidgetModalOpen] = useState(false);
+  const focusPinned = useRef<string | null>(null);
+  const focusScrolled = useRef<string | null>(null);
   const [viewRecord, setViewRecord] = useState<SampleRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SampleRecord | null>(null);
   const [undo, setUndo] = useState<{ record: SampleRecord; index: number } | null>(null);
@@ -132,6 +146,33 @@ function ResponsesContent() {
     [user?.uid, reloadProfile],
   );
 
+  /** Dashboard drill-down: pin focus widget if missing, then scroll once it mounts. */
+  useEffect(() => {
+    if (!focusParam) return;
+    const known =
+      isExtendedWidgetId(focusParam) ||
+      SUMMARY_WIDGET_CATALOG.some((w) => w.id === focusParam);
+    if (!known) return;
+
+    if (focusPinned.current !== focusParam && !summaryWidgets.includes(focusParam)) {
+      focusPinned.current = focusParam;
+      void persistWidgets([...summaryWidgets, focusParam]);
+      return;
+    }
+    focusPinned.current = focusParam;
+
+    if (focusScrolled.current === focusParam) return;
+    if (!summaryWidgets.includes(focusParam)) return;
+
+    const timer = window.setTimeout(() => {
+      const el = document.getElementById(`summary-widget-${focusParam}`);
+      if (!el) return;
+      focusScrolled.current = focusParam;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [focusParam, summaryWidgets, persistWidgets]);
+
   const handleToggleWidget = useCallback(
     (id: string) => {
       const next = summaryWidgets.includes(id)
@@ -199,16 +240,15 @@ function ResponsesContent() {
         <h1 id="admin-responses-title" className="admin-section__title">
           Responses
         </h1>
-        <p className="admin-section__lead">
-          Browse aggregates by question, or step through each submission.
-          {usingDemoSample
-            ? ' Demo sample mode (?demo=sample) — not live Firestore.'
-            : source === 'firestore'
-              ? ''
+        {usingDemoSample || source !== 'firestore' ? (
+          <p className="admin-section__lead">
+            {usingDemoSample
+              ? 'Demo sample mode (?demo=sample) — not live Firestore.'
               : source === 'error'
-                ? ' Live Firestore query failed — showing empty until reload succeeds.'
-                : ' Firestore unavailable — showing empty until config/auth is ready.'}
-        </p>
+                ? 'Live Firestore query failed — showing empty until reload succeeds.'
+                : 'Firestore unavailable — showing empty until config/auth is ready.'}
+          </p>
+        ) : null}
 
         {!canResponses ? (
           <p className="admin-section__lead">
@@ -266,6 +306,8 @@ function ResponsesContent() {
                 summaryWidgets={summaryWidgets}
                 onOpenWidgetPicker={() => setWidgetModalOpen(true)}
                 onRemoveWidget={(id) => handleToggleWidget(id)}
+                initialTab={initialTab}
+                focusResponseId={responseIdParam}
               />
             )}
           </>

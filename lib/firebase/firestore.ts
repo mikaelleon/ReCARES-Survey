@@ -20,14 +20,16 @@ export async function submitNeedsAssessment(data: SurveyResponseDocument): Promi
 
 /**
  * Separate collection. Must not include a survey response id or any survey answer.
+ * New invites start as not_contacted until an admin logs outreach.
  */
 export async function submitInterviewInvitation(
-  data: Omit<InterviewInvitation, 'submittedAt'>,
+  data: Omit<InterviewInvitation, 'submittedAt' | 'contactStatus' | 'confirmedDateTime'>,
 ): Promise<void> {
   const db = getFirestoreDb();
   if (!db) return;
   await addDoc(collection(db, 'interviewInterest'), {
     ...stripUndefined(data),
+    contactStatus: 'not_contacted' satisfies InterviewInvitation['contactStatus'],
     submittedAt: serverTimestamp(),
   });
 }

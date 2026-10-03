@@ -120,6 +120,7 @@ export function mapAdminDoc(data: Record<string, unknown>): AdminProfile {
     createdAt: (data.createdAt as AdminProfile['createdAt']) ?? null,
     approvedAt: (data.approvedAt as AdminProfile['approvedAt']) ?? null,
     approvedBy: typeof data.approvedBy === 'string' ? data.approvedBy : undefined,
+    updatedAt: (data.updatedAt as AdminProfile['updatedAt']) ?? null,
     removedAt: (data.removedAt as AdminProfile['removedAt']) ?? null,
     removedBy: typeof data.removedBy === 'string' ? data.removedBy : undefined,
     inviteId: typeof data.inviteId === 'string' ? data.inviteId : undefined,

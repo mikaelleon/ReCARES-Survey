@@ -26,14 +26,48 @@ function toDayEnd(isoDate: string): number {
   return new Date(`${isoDate}T23:59:59.999`).getTime();
 }
 
+/**
+ * Survey writes `submittedDate` as YYYY-MM-DD (date-only).
+ * `new Date('YYYY-MM-DD')` is UTC midnight and can fall outside local
+ * “Last 7/30 days” windows — parse date-only as local calendar day.
+ */
+export function parseSubmittedAt(value: string): number {
+  if (!value) return Number.NaN;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return new Date(`${value}T12:00:00`).getTime();
+  }
+  return new Date(value).getTime();
+}
+
+/**
+ * Custom selected but From/To incomplete — treat as all-time until both dates exist.
+ */
+export function isCustomPending(range: DateRangeValue): boolean {
+  return range.preset === 'custom' && (!range.start || !range.end);
+}
+
+/** Custom From is after To — invalid; do not apply the range. */
+export function isCustomInverted(range: DateRangeValue): boolean {
+  return (
+    range.preset === 'custom' &&
+    Boolean(range.start && range.end && range.start > range.end)
+  );
+}
+
 export function resolveDateBounds(
   range: DateRangeValue,
   now = new Date(),
 ): { startMs: number | null; endMs: number | null } {
   if (range.preset === 'all') return { startMs: null, endMs: null };
 
-  if (range.preset === 'custom' && range.start && range.end) {
-    return { startMs: toDayStart(range.start), endMs: toDayEnd(range.end) };
+  if (range.preset === 'custom') {
+    if (range.start && range.end) {
+      // Invalid order → do not apply (all-time fallback, same as incomplete).
+      if (range.start > range.end) return { startMs: null, endMs: null };
+      return { startMs: toDayStart(range.start), endMs: toDayEnd(range.end) };
+    }
+    // Incomplete custom → all-time (not last-7-days stale fallback).
+    return { startMs: null, endMs: null };
   }
 
   const end = new Date(now);
@@ -53,8 +87,8 @@ export function filterRecordsByDateRange(
   const { startMs, endMs } = resolveDateBounds(range, now);
   if (startMs == null || endMs == null) return records;
   return records.filter((r) => {
-    const t = new Date(r.submittedAt).getTime();
-    return t >= startMs && t <= endMs;
+    const t = parseSubmittedAt(r.submittedAt);
+    return Number.isFinite(t) && t >= startMs && t <= endMs;
   });
 }
 
@@ -76,8 +110,8 @@ export function countInBounds(
   endMs: number,
 ): number {
   return records.filter((r) => {
-    const t = new Date(r.submittedAt).getTime();
-    return t >= startMs && t <= endMs;
+    const t = parseSubmittedAt(r.submittedAt);
+    return Number.isFinite(t) && t >= startMs && t <= endMs;
   }).length;
 }
 
@@ -107,7 +141,7 @@ export function formatRangeLabel(range: DateRangeValue, now = new Date()): strin
   if (range.preset === 'all') return 'All time';
   if (range.preset === '7d') return 'Last 7 days';
   if (range.preset === '30d') return 'Last 30 days';
-  if (range.start && range.end) {
+  if (range.preset === 'custom' && range.start && range.end) {
     const a = new Date(`${range.start}T12:00:00`);
     const b = new Date(`${range.end}T12:00:00`);
     const fmt = (d: Date) =>
@@ -115,5 +149,6 @@ export function formatRangeLabel(range: DateRangeValue, now = new Date()): strin
     return `${fmt(a)} – ${fmt(b)}`;
   }
   void now;
+  if (range.preset === 'custom') return 'Custom range (incomplete)';
   return 'Custom range';
 }

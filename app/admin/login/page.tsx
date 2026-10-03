@@ -35,6 +35,8 @@ export default function AdminLoginPage() {
   const { user, ready, reloadProfile } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -55,8 +57,12 @@ export default function AdminLoginPage() {
   };
 
   const handleSubmit = async () => {
-    if (!email.trim() || !password) {
-      setFormError('Enter your email and password.');
+    const nextEmailError = !email.trim() ? 'Email is required.' : null;
+    const nextPasswordError = !password ? 'Password is required.' : null;
+    setEmailError(nextEmailError);
+    setPasswordError(nextPasswordError);
+    if (nextEmailError || nextPasswordError) {
+      setFormError(null);
       return;
     }
     setBusy(true);
@@ -152,16 +158,24 @@ export default function AdminLoginPage() {
             type="email"
             placeholder="name@ub.edu.ph"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (emailError) setEmailError(null);
+            }}
             required
+            error={emailError}
           />
           <Input
             label="Password"
             type="password"
             placeholder="••••••••"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (passwordError) setPasswordError(null);
+            }}
             required
+            error={passwordError}
           />
 
           {formError ? (

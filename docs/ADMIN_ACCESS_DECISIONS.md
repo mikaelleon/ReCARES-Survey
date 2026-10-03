@@ -28,11 +28,13 @@ If the document was created with the wrong ID, signing in as that email will att
 
 ## 2. Hard delete vs soft removal
 
-**Choice: Soft removal only for this pass**
+**Choice: Soft removal for live accounts; hard-delete only for unused invites and already-removed records**
 
 - Active members: `status: 'removed'` + `removedAt` / `removedBy`. No client hard-delete of active docs.
 - Pending reject: delete the pending `admins` document only (never granted access). Auth-account disable still needs a Cloud Function (Section 7); not built in this pass.
-- Hard-delete of Auth + Firestore for former members is out of scope until a separate confirmed destructive action exists.
+- Unused invites: superadmin may hard-delete (`revokeInvite`) when `used == false`.
+- Already-removed admin rows: superadmin may permanently delete after UI double-confirm. Rules allow delete only when `status == 'removed'` (or pending reject).
+- Hard-delete of the Auth user still needs a Cloud Function; not built in this pass.
 
 ## 3. Invite read / redeem (Section 6 tension)
 
@@ -79,8 +81,9 @@ Do not treat “PWD screening” as interchangeable with “Accessibility path.�
 
 | Item | Decision |
 |------|----------|
-| Summary widgets | Per-admin `summaryWidgets: string[]` on `admins/{uid}`. Default = 4 pies + 2 full-width charts. Self-update allowed by existing rules (non-privileged keys). |
-| Date range | Session-stored; filters Dashboard + Responses charts/stats together. Active preset = Dark Emerald filled tab. |
+| Summary widgets | Per-admin `summaryWidgets: string[]` on `admins/{uid}`. Default = 4 pies + 2 full-width + **Top Requested Features**. Nine more extended widgets are picker-only (not forced onto existing admins). Live `answers` from Firestore. Completion-rate = “Not available” (drafts are localStorage-only). Submissions-over-time trend deferred (comment in `extendedWidgets.ts`). |
+| Date range | Session-stored; filters Dashboard + Responses together. Active preset = Dark Emerald fill. `submittedDate` is YYYY-MM-DD — parse as **local** day (`parseSubmittedAt`), not UTC midnight. |
+| Dashboard empty | loading = skeleton; empty range = muted “—” + phase empty copy; never bold 0 flash. All-time 0 = no Firestore docs yet (stub removed). |
 | Trend captions | Only when `source === 'firestore'` and a prior period of equal length exists. No invented deltas on sample stub. |
 | Target gauge (“8 of N”) | **Blocked** until research team supplies a real sample-size target. Do not invent N. Same radial-ring shape as Donezo “Project Progress” when unblocked. |
 | UX check (Kimberly) | Timed task: “how many renters so far” / “did communication quality move” — confirm Summary pins make that faster than all-nine-at-once. |
@@ -98,3 +101,29 @@ Do not treat “PWD screening” as interchangeable with “Accessibility path.�
 | “Pin Summary widgets” copy | Keep — Add Widget picker is implemented on Responses Summary. |
 | Active members | Avatar list + role/status pills + “+ Add Member” scroll/focus to Create invite. |
 | Do not invent | Reminders, task lists, weekly bar chart (until volume), Time Tracker, mobile-app promo. |
+
+## 9. Average Completion Time (flagged — do not build yet)
+
+**Finding:** `SurveyResponseDocument` currently stores `submittedDate` (and mapped `submittedAt` for admin views) but **no start timestamp**. Survey drafts live in `localStorage` only; Firestore writes happen at submit with `status: 'complete'`.
+
+**Blocked until:** the resident survey records a real `startedAt` (or equivalent) when the respondent begins, then persists it on the same response document. Do **not** fabricate average duration from `submittedDate` alone or from client-side clocks that are never stored.
+
+## 10. Configuration page (flagged — do not build yet)
+
+The SaaS mockup sidebar includes a Configuration item with no ReCARES equivalent. If added later, scope must be real and bounded — likely candidates already present in the project:
+
+- Perimeter / development-phase reference list (`PHASE_OPTIONS` / survey content)
+- Admin signup access code
+- Survey published content version
+
+Do **not** ship an empty Configuration page just to fill a nav slot. Confirm product scope before building.
+
+## 11. Top KPI row — no “See on Responses” drill-downs (intentional)
+
+**Choice: leave Total Respondents / Homeowners / PWD / Tenants without drill-down links.**
+
+These four are headline counts. Unlike the widgets below them, they do not map cleanly to one Responses Summary chart (`phase`, `top-features`, etc.). Adding a generic “See on Responses” would land the admin on an ambiguous Summary view. Drill-downs stay on the detailed analytics cards only.
+
+## 12. Dashboard growth (flagged — revisit later)
+
+The Dashboard has grown to ~20 blocks. Before the next large widget wave, decide whether it needs (a) per-admin section/widget preferences like Responses Summary, and/or (b) collapsible section headers so returning admins can skip rarely used blocks. No implementation in this pass.

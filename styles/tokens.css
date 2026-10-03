@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --black: #0b0b0b;
   --white: #e5ebe8;
   --dark-emerald: #13693f;
@@ -15,6 +15,12 @@
   --card-fill-brand: var(--dark-emerald);
   --card-fill-accordion-open: rgba(0, 0, 0, 0.09);
   --brand-emerald: var(--dark-emerald);
+  /* Form fields — independent of --text-body so brand-card overrides cannot wash out typed text */
+  --field-bg: #ffffff;
+  --field-text: #0b0b0b;
+  --field-placeholder: rgba(11, 11, 11, 0.52);
+  --field-border: rgba(0, 0, 0, 0.3);
+  --field-caret: #0b0b0b;
   --text-headline: var(--dark-emerald);
   --text-body: var(--dark-emerald);
   --text-caption: rgba(0, 0, 0, 0.7);
@@ -117,7 +123,13 @@
   --surface-3-border: rgba(255, 255, 255, 0.12);
   --card-fill-neutral: #2a2a28;
   --card-fill-accordion-open: rgba(255, 255, 255, 0.14);
-  --text-headline: var(--dark-emerald);
+  --field-bg: #1a1a18;
+  --field-text: #f2f5f3;
+  --field-placeholder: rgba(242, 245, 243, 0.58);
+  --field-border: rgba(255, 255, 255, 0.35);
+  --field-caret: #f2f5f3;
+  /* Light mint — Dark Emerald (#13693f) fails contrast on near-black at UI sizes */
+  --text-headline: #8ee4b5;
   --text-body: var(--white);
   --text-caption: rgba(255, 255, 255, 0.7);
   --text-section-heading: var(--bright-amber);

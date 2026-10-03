@@ -1,10 +1,11 @@
 'use client';
 
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
+import { InterviewBoard } from '@/components/admin/InterviewBoard';
 import { useAuth } from '@/lib/auth/AuthProvider';
 
 /**
- * Interview invites — permission-gated placeholder until Firestore viewer lands.
+ * Interview Invites — Kanban for interviewInterest (separate from Members board).
  */
 export default function AdminInterviewsPage() {
   const { can } = useAuth();
@@ -17,10 +18,7 @@ export default function AdminInterviewsPage() {
           Interview Invites
         </h1>
         {canInterview ? (
-          <p className="admin-section__lead">
-            Interview interest documents live in the <code>interviewInterest</code> collection. A
-            dedicated viewer can be wired here later; the permission gate is already enforced.
-          </p>
+          <InterviewBoard />
         ) : (
           <p className="admin-section__lead">
             You do not have permission to view interview invites. Ask a superadmin if you need

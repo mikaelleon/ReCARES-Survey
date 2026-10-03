@@ -1,7 +1,9 @@
 /**
- * Sample proponent dashboard records (stub until Firestore).
- * Shape matches live survey v2 gates — not the retired Section 4/5 instrument.
+ * Sample proponent dashboard records (opt-in demo via ?demo=sample only).
+ * Live path maps Firestore docs into this shape, including raw `answers`.
  */
+
+import type { SurveyAnswers } from '@/survey/schema';
 
 export type LikertValue = 1 | 2 | 3 | 4 | 5;
 
@@ -36,6 +38,11 @@ export interface SampleRecord {
   section2: SampleSection2;
   /** Screening / gate notes for detail drawer */
   screeningNotes: string[];
+  /** Live survey answers — required for extended Summary widgets. */
+  answers?: Partial<SurveyAnswers>;
+  deviceClass?: 'phone' | 'computer';
+  /** Server status. Partials are not written today (drafts are localStorage-only). */
+  status?: 'complete' | 'partial';
 }
 
 export const SAMPLE_RESPONSES: SampleRecord[] = [

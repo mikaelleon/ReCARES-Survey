@@ -97,6 +97,7 @@ export async function approvePendingAdmin(params: {
     permissions: params.permissions,
     approvedAt: serverTimestamp(),
     approvedBy: params.approvedBy,
+    updatedAt: serverTimestamp(),
   });
 }
 
@@ -119,6 +120,7 @@ export async function updateActiveMember(params: {
   await updateDoc(doc(db, 'admins', params.uid), {
     role: params.role,
     permissions: params.permissions,
+    updatedAt: serverTimestamp(),
   });
 }
 
@@ -168,4 +170,19 @@ export async function createInvite(params: {
 export function inviteSignupUrl(inviteId: string, origin?: string): string {
   const base = origin || (typeof window !== 'undefined' ? window.location.origin : '');
   return `${base}/admin/signup?invite=${encodeURIComponent(inviteId)}`;
+}
+
+/** Delete an unused invite document (revoke before redemption). */
+export async function revokeInvite(inviteId: string): Promise<void> {
+  const db = requireDb();
+  await deleteDoc(doc(db, 'invites', inviteId));
+}
+
+/**
+ * Permanently delete a soft-removed admin document.
+ * Rules reject this unless status is already 'removed'.
+ */
+export async function permanentlyDeleteRemovedAdmin(uid: string): Promise<void> {
+  const db = requireDb();
+  await deleteDoc(doc(db, 'admins', uid));
 }

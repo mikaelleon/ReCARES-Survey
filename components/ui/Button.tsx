@@ -76,19 +76,30 @@ export function Button({
   const onDarkText = onDark ? 'var(--white)' : 'var(--text-body)';
   const onDarkBorder = onDark ? 'rgba(255,255,255,.7)' : 'var(--border-default)';
 
-  const primaryFill = onDark
-    ? hover && !disabled
-      ? 'var(--accent-hover)'
-      : 'var(--accent-selected)'
-    : hover && !disabled
-      ? 'var(--accent-hover)'
-      : 'var(--accent-primary)';
+  const primaryFill = disabled
+    ? 'var(--surface-2)'
+    : onDark
+      ? hover
+        ? 'var(--accent-hover)'
+        : 'var(--accent-selected)'
+      : hover
+        ? 'var(--accent-hover)'
+        : 'var(--harvest-orange)';
 
-  const primaryText =
-    onDark || (hover && !disabled) ? 'var(--text-on-accent)' : 'var(--text-on-primary)';
+  const primaryText = disabled
+    ? 'var(--text-caption)'
+    : onDark || hover
+      ? 'var(--text-on-accent)'
+      : 'var(--black)';
 
   const style: CSSProperties = isPrimary
-    ? { ...base, background: primaryFill, color: primaryText }
+    ? {
+        ...base,
+        background: primaryFill,
+        color: primaryText,
+        opacity: disabled ? 1 : base.opacity,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+      }
     : isSecondary
       ? {
           ...base,

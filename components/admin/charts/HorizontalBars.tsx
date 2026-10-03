@@ -22,15 +22,16 @@ export function HorizontalBars({
     <ul className="gf-hbar">
       {buckets.map((b) => {
         const widthPct = (b.count / max) * 100;
+        const empty = b.count <= 0;
         return (
-          <li key={b.label} className="gf-hbar__row">
+          <li key={b.label} className={`gf-hbar__row${empty ? ' is-zero' : ''}`}>
             <div className="gf-hbar__label" title={b.label}>
               {b.label}
             </div>
             <div className="gf-hbar__track" aria-hidden="true">
               <div
-                className="gf-hbar__fill"
-                style={{ width: animate ? `${widthPct}%` : '0%' }}
+                className={`gf-hbar__fill${empty ? ' is-empty' : ''}`}
+                style={{ width: animate ? (empty ? '4%' : `${widthPct}%`) : '0%' }}
               />
             </div>
             <div className="gf-hbar__value">

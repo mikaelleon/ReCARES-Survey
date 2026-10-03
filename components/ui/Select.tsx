@@ -49,16 +49,18 @@ export function Select({
   const selectStyle: CSSProperties = {
     fontFamily: 'var(--font-sans)',
     fontSize: 'var(--text-body-size)',
-    color: value ? 'var(--text-body)' : 'var(--text-caption)',
-    background: 'var(--surface-2)',
-    border: error ? '1px solid var(--error-red)' : '1px solid transparent',
+    color: 'var(--field-text)',
+    background: 'var(--field-bg)',
+    caretColor: 'var(--field-caret)',
+    border: error ? '1px solid var(--error-red)' : '1px solid var(--field-border)',
     borderRadius: 'var(--radius-sm)',
-    height: 44,
-    padding: '0 14px',
+    height: 40,
+    padding: '0 12px',
     outline: 'none',
     boxSizing: 'border-box',
     width: '100%',
     appearance: 'none',
+    cursor: 'pointer',
   };
 
   const describedBy = [helperText ? helperId : null, error ? errorId : null]

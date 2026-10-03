@@ -81,13 +81,14 @@ service cloud.firestore {
         isActiveSuperadmin(request.auth.uid) ||
         (request.auth.uid == uid
           && !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['role', 'status', 'permissions', 'approvedAt', 'approvedBy', 'removedAt', 'removedBy', 'inviteId']))
+            .hasAny(['role', 'status', 'permissions', 'approvedAt', 'approvedBy', 'updatedAt', 'removedAt', 'removedBy', 'inviteId']))
       );
 
-      // Pending reject only. Active members use status: 'removed' (soft).
+      // Pending reject, or hard-delete of already-removed historical records.
+      // Active accounts cannot be hard-deleted (soft-remove only).
       allow delete: if request.auth != null
         && isActiveSuperadmin(request.auth.uid)
-        && resource.data.status == 'pending';
+        && (resource.data.status == 'pending' || resource.data.status == 'removed');
     }
 
     // Tight invite rules: no open read for every signed-in user.
@@ -109,7 +110,10 @@ service cloud.firestore {
         )
       );
 
-      allow delete: if false;
+      // Superadmin may revoke an unused invite (wrong email/role).
+      allow delete: if request.auth != null
+        && isActiveSuperadmin(request.auth.uid)
+        && resource.data.used == false;
     }
 
     match /needsAssessmentResponses/{responseId} {

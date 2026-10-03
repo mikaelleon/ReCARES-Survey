@@ -77,7 +77,7 @@ Pie slices cycle this fixed palette, in order: `#13693f`, `#e87820`, `#1a8f56`, 
 | `--card-fill-neutral` | `#ffffff` | `#2a2a28` |
 | `--card-fill-brand` | `#13693f` both modes | same |
 | `--card-fill-accordion-open` | `rgba(0,0,0,0.09)` | `rgba(255,255,255,0.14)` |
-| `--text-headline` | `#13693f` | `#13693f` |
+| `--text-headline` | `#13693f` | `#8ee4b5` (light mint — Dark Emerald fails contrast on near-black at UI sizes) |
 | `--text-body` | `#13693f` | `#e5ebe8` |
 | `--text-caption` | `rgba(0,0,0,0.7)` | `rgba(255,255,255,0.7)` |
 | `--text-section-heading` | `#13693f` | `#feca09` |
@@ -96,7 +96,7 @@ Brand cards (`--card-fill-brand`) stay emerald in both themes. That fixedness is
 
 ### 3.3 Contrast rules
 
-- Dark Emerald on white is safe at body size. Dark Emerald on black is only for large or bold text (about 18px bold or 24px regular). In dark mode, questions, labels, and paragraphs use `--text-body` (the off-white), and section headings use Bright Amber via `--text-section-heading`.
+- Dark Emerald on white is safe at body size. Dark Emerald on black is not used for UI text — dark mode `--text-headline` is light mint (`#8ee4b5`). Questions, labels, and paragraphs use `--text-body` (the off-white), and section headings use Bright Amber via `--text-section-heading`.
 - Text on emerald chrome (nav, footer, admin bar, chat header, drawer header) is `--white` (`#e5ebe8`) or white at 75–94% opacity for secondary lines. Amber is the hover and the column label on the footer.
 - Text on Harvest Orange and Bright Amber is `--black`.
 - Dim Grey is a border color. It is never a fill and never the page background.
@@ -609,7 +609,7 @@ Drop this in the other project’s global stylesheet, then add the component cla
   --surface-3-border: rgba(255, 255, 255, 0.12);
   --card-fill-neutral: #2a2a28;
   --card-fill-accordion-open: rgba(255, 255, 255, 0.14);
-  --text-headline: var(--dark-emerald);
+  --text-headline: #8ee4b5;
   --text-body: var(--white);
   --text-caption: rgba(255, 255, 255, 0.7);
   --text-section-heading: var(--bright-amber);
@@ -645,7 +645,7 @@ These are already shipped. Matching them keeps the next site consistent with thi
 
 - Token defaults say the primary accent is emerald. The body override makes the visible primary orange. Copy both, or buttons will not match.
 - `--white` is `#e5ebe8`, the page canvas, not pure white. Pure white is `--card-fill-neutral` in light mode.
-- Headlines stay Dark Emerald in dark mode (`--text-headline`). Section headings switch to amber. Body copy switches to off-white.
+- Headlines use light mint (`#8ee4b5` via `--text-headline`) in dark mode — Dark Emerald is not readable on near-black at UI sizes. Section headings switch to amber. Body copy switches to off-white.
 - Resident chrome (nav and footer) stays emerald in both themes. The page behind them is what flips.
 - Goal cards and the inquiry form stay emerald in both themes.
 - Admin copy is English even when the language pill is present.

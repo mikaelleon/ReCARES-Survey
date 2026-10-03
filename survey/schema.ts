@@ -123,7 +123,18 @@ export interface SurveyResponseDocument {
   lastStepReached: number;
   deviceClass: 'phone' | 'computer';
   answers: Partial<SurveyAnswers>;
+  /**
+   * Not currently written. Average Completion Time needs a real start timestamp
+   * captured when the resident begins the survey — do not invent durations from
+   * submittedDate alone. See docs/ADMIN_ACCESS_DECISIONS.md §9.
+   */
+  // startedAt?: string;
 }
+
+export type InterviewContactStatus =
+  | 'not_contacted'
+  | 'pending_confirmation'
+  | 'confirmed';
 
 /** Separate from SurveyResponseDocument. No response ID, no survey answers. */
 export interface InterviewInvitation {
@@ -133,4 +144,8 @@ export interface InterviewInvitation {
   preferredTime: 'Morning' | 'Afternoon' | 'Evening' | 'Other';
   preferredTimeOther?: string; // required only when preferredTime === 'Other'
   submittedAt: string; // server timestamp (ISO or Firestore Timestamp serialized)
+  /** Outreach pipeline — never joined to anonymous survey answers. */
+  contactStatus: InterviewContactStatus;
+  /** Set when contactStatus moves to confirmed. */
+  confirmedDateTime?: string;
 }

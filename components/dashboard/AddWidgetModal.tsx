@@ -1,12 +1,20 @@
 'use client';
 
 import { useEffect } from 'react';
-import { BarChart3, PieChart, X } from 'lucide-react';
+import { Activity, BarChart3, Gauge, PieChart, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
   SUMMARY_WIDGET_CATALOG,
   type SummaryWidgetMeta,
+  type WidgetKind,
 } from '@/lib/admin/summaryWidgets';
+
+function iconFor(kind: WidgetKind) {
+  if (kind === 'pie') return PieChart;
+  if (kind === 'gauge') return Gauge;
+  if (kind === 'stat' || kind === 'composite') return Activity;
+  return BarChart3;
+}
 
 /**
  * Modal to pin/unpin Summary charts for the current admin only.
@@ -81,7 +89,7 @@ function WidgetPickCard({
   selected: boolean;
   onToggle: () => void;
 }) {
-  const Icon = item.kind === 'pie' ? PieChart : BarChart3;
+  const Icon = iconFor(item.kind);
   return (
     <li className={`widget-pick${selected ? ' is-selected' : ''}`}>
       <div className="widget-pick__icon" aria-hidden="true">

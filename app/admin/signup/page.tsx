@@ -24,24 +24,37 @@ export default function AdminSignupPage() {
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [password2Error, setPassword2Error] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const handleSubmit = async () => {
+    let nextPasswordError: string | null = null;
+    let nextPassword2Error: string | null = null;
+
     if (!name.trim() || !email.trim() || !password || !password2) {
       setFormError('Fill in every field.');
+      if (!password) nextPasswordError = 'Password is required.';
+      if (!password2) nextPassword2Error = 'Confirm your password.';
+      setPasswordError(nextPasswordError);
+      setPassword2Error(nextPassword2Error);
       return;
     }
     if (!inviteId && (!code.trim() || !requestedRole.trim())) {
       setFormError('Fill in every field.');
       return;
     }
-    if (password !== password2) {
-      setFormError('Passwords do not match.');
-      return;
-    }
     if (password.length < 6) {
-      setFormError('Password must be at least 6 characters.');
+      nextPasswordError = 'Password must be at least 6 characters.';
+    }
+    if (password !== password2) {
+      nextPassword2Error = 'Passwords do not match.';
+    }
+    setPasswordError(nextPasswordError);
+    setPassword2Error(nextPassword2Error);
+    if (nextPasswordError || nextPassword2Error) {
+      setFormError(null);
       return;
     }
 
@@ -189,16 +202,25 @@ export default function AdminSignupPage() {
             type="password"
             placeholder="••••••••"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (passwordError) setPasswordError(null);
+            }}
             required
+            error={passwordError}
+            helperText="At least 6 characters."
           />
           <Input
             label="Confirm password"
             type="password"
             placeholder="••••••••"
             value={password2}
-            onChange={(e) => setPassword2(e.target.value)}
+            onChange={(e) => {
+              setPassword2(e.target.value);
+              if (password2Error) setPassword2Error(null);
+            }}
             required
+            error={password2Error}
           />
 
           {formError ? (
