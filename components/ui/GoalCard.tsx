@@ -16,6 +16,7 @@ export function GoalCard({ title, children, icon }: GoalCardProps) {
     padding: 'var(--card-padding)',
     fontFamily: 'var(--font-sans)',
     color: 'var(--text-on-card-brand)',
+    boxSizing: 'border-box',
     transition:
       'transform var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease)',
   };

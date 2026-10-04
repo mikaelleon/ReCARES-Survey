@@ -6,7 +6,7 @@ import {
   buildAvailabilityMonth,
   type AvailabilityDay,
 } from '@/lib/admin/interviewAnalytics';
-import type { InterviewInviteRow } from '@/lib/firebase/interviewManage';
+import { ChartSkeleton } from '@/components/ui/Skeleton';
 
 const WEEK_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -60,8 +60,9 @@ export function InterviewAvailabilityCalendar({
 
   if (loading) {
     return (
-      <article className="dash-insight iv-cal" aria-hidden="true">
-        <div className="dash-stat--skeleton" style={{ minHeight: 280 }} />
+      <article className="dash-insight iv-cal skel-region" aria-busy="true">
+        <span className="visually-hidden">Loading availability calendar</span>
+        <ChartSkeleton height={280} />
       </article>
     );
   }
@@ -128,7 +129,7 @@ export function InterviewAvailabilityCalendar({
                 .filter(Boolean)
                 .join(' ')}
               disabled={!day.inMonth}
-              aria-pressed={selectedDay}
+              aria-selected={selectedDay}
               aria-label={`${day.date.toLocaleDateString(undefined, {
                 weekday: 'long',
                 month: 'short',

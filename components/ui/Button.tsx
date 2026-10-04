@@ -10,6 +10,7 @@ interface ButtonBaseProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   disabled?: boolean;
+  loading?: boolean;
   icon?: ReactNode;
   onDark?: boolean;
   children?: ReactNode;
@@ -34,6 +35,7 @@ export function Button({
   variant = 'primary',
   size = 'md',
   disabled = false,
+  loading = false,
   icon = null,
   onDark = false,
   children,
@@ -47,6 +49,7 @@ export function Button({
   const isPrimary = variant === 'primary';
   const isSecondary = variant === 'secondary';
   const height = size === 'sm' ? 40 : 44;
+  const isDisabled = disabled || loading;
 
   const base: CSSProperties = {
     fontFamily: 'var(--font-sans)',
@@ -63,11 +66,11 @@ export function Button({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    cursor: disabled ? 'not-allowed' : 'pointer',
+    cursor: isDisabled ? 'not-allowed' : 'pointer',
     border: 'none',
     transition:
       'background var(--motion-duration) var(--motion-ease), opacity var(--motion-duration) var(--motion-ease)',
-    opacity: disabled ? 0.5 : 1,
+    opacity: isDisabled ? 0.5 : 1,
     whiteSpace: 'nowrap',
     textDecoration: 'none',
     boxSizing: 'border-box',
@@ -76,7 +79,7 @@ export function Button({
   const onDarkText = onDark ? 'var(--white)' : 'var(--text-body)';
   const onDarkBorder = onDark ? 'rgba(255,255,255,.7)' : 'var(--border-default)';
 
-  const primaryFill = disabled
+  const primaryFill = isDisabled
     ? 'var(--surface-2)'
     : onDark
       ? hover
@@ -86,7 +89,7 @@ export function Button({
         ? 'var(--accent-hover)'
         : 'var(--harvest-orange)';
 
-  const primaryText = disabled
+  const primaryText = isDisabled
     ? 'var(--text-caption)'
     : onDark || hover
       ? 'var(--text-on-accent)'
@@ -97,8 +100,8 @@ export function Button({
         ...base,
         background: primaryFill,
         color: primaryText,
-        opacity: disabled ? 1 : base.opacity,
-        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: isDisabled ? 1 : base.opacity,
+        cursor: isDisabled ? 'not-allowed' : 'pointer',
       }
     : isSecondary
       ? {
@@ -126,10 +129,11 @@ export function Button({
         href={href}
         style={style}
         onClick={onClick as MouseEventHandler<HTMLAnchorElement>}
-        aria-disabled={disabled || undefined}
+        aria-disabled={isDisabled || undefined}
+        aria-busy={loading || undefined}
         {...hoverHandlers}
       >
-        {icon}
+        {loading ? <span className="btn-spinner" aria-hidden="true" /> : icon}
         {children}
       </Link>
     );
@@ -140,10 +144,11 @@ export function Button({
       type={type}
       style={style}
       onClick={onClick as MouseEventHandler<HTMLButtonElement>}
-      disabled={disabled}
+      disabled={isDisabled}
+      aria-busy={loading || undefined}
       {...hoverHandlers}
     >
-      {icon}
+      {loading ? <span className="btn-spinner" aria-hidden="true" /> : icon}
       {children}
     </button>
   );

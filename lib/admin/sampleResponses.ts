@@ -251,7 +251,6 @@ export const PHASE_OPTIONS = [
   'Phase 4 Heights',
   'Phase 5 Highlands',
   'Phase 6 Eastgrove',
-  'Not sure',
 ] as const;
 
 export const RESIDENT_OPTIONS = [

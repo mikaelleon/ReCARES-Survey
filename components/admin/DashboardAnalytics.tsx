@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { CountBucket, GateCoverage, LikertMean } from '@/lib/admin/analytics';
+import { ChartSkeleton } from '@/components/ui/Skeleton';
 
 function useInViewOnce<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);
@@ -80,9 +80,12 @@ export function DashboardAnalytics({
 
   if (loading) {
     return (
-      <div className="admin-analytics admin-analytics--skeleton" aria-hidden="true">
-        <div className="admin-chart admin-chart--skeleton" />
-        <div className="admin-chart admin-chart--skeleton" />
+      <div className="admin-analytics skel-region" aria-busy="true">
+        <span className="visually-hidden">Loading analytics</span>
+        <div className="admin-analytics__grid">
+          <ChartSkeleton height={180} />
+          <ChartSkeleton height={180} />
+        </div>
       </div>
     );
   }

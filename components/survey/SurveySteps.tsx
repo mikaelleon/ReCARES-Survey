@@ -114,7 +114,6 @@ export function StepView({
             { id: 'Phase 4 Heights', label: 'Phase 4 Heights' },
             { id: 'Phase 5 Highlands', label: 'Phase 5 Highlands' },
             { id: 'Phase 6 Eastgrove', label: 'Phase 6 Eastgrove' },
-            { id: 'Not sure', label: 'Not sure', wide: true },
           ]}
           onChange={(A2) => onPatch({ A2: A2 as SurveyAnswers['A2'] })}
         />

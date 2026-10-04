@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { FirestoreBlockedNotice } from '@/components/admin/FirestoreBlockedNotice';
 import { Button } from '@/components/ui/Button';
+import { PageLoader } from '@/components/ui/PageLoader';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useAdminRouteGate } from '@/lib/auth/useAdminRouteGate';

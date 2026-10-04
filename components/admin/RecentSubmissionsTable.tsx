@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { TableSkeleton } from '@/components/ui/Skeleton';
 import { parseSubmittedAt } from '@/lib/admin/dateRange';
 import type { SampleRecord } from '@/lib/admin/sampleResponses';
 import { formatSubmissionLabel } from '@/lib/admin/submissionLabel';
@@ -88,7 +89,7 @@ export function RecentSubmissionsTable({
         </header>
 
         {loading ? (
-          <div className="dash-stat--skeleton" style={{ minHeight: 120 }} aria-hidden="true" />
+          <TableSkeleton rows={4} />
         ) : recentSubmissions.length === 0 ? (
           <p className="dash-recent-panel__empty">No submissions in this range yet.</p>
         ) : (
@@ -129,7 +130,7 @@ export function RecentSubmissionsTable({
       </header>
 
       {loading ? (
-        <div className="dash-stat--skeleton" style={{ minHeight: 120 }} aria-hidden="true" />
+        <TableSkeleton rows={5} />
       ) : recentSubmissions.length === 0 ? (
         <p className="dash-tile__empty">No submissions in this date range yet.</p>
       ) : (

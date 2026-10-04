@@ -3,7 +3,7 @@
 import { AdminNavLink } from '@/components/admin/AdminNavLink';
 import type { DashboardSimpleSnapshot } from '@/lib/admin/dashboardView';
 import { RecentSubmissionsTable } from '@/components/admin/RecentSubmissionsTable';
-import type { SampleRecord } from '@/lib/admin/sampleResponses';
+import { ChartSkeleton } from '@/components/ui/Skeleton';
 
 /**
  * Optional plain-language Dashboard — takeaways for the system plan.
@@ -22,9 +22,10 @@ export function DashboardSimpleView({
 }) {
   if (loading) {
     return (
-      <div className="dash-simple" aria-hidden="true">
-        <div className="dash-stat--skeleton" style={{ minHeight: 120 }} />
-        <div className="dash-stat--skeleton" style={{ minHeight: 180 }} />
+      <div className="dash-simple skel-region" aria-busy="true">
+        <span className="visually-hidden">Loading dashboard</span>
+        <ChartSkeleton height={120} />
+        <ChartSkeleton height={180} />
       </div>
     );
   }

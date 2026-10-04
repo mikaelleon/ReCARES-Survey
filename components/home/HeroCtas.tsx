@@ -25,16 +25,7 @@ export function HeroCtas() {
   };
 
   return (
-    <div
-      style={{
-        marginTop: 28,
-        display: 'flex',
-        gap: 16,
-        justifyContent: 'center',
-        flexWrap: 'wrap',
-        pointerEvents: 'auto',
-      }}
-    >
+    <div className="home-hero__ctas">
       <span className="hero-cta--primary">
         <Button variant="primary" onDark href="/survey">
           Start the survey

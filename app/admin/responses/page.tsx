@@ -34,7 +34,7 @@ import { useSurveyResponses } from '@/lib/admin/useSurveyResponses';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { saveSummaryWidgets } from '@/lib/firebase/auth';
 import { useQueryParam } from '@/lib/navigation/useQueryParam';
-import type { ResponseViewTab } from '@/components/admin/ResponseViewsPanel';
+import { TableSkeleton } from '@/components/ui/Skeleton';
 
 type DemoState = 'data' | 'loading' | 'empty' | 'error';
 
@@ -304,11 +304,7 @@ function ResponsesContent() {
                 </div>
               ) : demoState === 'loading' ? (
                 <div className="admin-panel">
-                  <div className="admin-table-skel" aria-hidden="true">
-                    <div className="admin-table-skel__row" />
-                    <div className="admin-table-skel__row" />
-                    <div className="admin-table-skel__row" />
-                  </div>
+                  <TableSkeleton rows={8} />
                 </div>
               ) : (
                 <ResponseViewsPanel

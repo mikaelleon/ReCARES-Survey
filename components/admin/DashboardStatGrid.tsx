@@ -10,7 +10,7 @@ import {
   Users,
 } from 'lucide-react';
 import { FIELD_CODE_HELP, FieldCodeHint } from '@/components/admin/FieldCodeHint';
-import type { DashboardKpis } from '@/lib/admin/analytics';
+import { StatSkeleton } from '@/components/ui/Skeleton';
 
 /** Research sample-size target for Total Respondents progress. */
 const RESPONDENT_TARGET = 100;
@@ -43,13 +43,7 @@ export function DashboardStatGrid({
   periodTrend?: string | null;
 }) {
   if (loading) {
-    return (
-      <div className="dash-stat-grid" aria-hidden="true">
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="dash-stat dash-stat--skeleton" />
-        ))}
-      </div>
-    );
+    return <StatSkeleton count={4} />;
   }
 
   const valueNode = (n: number) =>

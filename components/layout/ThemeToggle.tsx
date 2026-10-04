@@ -6,6 +6,8 @@ export interface ThemeToggleProps {
   'aria-label': string;
   onClick?: MouseEventHandler<HTMLButtonElement>;
   onDark?: boolean;
+  /** Borderless icon control — matches admin sidebar tool buttons. */
+  quiet?: boolean;
 }
 
 function MoonIcon({ spinning }: { spinning: boolean }) {
@@ -31,11 +33,27 @@ export function ThemeToggle({
   'aria-label': ariaLabel,
   onClick,
   onDark = false,
+  quiet = false,
 }: ThemeToggleProps) {
   const [hover, setHover] = useState(false);
   const [spinning, setSpinning] = useState(false);
 
-  const style: CSSProperties = onDark
+  const style: CSSProperties = quiet
+    ? {
+        width: 36,
+        height: 36,
+        flex: '0 0 36px',
+        borderRadius: 9,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        background: hover ? 'rgba(255,255,255,.12)' : 'transparent',
+        color: 'var(--white)',
+        border: 'none',
+        transition: 'background var(--motion-duration) var(--motion-ease)',
+      }
+    : onDark
     ? {
         marginLeft: 4,
         width: 36,

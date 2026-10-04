@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { AdminPageTransition } from '@/components/admin/AdminPageTransition';
 import { AdminTopBar } from '@/components/dashboard/AdminTopBar';
 import { SidebarNav } from '@/components/dashboard/SidebarNav';
+import { AdminWorkspaceLoader } from '@/components/admin/AdminWorkspaceLoader';
 import { FirestoreBlockedNotice } from '@/components/admin/FirestoreBlockedNotice';
 import { SurveyResponsesProvider } from '@/lib/admin/useSurveyResponses';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -54,7 +55,7 @@ export function AdminAppShell({
   }, []);
 
   if (!ready || !allowRender || !user) {
-    return <p className="admin-dashboard__inner">Loading…</p>;
+    return <AdminWorkspaceLoader />;
   }
 
   return (

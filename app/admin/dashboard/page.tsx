@@ -32,7 +32,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 
 function phaseBuckets(records: { phase: string }[]) {
   const total = records.length;
-  return PHASE_OPTIONS.filter((p) => p !== 'Not sure').map((label) => {
+  return PHASE_OPTIONS.map((label) => {
     const count = records.filter((r) => r.phase === label).length;
     return {
       label,

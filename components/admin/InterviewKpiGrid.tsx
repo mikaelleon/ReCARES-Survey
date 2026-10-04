@@ -1,6 +1,6 @@
 'use client';
 
-import type { InterviewKpis } from '@/lib/admin/interviewAnalytics';
+import { SkelLine } from '@/components/ui/Skeleton';
 
 /**
  * Compact preference strip — pipeline counts live on the Kanban columns.
@@ -14,8 +14,13 @@ export function InterviewKpiGrid({
 }) {
   if (loading) {
     return (
-      <div className="iv-summary" aria-hidden="true">
-        <div className="dash-stat--skeleton" style={{ minHeight: 44 }} />
+      <div className="iv-summary skel-region" aria-busy="true">
+        <span className="visually-hidden">Loading interview snapshot</span>
+        <div className="skel-stat" style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center' }}>
+          <SkelLine size="sm" />
+          <SkelLine size="md" />
+          <SkelLine size="sm" />
+        </div>
       </div>
     );
   }

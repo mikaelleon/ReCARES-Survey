@@ -7,7 +7,7 @@ import { AccessibilityNeedsRows } from '@/components/admin/charts/AccessibilityN
 import { HorizontalBars } from '@/components/admin/charts/HorizontalBars';
 import { MeanBars } from '@/components/admin/charts/MeanBars';
 import { PhaseBarChart } from '@/components/admin/charts/PhaseBarChart';
-import type { CountBucket } from '@/lib/admin/analytics';
+import { ChartSkeleton } from '@/components/ui/Skeleton';
 import {
   accessibilityNeeds,
   openProblems,
@@ -37,11 +37,7 @@ function InsightTile({
         {hint ? <div className="dash-insight__hint">{hint}</div> : null}
       </header>
       <div className="dash-insight__body">
-        {loading ? (
-          <div className="dash-stat--skeleton" style={{ minHeight: 100 }} aria-hidden="true" />
-        ) : (
-          children
-        )}
+        {loading ? <ChartSkeleton height={100} /> : children}
       </div>
       {responsesFocus ? (
         <div className="dash-insight__foot">

@@ -9,14 +9,7 @@ import { Button } from '@/components/ui/Button';
  */
 export function InquiryContactChoices() {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-        height: '100%',
-      }}
-    >
+    <div className="home-contact-copy">
       <p
         style={{
           margin: 0,
@@ -59,7 +52,7 @@ export function InquiryContactChoices() {
         You can also use either option if you would like to know more about the study before deciding
         whether to participate.
       </p>
-      <div style={{ marginTop: 'auto', paddingTop: 4 }}>
+      <div className="home-contact-copy__cta">
         <Button
           type="button"
           variant="secondary"

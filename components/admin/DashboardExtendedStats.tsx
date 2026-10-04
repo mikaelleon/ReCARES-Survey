@@ -15,7 +15,7 @@ import {
   serviceQualityGauge,
   waitTimeStat,
 } from '@/lib/admin/extendedWidgets';
-import type { SampleRecord } from '@/lib/admin/sampleResponses';
+import { StatSkeleton } from '@/components/ui/Skeleton';
 
 /**
  * Second KPI row (Digital Feasibility, Service Quality, Wait Time, Interview).
@@ -34,12 +34,8 @@ export function DashboardExtendedStats({
 }) {
   if (loading) {
     return (
-      <div className="dash-extended-stats" aria-hidden="true">
-        <div className="dash-stat-grid">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="dash-stat dash-stat--skeleton" />
-          ))}
-        </div>
+      <div className="dash-extended-stats">
+        <StatSkeleton count={4} />
       </div>
     );
   }

@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
+import { RecaresWordmark } from '@/components/brand/RecaresWordmark';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -13,10 +14,15 @@ import {
   signupErrorMessage,
 } from '@/lib/firebase/auth';
 
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
 export default function AdminSignupPage() {
   const router = useRouter();
   const inviteId = useQueryParam('invite')?.trim() || '';
   const { reloadProfile } = useAuth();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -24,37 +30,70 @@ export default function AdminSignupPage() {
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [roleError, setRoleError] = useState<string | null>(null);
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [password2Error, setPassword2Error] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const handleSubmit = async () => {
-    let nextPasswordError: string | null = null;
-    let nextPassword2Error: string | null = null;
+  const passwordHint =
+    password.length === 0
+      ? 'At least 6 characters. 8 or more is stronger.'
+      : password.length < 6
+        ? 'Too short — add a few more characters.'
+        : password.length < 8
+          ? 'Acceptable. Longer passwords are harder to guess.'
+          : 'Looks good.';
 
-    if (!name.trim() || !email.trim() || !password || !password2) {
-      setFormError('Fill in every field.');
-      if (!password) nextPasswordError = 'Password is required.';
-      if (!password2) nextPassword2Error = 'Confirm your password.';
-      setPasswordError(nextPasswordError);
-      setPassword2Error(nextPassword2Error);
-      return;
-    }
-    if (!inviteId && (!code.trim() || !requestedRole.trim())) {
-      setFormError('Fill in every field.');
-      return;
-    }
-    if (password.length < 6) {
-      nextPasswordError = 'Password must be at least 6 characters.';
-    }
-    if (password !== password2) {
-      nextPassword2Error = 'Passwords do not match.';
-    }
+  const focusFirstInvalid = () => {
+    requestAnimationFrame(() => {
+      formRef.current?.querySelector<HTMLInputElement>('[aria-invalid="true"]')?.focus();
+    });
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+
+    const nextNameError = !name.trim() ? 'Name is required.' : null;
+    const trimmedEmail = email.trim();
+    const nextEmailError = !trimmedEmail
+      ? 'Email is required.'
+      : !isValidEmail(trimmedEmail)
+        ? 'Enter a valid email address.'
+        : null;
+    const nextRoleError = !inviteId && !requestedRole.trim() ? 'Requested role is required.' : null;
+    const nextCodeError = !inviteId && !code.trim() ? 'Access code is required.' : null;
+    const nextPasswordError = !password
+      ? 'Password is required.'
+      : password.length < 6
+        ? 'Password must be at least 6 characters.'
+        : null;
+    const nextPassword2Error = !password2
+      ? 'Confirm your password.'
+      : password && password2 !== password
+        ? 'Passwords do not match.'
+        : null;
+
+    setNameError(nextNameError);
+    setEmailError(nextEmailError);
+    setRoleError(nextRoleError);
+    setCodeError(nextCodeError);
     setPasswordError(nextPasswordError);
     setPassword2Error(nextPassword2Error);
-    if (nextPasswordError || nextPassword2Error) {
+
+    if (
+      nextNameError ||
+      nextEmailError ||
+      nextRoleError ||
+      nextCodeError ||
+      nextPasswordError ||
+      nextPassword2Error
+    ) {
       setFormError(null);
+      focusFirstInvalid();
       return;
     }
 
@@ -63,8 +102,8 @@ export default function AdminSignupPage() {
     try {
       if (inviteId) {
         await registerAdminFromInvite({
-          fullName: name,
-          email,
+          fullName: name.trim(),
+          email: trimmedEmail,
           password,
           inviteId,
         });
@@ -72,149 +111,135 @@ export default function AdminSignupPage() {
         router.push('/admin/dashboard');
       } else {
         await registerAdmin({
-          fullName: name,
-          email,
+          fullName: name.trim(),
+          email: trimmedEmail,
           password,
-          requestedRole,
-          accessCode: code,
+          requestedRole: requestedRole.trim(),
+          accessCode: code.trim(),
         });
         await reloadProfile();
         router.push('/admin/pending');
       }
     } catch (error) {
       setFormError(signupErrorMessage(error));
-    } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div
-      style={{
-        minHeight: '80vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'clamp(24px, 5vw, 48px) clamp(16px, 4vw, 32px) clamp(48px, 8vw, 96px)',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: 440, animation: 'riseIn 420ms ease-in-out both' }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '.01em' }}>
-            <span style={{ color: 'var(--text-headline)' }}>Re</span>
-            <span style={{ color: 'var(--emerald-500)' }}>C</span>
-            <span style={{ color: 'var(--harvest-orange)' }}>AR</span>
-            <span style={{ color: 'var(--bright-amber)' }}>E</span>
-            <span style={{ color: 'var(--text-headline)' }}>S</span>
-          </div>
-          <div
-            style={{
-              marginTop: 6,
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: '.12em',
-              textTransform: 'uppercase',
-              color: 'var(--text-caption)',
-            }}
-          >
-            Proponent access
-          </div>
+    <div className="auth-page">
+      <div className="auth-page__inner">
+        <div className="auth-page__brand">
+          <RecaresWordmark size={28} />
+          <p className="auth-page__eyebrow">Proponent access</p>
         </div>
 
-        <div
-          data-auth=""
-          style={{
-            ['--text-body' as string]: 'var(--white)',
-            ['--surface-2' as string]: 'rgba(255,255,255,.14)',
-            ['--text-caption' as string]: 'rgba(255,255,255,.75)',
-            ['--error-red' as string]: 'var(--bright-amber)',
-            ['--status-error' as string]: 'var(--bright-amber)',
-            background: 'var(--card-fill-brand)',
-            borderRadius: 16,
-            padding: 'clamp(20px, 3vw, 32px)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-          }}
-        >
-          <h1
-            style={{
-              margin: 0,
-              color: 'var(--white)',
-              textTransform: 'uppercase',
-              fontSize: 'clamp(20px, 5vw, 24px)',
-              fontWeight: 700,
-              letterSpacing: '.04em',
-            }}
-          >
+        <form ref={formRef} className="auth-card" data-auth="" onSubmit={handleSubmit} noValidate>
+          <h1 className="auth-card__title">
             {inviteId ? 'Accept invite' : 'Create proponent account'}
           </h1>
-
-          {inviteId ? (
-            <p style={{ margin: 0, color: 'rgba(255,255,255,.85)', fontSize: 14, lineHeight: 1.5 }}>
-              You were invited. Use the same email the invite was issued for. Access is granted
-              immediately after signup.
-            </p>
-          ) : (
-            <p style={{ margin: 0, color: 'rgba(255,255,255,.85)', fontSize: 14, lineHeight: 1.5 }}>
-              Self-registration creates a pending account. A superadmin must approve you before the
-              dashboard opens.
-            </p>
-          )}
+          <p className="auth-card__lead">
+            {inviteId
+              ? 'You were invited. Use the same email the invite was issued for. Access is granted immediately after signup.'
+              : 'Self-registration creates a pending account. A superadmin must approve you before the dashboard opens.'}
+          </p>
 
           <Input
+            id="signup-name"
+            name="name"
             label="Name"
+            autoComplete="name"
             placeholder="Full name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            autoFocus
+            disabled={busy}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (nameError) setNameError(null);
+            }}
             required
+            error={nameError}
           />
           <Input
+            id="signup-email"
+            name="email"
             label="Institutional or team email"
             type="email"
+            inputMode="email"
+            autoComplete="email"
             placeholder="name@ub.edu.ph"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            disabled={busy}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (emailError) setEmailError(null);
+            }}
             required
+            error={emailError}
           />
           {!inviteId ? (
             <>
               <Input
+                id="signup-role"
+                name="requestedRole"
                 label="Requested role"
+                autoComplete="organization-title"
                 placeholder="Proponent"
                 value={requestedRole}
-                onChange={(e) => setRequestedRole(e.target.value)}
+                disabled={busy}
+                onChange={(e) => {
+                  setRequestedRole(e.target.value);
+                  if (roleError) setRoleError(null);
+                }}
                 required
+                error={roleError}
                 helperText="Shown to the superadmin during approval. Does not grant access by itself."
               />
               <Input
+                id="signup-code"
+                name="accessCode"
                 label="Access code"
+                autoComplete="one-time-code"
                 placeholder="Shared with the proponent team"
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
+                disabled={busy}
+                spellCheck={false}
+                onChange={(e) => {
+                  setCode(e.target.value);
+                  if (codeError) setCodeError(null);
+                }}
                 required
+                error={codeError}
                 helperText="Required for self-registration. Access stays pending until approved."
               />
             </>
           ) : null}
           <Input
+            id="signup-password"
+            name="password"
             label="Password"
             type="password"
+            autoComplete="new-password"
             placeholder="••••••••"
             value={password}
+            disabled={busy}
             onChange={(e) => {
               setPassword(e.target.value);
               if (passwordError) setPasswordError(null);
             }}
             required
             error={passwordError}
-            helperText="At least 6 characters."
+            helperText={passwordHint}
           />
           <Input
+            id="signup-password2"
+            name="passwordConfirm"
             label="Confirm password"
             type="password"
+            autoComplete="new-password"
             placeholder="••••••••"
             value={password2}
+            disabled={busy}
             onChange={(e) => {
               setPassword2(e.target.value);
               if (password2Error) setPassword2Error(null);
@@ -224,61 +249,32 @@ export default function AdminSignupPage() {
           />
 
           {formError ? (
-            <p role="alert" style={{ margin: 0, color: 'var(--bright-amber)', fontSize: 14 }}>
+            <p role="alert" className="auth-card__alert">
               {formError}
             </p>
           ) : null}
 
-          <div style={{ marginTop: 8 }}>
-            <Button variant="primary" onDark onClick={handleSubmit} disabled={busy}>
-              {busy ? 'Creating account…' : inviteId ? 'Create account from invite' : 'Create account'}
+          <div className="auth-card__actions">
+            <Button variant="primary" onDark type="submit" fullWidth loading={busy} disabled={busy}>
+              {busy
+                ? 'Creating account…'
+                : inviteId
+                  ? 'Create account from invite'
+                  : 'Create account'}
             </Button>
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              gap: 16,
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              paddingTop: 4,
-            }}
-          >
-            <Link
-              href="/admin/login"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
-                fontFamily: 'var(--font-sans)',
-                fontSize: 14,
-                color: 'rgba(255,255,255,.8)',
-                textDecoration: 'underline',
-                transition: 'color 220ms ease-in-out',
-              }}
-            >
-              Already have an account? Log in
+          <p className="auth-card__footer">
+            Already have an account?{' '}
+            <Link href="/admin/login" className="auth-card__link">
+              Log in
             </Link>
-          </div>
-        </div>
+          </p>
+        </form>
 
-        <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <Link
-            href="/"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-sans)',
-              fontSize: 14,
-              color: 'var(--text-caption)',
-              textDecoration: 'underline',
-            }}
-          >
-            Back to the resident site
-          </Link>
-        </div>
+        <p className="auth-page__back">
+          <Link href="/">Back to the resident site</Link>
+        </p>
       </div>
     </div>
   );

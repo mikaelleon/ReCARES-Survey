@@ -2,6 +2,7 @@
 
 import { FirestoreBlockedNotice } from '@/components/admin/FirestoreBlockedNotice';
 import { Button } from '@/components/ui/Button';
+import { PageLoader } from '@/components/ui/PageLoader';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useAdminRouteGate } from '@/lib/auth/useAdminRouteGate';
 import { goToAdminLogin } from '@/lib/firebase/auth';
@@ -11,7 +12,7 @@ export default function AdminRemovedPage() {
   const { ready, user, allowRender, firestoreError } = useAdminRouteGate('removed');
 
   if (!ready || !allowRender || !user) {
-    return <p style={{ padding: 32 }}>Loading…</p>;
+    return <PageLoader label="Checking your access…" />;
   }
 
   return (

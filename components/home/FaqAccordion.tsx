@@ -97,22 +97,10 @@ export function FaqAccordion() {
     <div
       ref={sectionRef}
       id="faq"
-      style={{
-        flex: '1 1 100%',
-        minWidth: 0,
-        width: '100%',
-        paddingTop: 'clamp(24px, 4vw, 40px)',
-      }}
+      className="home-faq"
     >
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 'clamp(16px, 2.4vw, 28px)',
-          alignItems: 'flex-start',
-        }}
-      >
-        <div style={{ flex: '1 1 520px', minWidth: 0 }}>
+      <div className="home-faq__grid">
+        <div className="home-faq__list">
           <h2
             style={{
               margin: '0 0 16px',
@@ -233,22 +221,7 @@ export function FaqAccordion() {
           </div>
         </div>
 
-        <aside
-          style={{
-            flex: '0 1 300px',
-            minWidth: 240,
-            maxWidth: 340,
-            width: '100%',
-            background: 'var(--card-fill-neutral)',
-            borderRadius: 16,
-            padding: 'clamp(20px, 3vw, 28px)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 20,
-            position: 'sticky',
-            top: 72,
-          }}
-        >
+        <aside className="home-faq__aside">
           <SidebarRow
             color="var(--harvest-orange)"
             title="Estimated time"

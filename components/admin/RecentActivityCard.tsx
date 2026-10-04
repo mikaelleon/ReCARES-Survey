@@ -10,6 +10,7 @@ import {
 } from '@/lib/admin/recentActivity';
 import { listAdminsByStatus } from '@/lib/firebase/adminManage';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { TableSkeleton } from '@/components/ui/Skeleton';
 
 function formatRelative(ms: number, now = Date.now()): string {
   if (!Number.isFinite(ms)) return '—';
@@ -92,7 +93,7 @@ export function RecentActivityCard({ limit = 5 }: { limit?: number }) {
       </header>
 
       {loading ? (
-        <div className="dash-stat--skeleton" style={{ minHeight: 96 }} aria-hidden="true" />
+        <TableSkeleton rows={4} />
       ) : error ? (
         <p className="dash-activity__empty">Could not load account activity.</p>
       ) : items.length === 0 ? (

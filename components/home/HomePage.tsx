@@ -14,10 +14,10 @@ function CamellaLogoMark() {
     <Image
       src="/images/Camella-LOGO.svg"
       alt="Camella Homes"
-      width={200}
-      height={200}
+      width={160}
+      height={160}
       unoptimized
-      style={{ display: 'block', width: 200, height: 200, objectFit: 'contain' }}
+      className="home-logo-mark"
     />
   );
 }
@@ -38,65 +38,26 @@ const heroLetters = [
 export function HomePage() {
   return (
     <>
-      <div
-        style={{
-          maxWidth: 1120,
-          margin: '0 auto',
-          padding: 'clamp(16px, 3vw, 32px) clamp(16px, 4vw, 32px) 0',
-        }}
-      >
+      <section className="home-wrap home-wrap--hero" aria-label="Welcome">
         <RevealOnScroll>
-          <div
-            style={{
-              position: 'relative',
-              borderRadius: 16,
-              overflow: 'hidden',
-              minHeight: 'clamp(420px, 62vh, 560px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+          <div className="home-hero">
             <Image
               src="/images/h1.png"
               alt="Camella Homes Tibig outdoor basketball court and community grounds"
               fill
               priority
-              sizes="(max-width: 1120px) 100vw, 1120px"
+              sizes="(max-width: 640px) 100vw, (max-width: 1120px) 100vw, 1120px"
               style={{ objectFit: 'cover', objectPosition: 'center' }}
             />
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'var(--overlay-hero)',
-                pointerEvents: 'none',
-              }}
-            />
+            <div className="home-hero__overlay" />
             <div className="hero-stripe" aria-hidden="true">
               <div className="hero-stripe__seg" style={{ background: 'var(--dark-emerald)' }} />
               <div className="hero-stripe__seg" style={{ background: 'var(--emerald-400)' }} />
               <div className="hero-stripe__seg" style={{ background: 'var(--harvest-orange)' }} />
               <div className="hero-stripe__seg" style={{ background: 'var(--bright-amber)' }} />
             </div>
-            <div
-              style={{
-                position: 'relative',
-                padding: 'clamp(48px, 9vw, 80px) clamp(20px, 5vw, 40px) clamp(56px, 10vw, 92px)',
-                textAlign: 'center',
-                pointerEvents: 'none',
-                maxWidth: 820,
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  fontSize: 'clamp(44px, 11vw, 92px)',
-                  letterSpacing: '.01em',
-                }}
-              >
+            <div className="home-hero__copy">
+              <h1 className="home-hero__title">
                 {heroLetters.map(({ char, color, delay }) => (
                   <span
                     key={char + delay}
@@ -109,71 +70,26 @@ export function HomePage() {
                     {char}
                   </span>
                 ))}
-              </div>
-              <div
-                style={{
-                  marginTop: 14,
-                  fontFamily: 'var(--font-title)',
-                  fontSize: 'clamp(18px, 4.6vw, 24px)',
-                  fontWeight: 700,
-                  color: 'var(--bright-amber)',
-                }}
-              >
-                Community needs assessment survey
-              </div>
-              <div
-                style={{
-                  marginTop: 14,
-                  fontFamily: 'var(--font-title)',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  letterSpacing: '.12em',
-                  textTransform: 'uppercase',
-                  color: 'var(--white)',
-                }}
-              >
-                For residents of Camella Homes Tibig, Lipa City
-              </div>
-              <div
-                style={{
-                  margin: '18px auto 0',
-                  maxWidth: 620,
-                  fontSize: 16,
-                  lineHeight: 1.55,
-                  color: 'var(--white)',
-                  textWrap: 'pretty',
-                }}
-              >
+              </h1>
+              <p className="home-hero__kicker">Community needs assessment survey</p>
+              <p className="home-hero__place">For residents of Camella Homes Tibig, Lipa City</p>
+              <p className="home-hero__lead">
                 Help us understand what safety and service improvements Camella Homes Tibig residents
                 need most, before we build anything.
-              </div>
+              </p>
               <HeroCtas />
             </div>
           </div>
         </RevealOnScroll>
-      </div>
+      </section>
 
-      <div
-        id="about"
-        style={{
-          maxWidth: 1120,
-          margin: '0 auto',
-          padding: 'clamp(48px, 8vw, 96px) clamp(16px, 4vw, 32px) 0',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 'clamp(16px, 2.4vw, 24px)',
-            alignItems: 'stretch',
-          }}
-        >
-          <RevealOnScroll
-            className="lift"
-            style={{ flex: '1 1 100%', minWidth: 0, display: 'flex', transition: 'transform 220ms ease-in-out' }}
-          >
-            <div data-ic="" style={{ display: 'flex', width: '100%' }}>
+      <section id="about" className="home-wrap" aria-labelledby="about-heading">
+        <h2 id="about-heading" className="visually-hidden">
+          About this survey
+        </h2>
+        <div className="home-stack">
+          <RevealOnScroll className="lift home-info">
+            <div data-ic="">
               <InfoCard heading="What is this survey for?" iconSide="right" icon={<CamellaLogoMark />}>
                 This survey is part of a research project by fourth-year Information Technology
                 students at the University of Batangas, Lipa Campus, working with the Camella Homes
@@ -186,16 +102,12 @@ export function HomePage() {
             </div>
           </RevealOnScroll>
 
-          <RevealOnScroll
-            delayMs={80}
-            className="lift"
-            style={{ flex: '1 1 100%', minWidth: 0, display: 'flex', transition: 'transform 220ms ease-in-out' }}
-          >
-            <div data-ic="" style={{ display: 'flex', width: '100%' }}>
+          <RevealOnScroll delayMs={80} className="lift home-info">
+            <div data-ic="">
               <InfoCard
                 heading="About us"
                 iconSide="left"
-                icon={<RecaresLogoForPage size={200} lightSurface="favicon" />}
+                icon={<RecaresLogoForPage size={140} lightSurface="favicon" className="home-logo-mark" />}
               >
                 ReCARES stands for Resident Centered Assistance for Reporting and Emergency System. We
                 are a team of fourth-year Information Technology students from the University of
@@ -209,120 +121,63 @@ export function HomePage() {
             </div>
           </RevealOnScroll>
 
-          <RevealOnScroll style={{ flex: '1 1 100%', paddingTop: 'clamp(24px, 4vw, 40px)' }}>
-            <h2
-              style={{
-                margin: 0,
-                color: 'var(--text-section-heading)',
-                textTransform: 'uppercase',
-                fontSize: 'clamp(20px, 4.5vw, 24px)',
-                fontWeight: 700,
-                letterSpacing: '.04em',
-              }}
-            >
-              Goals of this study
-            </h2>
+          <RevealOnScroll>
+            <h2 className="home-section-title">Goals of this study</h2>
           </RevealOnScroll>
 
-          <RevealOnScroll
-            delayMs={0}
-            className="lift"
-            style={{ flex: '1 1 240px', minWidth: 0, display: 'flex', transition: 'transform 220ms ease-in-out' }}
-          >
-            <GoalCard
-              title="Safer, more private reporting"
-              icon={<Shield size={28} strokeWidth={2} />}
-            >
-              Give residents a way to reach out about sensitive personal safety concerns privately,
-              without relying on public posts or waiting for the office to open.
-            </GoalCard>
-          </RevealOnScroll>
-          <RevealOnScroll
-            delayMs={80}
-            className="lift"
-            style={{ flex: '1 1 240px', minWidth: 0, display: 'flex', transition: 'transform 220ms ease-in-out' }}
-          >
-            <GoalCard
-              title="Accessible services for every resident"
-              icon={<Accessibility size={28} strokeWidth={2} />}
-            >
-              Make it possible for residents with disabilities or mobility challenges to request
-              documents, raise concerns, and get help without needing to travel to the office in
-              person.
-            </GoalCard>
-          </RevealOnScroll>
-          <RevealOnScroll
-            delayMs={160}
-            className="lift"
-            style={{ flex: '1 1 240px', minWidth: 0, display: 'flex', transition: 'transform 220ms ease-in-out' }}
-          >
-            <GoalCard
-              title="Faster response to security concerns"
-              icon={<MapPin size={28} strokeWidth={2} />}
-            >
-              Help guards and HOA staff respond more quickly to suspicious behavior, break-ins, and
-              other safety concerns by sending your real-time location pin.
-            </GoalCard>
-          </RevealOnScroll>
+          <div className="home-goals">
+            <RevealOnScroll delayMs={0} className="lift">
+              <GoalCard
+                title="Safer, more private reporting"
+                icon={<Shield size={28} strokeWidth={2} />}
+              >
+                Give residents a way to reach out about sensitive personal safety concerns privately,
+                without relying on public posts or waiting for the office to open.
+              </GoalCard>
+            </RevealOnScroll>
+            <RevealOnScroll delayMs={80} className="lift">
+              <GoalCard
+                title="Accessible services for every resident"
+                icon={<Accessibility size={28} strokeWidth={2} />}
+              >
+                Make it possible for residents with disabilities or mobility challenges to request
+                documents, raise concerns, and get help without needing to travel to the office in
+                person.
+              </GoalCard>
+            </RevealOnScroll>
+            <RevealOnScroll delayMs={160} className="lift">
+              <GoalCard
+                title="Faster response to security concerns"
+                icon={<MapPin size={28} strokeWidth={2} />}
+              >
+                Help guards and HOA staff respond more quickly to suspicious behavior, break-ins, and
+                other safety concerns by sending your real-time location pin.
+              </GoalCard>
+            </RevealOnScroll>
+          </div>
 
-          <RevealOnScroll style={{ flex: '1 1 100%', minWidth: 0, width: '100%' }}>
+          <RevealOnScroll>
             <FaqAccordion />
           </RevealOnScroll>
         </div>
-      </div>
+      </section>
 
       <div className="contact-band">
-        <div
-          id="contact"
-          style={{
-            maxWidth: 1120,
-            margin: '0 auto',
-            padding: '0 clamp(16px, 4vw, 32px)',
-          }}
-        >
+        <section id="contact" className="home-wrap home-wrap--flush" aria-labelledby="contact-heading">
           <RevealOnScroll>
-            <h2
-              style={{
-                margin: '0 0 clamp(16px, 2.4vw, 24px)',
-                color: 'var(--text-section-heading)',
-                textTransform: 'uppercase',
-                fontSize: 'clamp(20px, 4.5vw, 24px)',
-                fontWeight: 700,
-                letterSpacing: '.04em',
-              }}
-            >
+            <h2 id="contact-heading" className="home-section-title home-section-title--flush">
               For further inquiries or concerns
             </h2>
           </RevealOnScroll>
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 'clamp(16px, 2.4vw, 24px)',
-              alignItems: 'stretch',
-            }}
-          >
-            <RevealOnScroll
-              className="lift"
-              style={{
-                flex: '1 1 260px',
-                minWidth: 0,
-                background: 'var(--card-fill-neutral)',
-                borderRadius: 16,
-                padding: 'clamp(20px, 3vw, 32px)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 14,
-                transition: 'transform 220ms ease-in-out',
-              }}
-            >
+          <div className="home-contact">
+            <RevealOnScroll className="lift home-contact__copy">
               <InquiryContactChoices />
             </RevealOnScroll>
-            <RevealOnScroll delayMs={80} style={{ flex: '1.4 1 380px', minWidth: 0, display: 'flex' }}>
+            <RevealOnScroll delayMs={80} className="home-contact__form">
               <InquiryForm />
             </RevealOnScroll>
           </div>
-        </div>
+        </section>
       </div>
     </>
   );

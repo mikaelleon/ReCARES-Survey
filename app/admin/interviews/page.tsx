@@ -43,9 +43,11 @@ function InterviewInvitesContent() {
           onWithdraw={(id, email) => void withdraw(id, email)}
         />
       ) : (
-        <p className="na-error" role="status">
-          Loading interview pipeline…
-        </p>
+        <div className="skel-region" aria-busy="true" role="status">
+          <span className="visually-hidden">Loading interview pipeline</span>
+          <div className="skel-stat" style={{ minHeight: 160 }} />
+          <div className="skel-stat" style={{ minHeight: 120 }} />
+        </div>
       )}
 
       <div className="iv-page__main">

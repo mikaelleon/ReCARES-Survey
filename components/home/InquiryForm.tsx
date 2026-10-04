@@ -1,11 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
 import { submitInquiry } from '@/lib/firebase/firestore';
 
-const REQUIRED = 'This field is required';
+const REQUIRED = 'This field is required.';
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
 
 /**
  * Homepage inquiry form with brand-fill styling and Firestore submit stub.
@@ -19,8 +24,14 @@ export function InquiryForm() {
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
-    const nextEmailError = !email.trim() ? REQUIRED : null;
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    const trimmedEmail = email.trim();
+    const nextEmailError = !trimmedEmail
+      ? REQUIRED
+      : !isValidEmail(trimmedEmail)
+        ? 'Enter a valid email address.'
+        : null;
     const nextMessageError = !message.trim() ? REQUIRED : null;
     setEmailError(nextEmailError);
     setMessageError(nextMessageError);
@@ -30,7 +41,7 @@ export function InquiryForm() {
     try {
       await submitInquiry({
         name: name.trim() || undefined,
-        email: email.trim(),
+        email: trimmedEmail,
         message: message.trim(),
       });
       setSent(true);
@@ -42,84 +53,59 @@ export function InquiryForm() {
   };
 
   return (
-    <div
-      data-inq
-      style={{
-        flex: '1.4 1 380px',
-        minWidth: 0,
-        ['--text-body' as string]: 'var(--white)',
-        ['--surface-2' as string]: 'rgba(255,255,255,.14)',
-        ['--text-caption' as string]: 'rgba(255,255,255,.75)',
-        ['--error-red' as string]: 'var(--bright-amber)',
-        ['--status-error' as string]: 'var(--bright-amber)',
-        /* Field tokens stay dark-on-light; labels use --text-body (white) above */
-        ['--field-bg' as string]: '#ffffff',
-        ['--field-text' as string]: '#0b0b0b',
-        ['--field-placeholder' as string]: 'rgba(11,11,11,.52)',
-        ['--field-border' as string]: 'rgba(0,0,0,.28)',
-        ['--field-caret' as string]: '#0b0b0b',
-        background: 'var(--card-fill-brand)',
-        borderRadius: 16,
-        padding: 'clamp(20px, 3vw, 32px)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16,
-        transition: 'transform 220ms ease-in-out',
-        width: '100%',
-      }}
-      className="lift"
-    >
+    <form data-inq className="home-inquiry lift" onSubmit={handleSubmit} noValidate>
       <Input
+        id="inquiry-name"
+        name="name"
         label="Name (optional)"
+        autoComplete="name"
         placeholder="Your name"
         value={name}
+        disabled={submitting}
         onChange={(e) => setName(e.target.value)}
       />
       <Input
+        id="inquiry-email"
+        name="email"
         label="Email"
         type="email"
+        inputMode="email"
+        autoComplete="email"
         placeholder="you@example.com"
         value={email}
+        disabled={submitting}
         onChange={(e) => {
           setEmail(e.target.value);
           if (emailError) setEmailError(null);
         }}
+        required
         error={emailError}
       />
-      <Input
+      <Textarea
+        id="inquiry-message"
+        name="message"
         label="Message"
         placeholder="How can we help?"
         value={message}
+        disabled={submitting}
+        rows={5}
         onChange={(e) => {
           setMessage(e.target.value);
           if (messageError) setMessageError(null);
         }}
+        required
         error={messageError}
       />
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          flexWrap: 'wrap',
-          marginTop: 4,
-        }}
-      >
-        <Button variant="primary" onDark disabled={submitting} onClick={handleSubmit}>
+      <div className="home-inquiry__foot">
+        <Button variant="primary" onDark type="submit" loading={submitting} disabled={submitting}>
           {submitting ? 'Sending…' : 'Send message'}
         </Button>
-        {sent && (
-          <span
-            style={{
-              color: 'var(--white)',
-              fontSize: 14,
-              animation: 'fadeIn 260ms ease-in-out both',
-            }}
-          >
+        {sent ? (
+          <span className="home-inquiry__sent" role="status">
             Message sent. We will reply to the email you gave.
           </span>
-        )}
+        ) : null}
       </div>
-    </div>
+    </form>
   );
 }

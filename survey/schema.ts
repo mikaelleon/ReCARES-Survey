@@ -16,8 +16,7 @@ export interface SurveyAnswers {
     | 'Phase 3'
     | 'Phase 4 Heights'
     | 'Phase 5 Highlands'
-    | 'Phase 6 Eastgrove'
-    | 'Not sure';
+    | 'Phase 6 Eastgrove';
   A3: '1' | '2' | '3' | '4' | '5' | '6+' | 'No one lives in the unit right now';
   A4: 'yes' | 'no' | 'prefer_not_to_say';
   /** Shown on Screen 2, under A4, only when A4 is yes. */
