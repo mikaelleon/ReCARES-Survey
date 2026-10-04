@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { AdminNavLink } from '@/components/admin/AdminNavLink';
 import type { DashboardSimpleSnapshot } from '@/lib/admin/dashboardView';
 import { RecentSubmissionsTable } from '@/components/admin/RecentSubmissionsTable';
 import type { SampleRecord } from '@/lib/admin/sampleResponses';
@@ -134,9 +134,9 @@ export function DashboardSimpleView({
           <p className="dash-simple__cta-text">
             Need charts, filters, and full breakdowns? Open Responses.
           </p>
-          <Link href="/admin/responses/" className="dash-quick__btn dash-quick__btn--primary">
+          <AdminNavLink href="/admin/responses/" className="dash-quick__btn dash-quick__btn--primary">
             View Responses →
-          </Link>
+          </AdminNavLink>
         </div>
       </div>
     </div>

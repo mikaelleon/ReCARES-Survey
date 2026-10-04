@@ -22,6 +22,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import { AdminNavLink } from '@/components/admin/AdminNavLink';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -160,15 +161,15 @@ export function SidebarNav({
         aria-label="Admin navigation"
       >
         <div className="admin-sidebar__brand">
-          <Link
+          <AdminNavLink
             href="/admin/dashboard/"
             className="admin-sidebar__logo"
-            onClick={() => onOpenChange(false)}
+            onNavigate={() => onOpenChange(false)}
             title="ReCARES Survey Administration"
           >
             <span className="admin-sidebar__logo-name">ReCARES</span>
             <span className="admin-sidebar__logo-sub">Survey Administration</span>
-          </Link>
+          </AdminNavLink>
           {onCollapsedChange ? (
             <button
               type="button"
@@ -206,17 +207,17 @@ export function SidebarNav({
           {links.map(({ href, label, Icon }) => {
             const active = isActivePath(pathname, href);
             return (
-              <Link
+              <AdminNavLink
                 key={href}
                 href={href}
                 className={`admin-sidebar__link${active ? ' is-active' : ''}`}
                 aria-current={active ? 'page' : undefined}
                 title={collapsed ? label : undefined}
-                onClick={() => onOpenChange(false)}
+                onNavigate={() => onOpenChange(false)}
               >
                 <Icon className="admin-sidebar__icon" size={18} strokeWidth={2.2} aria-hidden="true" />
                 <span className="admin-sidebar__link-label">{label}</span>
-              </Link>
+              </AdminNavLink>
             );
           })}
           {isSuperadmin ? (
@@ -224,16 +225,16 @@ export function SidebarNav({
               <p className="admin-sidebar__group-label admin-sidebar__group-label--spaced" aria-hidden="true">
                 General
               </p>
-              <Link
+              <AdminNavLink
                 href="/admin/members/"
                 className={`admin-sidebar__link${isActivePath(pathname, '/admin/members/') ? ' is-active' : ''}`}
                 aria-current={isActivePath(pathname, '/admin/members/') ? 'page' : undefined}
                 title={collapsed ? 'Members & Invites' : undefined}
-                onClick={() => onOpenChange(false)}
+                onNavigate={() => onOpenChange(false)}
               >
                 <Users className="admin-sidebar__icon" size={18} strokeWidth={2.2} aria-hidden="true" />
                 <span className="admin-sidebar__link-label">Members &amp; Invites</span>
-              </Link>
+              </AdminNavLink>
             </>
           ) : null}
         </nav>

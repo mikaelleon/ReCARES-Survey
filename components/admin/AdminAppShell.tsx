@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { AdminPageTransition } from '@/components/admin/AdminPageTransition';
 import { AdminTopBar } from '@/components/dashboard/AdminTopBar';
 import { SidebarNav } from '@/components/dashboard/SidebarNav';
 import { FirestoreBlockedNotice } from '@/components/admin/FirestoreBlockedNotice';
@@ -74,7 +75,9 @@ export function AdminAppShell({
               <FirestoreBlockedNotice message={firestoreError} />
             </div>
           ) : null}
-          <SurveyResponsesProvider>{children}</SurveyResponsesProvider>
+          <SurveyResponsesProvider>
+            <AdminPageTransition>{children}</AdminPageTransition>
+          </SurveyResponsesProvider>
         </div>
       </div>
     </div>

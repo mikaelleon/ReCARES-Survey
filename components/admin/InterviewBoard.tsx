@@ -277,7 +277,7 @@ export function InterviewBoard({
             );
           })}
         </div>
-        <div className="interview-board__mobile-body" role="tabpanel">
+        <div key={mobileTab} className="interview-board__mobile-body admin-view-transition" role="tabpanel">
           {mobileList.length === 0 ? (
             <div className="admin-kanban-empty">
               <span className="admin-kanban-empty__icon" aria-hidden="true">

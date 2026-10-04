@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { AdminNavLink } from '@/components/admin/AdminNavLink';
 
 /**
  * Standardized Dashboard → Responses drill-down.
@@ -9,8 +9,8 @@ import Link from 'next/link';
 export function ResponsesDrilldownLink({ focus }: { focus: string }) {
   const href = `/admin/responses/?focus=${encodeURIComponent(focus)}`;
   return (
-    <Link href={href} className="dash-insight__link">
+    <AdminNavLink href={href} className="dash-insight__link">
       See on Responses →
-    </Link>
+    </AdminNavLink>
   );
 }

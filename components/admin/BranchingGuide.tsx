@@ -347,7 +347,9 @@ export function BranchingGuide() {
             </button>
           </div>
 
-          {mode === 'simple' ? <SimpleView /> : <DetailedView />}
+          <div key={mode} className="admin-view-transition">
+            {mode === 'simple' ? <SimpleView /> : <DetailedView />}
+          </div>
         </div>
       ) : null}
     </section>

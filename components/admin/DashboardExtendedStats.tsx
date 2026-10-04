@@ -1,12 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import {
   Clock3,
   MessageSquareQuote,
   Signal,
   Smartphone,
 } from 'lucide-react';
+import { AdminNavLink } from '@/components/admin/AdminNavLink';
 import { FIELD_CODE_HELP, FieldCodeHint } from '@/components/admin/FieldCodeHint';
 import { ResponsesDrilldownLink } from '@/components/admin/ResponsesDrilldownLink';
 import {
@@ -146,9 +146,9 @@ export function DashboardExtendedStats({
             <FieldCodeHint content={FIELD_CODE_HELP.iv1}>Open to a follow-up interview</FieldCodeHint>
           </div>
           <div className="dash-stat__foot">
-            <Link href="/admin/interviews/" className="dash-insight__link">
+            <AdminNavLink href="/admin/interviews/" className="dash-insight__link">
               Interview Invites
-            </Link>
+            </AdminNavLink>
           </div>
         </div>
       </div>

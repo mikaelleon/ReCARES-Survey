@@ -132,46 +132,48 @@ function DashboardContent() {
             </p>
           ) : null}
 
-          {viewMode === 'simple' ? (
-            <DashboardSimpleView
-              snapshot={simpleSnapshot}
-              records={ranged}
-              loading={loading}
-              empty={empty}
-            />
-          ) : (
-            <div className="dash-bento">
-              <div className="dash-bento__main">
-                <div className="dash-bento__kpis">
-                  <DashboardStatGrid
-                    kpis={kpis}
+          <div key={viewMode} className="admin-view-transition">
+            {viewMode === 'simple' ? (
+              <DashboardSimpleView
+                snapshot={simpleSnapshot}
+                records={ranged}
+                loading={loading}
+                empty={empty}
+              />
+            ) : (
+              <div className="dash-bento">
+                <div className="dash-bento__main">
+                  <div className="dash-bento__kpis">
+                    <DashboardStatGrid
+                      kpis={kpis}
+                      loading={loading}
+                      empty={empty}
+                      periodTrend={periodTrend}
+                    />
+                    <DashboardExtendedStats records={ranged} loading={loading} empty={empty} />
+                  </div>
+
+                  <DashboardAnalyticsSections
+                    records={ranged}
+                    phases={phases}
                     loading={loading}
                     empty={empty}
-                    periodTrend={periodTrend}
+                    allTimeCount={allTimeCount}
                   />
-                  <DashboardExtendedStats records={ranged} loading={loading} empty={empty} />
                 </div>
 
-                <DashboardAnalyticsSections
-                  records={ranged}
-                  phases={phases}
-                  loading={loading}
-                  empty={empty}
-                  allTimeCount={allTimeCount}
-                />
+                <aside className="dash-bento__rail">
+                  <RecentActivityCard limit={3} />
+                  <RecentSubmissionsTable
+                    records={ranged}
+                    limit={3}
+                    loading={loading}
+                    variant="panel"
+                  />
+                </aside>
               </div>
-
-              <aside className="dash-bento__rail">
-                <RecentActivityCard limit={3} />
-                <RecentSubmissionsTable
-                  records={ranged}
-                  limit={3}
-                  loading={loading}
-                  variant="panel"
-                />
-              </aside>
-            </div>
-          )}
+            )}
+          </div>
         </>
       )}
     </section>
