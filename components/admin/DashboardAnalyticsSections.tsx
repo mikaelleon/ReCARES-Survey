@@ -79,7 +79,19 @@ export function DashboardAnalyticsSections({
       <div className="dash-bento__charts">
         <InsightTile
           title="Analytics by Phase"
-          hint={`${empty ? 0 : responseCount} in range`}
+          hint={
+            <FieldCodeHint
+              content={
+                empty
+                  ? allTimeCount === 0
+                    ? 'No live submissions in Firestore yet.'
+                    : 'No responses in this date range. Try All time or widen the range.'
+                  : `${responseCount} response${responseCount === 1 ? '' : 's'} in the selected range. Hover a bar for count and share.`
+              }
+            >
+              By phase
+            </FieldCodeHint>
+          }
           loading={loading}
           responsesFocus="phase"
         >
@@ -100,8 +112,8 @@ export function DashboardAnalyticsSections({
         <InsightTile
           title="Top Requested Features"
           hint={
-            <FieldCodeHint content={FIELD_CODE_HELP.f1f6}>
-              F1–F6 · top 3 · 99s excluded
+            <FieldCodeHint content={`${FIELD_CODE_HELP.f1f6} Hover a feature for average and sample size.`}>
+              Proposed website features
             </FieldCodeHint>
           }
           loading={loading}
@@ -113,10 +125,11 @@ export function DashboardAnalyticsSections({
             <MeanBars
               wrapLabels
               highlightTop={3}
-              items={features.map((f) => ({
-                label: f.label,
-                mean: f.averageLikelihood,
-                n: f.responseCount,
+              valueMode="tooltip"
+              items={features.map((feature) => ({
+                label: feature.label,
+                mean: feature.averageLikelihood,
+                n: feature.responseCount,
               }))}
             />
           )}
@@ -126,25 +139,33 @@ export function DashboardAnalyticsSections({
       <div className="dash-bento__detail">
         <InsightTile
           title="Open Problem Discovery"
-          hint="Problems beyond named survey topics"
+          hint={
+            <FieldCodeHint content="Problems residents raised beyond the named survey topics. Hover a row for count and share.">
+              Open topics
+            </FieldCodeHint>
+          }
           loading={loading}
           responsesFocus="open-problems"
         >
           {empty ? (
             <p className="dash-tile__empty">No open-problem answers yet.</p>
           ) : (
-            <HorizontalBars buckets={problems} />
+            <HorizontalBars buckets={problems} valueMode="tooltip" />
           )}
         </InsightTile>
 
         <InsightTile
           title="Accessibility Needs"
           hint={
-            ac.baseN > 0 ? (
-              `Out of ${ac.baseN} with disability/mobility limitation`
-            ) : (
-              <FieldCodeHint content={FIELD_CODE_HELP.ac1}>AC1 path only</FieldCodeHint>
-            )
+            <FieldCodeHint
+              content={
+                ac.baseN > 0
+                  ? `${FIELD_CODE_HELP.ac1} Path base: ${ac.baseN} respondent${ac.baseN === 1 ? '' : 's'}. Hover a row for count and share.`
+                  : FIELD_CODE_HELP.ac1
+              }
+            >
+              Accessibility checklist
+            </FieldCodeHint>
           }
           loading={loading}
           responsesFocus="accessibility-needs"

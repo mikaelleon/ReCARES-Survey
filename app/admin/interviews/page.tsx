@@ -16,16 +16,12 @@ function InterviewInvitesContent() {
 
   return (
     <section className="dash-page iv-page" aria-labelledby="admin-interview-title">
-      <div className="dash-page__header">
+      <div className="dash-page__header iv-page__header">
         <h1 id="admin-interview-title" className="dash-page__title">
           Interview Invites
         </h1>
+        <InterviewKpiGrid kpis={kpis} loading={loading} />
       </div>
-
-      <p className="iv-page__lead">
-        Resident-provided contact preferences only. These records are never joined to anonymous
-        survey responses.
-      </p>
 
       {error ? (
         <p className="na-error" role="alert">
@@ -47,55 +43,58 @@ function InterviewInvitesContent() {
           onWithdraw={(id, email) => void withdraw(id, email)}
         />
       ) : (
-        <p className="admin-section__lead">Loading interview pipeline…</p>
+        <p className="na-error" role="status">
+          Loading interview pipeline…
+        </p>
       )}
-
-      <InterviewKpiGrid kpis={kpis} loading={loading} />
 
       <div className="iv-page__main">
         <InterviewAvailabilityCalendar rows={rows} loading={loading} />
-        <aside className="iv-page__aside dash-insight" aria-label="Form preference snapshot">
-          <h2 className="dash-insight__title">Preferred weekdays</h2>
-          <p className="dash-insight__hint">Across all open + confirmed invites</p>
-          <ul className="iv-day-bars">
-            {kpis.dayCounts.map((d) => {
-              const max = Math.max(1, ...kpis.dayCounts.map((x) => x.count));
-              const pct = Math.round((d.count / max) * 100);
-              const isTop = kpis.topDay?.label === d.label && d.count > 0;
-              return (
-                <li
-                  key={d.label}
-                  className={`iv-day-bars__row${isTop ? ' is-top' : ''}${d.count === 0 ? ' is-zero' : ''}`}
-                >
-                  <span className="iv-day-bars__label">{d.label.slice(0, 3)}</span>
-                  <span className="iv-day-bars__track" aria-hidden="true">
-                    <span className="iv-day-bars__fill" style={{ width: `${pct}%` }} />
-                  </span>
-                  <span className="iv-day-bars__value">{d.count}</span>
-                </li>
-              );
-            })}
-          </ul>
-          <h2 className="dash-insight__title iv-page__aside-sub">Time windows</h2>
-          <ul className="iv-day-bars">
-            {kpis.timeCounts.map((t) => {
-              const max = Math.max(1, ...kpis.timeCounts.map((x) => x.count));
-              const pct = Math.round((t.count / max) * 100);
-              const isTop = kpis.topTime?.label === t.label && t.count > 0;
-              return (
-                <li
-                  key={t.label}
-                  className={`iv-day-bars__row${isTop ? ' is-top' : ''}${t.count === 0 ? ' is-zero' : ''}`}
-                >
-                  <span className="iv-day-bars__label">{t.label}</span>
-                  <span className="iv-day-bars__track" aria-hidden="true">
-                    <span className="iv-day-bars__fill" style={{ width: `${pct}%` }} />
-                  </span>
-                  <span className="iv-day-bars__value">{t.count}</span>
-                </li>
-              );
-            })}
-          </ul>
+        <aside className="iv-page__aside dash-insight" aria-label="Preference charts">
+          <div className="iv-prefs__block">
+            <h2 className="dash-insight__title">Preferred weekdays</h2>
+            <ul className="iv-day-bars">
+              {kpis.dayCounts.map((d) => {
+                const max = Math.max(1, ...kpis.dayCounts.map((x) => x.count));
+                const pct = Math.round((d.count / max) * 100);
+                const isTop = kpis.topDay?.label === d.label && d.count > 0;
+                return (
+                  <li
+                    key={d.label}
+                    className={`iv-day-bars__row${isTop ? ' is-top' : ''}${d.count === 0 ? ' is-zero' : ''}`}
+                  >
+                    <span className="iv-day-bars__label">{d.label.slice(0, 3)}</span>
+                    <span className="iv-day-bars__track" aria-hidden="true">
+                      <span className="iv-day-bars__fill" style={{ width: `${pct}%` }} />
+                    </span>
+                    <span className="iv-day-bars__value">{d.count}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+          <div className="iv-prefs__block">
+            <h2 className="dash-insight__title">Time windows</h2>
+            <ul className="iv-day-bars">
+              {kpis.timeCounts.map((t) => {
+                const max = Math.max(1, ...kpis.timeCounts.map((x) => x.count));
+                const pct = Math.round((t.count / max) * 100);
+                const isTop = kpis.topTime?.label === t.label && t.count > 0;
+                return (
+                  <li
+                    key={t.label}
+                    className={`iv-day-bars__row${isTop ? ' is-top' : ''}${t.count === 0 ? ' is-zero' : ''}`}
+                  >
+                    <span className="iv-day-bars__label">{t.label}</span>
+                    <span className="iv-day-bars__track" aria-hidden="true">
+                      <span className="iv-day-bars__fill" style={{ width: `${pct}%` }} />
+                    </span>
+                    <span className="iv-day-bars__value">{t.count}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </aside>
       </div>
     </section>
@@ -103,7 +102,7 @@ function InterviewInvitesContent() {
 }
 
 /**
- * Interview Invites — KPIs, availability calendar, and Kanban pipeline.
+ * Interview Invites — pipeline first, compact prefs, availability calendar.
  */
 export default function AdminInterviewsPage() {
   const { can } = useAuth();
@@ -114,11 +113,13 @@ export default function AdminInterviewsPage() {
       {canInterview ? (
         <InterviewInvitesContent />
       ) : (
-        <section className="admin-section" aria-labelledby="admin-interview-title">
-          <h1 id="admin-interview-title" className="admin-section__title">
-            Interview Invites
-          </h1>
-          <p className="admin-section__lead">
+        <section className="dash-page" aria-labelledby="admin-interview-title">
+          <div className="dash-page__header">
+            <h1 id="admin-interview-title" className="dash-page__title">
+              Interview Invites
+            </h1>
+          </div>
+          <p className="na-error" role="alert">
             You do not have permission to view interview invites. Ask a superadmin if you need
             access.
           </p>

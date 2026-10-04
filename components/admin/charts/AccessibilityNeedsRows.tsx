@@ -18,5 +18,5 @@ export function AccessibilityNeedsRows({
     return <p className="dash-tile__empty">No AC1 answers on the accessibility path yet.</p>;
   }
 
-  return <HorizontalBars buckets={buckets} />;
+  return <HorizontalBars buckets={buckets} valueMode="tooltip" />;
 }

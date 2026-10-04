@@ -69,16 +69,15 @@ export function InterviewAvailabilityCalendar({
   return (
     <article className="dash-insight iv-cal" aria-labelledby="iv-cal-title">
       <header className="iv-cal__head">
-        <div>
-          <h2 id="iv-cal-title" className="dash-insight__title">
-            Availability Calendar
-          </h2>
-          <p className="dash-insight__hint">
-            {maxCount > 0 && peakWeekday
-              ? `Peak open availability: ${peakWeekday}s (${maxCount} invite${maxCount === 1 ? '' : 's'})`
-              : 'Open invites’ preferred weekdays — confirmed interviews excluded'}
-          </p>
-        </div>
+        <h2 id="iv-cal-title" className="dash-insight__title">
+          Availability
+          {maxCount > 0 && peakWeekday ? (
+            <span className="iv-cal__peak">
+              {' '}
+              · Peak {peakWeekday}s ({maxCount})
+            </span>
+          ) : null}
+        </h2>
         <div className="iv-cal__nav">
           <button
             type="button"

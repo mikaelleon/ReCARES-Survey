@@ -128,7 +128,7 @@ export function DashboardStatGrid({
           </div>
         ) : null}
         <div className="dash-stat__caption">
-          {empty ? 'No data yet' : 'Grouped homeowner branch'}
+          {empty ? 'No data yet' : 'Share of respondents who are homeowners'}
         </div>
       </div>
 
@@ -137,7 +137,7 @@ export function DashboardStatGrid({
           <span className="dash-stat__icon dash-stat__icon--neutral" aria-hidden="true">
             <Accessibility size={18} strokeWidth={2.2} />
           </span>
-          <div className="dash-stat__label">Total PWD Residents</div>
+          <div className="dash-stat__label">Accessibility screening</div>
         </div>
         <div className="dash-stat__value-row">
           <div className="dash-stat__value">{valueNode(kpis.pwdRelatedCount)}</div>
@@ -152,7 +152,9 @@ export function DashboardStatGrid({
           {empty ? (
             'No data yet'
           ) : (
-            <FieldCodeHint content={FIELD_CODE_HELP.a4}>Screening A4 Yes only</FieldCodeHint>
+            <FieldCodeHint content={FIELD_CODE_HELP.a4}>
+              Household disability / mobility — Yes
+            </FieldCodeHint>
           )}
         </div>
       </div>
@@ -178,7 +180,7 @@ export function DashboardStatGrid({
           </div>
         ) : null}
         <div className="dash-stat__caption">
-          {empty ? 'No data yet' : 'Grouped tenant branch'}
+          {empty ? 'No data yet' : 'Share of respondents who are tenants'}
         </div>
       </div>
     </div>

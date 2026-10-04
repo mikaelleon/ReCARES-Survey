@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { GatedSectionChips } from '@/components/admin/GatedSectionChips';
 import type { SampleRecord } from '@/lib/admin/sampleResponses';
+import { formatSubmissionLabel } from '@/lib/admin/submissionLabel';
 
 /**
  * Read-only response detail drawer.
@@ -50,7 +51,7 @@ export function ResponseDetailDrawer({
         <header className="admin-drawer__head">
           <div>
             <h2 id="admin-drawer-title" className="admin-drawer__title">
-              {record.id}
+              {formatSubmissionLabel(record.submissionNumber ?? 0, record.phase)}
             </h2>
             <p className="admin-drawer__sub">{record.ts}</p>
           </div>

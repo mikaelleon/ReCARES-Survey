@@ -4,12 +4,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { DashboardAnalyticsSections } from '@/components/admin/DashboardAnalyticsSections';
 import { DashboardExtendedStats } from '@/components/admin/DashboardExtendedStats';
-import { DashboardQuickActions } from '@/components/admin/DashboardQuickActions';
 import { DashboardStatGrid } from '@/components/admin/DashboardStatGrid';
 import { RecentSubmissionsTable } from '@/components/admin/RecentSubmissionsTable';
 import { DashboardHeaderTools } from '@/components/admin/DashboardHeaderTools';
+import { DashboardSimpleView } from '@/components/admin/DashboardSimpleView';
 import { RecentActivityCard } from '@/components/admin/RecentActivityCard';
 import { computeKpis } from '@/lib/admin/analytics';
+import {
+  buildDashboardSimpleSnapshot,
+  loadDashboardViewMode,
+  storeDashboardViewMode,
+  type DashboardViewMode,
+} from '@/lib/admin/dashboardView';
 import {
   DEFAULT_DATE_RANGE,
   countInBounds,
@@ -47,9 +53,11 @@ function DashboardContent() {
   const { can, user } = useAuth();
   const { records, status, source, usingDemoSample } = useSurveyResponses();
   const [dateRange, setDateRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
+  const [viewMode, setViewMode] = useState<DashboardViewMode>('detailed');
 
   useEffect(() => {
     setDateRange(loadStoredDateRange());
+    setViewMode(loadDashboardViewMode());
   }, []);
 
   const ranged = useMemo(
@@ -58,6 +66,10 @@ function DashboardContent() {
   );
   const kpis = useMemo(() => computeKpis(ranged), [ranged]);
   const phases = useMemo(() => phaseBuckets(ranged), [ranged]);
+  const simpleSnapshot = useMemo(
+    () => buildDashboardSimpleSnapshot(ranged, kpis),
+    [ranged, kpis],
+  );
   const canResponses = can('responsesDashboard');
 
   const loading = status === 'loading';
@@ -79,9 +91,12 @@ function DashboardContent() {
   }, [records, dateRange, source, usingDemoSample]);
 
   return (
-    <section className="dash-page" aria-labelledby="admin-overview-title">
+    <section
+      className={`dash-page${viewMode === 'simple' ? ' dash-page--simple' : ''}`}
+      aria-labelledby="admin-overview-title"
+    >
       {!canResponses ? (
-        <p className="admin-section__lead">
+        <p className="na-error" role="alert">
           You do not have permission to view the responses dashboard. Ask a superadmin if you
           need access.
         </p>
@@ -96,6 +111,11 @@ function DashboardContent() {
               onDateRangeChange={(next) => {
                 setDateRange(next);
                 storeDateRange(next);
+              }}
+              viewMode={viewMode}
+              onViewModeChange={(mode) => {
+                setViewMode(mode);
+                storeDashboardViewMode(mode);
               }}
             />
           </div>
@@ -112,38 +132,46 @@ function DashboardContent() {
             </p>
           ) : null}
 
-          <div className="dash-bento">
-            <div className="dash-bento__main">
-              <div className="dash-bento__kpis">
-                <DashboardStatGrid
-                  kpis={kpis}
+          {viewMode === 'simple' ? (
+            <DashboardSimpleView
+              snapshot={simpleSnapshot}
+              records={ranged}
+              loading={loading}
+              empty={empty}
+            />
+          ) : (
+            <div className="dash-bento">
+              <div className="dash-bento__main">
+                <div className="dash-bento__kpis">
+                  <DashboardStatGrid
+                    kpis={kpis}
+                    loading={loading}
+                    empty={empty}
+                    periodTrend={periodTrend}
+                  />
+                  <DashboardExtendedStats records={ranged} loading={loading} empty={empty} />
+                </div>
+
+                <DashboardAnalyticsSections
+                  records={ranged}
+                  phases={phases}
                   loading={loading}
                   empty={empty}
-                  periodTrend={periodTrend}
+                  allTimeCount={allTimeCount}
                 />
-                <DashboardExtendedStats records={ranged} loading={loading} empty={empty} />
               </div>
 
-              <DashboardAnalyticsSections
-                records={ranged}
-                phases={phases}
-                loading={loading}
-                empty={empty}
-                allTimeCount={allTimeCount}
-              />
+              <aside className="dash-bento__rail">
+                <RecentActivityCard limit={3} />
+                <RecentSubmissionsTable
+                  records={ranged}
+                  limit={3}
+                  loading={loading}
+                  variant="panel"
+                />
+              </aside>
             </div>
-
-            <aside className="dash-bento__rail">
-              <RecentActivityCard limit={3} />
-              <RecentSubmissionsTable
-                records={ranged}
-                limit={3}
-                loading={loading}
-                variant="panel"
-              />
-              <DashboardQuickActions />
-            </aside>
-          </div>
+          )}
         </>
       )}
     </section>
@@ -151,7 +179,7 @@ function DashboardContent() {
 }
 
 /**
- * Dashboard — bento quick summary over live Firestore responses.
+ * Dashboard — summary over live Firestore responses (Detailed default; Simple optional).
  */
 export default function AdminDashboardPage() {
   return (

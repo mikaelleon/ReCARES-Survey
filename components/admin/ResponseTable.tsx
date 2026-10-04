@@ -2,6 +2,7 @@
 
 import { GatedSectionChips } from '@/components/admin/GatedSectionChips';
 import type { SampleRecord } from '@/lib/admin/sampleResponses';
+import { formatSubmissionLabel } from '@/lib/admin/submissionLabel';
 
 /**
  * Semantic desktop table + stacked mobile cards for responses.
@@ -43,7 +44,9 @@ export function ResponseTable({
                   if (e.key === 'Enter') onView(r);
                 }}
               >
-                <th scope="row">{r.id}</th>
+                <th scope="row" title={r.id}>
+                  {formatSubmissionLabel(r.submissionNumber ?? 0, r.phase)}
+                </th>
                 <td>{r.ts}</td>
                 <td>{r.phase}</td>
                 <td>{r.resident}</td>
@@ -93,7 +96,9 @@ export function ResponseTable({
             style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}
           >
             <div className="admin-response-card__top">
-              <strong>{r.id}</strong>
+              <strong title={r.id}>
+                {formatSubmissionLabel(r.submissionNumber ?? 0, r.phase)}
+              </strong>
               <span>{r.ts}</span>
             </div>
             <dl className="admin-response-card__meta">

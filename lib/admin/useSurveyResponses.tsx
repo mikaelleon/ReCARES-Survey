@@ -14,6 +14,7 @@ import {
 import { collection, getDocs } from 'firebase/firestore';
 import { mapSurveyDocToSample } from '@/lib/admin/mapSurveyResponse';
 import { SAMPLE_RESPONSES, type SampleRecord } from '@/lib/admin/sampleResponses';
+import { withSubmissionNumbers } from '@/lib/admin/submissionLabel';
 import { getFirestoreDb } from '@/lib/firebase/config';
 import type { SurveyResponseDocument } from '@/survey/schema';
 
@@ -65,10 +66,17 @@ const SurveyResponsesContext = createContext<UseSurveyResponsesResult | null>(nu
  * Live path: Firestore `needsAssessmentResponses` only. No silent SAMPLE inject.
  */
 export function SurveyResponsesProvider({ children }: { children: ReactNode }) {
-  const [records, setRecords] = useState<SampleRecord[]>([]);
+  const [records, setRecordsState] = useState<SampleRecord[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [source, setSource] = useState<SurveyResponseSource>('unavailable');
   const [usingDemoSample, setUsingDemoSample] = useState(false);
+
+  const setRecords = useCallback<Dispatch<SetStateAction<SampleRecord[]>>>((action) => {
+    setRecordsState((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      return withSubmissionNumbers(next);
+    });
+  }, []);
 
   const reload = useCallback(async () => {
     setStatus('loading');
@@ -101,7 +109,7 @@ export function SurveyResponsesProvider({ children }: { children: ReactNode }) {
       setSource('error');
       setStatus('error');
     }
-  }, []);
+  }, [setRecords]);
 
   useEffect(() => {
     void reload();
@@ -109,7 +117,7 @@ export function SurveyResponsesProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({ records, setRecords, status, source, usingDemoSample, reload }),
-    [records, status, source, usingDemoSample, reload],
+    [records, setRecords, status, source, usingDemoSample, reload],
   );
 
   return (

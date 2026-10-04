@@ -3,30 +3,40 @@
 import Link from 'next/link';
 import { parseSubmittedAt } from '@/lib/admin/dateRange';
 import type { SampleRecord } from '@/lib/admin/sampleResponses';
+import { formatSubmissionLabel } from '@/lib/admin/submissionLabel';
 
-export interface RecentSubmissionRow {
+export interface RecentSubmission {
   responseId: string;
-  phase: string;
+  /** Human label: "Submission 001 - Phase 1" */
+  displayLabel: string;
   submittedAt: string;
-  status: 'complete' | 'partial';
+  completionStatus: 'complete' | 'partial';
 }
 
-function toRows(records: SampleRecord[], limit: number): RecentSubmissionRow[] {
-  return [...records]
+export { formatSubmissionLabel };
+
+function mapRecordsToRecentSubmissions(
+  surveyRecords: SampleRecord[],
+  maxItems: number,
+): RecentSubmission[] {
+  return [...surveyRecords]
     .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))
-    .slice(0, limit)
-    .map((r) => ({
-      responseId: r.id,
-      phase: r.phase || '—',
-      submittedAt: r.submittedAt,
-      status: r.status === 'partial' ? 'partial' : 'complete',
+    .slice(0, maxItems)
+    .map((record) => ({
+      responseId: record.id,
+      displayLabel: formatSubmissionLabel(
+        record.submissionNumber ?? 0,
+        record.phase || 'Phase unknown',
+      ),
+      submittedAt: record.submittedAt,
+      completionStatus: record.status === 'partial' ? 'partial' : 'complete',
     }));
 }
 
-function formatRelative(iso: string, now = Date.now()): string {
-  const t = parseSubmittedAt(iso);
-  if (!Number.isFinite(t)) return '—';
-  const diffSec = Math.round((now - t) / 1000);
+function formatRelativeTime(isoTimestamp: string, nowMs = Date.now()): string {
+  const submittedMs = parseSubmittedAt(isoTimestamp);
+  if (!Number.isFinite(submittedMs)) return '—';
+  const diffSec = Math.round((nowMs - submittedMs) / 1000);
   if (diffSec < 60) return 'Just now';
   const mins = Math.round(diffSec / 60);
   if (mins < 60) return `${mins}m ago`;
@@ -35,7 +45,7 @@ function formatRelative(iso: string, now = Date.now()): string {
   const days = Math.round(hours / 24);
   if (days < 14) return `${days}d ago`;
   try {
-    return new Date(t).toLocaleDateString(undefined, {
+    return new Date(submittedMs).toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -45,17 +55,16 @@ function formatRelative(iso: string, now = Date.now()): string {
   }
 }
 
-function shortId(id: string): string {
-  if (id.length <= 14) return id;
-  return `${id.slice(0, 8)}…${id.slice(-4)}`;
+function completionLabel(status: RecentSubmission['completionStatus']): string {
+  return status === 'partial' ? 'Partial' : 'Complete';
 }
 
 /**
- * Latest individual responses — table (default) or tall brand panel for Dashboard hero.
+ * Latest individual responses — table (default) or tall brand panel for Dashboard.
  */
 export function RecentSubmissionsTable({
-  records,
-  limit = 5,
+  records: surveyRecords,
+  limit: maxItems = 5,
   loading = false,
   variant = 'table',
 }: {
@@ -64,7 +73,7 @@ export function RecentSubmissionsTable({
   loading?: boolean;
   variant?: 'table' | 'panel';
 }) {
-  const rows = toRows(records, limit);
+  const recentSubmissions = mapRecordsToRecentSubmissions(surveyRecords, maxItems);
 
   if (variant === 'panel') {
     return (
@@ -80,23 +89,23 @@ export function RecentSubmissionsTable({
 
         {loading ? (
           <div className="dash-stat--skeleton" style={{ minHeight: 120 }} aria-hidden="true" />
-        ) : rows.length === 0 ? (
+        ) : recentSubmissions.length === 0 ? (
           <p className="dash-recent-panel__empty">No submissions in this range yet.</p>
         ) : (
           <ul className="dash-recent-panel__list">
-            {rows.map((row) => (
-              <li key={row.responseId}>
+            {recentSubmissions.map((submission) => (
+              <li key={submission.responseId}>
                 <Link
-                  href={`/admin/responses/?tab=individual&responseId=${encodeURIComponent(row.responseId)}`}
+                  href={`/admin/responses/?tab=individual&responseId=${encodeURIComponent(submission.responseId)}`}
                   className="dash-recent-panel__item"
+                  title={`Open ${submission.displayLabel}`}
                 >
                   <span className="dash-recent-panel__dot" aria-hidden="true" />
                   <span className="dash-recent-panel__meta">
-                    <span className="dash-recent-panel__id" title={row.responseId}>
-                      {shortId(row.responseId)}
-                    </span>
+                    <span className="dash-recent-panel__label">{submission.displayLabel}</span>
                     <span className="dash-recent-panel__sub">
-                      {row.phase} · {formatRelative(row.submittedAt)}
+                      {formatRelativeTime(submission.submittedAt)} ·{' '}
+                      {completionLabel(submission.completionStatus)}
                     </span>
                   </span>
                 </Link>
@@ -121,15 +130,14 @@ export function RecentSubmissionsTable({
 
       {loading ? (
         <div className="dash-stat--skeleton" style={{ minHeight: 120 }} aria-hidden="true" />
-      ) : rows.length === 0 ? (
+      ) : recentSubmissions.length === 0 ? (
         <p className="dash-tile__empty">No submissions in this date range yet.</p>
       ) : (
         <div className="dash-recent__table-wrap">
           <table className="dash-recent__table">
             <thead>
               <tr>
-                <th scope="col">Response ID</th>
-                <th scope="col">Phase</th>
+                <th scope="col">Submission</th>
                 <th scope="col">Submitted</th>
                 <th scope="col">Status</th>
                 <th scope="col">
@@ -138,25 +146,24 @@ export function RecentSubmissionsTable({
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.responseId}>
+              {recentSubmissions.map((submission) => (
+                <tr key={submission.responseId}>
+                  <td title={submission.responseId}>{submission.displayLabel}</td>
                   <td>
-                    <code className="dash-recent__id">{row.responseId}</code>
-                  </td>
-                  <td>{row.phase}</td>
-                  <td>
-                    <time dateTime={row.submittedAt}>{formatRelative(row.submittedAt)}</time>
+                    <time dateTime={submission.submittedAt}>
+                      {formatRelativeTime(submission.submittedAt)}
+                    </time>
                   </td>
                   <td>
                     <span
-                      className={`dash-recent__status dash-recent__status--${row.status}`}
+                      className={`dash-recent__status dash-recent__status--${submission.completionStatus}`}
                     >
-                      {row.status === 'partial' ? 'Partial' : 'Complete'}
+                      {completionLabel(submission.completionStatus)}
                     </span>
                   </td>
                   <td>
                     <Link
-                      href={`/admin/responses/?tab=individual&responseId=${encodeURIComponent(row.responseId)}`}
+                      href={`/admin/responses/?tab=individual&responseId=${encodeURIComponent(submission.responseId)}`}
                       className="dash-insight__link"
                     >
                       Details →
@@ -171,3 +178,6 @@ export function RecentSubmissionsTable({
     </section>
   );
 }
+
+/** @deprecated Prefer RecentSubmission — kept for any external imports. */
+export type RecentSubmissionRow = RecentSubmission;

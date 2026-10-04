@@ -21,6 +21,7 @@ import {
   SUMMARY_PIE_IDS,
   getQuestionById,
 } from '@/lib/admin/responseQuestions';
+import { formatSubmissionLabel } from '@/lib/admin/submissionLabel';
 
 export type ResponseViewTab = 'summary' | 'question' | 'individual';
 
@@ -413,7 +414,12 @@ export function ResponseViewsPanel({
                   <article className="gf-card gf-individual__card">
                     <header className="gf-individual__head">
                       <div>
-                        <h3 className="gf-card__title">{individualDetail.id}</h3>
+                        <h3 className="gf-card__title">
+                          {formatSubmissionLabel(
+                            individualDetail.submissionNumber ?? 0,
+                            individualDetail.phase,
+                          )}
+                        </h3>
                         <p className="gf-card__meta">{individualDetail.ts}</p>
                       </div>
                       <div className="gf-individual__actions">

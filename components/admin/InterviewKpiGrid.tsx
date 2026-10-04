@@ -1,18 +1,9 @@
 'use client';
 
-import {
-  CalendarCheck,
-  Clock3,
-  Laptop,
-  Mail,
-  MessageCircle,
-  Users,
-  MapPin,
-} from 'lucide-react';
 import type { InterviewKpis } from '@/lib/admin/interviewAnalytics';
 
 /**
- * Interview Invites KPI strip — pipeline + form-field highlights.
+ * Compact preference strip — pipeline counts live on the Kanban columns.
  */
 export function InterviewKpiGrid({
   kpis,
@@ -23,131 +14,49 @@ export function InterviewKpiGrid({
 }) {
   if (loading) {
     return (
-      <div className="dash-stat-grid iv-kpi-grid" aria-hidden="true">
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="dash-stat dash-stat--skeleton" />
-        ))}
+      <div className="iv-summary" aria-hidden="true">
+        <div className="dash-stat--skeleton" style={{ minHeight: 44 }} />
       </div>
     );
   }
 
   const empty = kpis.total === 0;
+  const items = [
+    {
+      key: 'total',
+      label: 'Total',
+      value: empty ? '—' : String(kpis.total),
+    },
+    {
+      key: 'online',
+      label: 'Online',
+      value: empty ? '—' : String(kpis.online),
+    },
+    {
+      key: 'f2f',
+      label: 'Face-to-face',
+      value: empty ? '—' : String(kpis.faceToFace),
+    },
+    {
+      key: 'day',
+      label: 'Top day',
+      value: kpis.topDay?.label ?? '—',
+    },
+    {
+      key: 'time',
+      label: 'Top time',
+      value: kpis.topTime?.label ?? '—',
+    },
+  ];
 
   return (
-    <div className="iv-kpi-stack">
-      <div className="dash-stat-grid iv-kpi-grid">
-        <div className="dash-stat dash-stat--hero">
-          <div className="dash-stat__top">
-            <span className="dash-stat__icon" aria-hidden="true">
-              <Users size={18} strokeWidth={2.2} />
-            </span>
-            <div className="dash-stat__label">Total Invites</div>
-          </div>
-          <div className="dash-stat__value">{empty ? <span className="dash-stat__empty">—</span> : kpis.total}</div>
-          <div className="dash-stat__caption">
-            {empty ? 'No interview interest yet' : 'From the interview invite form'}
-          </div>
-        </div>
-
-        <div className="dash-stat dash-stat--neutral">
-          <div className="dash-stat__top">
-            <span className="dash-stat__icon dash-stat__icon--neutral" aria-hidden="true">
-              <Mail size={18} strokeWidth={2.2} />
-            </span>
-            <div className="dash-stat__label">Not Contacted</div>
-          </div>
-          <div className="dash-stat__value">
-            {empty ? <span className="dash-stat__empty">—</span> : kpis.notContacted}
-          </div>
-          <div className="dash-stat__caption">Awaiting first outreach</div>
-        </div>
-
-        <div className="dash-stat dash-stat--neutral">
-          <div className="dash-stat__top">
-            <span className="dash-stat__icon dash-stat__icon--neutral" aria-hidden="true">
-              <MessageCircle size={18} strokeWidth={2.2} />
-            </span>
-            <div className="dash-stat__label">Pending Confirmation</div>
-          </div>
-          <div className="dash-stat__value">
-            {empty ? <span className="dash-stat__empty">—</span> : kpis.pending}
-          </div>
-          <div className="dash-stat__caption">Contacted — awaiting reply</div>
-        </div>
-
-        <div className="dash-stat dash-stat--neutral">
-          <div className="dash-stat__top">
-            <span className="dash-stat__icon dash-stat__icon--neutral" aria-hidden="true">
-              <CalendarCheck size={18} strokeWidth={2.2} />
-            </span>
-            <div className="dash-stat__label">Confirmed</div>
-          </div>
-          <div className="dash-stat__value">
-            {empty ? <span className="dash-stat__empty">—</span> : kpis.confirmed}
-          </div>
-          <div className="dash-stat__caption">Scheduled with resident</div>
-        </div>
-      </div>
-
-      <div className="dash-stat-grid iv-kpi-grid iv-kpi-grid--form">
-        <div className="dash-stat dash-stat--metric">
-          <div className="dash-stat__top">
-            <span className="dash-stat__icon dash-stat__icon--metric" aria-hidden="true">
-              <Laptop size={16} strokeWidth={2.2} />
-            </span>
-            <div className="dash-stat__label">Online</div>
-          </div>
-          <div className="dash-stat__value">
-            {empty ? <span className="dash-stat__empty">—</span> : kpis.online}
-          </div>
-          <div className="dash-stat__caption">Preferred format</div>
-        </div>
-
-        <div className="dash-stat dash-stat--metric">
-          <div className="dash-stat__top">
-            <span className="dash-stat__icon dash-stat__icon--metric" aria-hidden="true">
-              <MapPin size={16} strokeWidth={2.2} />
-            </span>
-            <div className="dash-stat__label">Face-to-face</div>
-          </div>
-          <div className="dash-stat__value">
-            {empty ? <span className="dash-stat__empty">—</span> : kpis.faceToFace}
-          </div>
-          <div className="dash-stat__caption">Dear Joe location</div>
-        </div>
-
-        <div className="dash-stat dash-stat--metric">
-          <div className="dash-stat__top">
-            <span className="dash-stat__icon dash-stat__icon--metric" aria-hidden="true">
-              <CalendarCheck size={16} strokeWidth={2.2} />
-            </span>
-            <div className="dash-stat__label">Top Preferred Day</div>
-          </div>
-          <div className="dash-stat__value dash-stat__value--text">
-            {kpis.topDay ? kpis.topDay.label : <span className="dash-stat__empty">—</span>}
-          </div>
-          <div className="dash-stat__caption">
-            {kpis.topDay ? `${kpis.topDay.count} invite${kpis.topDay.count === 1 ? '' : 's'}` : 'No day preference yet'}
-          </div>
-        </div>
-
-        <div className="dash-stat dash-stat--metric">
-          <div className="dash-stat__top">
-            <span className="dash-stat__icon dash-stat__icon--metric" aria-hidden="true">
-              <Clock3 size={16} strokeWidth={2.2} />
-            </span>
-            <div className="dash-stat__label">Top Time Window</div>
-          </div>
-          <div className="dash-stat__value dash-stat__value--text">
-            {kpis.topTime ? kpis.topTime.label : <span className="dash-stat__empty">—</span>}
-          </div>
-          <div className="dash-stat__caption">
-            {kpis.topTime
-              ? `${kpis.topTime.count} invite${kpis.topTime.count === 1 ? '' : 's'}`
-              : 'No time preference yet'}
-          </div>
-        </div>
-      </div>
-    </div>
+    <ul className="iv-summary" aria-label="Interview preference snapshot">
+      {items.map((item) => (
+        <li key={item.key} className="iv-summary__item">
+          <span className="iv-summary__label">{item.label}</span>
+          <span className="iv-summary__value">{item.value}</span>
+        </li>
+      ))}
+    </ul>
   );
 }

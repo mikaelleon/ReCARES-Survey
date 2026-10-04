@@ -523,15 +523,9 @@ export function MemberManagement() {
   return (
     <section className="admin-section" aria-labelledby="admin-members-title">
       <div className="admin-member-card__head">
-        <div>
-          <h1 id="admin-members-title" className="admin-section__title">
-            Members and invites
-          </h1>
-          <p className="admin-section__lead" style={{ marginBottom: 0 }}>
-            Invite → pending → active. Links copy manually — app never emails. Reject deletes
-            pending profile; Auth disable still needs Cloud Function.
-          </p>
-        </div>
+        <h1 id="admin-members-title" className="admin-section__title">
+          Members and invites
+        </h1>
         <Button variant="primary" size="sm" onClick={() => setShowInviteModal(true)}>
           <UserPlus size={16} strokeWidth={2.2} aria-hidden="true" />
           Add Member

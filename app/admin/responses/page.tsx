@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
+import { BranchingGuide } from '@/components/admin/BranchingGuide';
+import { DashboardHeaderTools } from '@/components/admin/DashboardHeaderTools';
 import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import { ResponseDetailDrawer } from '@/components/admin/ResponseDetailDrawer';
 import { ResponseEmptyState } from '@/components/admin/ResponseEmptyState';
 import { ResponseViewsPanel } from '@/components/admin/ResponseViewsPanel';
 import { AddWidgetModal } from '@/components/dashboard/AddWidgetModal';
-import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
 import {
   ResponsesToolbar,
   type BranchFilter,
@@ -236,27 +237,43 @@ function ResponsesContent() {
 
   return (
     <>
-      <section className="admin-section" aria-labelledby="admin-responses-title">
-        <h1 id="admin-responses-title" className="admin-section__title">
-          Responses
-        </h1>
-        {usingDemoSample || source !== 'firestore' ? (
-          <p className="admin-section__lead">
-            {usingDemoSample
-              ? 'Demo sample mode (?demo=sample) — not live Firestore.'
-              : source === 'error'
-                ? 'Live Firestore query failed — showing empty until reload succeeds.'
-                : 'Firestore unavailable — showing empty until config/auth is ready.'}
-          </p>
-        ) : null}
-
+      <section className="dash-page resp-page" aria-labelledby="admin-responses-title">
         {!canResponses ? (
-          <p className="admin-section__lead">
-            You do not have permission to view responses. Ask a superadmin if you need access.
-          </p>
+          <>
+            <div className="dash-page__header">
+              <h1 id="admin-responses-title" className="dash-page__title">
+                Responses
+              </h1>
+            </div>
+            <p className="na-error" role="alert">
+              You do not have permission to view responses. Ask a superadmin if you need access.
+            </p>
+          </>
         ) : (
           <>
-            <DateRangePicker value={dateRange} onChange={handleDateChange} />
+            <div className="dash-page__header">
+              <h1 id="admin-responses-title" className="dash-page__title">
+                Responses
+              </h1>
+              <DashboardHeaderTools dateRange={dateRange} onDateRangeChange={handleDateChange} />
+            </div>
+
+            {usingDemoSample ? (
+              <p className="na-error" role="status">
+                Demo sample mode (?demo=sample). Not live Firestore data.
+              </p>
+            ) : null}
+            {source === 'error' && !usingDemoSample ? (
+              <p className="na-error" role="alert">
+                Live Firestore query failed — showing empty until reload succeeds.
+              </p>
+            ) : null}
+            {source !== 'firestore' && source !== 'error' && !usingDemoSample ? (
+              <p className="na-error" role="status">
+                Firestore unavailable — showing empty until config/auth is ready.
+              </p>
+            ) : null}
+
             <ResponsesToolbar
               query={query}
               onQueryChange={setQuery}
@@ -275,41 +292,45 @@ function ResponsesContent() {
               exportDisabled={filtered.length === 0}
             />
 
-            {demoState === 'error' ? (
-              <div className="admin-panel">
-                <ResponseEmptyState
-                  kind="error"
-                  onReset={() => window.location.assign('/admin/responses/')}
-                />
-              </div>
-            ) : demoState === 'loading' ? (
-              <div className="admin-panel">
-                <div className="admin-table-skel" aria-hidden="true">
-                  <div className="admin-table-skel__row" />
-                  <div className="admin-table-skel__row" />
-                  <div className="admin-table-skel__row" />
+            <BranchingGuide />
+
+            <div className="resp-page__body">
+              {demoState === 'error' ? (
+                <div className="admin-panel">
+                  <ResponseEmptyState
+                    kind="error"
+                    onReset={() => window.location.assign('/admin/responses/')}
+                  />
                 </div>
-              </div>
-            ) : (
-              <ResponseViewsPanel
-                records={workingRecords}
-                filtered={filtered}
-                onExport={handleExport}
-                onCopySummary={() => void handleCopySummary()}
-                copyNote={copyNote}
-                exportDisabled={filtered.length === 0}
-                onView={setViewRecord}
-                onDelete={setDeleteTarget}
-                highlightId={flashId}
-                onResetFilters={resetFilters}
-                emptyDataset={workingRecords.length === 0}
-                summaryWidgets={summaryWidgets}
-                onOpenWidgetPicker={() => setWidgetModalOpen(true)}
-                onRemoveWidget={(id) => handleToggleWidget(id)}
-                initialTab={initialTab}
-                focusResponseId={responseIdParam}
-              />
-            )}
+              ) : demoState === 'loading' ? (
+                <div className="admin-panel">
+                  <div className="admin-table-skel" aria-hidden="true">
+                    <div className="admin-table-skel__row" />
+                    <div className="admin-table-skel__row" />
+                    <div className="admin-table-skel__row" />
+                  </div>
+                </div>
+              ) : (
+                <ResponseViewsPanel
+                  records={workingRecords}
+                  filtered={filtered}
+                  onExport={handleExport}
+                  onCopySummary={() => void handleCopySummary()}
+                  copyNote={copyNote}
+                  exportDisabled={filtered.length === 0}
+                  onView={setViewRecord}
+                  onDelete={setDeleteTarget}
+                  highlightId={flashId}
+                  onResetFilters={resetFilters}
+                  emptyDataset={workingRecords.length === 0}
+                  summaryWidgets={summaryWidgets}
+                  onOpenWidgetPicker={() => setWidgetModalOpen(true)}
+                  onRemoveWidget={(id) => handleToggleWidget(id)}
+                  initialTab={initialTab}
+                  focusResponseId={responseIdParam}
+                />
+              )}
+            </div>
           </>
         )}
       </section>

@@ -17,6 +17,11 @@ export interface SampleSection2 {
 
 export interface SampleRecord {
   id: string;
+  /**
+   * Stable 1-based index in chronological order (oldest = 1 → label "001").
+   * Assigned when the response set is loaded or locally mutated.
+   */
+  submissionNumber?: number;
   /** ISO timestamp for sorting / “last 7 days” */
   submittedAt: string;
   /** Display string */

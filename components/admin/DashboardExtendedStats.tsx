@@ -84,15 +84,15 @@ export function DashboardExtendedStats({
             )}
           </div>
           <div className="dash-stat__caption">
-            {empty || service.n === 0 ? (
-              <FieldCodeHint content={FIELD_CODE_HELP.s1s3}>
-                S1–S3 average as % of scale
-              </FieldCodeHint>
-            ) : (
-              <FieldCodeHint content={FIELD_CODE_HELP.s1s3}>
-                S1–S3 mean {service.average}/5 · n={service.respondentN}
-              </FieldCodeHint>
-            )}
+            <FieldCodeHint
+              content={
+                empty || service.n === 0
+                  ? FIELD_CODE_HELP.s1s3
+                  : `${FIELD_CODE_HELP.s1s3} Current average ${service.average}/5 from ${service.respondentN} respondent${service.respondentN === 1 ? '' : 's'}.`
+              }
+            >
+              Office access &amp; response time
+            </FieldCodeHint>
           </div>
           <div className="dash-stat__foot">
             <ResponsesDrilldownLink focus="service-quality" />
@@ -117,8 +117,14 @@ export function DashboardExtendedStats({
             )}
           </div>
           <div className="dash-stat__caption">
-            <FieldCodeHint content={FIELD_CODE_HELP.p4}>
-              P4 optional · based on {wait.answered} answer{wait.answered === 1 ? '' : 's'}
+            <FieldCodeHint
+              content={
+                wait.answered > 0
+                  ? `${FIELD_CODE_HELP.p4} Based on ${wait.answered} answer${wait.answered === 1 ? '' : 's'} in this range.`
+                  : FIELD_CODE_HELP.p4
+              }
+            >
+              Typical wait at the gate
             </FieldCodeHint>
           </div>
           <div className="dash-stat__foot">
@@ -137,7 +143,7 @@ export function DashboardExtendedStats({
             {empty ? <span className="dash-stat__empty">—</span> : interview.yes}
           </div>
           <div className="dash-stat__caption">
-            <FieldCodeHint content={FIELD_CODE_HELP.iv1}>IV1 = Yes</FieldCodeHint>
+            <FieldCodeHint content={FIELD_CODE_HELP.iv1}>Open to a follow-up interview</FieldCodeHint>
           </div>
           <div className="dash-stat__foot">
             <Link href="/admin/interviews/" className="dash-insight__link">
