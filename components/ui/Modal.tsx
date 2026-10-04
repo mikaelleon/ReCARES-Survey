@@ -1,6 +1,7 @@
 'use client';
 
 import type { CSSProperties, MouseEventHandler, ReactNode } from 'react';
+import { AdminOverlayPortal } from '@/components/admin/AdminOverlayPortal';
 
 export interface ModalProps {
   open?: boolean;
@@ -20,7 +21,7 @@ export function Modal({ open = true, onClose, children }: ModalProps) {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 100,
+    zIndex: 200,
   };
 
   const panelStyle: CSSProperties = {
@@ -40,10 +41,12 @@ export function Modal({ open = true, onClose, children }: ModalProps) {
   };
 
   return (
-    <div style={backdropStyle} onClick={onClose}>
-      <div style={panelStyle} onClick={stopPropagation}>
-        {children}
+    <AdminOverlayPortal>
+      <div style={backdropStyle} onClick={onClose}>
+        <div style={panelStyle} onClick={stopPropagation}>
+          {children}
+        </div>
       </div>
-    </div>
+    </AdminOverlayPortal>
   );
 }

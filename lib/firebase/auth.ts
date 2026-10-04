@@ -45,8 +45,8 @@ function requireServices() {
 }
 
 /**
- * Client-side access-code check. Firestore rules do not test this code.
- * Keep the real code in env, not in source.
+ * Sync env fallback. Prefer `validateSignupAccessCode` (Firestore + env).
+ * Keep NEXT_PUBLIC_* only as bootstrap until a superadmin generates a live code.
  */
 export function isValidAccessCode(accessCode: string): boolean {
   const expected = process.env.NEXT_PUBLIC_ADMIN_ACCESS_CODE?.trim();
@@ -64,7 +64,7 @@ function parsePermissions(raw: unknown): AdminPermissions {
 }
 
 function parseRole(raw: unknown): AdminRole | null {
-  if (raw === 'superadmin' || raw === 'admin') return raw;
+  if (raw === 'superadmin' || raw === 'admin' || raw === 'adviser') return raw;
   return null;
 }
 
@@ -91,6 +91,12 @@ export function mapAdminDoc(data: Record<string, unknown>): AdminProfile {
   let status = parseStatus(data.status);
   if (!normalizedRole && status === 'active' && legacyRole === 'superadmin') {
     normalizedRole = 'superadmin';
+  } else if (
+    !normalizedRole &&
+    status === 'active' &&
+    (legacyRole === 'adviser' || legacyRole === 'advisor')
+  ) {
+    normalizedRole = 'adviser';
   } else if (!normalizedRole && status === 'active' && (legacyRole === 'admin' || legacyRole === 'Proponent' || legacyRole)) {
     // Old profiles were immediately active with a free-text role label.
     normalizedRole = legacyRole === 'superadmin' ? 'superadmin' : 'admin';
@@ -186,7 +192,9 @@ async function findAdminProfileByEmail(
     matches.find(
       (item) =>
         item.profile.status === 'active' &&
-        (item.profile.role === 'admin' || item.profile.role === 'superadmin'),
+        (item.profile.role === 'admin' ||
+          item.profile.role === 'adviser' ||
+          item.profile.role === 'superadmin'),
     ) ?? matches[0]
   );
 }
@@ -247,7 +255,9 @@ export async function resolveAdminProfile(
   // Relink onto the Auth UID so security rules (isActiveAdmin / isSuperadmin) work.
   if (
     byEmail.profile.status === 'active' &&
-    (byEmail.profile.role === 'admin' || byEmail.profile.role === 'superadmin')
+    (byEmail.profile.role === 'admin' ||
+      byEmail.profile.role === 'adviser' ||
+      byEmail.profile.role === 'superadmin')
   ) {
     const db = getFirestoreDb();
     if (!db) return byEmail.profile;
@@ -348,7 +358,8 @@ export async function registerAdmin(params: {
   requestedRole: string;
   accessCode: string;
 }): Promise<void> {
-  if (!isValidAccessCode(params.accessCode)) {
+  const { validateSignupAccessCode } = await import('@/lib/firebase/accessCode');
+  if (!(await validateSignupAccessCode(params.accessCode))) {
     throw new Error('Invalid access code.');
   }
   const { auth, db } = requireServices();
@@ -415,7 +426,8 @@ export async function completeGoogleAdmin(params: {
   requestedRole: string;
   accessCode: string;
 }): Promise<void> {
-  if (!isValidAccessCode(params.accessCode)) {
+  const { validateSignupAccessCode } = await import('@/lib/firebase/accessCode');
+  if (!(await validateSignupAccessCode(params.accessCode))) {
     throw new Error('Invalid access code.');
   }
   const { auth, db } = requireServices();

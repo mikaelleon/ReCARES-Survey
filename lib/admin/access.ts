@@ -1,8 +1,43 @@
 import type { Timestamp } from 'firebase/firestore';
 
-export type AdminRole = 'superadmin' | 'admin';
+export type AdminRole = 'superadmin' | 'admin' | 'adviser';
 export type AdminStatus = 'pending' | 'active' | 'removed';
 export type AdminAccessState = 'unauthenticated' | 'pending' | 'removed' | 'active';
+
+export const ADMIN_ROLE_OPTIONS: AdminRole[] = ['admin', 'adviser', 'superadmin'];
+
+/** UI labels — `admin` surfaces as Proponent. */
+export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
+  admin: 'Proponent',
+  adviser: 'Adviser',
+  superadmin: 'Superadmin',
+};
+
+export type RoleTone = 'proponent' | 'adviser' | 'superadmin';
+
+export function roleTone(role: AdminRole | string | null | undefined): RoleTone {
+  const normalized = (role || '').trim().toLowerCase();
+  if (normalized === 'superadmin') return 'superadmin';
+  if (normalized === 'adviser' || normalized === 'advisor') return 'adviser';
+  return 'proponent';
+}
+
+export function roleLabel(role: AdminRole | string | null | undefined): string {
+  const tone = roleTone(role);
+  if (tone === 'superadmin') return ADMIN_ROLE_LABELS.superadmin;
+  if (tone === 'adviser') return ADMIN_ROLE_LABELS.adviser;
+  if (role === 'admin' || !role) return ADMIN_ROLE_LABELS.admin;
+  // Free-text requestedRole (pending) — title-case as shown.
+  return String(role);
+}
+
+export function isAssignableRole(value: string): value is AdminRole {
+  return value === 'admin' || value === 'adviser' || value === 'superadmin';
+}
+
+export function isActiveGrantedRole(role: AdminRole | null | undefined): boolean {
+  return role === 'admin' || role === 'adviser' || role === 'superadmin';
+}
 
 export const DASHBOARD_PERMISSION_KEYS = [
   'responsesDashboard',
@@ -58,7 +93,7 @@ export function getAdminAccessState(
   if (!adminDoc) return 'unauthenticated';
   if (adminDoc.status === 'pending') return 'pending';
   if (adminDoc.status === 'removed') return 'removed';
-  if (adminDoc.status === 'active' && (adminDoc.role === 'admin' || adminDoc.role === 'superadmin')) {
+  if (adminDoc.status === 'active' && isActiveGrantedRole(adminDoc.role)) {
     return 'active';
   }
   return 'unauthenticated';

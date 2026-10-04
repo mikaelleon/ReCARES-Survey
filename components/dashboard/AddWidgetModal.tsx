@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { Activity, BarChart3, Gauge, PieChart, X } from 'lucide-react';
+import { AdminOverlayPortal } from '@/components/admin/AdminOverlayPortal';
 import { Button } from '@/components/ui/Button';
 import {
   SUMMARY_WIDGET_CATALOG,
@@ -39,44 +40,55 @@ export function AddWidgetModal({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const selected = new Set(selectedIds);
 
   return (
-    <div className="widget-modal-root" role="presentation">
-      <button type="button" className="widget-modal__backdrop" aria-label="Close" onClick={onClose} />
-      <div
-        className="widget-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="widget-modal-title"
-      >
-        <header className="widget-modal__head">
-          <div>
-            <h2 id="widget-modal-title" className="widget-modal__title">
-              Add widget
-            </h2>
-            <p className="widget-modal__lead">
-              Pin charts to your Summary view. Choices save to your admin profile only.
-            </p>
-          </div>
-          <button type="button" className="widget-modal__close" onClick={onClose} aria-label="Close">
-            <X size={20} strokeWidth={2.2} aria-hidden="true" />
-          </button>
-        </header>
-        <ul className="widget-modal__grid">
-          {SUMMARY_WIDGET_CATALOG.map((item) => (
-            <WidgetPickCard
-              key={item.id}
-              item={item}
-              selected={selected.has(item.id)}
-              onToggle={() => onToggle(item.id)}
-            />
-          ))}
-        </ul>
+    <AdminOverlayPortal>
+      <div className="widget-modal-root" role="presentation">
+        <button type="button" className="widget-modal__backdrop" aria-label="Close" onClick={onClose} />
+        <div
+          className="widget-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="widget-modal-title"
+        >
+          <header className="widget-modal__head">
+            <div>
+              <h2 id="widget-modal-title" className="widget-modal__title">
+                Add widget
+              </h2>
+              <p className="widget-modal__lead">
+                Pin charts to your Summary view. Choices save to your admin profile only.
+              </p>
+            </div>
+            <button type="button" className="widget-modal__close" onClick={onClose} aria-label="Close">
+              <X size={20} strokeWidth={2.2} aria-hidden="true" />
+            </button>
+          </header>
+          <ul className="widget-modal__grid">
+            {SUMMARY_WIDGET_CATALOG.map((item) => (
+              <WidgetPickCard
+                key={item.id}
+                item={item}
+                selected={selected.has(item.id)}
+                onToggle={() => onToggle(item.id)}
+              />
+            ))}
+          </ul>
+        </div>
       </div>
-    </div>
+    </AdminOverlayPortal>
   );
 }
 

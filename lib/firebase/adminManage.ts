@@ -12,6 +12,7 @@ import {
   where,
 } from 'firebase/firestore';
 import {
+  isAssignableRole,
   type AdminInvite,
   type AdminPermissions,
   type AdminProfile,
@@ -74,7 +75,7 @@ export async function listInvites(): Promise<InviteRow[]> {
     return {
       id: item.id,
       email: typeof data.email === 'string' ? data.email : '',
-      role: data.role === 'superadmin' ? 'superadmin' : 'admin',
+      role: isAssignableRole(String(data.role)) ? (data.role as AdminRole) : 'admin',
       permissions: (data.permissions as AdminPermissions) || {},
       createdAt: (data.createdAt as AdminInvite['createdAt']) ?? null,
       createdBy: typeof data.createdBy === 'string' ? data.createdBy : '',

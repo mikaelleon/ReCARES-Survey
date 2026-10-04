@@ -54,6 +54,7 @@ service cloud.firestore {
         ])
         && request.resource.data.status == 'active'
         && (request.resource.data.role == 'admin'
+          || request.resource.data.role == 'adviser'
           || request.resource.data.role == 'superadmin')
         && emailMatches(request.resource.data.email)
         && exists(/databases/$(database)/documents/admins/$(request.resource.data.linkedFromDocumentId))
@@ -66,10 +67,13 @@ service cloud.firestore {
     }
 
     match /admins/{uid} {
+      // Active admins may read the member directory (roles/emails).
+      // Mutations that grant/remove roles stay superadmin-only below.
       allow read: if request.auth != null
         && (
           request.auth.uid == uid
           || emailMatches(resource.data.email)
+          || isActiveAdmin()
           || isActiveSuperadmin(request.auth.uid)
         );
 
@@ -134,6 +138,16 @@ service cloud.firestore {
     match /interview_contacts/{contactId} {
       allow create: if true;
       allow read, update, delete: if isActiveAdmin();
+    }
+
+    // Signup access code (same public exposure class as NEXT_PUBLIC_ADMIN_ACCESS_CODE).
+    // Superadmin rotates via Members → Access code.
+    match /appConfig/{docId} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+        && isActiveSuperadmin(request.auth.uid)
+        && docId == 'signup';
+      allow delete: if false;
     }
   }
 }

@@ -50,10 +50,15 @@ function InterviewInvitesContent() {
 
       <div className="iv-page__main">
         <InterviewAvailabilityCalendar rows={rows} loading={loading} />
-        <aside className="iv-page__aside dash-insight" aria-label="Preference charts">
-          <div className="iv-prefs__block">
-            <h2 className="dash-insight__title">Preferred weekdays</h2>
-            <ul className="iv-day-bars">
+        <aside className="iv-page__aside" aria-label="Preference charts">
+          <article className="dash-insight iv-prefs-card iv-prefs-card--days">
+            <header className="iv-prefs-card__head">
+              <h2 className="dash-insight__title">Preferred weekdays</h2>
+              {kpis.topDay && kpis.topDay.count > 0 ? (
+                <span className="iv-prefs-card__badge">{kpis.topDay.label}</span>
+              ) : null}
+            </header>
+            <ul className="iv-day-bars iv-day-bars--roomy">
               {kpis.dayCounts.map((d) => {
                 const max = Math.max(1, ...kpis.dayCounts.map((x) => x.count));
                 const pct = Math.round((d.count / max) * 100);
@@ -72,10 +77,16 @@ function InterviewInvitesContent() {
                 );
               })}
             </ul>
-          </div>
-          <div className="iv-prefs__block">
-            <h2 className="dash-insight__title">Time windows</h2>
-            <ul className="iv-day-bars">
+          </article>
+
+          <article className="dash-insight iv-prefs-card iv-prefs-card--times">
+            <header className="iv-prefs-card__head">
+              <h2 className="dash-insight__title">Time windows</h2>
+              {kpis.topTime && kpis.topTime.count > 0 ? (
+                <span className="iv-prefs-card__badge">{kpis.topTime.label}</span>
+              ) : null}
+            </header>
+            <ul className="iv-day-bars iv-day-bars--roomy">
               {kpis.timeCounts.map((t) => {
                 const max = Math.max(1, ...kpis.timeCounts.map((x) => x.count));
                 const pct = Math.round((t.count / max) * 100);
@@ -94,7 +105,7 @@ function InterviewInvitesContent() {
                 );
               })}
             </ul>
-          </div>
+          </article>
         </aside>
       </div>
     </section>

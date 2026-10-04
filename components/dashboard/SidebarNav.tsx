@@ -63,7 +63,7 @@ export function SidebarNav({
   onCollapsedChange?: (collapsed: boolean) => void;
 }) {
   const pathname = usePathname() || '';
-  const { user, isSuperadmin, logout } = useAuth();
+  const { user, logout } = useAuth();
   const { toggleTheme, themeLabel } = useTheme();
   const titleId = useId();
   const menuId = useId();
@@ -135,7 +135,8 @@ export function SidebarNav({
   ];
 
   const displayName = user.name || user.email;
-  const roleTone = user.role === 'superadmin' ? 'amber' : 'emerald';
+  const roleTone =
+    user.role === 'superadmin' ? 'amber' : user.role === 'adviser' ? 'neutral' : 'emerald';
   const statusTone =
     user.status === 'active' ? 'emerald' : user.status === 'removed' ? 'danger' : 'neutral';
 
@@ -220,23 +221,19 @@ export function SidebarNav({
               </AdminNavLink>
             );
           })}
-          {isSuperadmin ? (
-            <>
-              <p className="admin-sidebar__group-label admin-sidebar__group-label--spaced" aria-hidden="true">
-                General
-              </p>
-              <AdminNavLink
-                href="/admin/members/"
-                className={`admin-sidebar__link${isActivePath(pathname, '/admin/members/') ? ' is-active' : ''}`}
-                aria-current={isActivePath(pathname, '/admin/members/') ? 'page' : undefined}
-                title={collapsed ? 'Members & Invites' : undefined}
-                onNavigate={() => onOpenChange(false)}
-              >
-                <Users className="admin-sidebar__icon" size={18} strokeWidth={2.2} aria-hidden="true" />
-                <span className="admin-sidebar__link-label">Members &amp; Invites</span>
-              </AdminNavLink>
-            </>
-          ) : null}
+          <p className="admin-sidebar__group-label admin-sidebar__group-label--spaced" aria-hidden="true">
+            General
+          </p>
+          <AdminNavLink
+            href="/admin/members/"
+            className={`admin-sidebar__link${isActivePath(pathname, '/admin/members/') ? ' is-active' : ''}`}
+            aria-current={isActivePath(pathname, '/admin/members/') ? 'page' : undefined}
+            title={collapsed ? 'Members & Invites' : undefined}
+            onNavigate={() => onOpenChange(false)}
+          >
+            <Users className="admin-sidebar__icon" size={18} strokeWidth={2.2} aria-hidden="true" />
+            <span className="admin-sidebar__link-label">Members &amp; Invites</span>
+          </AdminNavLink>
         </nav>
 
         <div className="admin-sidebar__footer">
