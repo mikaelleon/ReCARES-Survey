@@ -1,5 +1,7 @@
 # Site images
 
+Photographs and optional brand files for the **running website**. For why the site looks the way it does, see [docs/design.md](../../docs/design.md).
+
 Drop final image files here. Next.js serves anything under `public/` at the site root, so a file at:
 
 `public/images/hero-perimeter.jpg`

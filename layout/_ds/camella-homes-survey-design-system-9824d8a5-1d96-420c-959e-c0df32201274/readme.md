@@ -1,8 +1,10 @@
 # ReCARES — Camella Homes Tibig Resident Survey Design System
 
+> **Archive.** This folder is a visual kit from an earlier design export. The **running website** uses `styles/` and `components/`. Current writing for people: [docs/design.md](../../../docs/design.md). Current tokens: [docs/DESIGN-SYSTEM.md](../../../docs/DESIGN-SYSTEM.md). Some claims below (HOA partnership, five-step survey, footer language pills as the live control) may not match the product.
+
 ## Overview
 
-**ReCARES** is a **community needs assessment survey website** for residents of **Camella Homes Tibig, Lipa City** — a student capstone project built with the Camella Homes Tibig Homeowners Association. It collects feedback from two respondent tracks, **homeowners** and **tenants**, through a multi-section form using Likert scales, checkboxes, and dropdowns, in English and Filipino.
+**ReCARES** is a **community needs assessment survey website** for residents of **Camella Homes Tibig, Lipa City** — a student capstone project. Collaboration with the Camella Homes Tibig Homeowners Association is **exploratory**, not an announced partnership. It collects feedback from two respondent tracks, **homeowners** and **tenants**, through a multi-section form using Likert scales, checkboxes, and dropdowns, in English and Filipino.
 
 There are two audiences and they are deliberately kept apart: **residents** taking the survey, and **proponents** managing responses through a CRUD admin panel. Resident-facing navigation carries only resident links; Sign Up / Login live in the footer.
 

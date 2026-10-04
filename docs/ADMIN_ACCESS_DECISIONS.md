@@ -1,5 +1,7 @@
 # Admin access decisions (Section 8)
 
+> **Audience:** developers and superadmins. For a walkthrough without Firestore field names, start with **[Roles and access](roles-and-access.md)** and **[For proponents](for-proponents.md)**.
+
 Recorded for the Superadmin Roles / Permissions / Invites pass. These are deliberate choices, not silent defaults.
 
 ## 1. Bootstrapping the first superadmin

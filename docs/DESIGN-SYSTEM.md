@@ -1,5 +1,7 @@
 # ReCARES design system
 
+> **Audience:** developers and designers copying tokens into another repo. For a non-technical explanation of the same look, read **[Design (plain language)](design.md)**. Product purpose and audiences: **[Overview](overview.md)**.
+
 Portable specification of the ReCARES website as it is built. Copy this file, plus `styles/tokens.css` and the font loading in `app/layout.tsx`, into another repository when the sites must look and behave the same way.
 
 ReCARES is a bilingual community needs-assessment site for residents of Camella Homes Tibig, Lipa City. Two audiences stay visually related and structurally separate:

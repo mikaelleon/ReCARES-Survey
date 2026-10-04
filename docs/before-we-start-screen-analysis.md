@@ -1,5 +1,7 @@
 # Analysis: “Before we start” (Screening) Screen
 
+> **This document is out of date.** It describes an earlier **five-step** survey (including removed Section 4 / Section 5 safety blocks and a “Before we start” screening step). The live instrument is **welcome → consent → extra gates → steps 1–13 → review**. Use **[The survey](survey.md)** as the current source of truth. Keep this file only as a historical design note.
+
 **Scope:** The first numbered survey step after the consent gate — titled **Before we start** in the product UI (`STEPS[0].key === 'screening'`).  
 **Primary sources:** screenshot of the live/UI step, `components/survey/SurveyFlow.tsx`, `components/survey/ScreeningForm.tsx`, `survey/content.ts`, `survey/gatingLogic.ts`, `survey/schema.ts`.  
 **Date of analysis:** 18 Sep 2026.
