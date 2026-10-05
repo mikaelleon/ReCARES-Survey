@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
-  deleteInterviewInvite,
+  addInterviewNote,
   listInterviewInvites,
   updateInterviewContactStatus,
   type InterviewInviteRow,
@@ -67,7 +67,42 @@ export function useInterviewInvites() {
 
   const withdraw = useCallback(
     (id: string, email: string) =>
-      run(id, () => deleteInterviewInvite(id), `Withdrew invite for ${email}.`),
+      run(
+        id,
+        () => updateInterviewContactStatus(id, 'withdrawn'),
+        `Marked ${email} as withdrawn. Contact details stay on this board.`,
+      ),
+    [run],
+  );
+
+  const restore = useCallback(
+    (id: string, email: string) =>
+      run(
+        id,
+        () => updateInterviewContactStatus(id, 'not_contacted'),
+        `Restored ${email} to not contacted.`,
+      ),
+    [run],
+  );
+
+  const addNote = useCallback(
+    (
+      id: string,
+      existing: InterviewInviteRow['notes'],
+      text: string,
+      byUid: string,
+      byName: string,
+    ) =>
+      run(
+        id,
+        () =>
+          addInterviewNote(id, existing ?? [], {
+            text,
+            byUid,
+            byName,
+          }),
+        'Note saved.',
+      ),
     [run],
   );
 
@@ -80,5 +115,7 @@ export function useInterviewInvites() {
     markContacted,
     confirm,
     withdraw,
+    restore,
+    addNote,
   };
 }

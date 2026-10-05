@@ -25,9 +25,9 @@ If the login card never finishes loading, turn down Brave Shields or allow `fire
 
 ## The workspace layout
 
-- **Green sidebar** (left): Dashboard, Responses, Interview Invites, Members & Invites. On a phone this is a menu.
+- **Green sidebar** (left): Dashboard, Responses, Interview Invites, Inquiries, Members & Invites, and (superadmin) Survey control. On a phone this is a menu.
 - **Account footer:** your name, role, status, **Log out**, and **Back to resident site**.
-- **Bell:** notifications placeholder (empty until real alerts exist).
+- **Bell:** unread inquiries, uncontacted interview opt-ins, pending access requests (superadmin), and a notice if the survey is paused or closed.
 - **Moon:** dark / light theme.
 
 You only see Responses or Interview Invites if a superadmin turned on those **permissions** for your account (superadmins see everything).
@@ -48,6 +48,8 @@ Combined counts for the date range at the top.
 Below that: charts, recent submissions, and (for superadmins) recent member activity.
 
 **Date range** is remembered for the browser session and is shared with Responses. Empty range shows a calm dash (“—”), not a flashing zero.
+
+The dashboard also shows whether the public survey is **open, paused, or closed**, and which **instrument version** (for example `v1`) new submissions will be stamped with.
 
 **Demo data:** the live dashboard reads Firestore. A sample dataset is only for explicit demo (`?demo=sample` on Responses). Do not treat demo rows as community results.
 
@@ -73,8 +75,11 @@ Gated fields the resident was not asked show as **`not_shown`**.
 
 People who agreed to a follow-up interview.
 
-- Board columns follow outreach: not contacted → contacted → confirmed, plus withdrawn.
-- A calendar highlights preferred weekdays.
+- Board columns follow outreach: not contacted → contacted → confirmed → **withdrawn**.
+- Withdrawn people stay on the board so the team does not email them again. Restore moves them back to not contacted. This does **not** delete the record.
+- Each card has **Notes** for call/email history (team only — never joined to anonymous survey answers).
+- **Export contacts CSV** downloads this roster only (email, preferences, status, notes). It is not the full survey CSV.
+- A calendar highlights preferred weekdays (open invites only).
 - Only people with the **Interview invites** permission (or superadmin) can change statuses.
 
 ---
@@ -95,6 +100,30 @@ Only a **superadmin** can:
 The board is a kanban: **Invited → Pending approval → Active → Removed**.
 
 Invites do **not** send email from this app. Copy the signup link and send it yourself.
+
+---
+
+## Inquiries
+
+Messages from the homepage contact form. All active admins can open this list.
+
+- Statuses: new, in progress, resolved
+- Use **mailto** on the email to reply from your own inbox — the app does not send email
+- New and in-progress items appear on the **bell**
+
+---
+
+## Survey control (superadmin)
+
+Pause or close the public survey without a code change.
+
+| Window | What residents see |
+| --- | --- |
+| **Open** | They can start and submit. Each new response is stamped with the **instrument version** (starts at `v1`). |
+| **Paused** | A message that the survey is on hold. Submits are blocked in the app and in Firestore rules. |
+| **Closed** | A message that the study has ended. Same block as paused. |
+
+Bump the instrument version only when the question set actually changes, so charts can still be split later.
 
 ---
 

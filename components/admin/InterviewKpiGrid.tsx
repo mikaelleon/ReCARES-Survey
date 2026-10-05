@@ -1,6 +1,7 @@
 'use client';
 
 import { SkelLine } from '@/components/ui/Skeleton';
+import type { InterviewKpis } from '@/lib/admin/interviewAnalytics';
 
 /**
  * Compact preference strip — pipeline counts live on the Kanban columns.

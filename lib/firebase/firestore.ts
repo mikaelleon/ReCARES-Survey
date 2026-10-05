@@ -2,6 +2,8 @@
 
 import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase/config';
+import { getSurveyConfig } from '@/lib/firebase/surveyConfig';
+import { surveyAcceptsResponses } from '@/survey/instrument';
 import type { InterviewInvitation, SurveyResponseDocument } from '@/survey/schema';
 
 function stripUndefined<T>(value: T): T {
@@ -15,7 +17,15 @@ function stripUndefined<T>(value: T): T {
 export async function submitNeedsAssessment(data: SurveyResponseDocument): Promise<void> {
   const db = getFirestoreDb();
   if (!db) return;
-  await setDoc(doc(db, 'needsAssessmentResponses', data.responseId), stripUndefined(data));
+  const config = await getSurveyConfig();
+  if (!surveyAcceptsResponses(config.status)) {
+    throw new Error('SURVEY_WINDOW_CLOSED');
+  }
+  const stamped: SurveyResponseDocument = {
+    ...data,
+    instrumentVersion: data.instrumentVersion || config.instrumentVersion,
+  };
+  await setDoc(doc(db, 'needsAssessmentResponses', stamped.responseId), stripUndefined(stamped));
 }
 
 /**
@@ -39,7 +49,14 @@ export async function submitInquiry(data: {
   email: string;
   message: string;
 }): Promise<void> {
-  // inquiries is not in the deployed rules yet, so this stays a no-op.
-  void data;
+  const db = getFirestoreDb();
+  if (!db) {
+    throw new Error('INQUIRY_UNAVAILABLE');
+  }
+  await addDoc(collection(db, 'inquiries'), {
+    ...stripUndefined(data),
+    status: 'new',
+    createdAt: serverTimestamp(),
+  });
 }
 

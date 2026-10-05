@@ -120,8 +120,13 @@ service cloud.firestore {
         && resource.data.used == false;
     }
 
+    function surveyAcceptsResponses() {
+      return !exists(/databases/$(database)/documents/appConfig/survey)
+        || get(/databases/$(database)/documents/appConfig/survey).data.status == 'open';
+    }
+
     match /needsAssessmentResponses/{responseId} {
-      allow create: if true;
+      allow create: if surveyAcceptsResponses();
       allow read, update, delete: if isActiveAdmin();
     }
 
@@ -140,13 +145,17 @@ service cloud.firestore {
       allow read, update, delete: if isActiveAdmin();
     }
 
-    // Signup access code (same public exposure class as NEXT_PUBLIC_ADMIN_ACCESS_CODE).
-    // Superadmin rotates via Members → Access code.
+    match /inquiries/{inquiryId} {
+      allow create: if true;
+      allow read, update, delete: if isActiveAdmin();
+    }
+
+    // Signup access code + survey window (public read; superadmin write).
     match /appConfig/{docId} {
       allow read: if true;
       allow create, update: if request.auth != null
         && isActiveSuperadmin(request.auth.uid)
-        && docId == 'signup';
+        && (docId == 'signup' || docId == 'survey');
       allow delete: if false;
     }
   }

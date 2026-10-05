@@ -2,6 +2,7 @@
 
 import { AdminNavLink } from '@/components/admin/AdminNavLink';
 import type { DashboardSimpleSnapshot } from '@/lib/admin/dashboardView';
+import type { SampleRecord } from '@/lib/admin/sampleResponses';
 import { RecentSubmissionsTable } from '@/components/admin/RecentSubmissionsTable';
 import { ChartSkeleton } from '@/components/ui/Skeleton';
 

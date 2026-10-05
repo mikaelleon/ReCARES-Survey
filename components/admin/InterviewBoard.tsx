@@ -7,8 +7,10 @@ import {
   Inbox,
   Mail,
   MessageCircle,
-  Trash2,
+  StickyNote,
+  UserRoundX,
 } from 'lucide-react';
+import { InterviewNotesDrawer } from '@/components/admin/InterviewNotesDrawer';
 import type { InterviewInviteRow } from '@/lib/firebase/interviewManage';
 import type { InterviewContactStatus } from '@/survey/schema';
 
@@ -31,6 +33,11 @@ const COLUMNS: {
     id: 'confirmed',
     title: 'Confirmed',
     shortTitle: 'Confirmed',
+  },
+  {
+    id: 'withdrawn',
+    title: 'Withdrawn',
+    shortTitle: 'Withdrawn',
   },
 ];
 
@@ -64,6 +71,7 @@ function ColumnIcon({ id }: { id: InterviewContactStatus }) {
   if (id === 'pending_confirmation') {
     return <MessageCircle size={16} strokeWidth={2.2} aria-hidden="true" />;
   }
+  if (id === 'withdrawn') return <UserRoundX size={16} strokeWidth={2.2} aria-hidden="true" />;
   return <CalendarCheck size={16} strokeWidth={2.2} aria-hidden="true" />;
 }
 
@@ -74,6 +82,8 @@ function InviteCard({
   onMarkContacted,
   onConfirm,
   onWithdraw,
+  onRestore,
+  onOpenNotes,
 }: {
   row: InterviewInviteRow;
   columnId: InterviewContactStatus;
@@ -81,7 +91,10 @@ function InviteCard({
   onMarkContacted: (id: string, email: string) => void;
   onConfirm: (id: string, email: string) => void;
   onWithdraw: (id: string, email: string) => void;
+  onRestore: (id: string, email: string) => void;
+  onOpenNotes: (row: InterviewInviteRow) => void;
 }) {
+  const noteCount = row.notes?.length ?? 0;
   return (
     <article className="admin-kanban-card">
       <div className="admin-kanban-card__top admin-kanban-card__top--polish">
@@ -134,24 +147,41 @@ function InviteCard({
             Confirm
           </button>
         ) : null}
+        {columnId === 'withdrawn' ? (
+          <button
+            type="button"
+            className="admin-kanban-icon-btn admin-kanban-icon-btn--primary"
+            disabled={busyId === row.id}
+            onClick={() => onRestore(row.id, row.email)}
+          >
+            Restore
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="admin-kanban-icon-btn"
+            disabled={busyId === row.id}
+            onClick={() => {
+              if (
+                !window.confirm(
+                  `Mark ${row.email} as withdrawn? Their contact details stay here so you do not reach out again by mistake.`,
+                )
+              ) {
+                return;
+              }
+              onWithdraw(row.id, row.email);
+            }}
+          >
+            Withdraw
+          </button>
+        )}
         <button
           type="button"
-          className="admin-kanban-icon-btn admin-kanban-icon-btn--danger"
-          aria-label={`Withdraw invite for ${row.email}`}
-          title="Withdraw"
-          disabled={busyId === row.id}
-          onClick={() => {
-            if (
-              !window.confirm(
-                `Withdraw interview interest for ${row.email}? This deletes the invite record.`,
-              )
-            ) {
-              return;
-            }
-            onWithdraw(row.id, row.email);
-          }}
+          className="admin-kanban-icon-btn"
+          onClick={() => onOpenNotes(row)}
         >
-          <Trash2 size={14} aria-hidden="true" />
+          <StickyNote size={14} aria-hidden="true" />
+          Notes{noteCount > 0 ? ` (${noteCount})` : ''}
         </button>
       </div>
     </article>
@@ -159,7 +189,7 @@ function InviteCard({
 }
 
 /**
- * Interview Invites Kanban — three columns on desktop; tabbed single column on mobile.
+ * Interview Invites Kanban — four columns on desktop; tabbed single column on mobile.
  */
 export function InterviewBoard({
   rows,
@@ -167,18 +197,32 @@ export function InterviewBoard({
   onMarkContacted,
   onConfirm,
   onWithdraw,
+  onRestore,
+  onAddNote,
 }: {
   rows: InterviewInviteRow[];
   busyId: string | null;
   onMarkContacted: (id: string, email: string) => void;
   onConfirm: (id: string, email: string) => void;
   onWithdraw: (id: string, email: string) => void;
+  onRestore: (id: string, email: string) => void;
+  onAddNote: (id: string, existing: InterviewInviteRow['notes'], text: string) => void;
 }) {
+  const [notesRow, setNotesRow] = useState<InterviewInviteRow | null>(null);
+
+  useEffect(() => {
+    setNotesRow((current) => {
+      if (!current) return null;
+      return rows.find((r) => r.id === current.id) ?? current;
+    });
+  }, [rows]);
+
   const byColumn = useMemo(() => {
     const map: Record<InterviewContactStatus, InterviewInviteRow[]> = {
       not_contacted: [],
       pending_confirmation: [],
       confirmed: [],
+      withdrawn: [],
     };
     for (const row of rows) {
       map[row.contactStatus].push(row);
@@ -189,7 +233,8 @@ export function InterviewBoard({
   const defaultTab = useMemo<InterviewContactStatus>(() => {
     if (byColumn.not_contacted.length > 0) return 'not_contacted';
     if (byColumn.pending_confirmation.length > 0) return 'pending_confirmation';
-    return 'confirmed';
+    if (byColumn.confirmed.length > 0) return 'confirmed';
+    return 'withdrawn';
   }, [byColumn]);
 
   const [mobileTab, setMobileTab] = useState<InterviewContactStatus>(defaultTab);
@@ -200,9 +245,17 @@ export function InterviewBoard({
 
   const mobileList = byColumn[mobileTab];
 
+  const cardProps = {
+    busyId,
+    onMarkContacted,
+    onConfirm,
+    onWithdraw,
+    onRestore,
+    onOpenNotes: setNotesRow,
+  };
+
   return (
     <div className="interview-board">
-      {/* Desktop: three-column board */}
       <div
         className="admin-kanban interview-board__desktop"
         role="region"
@@ -234,15 +287,7 @@ export function InterviewBoard({
                     </div>
                   ) : (
                     list.map((row) => (
-                      <InviteCard
-                        key={row.id}
-                        row={row}
-                        columnId={col.id}
-                        busyId={busyId}
-                        onMarkContacted={onMarkContacted}
-                        onConfirm={onConfirm}
-                        onWithdraw={onWithdraw}
-                      />
+                      <InviteCard key={row.id} row={row} columnId={col.id} {...cardProps} />
                     ))
                   )}
                 </div>
@@ -252,7 +297,6 @@ export function InterviewBoard({
         </div>
       </div>
 
-      {/* Mobile: tabbed single column */}
       <div
         className="interview-board__mobile"
         role="region"
@@ -287,19 +331,21 @@ export function InterviewBoard({
             </div>
           ) : (
             mobileList.map((row) => (
-              <InviteCard
-                key={row.id}
-                row={row}
-                columnId={mobileTab}
-                busyId={busyId}
-                onMarkContacted={onMarkContacted}
-                onConfirm={onConfirm}
-                onWithdraw={onWithdraw}
-              />
+              <InviteCard key={row.id} row={row} columnId={mobileTab} {...cardProps} />
             ))
           )}
         </div>
       </div>
+
+      <InterviewNotesDrawer
+        row={notesRow}
+        busy={Boolean(notesRow && busyId === notesRow.id)}
+        onClose={() => setNotesRow(null)}
+        onAddNote={(text) => {
+          if (!notesRow) return;
+          onAddNote(notesRow.id, notesRow.notes, text);
+        }}
+      />
     </div>
   );
 }

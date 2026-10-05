@@ -27,6 +27,7 @@ export interface InterviewKpis {
   notContacted: number;
   pending: number;
   confirmed: number;
+  withdrawn: number;
   online: number;
   faceToFace: number;
   topDay: { label: string; count: number } | null;
@@ -40,7 +41,7 @@ export interface AvailabilityDay {
   isoDate: string;
   weekday: string;
   count: number;
-  /** Open invites (not yet confirmed) who prefer this weekday. */
+  /** Open invites (not confirmed or withdrawn) who prefer this weekday. */
   matches: InterviewInviteRow[];
   isPeak: boolean;
   inMonth: boolean;
@@ -76,6 +77,7 @@ export function computeInterviewKpis(rows: InterviewInviteRow[]): InterviewKpis 
     notContacted: rows.filter((r) => r.contactStatus === 'not_contacted').length,
     pending: rows.filter((r) => r.contactStatus === 'pending_confirmation').length,
     confirmed: rows.filter((r) => r.contactStatus === 'confirmed').length,
+    withdrawn: rows.filter((r) => r.contactStatus === 'withdrawn').length,
     online: rows.filter((r) => r.interviewFormat === 'Online').length,
     faceToFace: rows.filter((r) => r.interviewFormat === 'Face-to-face').length,
     topDay: topOf(dayCounts),
@@ -101,7 +103,9 @@ export function buildAvailabilityMonth(
   year: number,
   monthIndex: number,
 ): { days: AvailabilityDay[]; maxCount: number; peakWeekday: string | null } {
-  const open = rows.filter((r) => r.contactStatus !== 'confirmed');
+  const open = rows.filter(
+    (r) => r.contactStatus !== 'confirmed' && r.contactStatus !== 'withdrawn',
+  );
   const first = new Date(year, monthIndex, 1);
   const startPad = first.getDay(); // 0 = Sunday
   const gridStart = new Date(year, monthIndex, 1 - startPad);
@@ -137,3 +141,37 @@ export function buildAvailabilityMonth(
 
   return { days, maxCount, peakWeekday };
 }
+
+export function buildInterviewContactsCsv(rows: InterviewInviteRow[]): string {
+  const header = [
+    'email',
+    'interviewFormat',
+    'preferredDays',
+    'preferredTime',
+    'preferredTimeOther',
+    'submittedAt',
+    'contactStatus',
+    'confirmedDateTime',
+    'notes',
+  ];
+  const body = rows.map((row) => {
+    const notes = (row.notes ?? [])
+      .map((n) => `${n.at} ${n.byName}: ${n.text}`)
+      .join(' | ');
+    return [
+      row.email,
+      row.interviewFormat,
+      row.preferredDays.join('; '),
+      row.preferredTime,
+      row.preferredTimeOther ?? '',
+      row.submittedAt,
+      row.contactStatus,
+      row.confirmedDateTime ?? '',
+      notes,
+    ]
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(',');
+  });
+  return [header.join(','), ...body].join('\n');
+}
+

@@ -110,15 +110,15 @@ Do not treat “PWD screening” as interchangeable with “Accessibility path.�
 
 **Blocked until:** the resident survey records a real `startedAt` (or equivalent) when the respondent begins, then persists it on the same response document. Do **not** fabricate average duration from `submittedDate` alone or from client-side clocks that are never stored.
 
-## 10. Configuration page (flagged — do not build yet)
+## 10. Survey control (built)
 
-The SaaS mockup sidebar includes a Configuration item with no ReCARES equivalent. If added later, scope must be real and bounded — likely candidates already present in the project:
+**Choice: bounded Survey control page for superadmin — not an empty Configuration dump.**
 
-- Perimeter / development-phase reference list (`PHASE_OPTIONS` / survey content)
-- Admin signup access code
-- Survey published content version
+`/admin/survey/` writes `appConfig/survey` (`status`, `instrumentVersion`, `residentMessage`). Public read; superadmin write. Missing doc = **open** so existing deployments keep accepting responses.
 
-Do **not** ship an empty Configuration page just to fill a nav slot. Confirm product scope before building.
+Resident submit is blocked in `SurveyFlow` and `submitNeedsAssessment`, and Firestore `needsAssessmentResponses` create requires `status == 'open'` (or no survey doc). Each submit stores `instrumentVersion`.
+
+Access code rotation stays on Members. Phase labels stay in code.
 
 ## 11. Top KPI row — no “See on Responses” drill-downs (intentional)
 

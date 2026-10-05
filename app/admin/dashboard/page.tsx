@@ -28,6 +28,7 @@ import {
 } from '@/lib/admin/dateRange';
 import { PHASE_OPTIONS } from '@/lib/admin/sampleResponses';
 import { useSurveyResponses } from '@/lib/admin/useSurveyResponses';
+import { useSurveyWindow } from '@/lib/admin/useSurveyWindow';
 import { useAuth } from '@/lib/auth/AuthProvider';
 
 function phaseBuckets(records: { phase: string }[]) {
@@ -52,6 +53,7 @@ function firstName(name?: string, email?: string): string {
 function DashboardContent() {
   const { can, user } = useAuth();
   const { records, status, source, usingDemoSample } = useSurveyResponses();
+  const { config: surveyWindow, acceptsResponses } = useSurveyWindow();
   const [dateRange, setDateRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
   const [viewMode, setViewMode] = useState<DashboardViewMode>('detailed');
 
@@ -103,9 +105,28 @@ function DashboardContent() {
       ) : (
         <>
           <div className="dash-page__header">
-            <h1 id="admin-overview-title" className="dash-page__title">
-              Dashboard <span className="dash-page__greet">· Hi, {greetName}!</span>
-            </h1>
+            <div>
+              <h1 id="admin-overview-title" className="dash-page__title">
+                Dashboard <span className="dash-page__greet">· Hi, {greetName}!</span>
+              </h1>
+              <p
+                className={`survey-window-chip survey-window-chip--${surveyWindow.status}`}
+                style={{ marginTop: 8 }}
+                title={
+                  acceptsResponses
+                    ? 'New submissions are being accepted'
+                    : 'Residents cannot submit until a superadmin reopens the survey'
+                }
+              >
+                {acceptsResponses
+                  ? 'Survey open'
+                  : surveyWindow.status === 'paused'
+                    ? 'Survey paused'
+                    : 'Survey closed'}
+                <span aria-hidden="true"> · </span>
+                {surveyWindow.instrumentVersion}
+              </p>
+            </div>
             <DashboardHeaderTools
               dateRange={dateRange}
               onDateRangeChange={(next) => {

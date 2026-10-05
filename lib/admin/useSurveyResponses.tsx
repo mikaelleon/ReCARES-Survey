@@ -44,6 +44,8 @@ function mapDocs(
         lastStepReached: data.lastStepReached ?? 0,
         deviceClass: data.deviceClass || 'phone',
         answers: data.answers || {},
+        instrumentVersion:
+          typeof data.instrumentVersion === 'string' ? data.instrumentVersion : undefined,
       });
     })
     .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))

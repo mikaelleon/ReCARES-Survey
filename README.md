@@ -113,7 +113,9 @@ Addresses use a **trailing slash** because the live site is a static export (pla
 | `/admin/dashboard/` | Approved team | Combined results |
 | `/admin/responses/` | Team with permission | Tables and charts of answers |
 | `/admin/interviews/` | Team with permission | People who opted in to an interview |
+| `/admin/inquiries/` | Approved team | Homepage contact messages |
 | `/admin/members/` | Superadmin (manage); others (view) | People, invites, access code |
+| `/admin/survey/` | Superadmin | Pause/close the survey and set instrument version |
 
 ---
 

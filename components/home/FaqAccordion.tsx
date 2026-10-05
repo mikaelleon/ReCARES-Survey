@@ -10,12 +10,14 @@ import {
 } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { useSurveyWindow } from '@/lib/admin/useSurveyWindow';
 import { FAQ } from '@/survey/content';
 
 /**
  * Single-expand FAQ accordion with measured panels, keyboard nav, and CTA pulse.
  */
 export function FaqAccordion() {
+  const { acceptsResponses, config } = useSurveyWindow();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [panelHeights, setPanelHeights] = useState<number[]>([]);
   const [hovered, setHovered] = useState<number | null>(null);
@@ -243,7 +245,11 @@ export function FaqAccordion() {
             onAnimationEnd={() => setPulseCta(false)}
           >
             <Button variant="primary" href="/survey" fullWidth>
-              Start the survey
+              {acceptsResponses
+                ? 'Start the survey'
+                : config.status === 'paused'
+                  ? 'Survey paused'
+                  : 'Survey closed'}
             </Button>
           </div>
         </aside>

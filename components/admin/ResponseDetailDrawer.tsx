@@ -89,6 +89,10 @@ export function ResponseDetailDrawer({
                 <dt>Language</dt>
                 <dd>{record.language}</dd>
               </div>
+              <div>
+                <dt>Instrument</dt>
+                <dd>{record.instrumentVersion || 'Not stored'}</dd>
+              </div>
             </dl>
 
             <h3 className="admin-drawer__h">Gated branches</h3>

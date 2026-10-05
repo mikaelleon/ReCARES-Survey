@@ -91,6 +91,8 @@ deploys rules and indexes together.
 | Team profiles | `admins` | Signed-in user (own pending/invite create); superadmin manages |
 | Invites | `invites` | Superadmin create; invitee may mark used |
 | Signup access code | `appConfig/signup` | Public read; superadmin update |
+| Survey window + version | `appConfig/survey` | Public read; superadmin update. Missing doc means open |
+| Homepage inquiries | `inquiries` | Anyone (create). Active admins read and update status |
 | Older leftover names | `responses`, `interview_contacts` | Still allowed in rules for compatibility; the **current** app writes the collections above |
 
 Firestore location in `firebase.json`: **`asia-southeast1`**, database `(default)`.
@@ -111,7 +113,7 @@ Do not put secrets that must stay server-only into `NEXT_PUBLIC_*`. The access c
 - [ ] Superadmin can sign in on the hosted URL
 - [ ] Brave/Shields users see the Firestore notice if they block the database
 - [ ] Footer “Proponent access” is the only public admin door
-- [ ] Inquiry form: do not promise delivery until `inquiries` rules exist (they are not in the current `firestore.rules`)
+- [ ] Inquiry form: a test message appears on `/admin/inquiries/`
 
 ---
 

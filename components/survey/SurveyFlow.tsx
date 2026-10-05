@@ -10,6 +10,7 @@ import { ReviewSummary } from '@/components/survey/ReviewSummary';
 import { REQUIRED_NOTE } from '@/components/survey/SurveyFields';
 import { STEP_TITLES, StepView } from '@/components/survey/SurveySteps';
 import { submitNeedsAssessment } from '@/lib/firebase/firestore';
+import { getSurveyConfig } from '@/lib/firebase/surveyConfig';
 import { normalizeAnswers } from '@/survey/answers';
 import { isHomeownerBranch } from '@/survey/branching';
 import {
@@ -20,6 +21,12 @@ import {
   writeDraft,
   type SurveyDraft,
 } from '@/survey/draft';
+import {
+  DEFAULT_SURVEY_CONFIG,
+  residentSurveyMessage,
+  surveyAcceptsResponses,
+  type SurveyConfig,
+} from '@/survey/instrument';
 import type { SurveyAnswers, SurveyResponseDocument } from '@/survey/schema';
 import { CHOOSE_ONE, validateStep } from '@/survey/validate';
 
@@ -58,11 +65,13 @@ export function SurveyFlow() {
   const [honeypot, setHoneypot] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [surveyConfig, setSurveyConfig] = useState<SurveyConfig>(DEFAULT_SURVEY_CONFIG);
 
   useEffect(() => {
     const draft = readDraft();
     setHasDraft(Boolean(draft));
     setAlreadySent(deviceAlreadySubmitted());
+    void getSurveyConfig().then(setSurveyConfig);
     setReady(true);
   }, []);
 
@@ -84,6 +93,7 @@ export function SurveyFlow() {
   };
 
   const resume = () => {
+    if (!surveyAcceptsResponses(surveyConfig.status)) return;
     const draft = readDraft();
     if (!draft) {
       setScreen('consent');
@@ -102,6 +112,7 @@ export function SurveyFlow() {
   };
 
   const startOver = () => {
+    if (!surveyAcceptsResponses(surveyConfig.status)) return;
     clearDraft();
     setAnswers({});
     setStep(1);
@@ -173,6 +184,12 @@ export function SurveyFlow() {
       setSubmitError('Please review your answers and try again.');
       return;
     }
+    const liveConfig = await getSurveyConfig();
+    setSurveyConfig(liveConfig);
+    if (!surveyAcceptsResponses(liveConfig.status)) {
+      setSubmitError(residentSurveyMessage(liveConfig));
+      return;
+    }
     if (Date.now() - consentedAt < MIN_MS_BEFORE_SUBMIT) {
       setSubmitError('Please take a moment to review your answers before submitting.');
       return;
@@ -185,6 +202,7 @@ export function SurveyFlow() {
       lastStepReached: 13,
       deviceClass: deviceClass(),
       answers: finalAnswers,
+      instrumentVersion: liveConfig.instrumentVersion,
     };
     setSubmitting(true);
     setSubmitError('');
@@ -193,8 +211,18 @@ export function SurveyFlow() {
       clearDraft();
       markSubmittedOnDevice();
       router.push('/survey/thank-you');
-    } catch {
-      setSubmitError('The response could not be saved. Please try again.');
+    } catch (error) {
+      const code =
+        error && typeof error === 'object' && 'code' in error
+          ? String((error as { code: string }).code)
+          : '';
+      const closed =
+        error instanceof Error && error.message === 'SURVEY_WINDOW_CLOSED';
+      if (closed || code === 'permission-denied') {
+        setSubmitError(residentSurveyMessage(liveConfig));
+      } else {
+        setSubmitError('The response could not be saved. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -260,6 +288,14 @@ export function SurveyFlow() {
       {screen === 'welcome' ? (
         <>
           <div className="survey-questions">
+            {!surveyAcceptsResponses(surveyConfig.status) ? (
+              <div className="survey-card">
+                <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>
+                  {residentSurveyMessage(surveyConfig)}
+                </p>
+              </div>
+            ) : (
+              <>
             {alreadySent ? (
               <p className="na-intro">
                 A response was already sent from this device. Continue only if you are a different
@@ -281,7 +317,10 @@ export function SurveyFlow() {
                 Questions about the study? Use the <Link href="/#contact">inquiry form</Link>.
               </p>
             </div>
+              </>
+            )}
           </div>
+          {surveyAcceptsResponses(surveyConfig.status) ? (
           <div className="survey-actions">
             {hasDraft ? (
               <Button variant="primary" onClick={resume}>
@@ -292,6 +331,13 @@ export function SurveyFlow() {
               Start the survey
             </Button>
           </div>
+          ) : (
+            <div className="survey-actions">
+              <Button variant="secondary" href="/">
+                Back to home
+              </Button>
+            </div>
+          )}
         </>
       ) : null}
 

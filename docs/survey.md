@@ -17,7 +17,9 @@ Residents see a progress bar and step titles, not field codes. Field codes (A1, 
 | Review | Summary | Check answers, then submit |
 | Thank you | Confirmation | Optional interview note if they opted in |
 
-Drafts are written to **this device’s browser storage** after consent, on later steps. **Firestore** (the online database) receives a document only on successful submit.
+Drafts are written to **this device’s browser storage** after consent, on later steps. **Firestore** (the online database) receives a document only on successful submit. Each saved response includes an **instrument version** (for example `v1`) so later edits to the question set can be compared fairly.
+
+A superadmin can **pause** or **close** the survey from **Survey control**. While it is not open, residents see a short message instead of the start buttons, and new submissions are refused.
 
 ---
 

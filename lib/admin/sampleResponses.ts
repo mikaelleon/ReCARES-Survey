@@ -48,6 +48,8 @@ export interface SampleRecord {
   deviceClass?: 'phone' | 'computer';
   /** Server status. Partials are not written today (drafts are localStorage-only). */
   status?: 'complete' | 'partial';
+  /** Instrument id at submit time, when stored. */
+  instrumentVersion?: string;
 }
 
 export const SAMPLE_RESPONSES: SampleRecord[] = [

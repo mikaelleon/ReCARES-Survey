@@ -12,6 +12,7 @@ import { getFirestoreDb } from '@/lib/firebase/config';
 import type {
   InterviewContactStatus,
   InterviewInvitation,
+  InterviewNote,
 } from '@/survey/schema';
 
 export type InterviewInviteRow = InterviewInvitation & { id: string };
@@ -40,8 +41,29 @@ function asTimestampString(value: unknown): string {
 }
 
 function normalizeStatus(raw: unknown): InterviewContactStatus {
-  if (raw === 'pending_confirmation' || raw === 'confirmed') return raw;
+  if (
+    raw === 'pending_confirmation' ||
+    raw === 'confirmed' ||
+    raw === 'withdrawn' ||
+    raw === 'not_contacted'
+  ) {
+    return raw;
+  }
   return 'not_contacted';
+}
+
+function mapNote(raw: unknown): InterviewNote | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const item = raw as Record<string, unknown>;
+  const text = typeof item.text === 'string' ? item.text.trim() : '';
+  if (!text) return null;
+  return {
+    id: typeof item.id === 'string' ? item.id : `note-${asTimestampString(item.at) || Date.now()}`,
+    text: text.slice(0, 2000),
+    at: asTimestampString(item.at) || new Date().toISOString(),
+    byUid: typeof item.byUid === 'string' ? item.byUid : '',
+    byName: typeof item.byName === 'string' ? item.byName : 'Team',
+  };
 }
 
 function mapDoc(id: string, data: Record<string, unknown>): InterviewInviteRow {
@@ -53,6 +75,10 @@ function mapDoc(id: string, data: Record<string, unknown>): InterviewInviteRow {
     preferredTime === 'Other'
       ? preferredTime
       : 'Other';
+
+  const notes = Array.isArray(data.notes)
+    ? data.notes.map(mapNote).filter((n): n is InterviewNote => Boolean(n))
+    : [];
 
   return {
     id,
@@ -68,6 +94,7 @@ function mapDoc(id: string, data: Record<string, unknown>): InterviewInviteRow {
     contactStatus: normalizeStatus(data.contactStatus),
     confirmedDateTime:
       typeof data.confirmedDateTime === 'string' ? data.confirmedDateTime : undefined,
+    notes,
   };
 }
 
@@ -90,6 +117,25 @@ export async function updateInterviewContactStatus(
     payload.confirmedDateTime = new Date().toISOString();
   }
   await updateDoc(doc(db, 'interviewInterest', id), payload);
+}
+
+export async function addInterviewNote(
+  id: string,
+  existing: InterviewNote[],
+  note: Omit<InterviewNote, 'id' | 'at'> & { text: string },
+): Promise<void> {
+  const db = requireDb();
+  const next: InterviewNote = {
+    id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `n-${Date.now()}`,
+    text: note.text.trim().slice(0, 2000),
+    at: new Date().toISOString(),
+    byUid: note.byUid,
+    byName: note.byName.trim() || 'Team',
+  };
+  if (!next.text) return;
+  await updateDoc(doc(db, 'interviewInterest', id), {
+    notes: [...existing, next],
+  });
 }
 
 export async function deleteInterviewInvite(id: string): Promise<void> {

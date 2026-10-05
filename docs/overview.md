@@ -57,11 +57,11 @@ The **resident** side is public. The **proponent** side is locked behind a Googl
 | --- | --- |
 | Live incident reporting to guards or the HOA | The FAQ states this clearly so residents do not treat the survey as a ticket |
 | Names, block, lot, or street of a household | The instrument is designed not to collect those |
-| Automatic emails from the inquiry form | The form is prepared; Firestore rules for inquiries are not fully deployed yet |
+| Automatic emails from the inquiry form | The form stores a message for the team. They reply from their own inbox — the site does not send mail |
 | Disabling a Firebase Auth user when someone is removed | Soft-remove in the app; Auth disable still needs a Cloud Function |
 | Average time to finish the survey | Start time is not stored yet — do not invent it from the submit date |
 
-Recorded “do not build yet” items also live in [Admin access decisions](ADMIN_ACCESS_DECISIONS.md) (average completion time, empty Configuration page).
+Recorded “do not build yet” items also live in [Admin access decisions](ADMIN_ACCESS_DECISIONS.md) (average completion time).
 
 ---
 

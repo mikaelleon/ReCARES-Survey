@@ -6,6 +6,7 @@ import { AdminTopBar } from '@/components/dashboard/AdminTopBar';
 import { SidebarNav } from '@/components/dashboard/SidebarNav';
 import { AdminWorkspaceLoader } from '@/components/admin/AdminWorkspaceLoader';
 import { FirestoreBlockedNotice } from '@/components/admin/FirestoreBlockedNotice';
+import { AdminNotificationsProvider } from '@/lib/admin/useAdminNotifications';
 import { SurveyResponsesProvider } from '@/lib/admin/useSurveyResponses';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useAdminRouteGate } from '@/lib/auth/useAdminRouteGate';
@@ -59,6 +60,7 @@ export function AdminAppShell({
   }
 
   return (
+    <AdminNotificationsProvider>
     <div
       className={`admin-app${collapsed ? ' is-sidebar-collapsed' : ''}${fitViewport ? ' is-fit-viewport' : ''}`}
     >
@@ -82,5 +84,6 @@ export function AdminAppShell({
         </div>
       </div>
     </div>
+    </AdminNotificationsProvider>
   );
 }

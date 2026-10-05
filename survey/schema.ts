@@ -122,6 +122,8 @@ export interface SurveyResponseDocument {
   lastStepReached: number;
   deviceClass: 'phone' | 'computer';
   answers: Partial<SurveyAnswers>;
+  /** Published instrument id at submit time (see survey/instrument.ts). */
+  instrumentVersion?: string;
   /**
    * Not currently written. Average Completion Time needs a real start timestamp
    * captured when the resident begins the survey — do not invent durations from
@@ -133,7 +135,16 @@ export interface SurveyResponseDocument {
 export type InterviewContactStatus =
   | 'not_contacted'
   | 'pending_confirmation'
-  | 'confirmed';
+  | 'confirmed'
+  | 'withdrawn';
+
+export interface InterviewNote {
+  id: string;
+  text: string;
+  at: string;
+  byUid: string;
+  byName: string;
+}
 
 /** Separate from SurveyResponseDocument. No response ID, no survey answers. */
 export interface InterviewInvitation {
@@ -147,4 +158,15 @@ export interface InterviewInvitation {
   contactStatus: InterviewContactStatus;
   /** Set when contactStatus moves to confirmed. */
   confirmedDateTime?: string;
+  notes?: InterviewNote[];
+}
+
+export type InquiryStatus = 'new' | 'in_progress' | 'resolved';
+
+export interface InquiryDocument {
+  name?: string;
+  email: string;
+  message: string;
+  status: InquiryStatus;
+  createdAt?: string;
 }

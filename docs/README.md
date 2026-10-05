@@ -27,7 +27,7 @@ The repository [README](../README.md) is the short front door. This folder is th
 | [Overview](overview.md) | Purpose, audiences, scope |
 | [For residents](for-residents.md) | Homepage, FAQ, survey, chat, inquiry form |
 | [The survey](survey.md) | Steps, branching, drafts, submit |
-| [For proponents](for-proponents.md) | Dashboard, Responses, Interviews, Members |
+| [For proponents](for-proponents.md) | Dashboard, Responses, Interviews, Inquiries, Survey control, Members |
 | [Roles and access](roles-and-access.md) | Superadmin, Proponent, Adviser, invites, pending |
 | [Data and privacy](data-and-privacy.md) | What is stored, drafts, HOA, Brave/ad blockers |
 | [Glossary](glossary.md) | Shared vocabulary |

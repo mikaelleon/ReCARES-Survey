@@ -25,7 +25,8 @@ Words used the same way across ReCARES documentation.
 | **Static export** | The site is built into plain files in `out/` for Firebase Hosting. |
 | **RAGbot** | Chat helper on the resident site for survey/FAQ questions. |
 | **Phase** | Subdivision phase (1–6, including Heights, Highlands, Eastgrove). |
-| **Field code** | Short id such as A1 or IV1 used by the team; hidden from residents. |
+| **Instrument version** | Short label (for example `v1`) stored on each submitted survey so later question-set changes can be compared. |
+| **Survey window** | Open, paused, or closed. Only open accepts new submissions. |
 | **Kanban** | Column board (for example Invited / Pending / Active / Removed). |
 | **Shields** | Brave browser tracker blocking. Often breaks Firestore until lowered for this site. |
 

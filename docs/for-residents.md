@@ -62,9 +62,7 @@ If the chat widget does not appear, an ad blocker or browser shield may be hidin
 
 ## Inquiry form
 
-At the bottom of the homepage you can send a message to the student team. Give an email so they can reply.
-
-Until the team finishes wiring the inquiries collection, treat this as “best effort”: if a message does not go through, use the contact path your adviser published for the live study.
+At the bottom of the homepage you can send a message to the student team. Give an email so they can reply. If sending fails, you will see an error on the form — try again, or turn down browser shields for this site.
 
 ---
 
@@ -82,4 +80,5 @@ Until the team finishes wiring the inquiries collection, treat this as “best e
 | You are not a Camella Homes Tibig resident | You may stop. The study is written for that community. |
 | You do not want to continue | Leave before Submit. Nothing is stored as a finished response until you submit. |
 | You worry the HOA will see *your* answers | Individual responses are not given to the HOA with a household attached. See [Data and privacy](data-and-privacy.md). |
+| The site says the survey is paused or closed | The team has temporarily stopped new answers. You can still read the homepage and send an inquiry. |
 | You need help using the form | A trusted person may read the questions and enter the answers you choose. The survey says this on the household screens. |

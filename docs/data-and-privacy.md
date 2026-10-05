@@ -24,6 +24,7 @@ A submitted response is a document in Firestore collection **`needsAssessmentRes
 - Answers to the questions they were shown
 - **`not_shown`** for gated questions they were never asked
 - A submit date
+- The **instrument version** in use at submit time
 - Language and similar metadata used for analysis
 - **No** name, block, lot, or street fields in the current schema
 
@@ -43,7 +44,8 @@ Approved proponents see:
 
 - Combined counts and charts
 - Individual *anonymous* submissions (phase, resident type, answers) for analysis
-- Interview opt-ins, if any, including whatever contact the resident typed
+- Interview opt-ins, if any, including whatever contact the resident typed, plus team notes
+- Homepage inquiries
 - Team member emails and roles (Members page)
 
 They should not export CSV onto shared drives carelessly. Treat exports like research records.
@@ -60,7 +62,7 @@ Residents do **not** create these accounts to take the survey.
 
 ## Inquiry form
 
-The homepage can collect a name (optional), email, and message. Writing to an `inquiries` collection is prepared in code but **not fully enabled in deployed rules**. Do not promise residents that a message is guaranteed to arrive until that wiring is finished and tested.
+The homepage can collect a name (optional), email, and message. Those messages are stored in Firestore **`inquiries`** and show up on **Inquiries** in the admin workspace. The team replies from their own email. If a send fails (for example Firestore is blocked), the form shows an error instead of a false “sent” message.
 
 ---
 

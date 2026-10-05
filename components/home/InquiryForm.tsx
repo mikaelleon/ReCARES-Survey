@@ -47,6 +47,8 @@ export function InquiryForm() {
       setSent(true);
       setMessage('');
       setMessageError(null);
+    } catch {
+      setMessageError('The message could not be sent. Please try again in a moment.');
     } finally {
       setSubmitting(false);
     }

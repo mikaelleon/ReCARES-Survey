@@ -7,6 +7,7 @@ import {
   type AvailabilityDay,
 } from '@/lib/admin/interviewAnalytics';
 import { ChartSkeleton } from '@/components/ui/Skeleton';
+import type { InterviewInviteRow } from '@/lib/firebase/interviewManage';
 
 const WEEK_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 

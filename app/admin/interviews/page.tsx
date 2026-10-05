@@ -2,17 +2,25 @@
 
 import { useMemo } from 'react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
+import { Button } from '@/components/ui/Button';
 import { InterviewAvailabilityCalendar } from '@/components/admin/InterviewAvailabilityCalendar';
 import { InterviewBoard } from '@/components/admin/InterviewBoard';
 import { InterviewKpiGrid } from '@/components/admin/InterviewKpiGrid';
-import { computeInterviewKpis } from '@/lib/admin/interviewAnalytics';
+import { computeInterviewKpis, buildInterviewContactsCsv } from '@/lib/admin/interviewAnalytics';
+import { downloadCsv } from '@/lib/admin/csvDownload';
 import { useInterviewInvites } from '@/lib/admin/useInterviewInvites';
 import { useAuth } from '@/lib/auth/AuthProvider';
 
 function InterviewInvitesContent() {
-  const { rows, loading, error, note, busyId, markContacted, confirm, withdraw } =
+  const { user } = useAuth();
+  const { rows, loading, error, note, busyId, markContacted, confirm, withdraw, restore, addNote } =
     useInterviewInvites();
   const kpis = useMemo(() => computeInterviewKpis(rows), [rows]);
+
+  const handleExport = () => {
+    if (rows.length === 0) return;
+    downloadCsv('recares-interview-contacts.csv', buildInterviewContactsCsv(rows));
+  };
 
   return (
     <section className="dash-page iv-page" aria-labelledby="admin-interview-title">
@@ -20,7 +28,12 @@ function InterviewInvitesContent() {
         <h1 id="admin-interview-title" className="dash-page__title">
           Interview Invites
         </h1>
-        <InterviewKpiGrid kpis={kpis} loading={loading} />
+        <div className="iv-page__header-tools">
+          <InterviewKpiGrid kpis={kpis} loading={loading} />
+          <Button variant="secondary" onClick={handleExport} disabled={rows.length === 0}>
+            Export contacts CSV
+          </Button>
+        </div>
       </div>
 
       {error ? (
@@ -41,6 +54,10 @@ function InterviewInvitesContent() {
           onMarkContacted={(id, email) => void markContacted(id, email)}
           onConfirm={(id, email) => void confirm(id, email)}
           onWithdraw={(id, email) => void withdraw(id, email)}
+          onRestore={(id, email) => void restore(id, email)}
+          onAddNote={(id, existing, text) =>
+            void addNote(id, existing, text, user?.uid || '', user?.name || user?.email || 'Team')
+          }
         />
       ) : (
         <div className="skel-region" aria-busy="true" role="status">

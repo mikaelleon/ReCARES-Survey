@@ -14,6 +14,7 @@ import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { RecaresLogo } from '@/components/brand/RecaresLogo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { useSurveyWindow } from '@/lib/admin/useSurveyWindow';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type SectionKey = 'home' | 'about' | 'faq';
@@ -35,6 +36,9 @@ function prefersReducedMotion(): boolean {
 export function Navbar() {
   const pathname = usePathname();
   const { toggleTheme, themeLabel } = useTheme();
+  const { acceptsResponses, config } = useSurveyWindow();
+  const surveyCta =
+    acceptsResponses ? 'Start the survey' : config.status === 'paused' ? 'Survey paused' : 'Survey closed';
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState<SectionKey>('home');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -210,7 +214,7 @@ export function Navbar() {
           alignItems: 'center',
         }}
       >
-        Start the survey
+        {surveyCta}
       </Link>
     </>
   );
@@ -396,7 +400,7 @@ export function Navbar() {
                 justifyContent: 'center',
               }}
             >
-              Start the survey
+              {surveyCta}
             </Link>
           </div>
         </div>

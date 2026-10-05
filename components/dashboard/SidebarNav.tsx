@@ -16,13 +16,16 @@ import {
   Bell,
   CalendarHeart,
   ChevronLeft,
+  Inbox,
   LayoutDashboard,
   LogOut,
+  Settings2,
   Users,
   X,
 } from 'lucide-react';
 import { AdminNavLink } from '@/components/admin/AdminNavLink';
 import { roleLabel } from '@/lib/admin/access';
+import { useAdminNotifications } from '@/lib/admin/useAdminNotifications';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { goToAdminLogin } from '@/lib/firebase/auth';
@@ -63,7 +66,8 @@ export function SidebarNav({
   onCollapsedChange?: (collapsed: boolean) => void;
 }) {
   const pathname = usePathname() || '';
-  const { user, logout, can } = useAuth();
+  const { user, logout, can, isSuperadmin } = useAuth();
+  const { items: notifications, unreadCount, markSeen } = useAdminNotifications();
   const { toggleTheme, themeLabel } = useTheme();
   const titleId = useId();
   const bellId = useId();
@@ -134,8 +138,10 @@ export function SidebarNav({
     },
   ];
 
-  const manageLinks: { href: string; label: string; Icon: IconType }[] = [
-    { href: '/admin/members/', label: 'Members & Invites', Icon: Users },
+  const manageLinks: { href: string; label: string; Icon: IconType; show: boolean }[] = [
+    { href: '/admin/inquiries/', label: 'Inquiries', Icon: Inbox, show: true },
+    { href: '/admin/members/', label: 'Members & Invites', Icon: Users, show: true },
+    { href: '/admin/survey/', label: 'Survey control', Icon: Settings2, show: isSuperadmin },
   ];
 
   const displayName = user.name || user.email.split('@')[0] || user.email;
@@ -229,7 +235,9 @@ export function SidebarNav({
           <p className="admin-sidebar__group-label admin-sidebar__group-label--spaced" aria-hidden="true">
             Manage
           </p>
-          {manageLinks.map(({ href, label, Icon }) => {
+          {manageLinks
+            .filter((link) => link.show)
+            .map(({ href, label, Icon }) => {
             const active = isActivePath(pathname, href);
             return (
               <AdminNavLink
@@ -253,19 +261,48 @@ export function SidebarNav({
               <button
                 type="button"
                 className={`admin-sidebar__icon-btn${bellOpen ? ' is-active' : ''}`}
-                aria-label="Notifications"
+                aria-label={
+                  unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'
+                }
                 aria-expanded={bellOpen}
                 aria-controls={bellId}
                 onClick={() => {
-                  setBellOpen((v) => !v);
+                  setBellOpen((v) => {
+                    const next = !v;
+                    if (next) markSeen();
+                    return next;
+                  });
                 }}
               >
                 <Bell size={18} strokeWidth={2.2} aria-hidden="true" />
+                {unreadCount > 0 ? (
+                  <span className="admin-sidebar__bell-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                ) : null}
               </button>
               {bellOpen ? (
                 <div id={bellId} className="admin-sidebar__popover" role="status">
                   <p className="admin-sidebar__popover-title">Notifications</p>
-                  <p className="admin-sidebar__popover-empty">No notifications yet.</p>
+                  {notifications.length === 0 ? (
+                    <p className="admin-sidebar__popover-empty">No notifications yet.</p>
+                  ) : (
+                    <ul className="admin-sidebar__notify-list">
+                      {notifications.map((item) => (
+                        <li key={item.id}>
+                          <AdminNavLink
+                            href={item.href}
+                            className="admin-sidebar__notify-link"
+                            onNavigate={() => {
+                              setBellOpen(false);
+                              onOpenChange(false);
+                            }}
+                          >
+                            <span className="admin-sidebar__notify-title">{item.title}</span>
+                            <span className="admin-sidebar__notify-detail">{item.detail}</span>
+                          </AdminNavLink>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               ) : null}
             </div>

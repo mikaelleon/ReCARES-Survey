@@ -171,6 +171,7 @@ export function buildCsv(records: SampleRecord[]): string {
     'permitsExtended',
     'deviceDependent',
     'language',
+    'instrumentVersion',
     ...LIKERT_LABELS.map((l) => l.key),
   ];
   const rows = records.map((r) =>
@@ -186,6 +187,7 @@ export function buildCsv(records: SampleRecord[]): string {
       r.permitsExtended,
       r.deviceDependent,
       r.language,
+      r.instrumentVersion ?? '',
       ...LIKERT_LABELS.map((l) => r.section2[l.key]),
     ]
       .map((v) => `"${String(v).replace(/"/g, '""')}"`)

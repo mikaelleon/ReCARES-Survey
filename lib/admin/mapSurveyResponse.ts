@@ -79,10 +79,12 @@ export function mapSurveyDocToSample(
     answers: a,
     deviceClass: doc.deviceClass === 'computer' ? 'computer' : 'phone',
     status: doc.status === 'partial' ? 'partial' : 'complete',
+    instrumentVersion: doc.instrumentVersion,
     screeningNotes: [
       `Status ${doc.status}`,
       `Last step ${doc.lastStepReached}`,
       `Device ${doc.deviceClass}`,
+      doc.instrumentVersion ? `Instrument ${doc.instrumentVersion}` : 'Instrument version not stored',
     ],
   };
 }
