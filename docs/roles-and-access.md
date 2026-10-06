@@ -82,6 +82,7 @@ Full field table: [Admin access decisions](ADMIN_ACCESS_DECISIONS.md) §1.
 
 - Environment fallback: `NEXT_PUBLIC_ADMIN_ACCESS_CODE` in `.env.local`.
 - After a superadmin generates a code in Members, Firestore `appConfig/signup` **wins**.
+- Matching is **case-insensitive** (stored and compared in uppercase).
 - Treat the code like a shared password for *requesting* access, not like a Dashboard key.
 
 ---

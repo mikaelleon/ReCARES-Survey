@@ -83,6 +83,7 @@ function InviteCard({
   onConfirm,
   onWithdraw,
   onRestore,
+  onDelete,
   onOpenNotes,
 }: {
   row: InterviewInviteRow;
@@ -92,6 +93,7 @@ function InviteCard({
   onConfirm: (id: string, email: string) => void;
   onWithdraw: (id: string, email: string) => void;
   onRestore: (id: string, email: string) => void;
+  onDelete: (id: string, email: string) => void;
   onOpenNotes: (row: InterviewInviteRow) => void;
 }) {
   const noteCount = row.notes?.length ?? 0;
@@ -148,14 +150,33 @@ function InviteCard({
           </button>
         ) : null}
         {columnId === 'withdrawn' ? (
-          <button
-            type="button"
-            className="admin-kanban-icon-btn admin-kanban-icon-btn--primary"
-            disabled={busyId === row.id}
-            onClick={() => onRestore(row.id, row.email)}
-          >
-            Restore
-          </button>
+          <>
+            <button
+              type="button"
+              className="admin-kanban-icon-btn admin-kanban-icon-btn--primary"
+              disabled={busyId === row.id}
+              onClick={() => onRestore(row.id, row.email)}
+            >
+              Restore
+            </button>
+            <button
+              type="button"
+              className="admin-kanban-icon-btn"
+              disabled={busyId === row.id}
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    `Permanently delete the interview invite for ${row.email}? This cannot be undone.`,
+                  )
+                ) {
+                  return;
+                }
+                onDelete(row.id, row.email);
+              }}
+            >
+              Delete
+            </button>
+          </>
         ) : (
           <button
             type="button"
@@ -198,6 +219,7 @@ export function InterviewBoard({
   onConfirm,
   onWithdraw,
   onRestore,
+  onDelete,
   onAddNote,
 }: {
   rows: InterviewInviteRow[];
@@ -206,6 +228,7 @@ export function InterviewBoard({
   onConfirm: (id: string, email: string) => void;
   onWithdraw: (id: string, email: string) => void;
   onRestore: (id: string, email: string) => void;
+  onDelete: (id: string, email: string) => void;
   onAddNote: (id: string, existing: InterviewInviteRow['notes'], text: string) => void;
 }) {
   const [notesRow, setNotesRow] = useState<InterviewInviteRow | null>(null);
@@ -251,6 +274,7 @@ export function InterviewBoard({
     onConfirm,
     onWithdraw,
     onRestore,
+    onDelete,
     onOpenNotes: setNotesRow,
   };
 

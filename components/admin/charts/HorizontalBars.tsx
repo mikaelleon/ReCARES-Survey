@@ -9,10 +9,12 @@ export function HorizontalBars({
   buckets,
   animate = true,
   valueMode = 'inline',
+  wrapLabels = false,
 }: {
   buckets: CountBucket[];
   animate?: boolean;
   valueMode?: 'inline' | 'tooltip';
+  wrapLabels?: boolean;
 }) {
   const max = Math.max(...buckets.map((b) => b.count), 1);
   const hideValues = valueMode === 'tooltip';
@@ -22,7 +24,9 @@ export function HorizontalBars({
   }
 
   return (
-    <ul className={`gf-hbar${hideValues ? ' gf-hbar--tooltip-values' : ''}`}>
+    <ul
+      className={`gf-hbar${wrapLabels ? ' gf-hbar--wrap' : ''}${hideValues ? ' gf-hbar--tooltip-values' : ''}`}
+    >
       {buckets.map((b) => {
         const widthPct = (b.count / max) * 100;
         const empty = b.count <= 0;

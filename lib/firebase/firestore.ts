@@ -1,6 +1,6 @@
 'use client';
 
-import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase/config';
 import { getSurveyConfig } from '@/lib/firebase/surveyConfig';
 import { surveyAcceptsResponses } from '@/survey/instrument';
@@ -26,6 +26,15 @@ export async function submitNeedsAssessment(data: SurveyResponseDocument): Promi
     instrumentVersion: data.instrumentVersion || config.instrumentVersion,
   };
   await setDoc(doc(db, 'needsAssessmentResponses', stamped.responseId), stripUndefined(stamped));
+}
+
+/** Active-admin delete of a submitted needs-assessment document. */
+export async function deleteNeedsAssessment(responseId: string): Promise<void> {
+  const db = getFirestoreDb();
+  if (!db) throw new Error('Firebase is not configured.');
+  const id = responseId.trim();
+  if (!id) throw new Error('Missing response id.');
+  await deleteDoc(doc(db, 'needsAssessmentResponses', id));
 }
 
 /**

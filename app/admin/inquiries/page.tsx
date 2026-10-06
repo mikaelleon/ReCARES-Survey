@@ -5,6 +5,7 @@ import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import {
+  deleteInquiry,
   listInquiries,
   updateInquiryStatus,
   type InquiryRow,
@@ -12,6 +13,7 @@ import {
 import type { InquiryStatus } from '@/survey/schema';
 
 const STATUS_FILTER = ['All', 'New', 'In progress', 'Resolved'];
+const SORT_OPTIONS = ['Newest first', 'Oldest first', 'From (A–Z)'];
 
 function filterLabel(status: InquiryStatus): string {
   if (status === 'in_progress') return 'In progress';
@@ -47,6 +49,7 @@ function InquiryInboxContent() {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [filter, setFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('Newest first');
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -62,9 +65,18 @@ function InquiryInboxContent() {
 
   const shown = useMemo(() => {
     const wanted = statusFromFilter(filter);
-    if (wanted === 'all') return rows;
-    return rows.filter((r) => r.status === wanted);
-  }, [rows, filter]);
+    const list = wanted === 'all' ? [...rows] : rows.filter((r) => r.status === wanted);
+    list.sort((a, b) => {
+      if (sortBy === 'From (A–Z)') {
+        const nameA = (a.name || a.email).toLowerCase();
+        const nameB = (b.name || b.email).toLowerCase();
+        return nameA.localeCompare(nameB);
+      }
+      const cmp = a.createdMs - b.createdMs;
+      return sortBy === 'Oldest first' ? cmp : -cmp;
+    });
+    return list;
+  }, [rows, filter, sortBy]);
 
   const setStatus = async (row: InquiryRow, status: InquiryStatus) => {
     setBusyId(row.id);
@@ -81,25 +93,53 @@ function InquiryInboxContent() {
     }
   };
 
+  const removeInquiry = async (row: InquiryRow) => {
+    if (
+      !window.confirm(
+        `Delete the inquiry from ${row.email || row.name || 'this person'}? This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    setBusyId(row.id);
+    setError(null);
+    setNote(null);
+    try {
+      await deleteInquiry(row.id);
+      await refresh();
+      setNote(`Deleted inquiry from ${row.email || row.name || 'unknown sender'}.`);
+    } catch {
+      setError('Could not delete that inquiry.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
-    <section className="dash-page" aria-labelledby="inquiries-title">
+    <section className="dash-page inquiries-page" aria-labelledby="inquiries-title">
       <div className="dash-page__header">
         <h1 id="inquiries-title" className="dash-page__title">
           Inquiries
         </h1>
-        <div className="admin-toolbar__select" style={{ minWidth: 180 }}>
-          <Select
-            label="Status"
-            options={STATUS_FILTER}
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          />
+        <div className="dash-page__tools">
+          <div className="admin-toolbar__select inquiries-page__filter">
+            <Select
+              label="Status"
+              options={STATUS_FILTER}
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+          </div>
+          <div className="admin-toolbar__select inquiries-page__filter">
+            <Select
+              label="Sort"
+              options={SORT_OPTIONS}
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            />
+          </div>
         </div>
       </div>
-      <p className="na-intro" style={{ maxWidth: 640, marginBottom: 16 }}>
-        Messages from the public contact form. Reply from your own email. This inbox does not send
-        mail automatically.
-      </p>
       {error ? (
         <p className="na-error" role="alert">
           {error}
@@ -111,9 +151,13 @@ function InquiryInboxContent() {
         </p>
       ) : null}
       {loading ? (
-        <p className="na-intro">Loading inquiries…</p>
+        <p className="na-intro" role="status">
+          Loading inquiries…
+        </p>
       ) : shown.length === 0 ? (
-        <p className="na-intro">No inquiries in this filter.</p>
+        <p className="na-intro" role="status">
+          No inquiries in this filter.
+        </p>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
@@ -134,7 +178,7 @@ function InquiryInboxContent() {
                     <div>{row.name || '—'}</div>
                     <a href={`mailto:${row.email}`}>{row.email}</a>
                   </td>
-                  <td style={{ maxWidth: 360, whiteSpace: 'pre-wrap' }}>{row.message}</td>
+                  <td className="inquiries-page__message">{row.message}</td>
                   <td>{filterLabel(row.status)}</td>
                   <td>
                     <div className="inquiry-row-actions">
@@ -167,6 +211,14 @@ function InquiryInboxContent() {
                           Reopen
                         </Button>
                       )}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={busyId === row.id}
+                        onClick={() => void removeInquiry(row)}
+                      >
+                        Delete
+                      </Button>
                     </div>
                   </td>
                 </tr>

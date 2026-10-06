@@ -120,8 +120,11 @@ export default function AdminCompletePage() {
           <Input
             label="Access code"
             value={code}
-            onChange={(e) => setCode(e.target.value)}
+            spellCheck={false}
+            autoComplete="one-time-code"
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
             required
+            helperText="Case does not matter."
           />
           {formError ? (
             <p role="alert" style={{ margin: 0, color: 'var(--bright-amber)', fontSize: 14 }}>

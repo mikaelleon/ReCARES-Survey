@@ -49,9 +49,9 @@ function requireServices() {
  * Keep NEXT_PUBLIC_* only as bootstrap until a superadmin generates a live code.
  */
 export function isValidAccessCode(accessCode: string): boolean {
-  const expected = process.env.NEXT_PUBLIC_ADMIN_ACCESS_CODE?.trim();
+  const expected = process.env.NEXT_PUBLIC_ADMIN_ACCESS_CODE?.trim().toUpperCase();
   if (!expected) return false;
-  return accessCode.trim() === expected;
+  return accessCode.trim().toUpperCase() === expected;
 }
 
 function parsePermissions(raw: unknown): AdminPermissions {

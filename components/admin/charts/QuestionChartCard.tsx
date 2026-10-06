@@ -73,9 +73,10 @@ export function QuestionChartCard({
             className="gf-card__copy"
             onClick={() => void handleCopy()}
             aria-label={`Copy chart for ${title}`}
+            title={copied ? 'Copied' : 'Copy chart'}
           >
             <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
-            {copied ? 'Copied' : 'Copy chart'}
+            <span className="gf-card__copy-label">{copied ? 'Copied' : 'Copy chart'}</span>
           </button>
           {onRemove ? (
             <button
@@ -94,7 +95,7 @@ export function QuestionChartCard({
         {kind === 'pie' ? (
           <PieChart buckets={buckets} animate={seen} />
         ) : (
-          <HorizontalBars buckets={buckets} animate={seen} />
+          <HorizontalBars buckets={buckets} animate={seen} wrapLabels />
         )}
       </div>
     </article>

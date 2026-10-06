@@ -74,9 +74,10 @@ export function ExtendedWidgetCard({
             className="gf-card__copy"
             onClick={() => void handleCopy()}
             aria-label={`Copy chart for ${title}`}
+            title={copied ? 'Copied' : 'Copy chart'}
           >
             <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
-            {copied ? 'Copied' : 'Copy chart'}
+            <span className="gf-card__copy-label">{copied ? 'Copied' : 'Copy chart'}</span>
           </button>
           {onRemove ? (
             <button
@@ -110,6 +111,7 @@ function renderBody(
           .join('\n'),
         node: (
           <MeanBars
+            wrapLabels
             highlightTop={3}
             items={ranked.map((f) => ({
               label: f.label,
@@ -184,6 +186,7 @@ function renderBody(
             <PieChart buckets={c1} />
             {sat.n > 0 ? (
               <MeanBars
+                wrapLabels
                 items={[
                   { label: 'Permit process is clear (C2)', mean: sat.noticeAvg, n: sat.n },
                   { label: 'Notices reach me in time (C3)', mean: sat.rerouteAvg, n: sat.n },
@@ -217,7 +220,12 @@ function renderBody(
         copyText: buckets.map((b) => `${b.label}: ${b.count} (${b.pct}%)`).join('\n'),
         node: (
           <>
-            <AccessibilityNeedsRows buckets={buckets} baseN={baseN} />
+            <AccessibilityNeedsRows
+              buckets={buckets}
+              baseN={baseN}
+              wrapLabels
+              valueMode="inline"
+            />
             <p className="gf-chart-hint">
               Base = respondents with AC1 present (A4 path), not all survey respondents.
             </p>
@@ -230,7 +238,7 @@ function renderBody(
       return {
         hint: 'Problems beyond what this survey asked about directly',
         copyText: buckets.map((b) => `${b.label}: ${b.count} (${b.pct}%)`).join('\n'),
-        node: <HorizontalBars buckets={buckets} />,
+        node: <HorizontalBars buckets={buckets} wrapLabels />,
       };
     }
     case 'registration-ai': {
@@ -246,6 +254,7 @@ function renderBody(
         node: (
           <div className="ext-composite">
             <MeanBars
+              wrapLabels
               items={[
                 {
                   label: 'Comfortable uploading ID photo (R1)',
@@ -299,9 +308,9 @@ function renderBody(
               </div>
             ) : null}
             <h4 className="ext-health__sub">Device class</h4>
-            <HorizontalBars buckets={h.deviceBuckets} />
+            <HorizontalBars buckets={h.deviceBuckets} wrapLabels />
             <h4 className="ext-health__sub">Language</h4>
-            <HorizontalBars buckets={h.languageBuckets} />
+            <HorizontalBars buckets={h.languageBuckets} wrapLabels />
           </div>
         ),
       };

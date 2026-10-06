@@ -205,12 +205,12 @@ export default function AdminSignupPage() {
                 disabled={busy}
                 spellCheck={false}
                 onChange={(e) => {
-                  setCode(e.target.value);
+                  setCode(e.target.value.toUpperCase());
                   if (codeError) setCodeError(null);
                 }}
                 required
                 error={codeError}
-                helperText="Required for self-registration. Access stays pending until approved."
+                helperText="Required for self-registration. Access stays pending until approved. Case does not matter."
               />
             </>
           ) : null}

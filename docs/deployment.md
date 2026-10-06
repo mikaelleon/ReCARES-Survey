@@ -91,7 +91,7 @@ deploys rules and indexes together.
 | Team profiles | `admins` | Signed-in user (own pending/invite create); superadmin manages |
 | Invites | `invites` | Superadmin create; invitee may mark used |
 | Signup access code | `appConfig/signup` | Public read; superadmin update |
-| Survey window + version | `appConfig/survey` | Public read; superadmin update. Missing doc means open |
+| Survey window + version | `appConfig/survey` | Public read; superadmin create/update/delete. Missing doc means open |
 | Homepage inquiries | `inquiries` | Anyone (create). Active admins read and update status |
 | Older leftover names | `responses`, `interview_contacts` | Still allowed in rules for compatibility; the **current** app writes the collections above |
 

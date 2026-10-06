@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   addInterviewNote,
+  deleteInterviewInvite,
   listInterviewInvites,
   updateInterviewContactStatus,
   type InterviewInviteRow,
@@ -85,6 +86,16 @@ export function useInterviewInvites() {
     [run],
   );
 
+  const remove = useCallback(
+    (id: string, email: string) =>
+      run(
+        id,
+        () => deleteInterviewInvite(id),
+        `Deleted interview invite for ${email}.`,
+      ),
+    [run],
+  );
+
   const addNote = useCallback(
     (
       id: string,
@@ -116,6 +127,7 @@ export function useInterviewInvites() {
     confirm,
     withdraw,
     restore,
+    remove,
     addNote,
   };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { collection, doc, getDocs, updateDoc, type Timestamp } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, updateDoc, type Timestamp } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase/config';
 import type { InquiryStatus } from '@/survey/schema';
 
@@ -68,4 +68,9 @@ export async function listInquiries(): Promise<InquiryRow[]> {
 export async function updateInquiryStatus(id: string, status: InquiryStatus): Promise<void> {
   const db = requireDb();
   await updateDoc(doc(db, 'inquiries', id), { status });
+}
+
+export async function deleteInquiry(id: string): Promise<void> {
+  const db = requireDb();
+  await deleteDoc(doc(db, 'inquiries', id));
 }

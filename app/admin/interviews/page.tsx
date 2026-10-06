@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import { InterviewAvailabilityCalendar } from '@/components/admin/InterviewAvailabilityCalendar';
 import { InterviewBoard } from '@/components/admin/InterviewBoard';
 import { InterviewKpiGrid } from '@/components/admin/InterviewKpiGrid';
@@ -11,11 +12,36 @@ import { downloadCsv } from '@/lib/admin/csvDownload';
 import { useInterviewInvites } from '@/lib/admin/useInterviewInvites';
 import { useAuth } from '@/lib/auth/AuthProvider';
 
+const INTERVIEW_SORT = ['Newest first', 'Oldest first', 'Email (A–Z)'];
+
 function InterviewInvitesContent() {
   const { user } = useAuth();
-  const { rows, loading, error, note, busyId, markContacted, confirm, withdraw, restore, addNote } =
-    useInterviewInvites();
+  const {
+    rows,
+    loading,
+    error,
+    note,
+    busyId,
+    markContacted,
+    confirm,
+    withdraw,
+    restore,
+    remove,
+    addNote,
+  } = useInterviewInvites();
+  const [sortBy, setSortBy] = useState('Newest first');
   const kpis = useMemo(() => computeInterviewKpis(rows), [rows]);
+  const sortedRows = useMemo(() => {
+    const list = [...rows];
+    list.sort((a, b) => {
+      if (sortBy === 'Email (A–Z)') {
+        return a.email.toLowerCase().localeCompare(b.email.toLowerCase());
+      }
+      const cmp = a.submittedAt.localeCompare(b.submittedAt);
+      return sortBy === 'Oldest first' ? cmp : -cmp;
+    });
+    return list;
+  }, [rows, sortBy]);
 
   const handleExport = () => {
     if (rows.length === 0) return;
@@ -30,6 +56,14 @@ function InterviewInvitesContent() {
         </h1>
         <div className="iv-page__header-tools">
           <InterviewKpiGrid kpis={kpis} loading={loading} />
+          <div className="admin-toolbar__select inquiries-page__filter">
+            <Select
+              label="Sort"
+              options={INTERVIEW_SORT}
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            />
+          </div>
           <Button variant="secondary" onClick={handleExport} disabled={rows.length === 0}>
             Export contacts CSV
           </Button>
@@ -49,12 +83,13 @@ function InterviewInvitesContent() {
 
       {!loading ? (
         <InterviewBoard
-          rows={rows}
+          rows={sortedRows}
           busyId={busyId}
           onMarkContacted={(id, email) => void markContacted(id, email)}
           onConfirm={(id, email) => void confirm(id, email)}
           onWithdraw={(id, email) => void withdraw(id, email)}
           onRestore={(id, email) => void restore(id, email)}
+          onDelete={(id, email) => void remove(id, email)}
           onAddNote={(id, existing, text) =>
             void addNote(id, existing, text, user?.uid || '', user?.name || user?.email || 'Team')
           }

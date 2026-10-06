@@ -65,7 +65,7 @@ Three ways to look at the same answers:
 | Question | One question at a time |
 | Individual | Each submission as a row, then a side panel for detail |
 
-You can filter by phase and branch, sort, export CSV, and copy a text summary. Deleting a row in the UI is a **local demo convenience** for sample data; it does not invent a Firestore “undo production delete” workflow.
+You can filter by phase and branch, sort, export CSV, and copy a text summary. Deleting a row on the Individual tab **removes the live Firestore document** (active admins). Demo sample mode (`?demo=sample`) still only deletes locally and can be undone for a few seconds.
 
 Gated fields the resident was not asked show as **`not_shown`**.
 
@@ -76,7 +76,9 @@ Gated fields the resident was not asked show as **`not_shown`**.
 People who agreed to a follow-up interview.
 
 - Board columns follow outreach: not contacted → contacted → confirmed → **withdrawn**.
-- Withdrawn people stay on the board so the team does not email them again. Restore moves them back to not contacted. This does **not** delete the record.
+- Withdrawn people stay on the board so the team does not email them again. Restore moves them back to not contacted.
+- **Delete** on a withdrawn card permanently removes the invite from Firestore. Use it for test opt-ins or when the person asked to be forgotten.
+- Sort the board by newest, oldest, or email.
 - Each card has **Notes** for call/email history (team only — never joined to anonymous survey answers).
 - **Export contacts CSV** downloads this roster only (email, preferences, status, notes). It is not the full survey CSV.
 - A calendar highlights preferred weekdays (open invites only).
@@ -108,7 +110,9 @@ Invites do **not** send email from this app. Copy the signup link and send it yo
 Messages from the homepage contact form. All active admins can open this list.
 
 - Statuses: new, in progress, resolved
+- Sort by newest, oldest, or sender name
 - Use **mailto** on the email to reply from your own inbox — the app does not send email
+- **Delete** permanently removes the message from Firestore
 - New and in-progress items appear on the **bell**
 
 ---

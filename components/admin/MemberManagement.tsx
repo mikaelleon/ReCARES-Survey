@@ -40,6 +40,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import {
   generateSignupAccessCode,
   getSignupAccessCode,
+  normalizeAccessCode,
 } from '@/lib/firebase/accessCode';
 import {
   approvePendingAdmin,
@@ -494,6 +495,8 @@ export function MemberManagement() {
   const [showAccessCodePanel, setShowAccessCodePanel] = useState(false);
   const [accessCode, setAccessCode] = useState<string | null>(null);
   const [accessCodeBusy, setAccessCodeBusy] = useState(false);
+  const [accessCodeNote, setAccessCodeNote] = useState<string | null>(null);
+  const [accessCodeError, setAccessCodeError] = useState<string | null>(null);
 
   const [showInvitePanel, setShowInvitePanel] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -587,12 +590,15 @@ export function MemberManagement() {
     setEditingMember(null);
     setHardDeleteTarget(null);
     setShowAccessCodePanel(true);
+    setAccessCodeNote(null);
+    setAccessCodeError(null);
     setAccessCodeBusy(true);
     try {
-      setAccessCode(await getSignupAccessCode());
+      const live = await getSignupAccessCode();
+      setAccessCode(live ? normalizeAccessCode(live) : null);
     } catch {
       setAccessCode(null);
-      setError('Could not load the access code.');
+      setAccessCodeError('Could not load the access code.');
     } finally {
       setAccessCodeBusy(false);
     }
@@ -608,20 +614,36 @@ export function MemberManagement() {
       return;
     }
     setAccessCodeBusy(true);
-    setError(null);
+    setAccessCodeNote(null);
+    setAccessCodeError(null);
     try {
       const next = await generateSignupAccessCode(user.uid);
       setAccessCode(next);
       try {
         await navigator.clipboard.writeText(next);
-        setNote('New access code generated and copied.');
+        setAccessCodeNote('New access code generated and copied.');
       } catch {
-        setNote('New access code generated. Copy it from the dialog.');
+        setAccessCodeNote('New access code generated. Use Copy if you need it on the clipboard.');
       }
-    } catch {
-      setError('Could not generate access code. Deploy appConfig rules if this persists.');
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Could not generate access code.';
+      setAccessCodeError(message);
     } finally {
       setAccessCodeBusy(false);
+    }
+  };
+
+  const handleCopyAccessCode = async () => {
+    if (!accessCode) return;
+    setAccessCodeError(null);
+    try {
+      await navigator.clipboard.writeText(accessCode);
+      setAccessCodeNote('Access code copied.');
+    } catch {
+      setAccessCodeError('Could not copy access code. Select the code and copy it manually.');
     }
   };
 
@@ -1288,10 +1310,22 @@ export function MemberManagement() {
           open={showAccessCodePanel}
           title="Signup access code"
           subtitle="Superadmin only"
-          onClose={() => setShowAccessCodePanel(false)}
+          onClose={() => {
+            setShowAccessCodePanel(false);
+            setAccessCodeNote(null);
+            setAccessCodeError(null);
+          }}
           footer={
             <>
-              <Button variant="secondary" size="sm" onClick={() => setShowAccessCodePanel(false)}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setShowAccessCodePanel(false);
+                  setAccessCodeNote(null);
+                  setAccessCodeError(null);
+                }}
+              >
                 Close
               </Button>
               <Button
@@ -1300,13 +1334,14 @@ export function MemberManagement() {
                 disabled={accessCodeBusy}
                 onClick={() => void handleGenerateAccessCode()}
               >
-                Generate new code
+                {accessCodeBusy ? 'Working…' : 'Generate new code'}
               </Button>
             </>
           }
         >
           <p className="admin-member-modal__lead">
             Shared with new proponents/advisers at signup. Only superadmins can view or rotate it.
+            Codes are case-insensitive.
           </p>
           <div className="access-code-box">
             <code className="access-code-box__value">
@@ -1316,17 +1351,21 @@ export function MemberManagement() {
               variant="secondary"
               size="sm"
               disabled={accessCodeBusy || !accessCode}
-              onClick={() => {
-                if (!accessCode) return;
-                void navigator.clipboard.writeText(accessCode).then(
-                  () => setNote('Access code copied.'),
-                  () => setError('Could not copy access code.'),
-                );
-              }}
+              onClick={() => void handleCopyAccessCode()}
             >
               Copy
             </Button>
           </div>
+          {accessCodeError ? (
+            <p className="na-error" role="alert" style={{ marginTop: 12 }}>
+              {accessCodeError}
+            </p>
+          ) : null}
+          {accessCodeNote ? (
+            <p role="status" className="admin-kanban-note" style={{ marginTop: 12 }}>
+              {accessCodeNote}
+            </p>
+          ) : null}
         </MembersDrawer>
       ) : null}
     </section>

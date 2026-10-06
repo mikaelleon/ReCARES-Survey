@@ -1,6 +1,7 @@
 'use client';
 
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { FirebaseError } from 'firebase/app';
+import { deleteDoc, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase/config';
 import {
   DEFAULT_SURVEY_CONFIG,
@@ -12,10 +13,30 @@ import {
 
 const CONFIG_DOC = ['appConfig', 'survey'] as const;
 
+export type SurveyConfigRecord = {
+  config: SurveyConfig;
+  /** False when `appConfig/survey` is absent (defaults apply). */
+  exists: boolean;
+  updatedAtMs: number | null;
+};
+
 function requireDb() {
   const db = getFirestoreDb();
   if (!db) throw new Error('Firebase is not configured. Add the project keys to .env.local.');
   return db;
+}
+
+function tsToMs(value: unknown): number | null {
+  if (
+    value &&
+    typeof value === 'object' &&
+    'toMillis' in value &&
+    typeof (value as { toMillis: () => number }).toMillis === 'function'
+  ) {
+    const ms = (value as { toMillis: () => number }).toMillis();
+    return Number.isFinite(ms) ? ms : null;
+  }
+  return null;
 }
 
 export function mapSurveyConfig(data: Record<string, unknown> | undefined): SurveyConfig {
@@ -28,22 +49,53 @@ export function mapSurveyConfig(data: Record<string, unknown> | undefined): Surv
   };
 }
 
+function messageForWriteError(error: unknown, action: 'save' | 'reset'): string {
+  if (error instanceof FirebaseError) {
+    if (error.code === 'permission-denied') {
+      return action === 'reset'
+        ? 'Could not reset. Confirm you are a superadmin and Firestore rules for appConfig/survey are deployed.'
+        : 'Could not save. Confirm you are a superadmin and Firestore rules for appConfig/survey are deployed.';
+    }
+    if (error.code === 'unavailable') {
+      return 'Could not reach Firestore. Check your connection and allow trackers for this site.';
+    }
+  }
+  if (error instanceof Error && error.message) return error.message;
+  return action === 'reset' ? 'Could not reset survey settings.' : 'Could not save survey settings.';
+}
+
 /**
- * Public read. Missing doc means the survey is open (existing deployments stay live).
+ * Public read with existence metadata for admin CRUD.
+ * Missing doc means the survey is open (existing deployments stay live).
  */
-export async function getSurveyConfig(): Promise<SurveyConfig> {
+export async function getSurveyConfigRecord(): Promise<SurveyConfigRecord> {
   try {
     const db = getFirestoreDb();
-    if (!db) return { ...DEFAULT_SURVEY_CONFIG };
+    if (!db) {
+      return { config: { ...DEFAULT_SURVEY_CONFIG }, exists: false, updatedAtMs: null };
+    }
     const snap = await getDoc(doc(db, CONFIG_DOC[0], CONFIG_DOC[1]));
-    if (!snap.exists()) return { ...DEFAULT_SURVEY_CONFIG };
-    return mapSurveyConfig(snap.data() as Record<string, unknown>);
+    if (!snap.exists()) {
+      return { config: { ...DEFAULT_SURVEY_CONFIG }, exists: false, updatedAtMs: null };
+    }
+    const data = snap.data() as Record<string, unknown>;
+    return {
+      config: mapSurveyConfig(data),
+      exists: true,
+      updatedAtMs: tsToMs(data.updatedAt),
+    };
   } catch {
-    return { ...DEFAULT_SURVEY_CONFIG };
+    return { config: { ...DEFAULT_SURVEY_CONFIG }, exists: false, updatedAtMs: null };
   }
 }
 
-/** Superadmin-only write. */
+/** Public read. Missing doc means the survey is open (existing deployments stay live). */
+export async function getSurveyConfig(): Promise<SurveyConfig> {
+  const { config } = await getSurveyConfigRecord();
+  return config;
+}
+
+/** Superadmin create/update of `appConfig/survey`. */
 export async function saveSurveyConfig(
   next: {
     status: SurveyWindowStatus;
@@ -51,21 +103,42 @@ export async function saveSurveyConfig(
     residentMessage: string;
   },
   updatedBy: string,
-): Promise<SurveyConfig> {
-  const db = requireDb();
-  const payload: SurveyConfig = {
-    status: next.status,
-    instrumentVersion: normalizeInstrumentVersion(next.instrumentVersion),
-    residentMessage: next.residentMessage.trim().slice(0, 500),
-    updatedBy,
-  };
-  await setDoc(
-    doc(db, CONFIG_DOC[0], CONFIG_DOC[1]),
-    {
-      ...payload,
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true },
-  );
-  return payload;
+): Promise<SurveyConfigRecord> {
+  try {
+    const db = requireDb();
+    const payload: SurveyConfig = {
+      status: next.status,
+      instrumentVersion: normalizeInstrumentVersion(next.instrumentVersion),
+      residentMessage: next.residentMessage.trim().slice(0, 500),
+      updatedBy,
+    };
+    await setDoc(
+      doc(db, CONFIG_DOC[0], CONFIG_DOC[1]),
+      {
+        ...payload,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+    return {
+      config: payload,
+      exists: true,
+      updatedAtMs: Date.now(),
+    };
+  } catch (error) {
+    throw new Error(messageForWriteError(error, 'save'));
+  }
+}
+
+/**
+ * Superadmin delete of `appConfig/survey`.
+ * After delete, the app falls back to open + default instrument version.
+ */
+export async function resetSurveyConfig(): Promise<void> {
+  try {
+    const db = requireDb();
+    await deleteDoc(doc(db, CONFIG_DOC[0], CONFIG_DOC[1]));
+  } catch (error) {
+    throw new Error(messageForWriteError(error, 'reset'));
+  }
 }

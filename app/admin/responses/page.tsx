@@ -7,7 +7,7 @@ import { DashboardHeaderTools } from '@/components/admin/DashboardHeaderTools';
 import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import { ResponseDetailDrawer } from '@/components/admin/ResponseDetailDrawer';
 import { ResponseEmptyState } from '@/components/admin/ResponseEmptyState';
-import { ResponseViewsPanel } from '@/components/admin/ResponseViewsPanel';
+import { ResponseViewsPanel, type ResponseViewTab } from '@/components/admin/ResponseViewsPanel';
 import { AddWidgetModal } from '@/components/dashboard/AddWidgetModal';
 import {
   ResponsesToolbar,
@@ -33,6 +33,7 @@ import {
 import { useSurveyResponses } from '@/lib/admin/useSurveyResponses';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { saveSummaryWidgets } from '@/lib/firebase/auth';
+import { deleteNeedsAssessment } from '@/lib/firebase/firestore';
 import { useQueryParam } from '@/lib/navigation/useQueryParam';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 
@@ -77,7 +78,9 @@ function ResponsesContent() {
   const [undo, setUndo] = useState<{ record: SampleRecord; index: number } | null>(null);
   const [flashId, setFlashId] = useState<string | null>(null);
   const [copyNote, setCopyNote] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const liveDelete = source === 'firestore' && !usingDemoSample;
 
   useEffect(() => {
     setDateRange(loadStoredDateRange());
@@ -207,7 +210,7 @@ function ResponsesContent() {
     setTimeout(() => setCopyNote(null), 2000);
   }, [workingRecords]);
 
-  const confirmDelete = useCallback(() => {
+  const confirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
     const index = records.findIndex((r) => r.id === deleteTarget.id);
     if (index < 0) {
@@ -215,12 +218,31 @@ function ResponsesContent() {
       return;
     }
     const removed = records[index];
+
+    if (liveDelete) {
+      setDeleteBusy(true);
+      try {
+        await deleteNeedsAssessment(removed.id);
+        setRecords((prev) => prev.filter((r) => r.id !== removed.id));
+        setDeleteTarget(null);
+        setUndo(null);
+        setCopyNote('Response deleted from Firestore.');
+        setTimeout(() => setCopyNote(null), 2000);
+      } catch {
+        setCopyNote('Could not delete that response.');
+        setTimeout(() => setCopyNote(null), 3000);
+      } finally {
+        setDeleteBusy(false);
+      }
+      return;
+    }
+
     setRecords((prev) => prev.filter((r) => r.id !== removed.id));
     setDeleteTarget(null);
     setUndo({ record: removed, index });
     if (undoTimer.current) clearTimeout(undoTimer.current);
     undoTimer.current = setTimeout(() => setUndo(null), 5000);
-  }, [deleteTarget, records, setRecords]);
+  }, [deleteTarget, records, setRecords, liveDelete]);
 
   const handleUndo = useCallback(() => {
     if (!undo) return;
@@ -341,11 +363,16 @@ function ResponsesContent() {
       <ResponseDetailDrawer record={viewRecord} onClose={() => setViewRecord(null)} />
       <DeleteConfirmModal
         record={deleteTarget}
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={confirmDelete}
+        live={liveDelete}
+        busy={deleteBusy}
+        onCancel={() => {
+          if (deleteBusy) return;
+          setDeleteTarget(null);
+        }}
+        onConfirm={() => void confirmDelete()}
       />
 
-      {undo ? (
+      {undo && !liveDelete ? (
         <div className="admin-undo" role="status">
           <span>Deleted {undo.record.id}</span>
           <button type="button" onClick={handleUndo}>

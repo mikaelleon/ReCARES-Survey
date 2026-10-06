@@ -10,13 +10,19 @@ import type { CountBucket } from '@/lib/admin/analytics';
 export function AccessibilityNeedsRows({
   buckets,
   baseN,
+  wrapLabels = false,
+  valueMode = 'tooltip',
 }: {
   buckets: CountBucket[];
   baseN: number;
+  wrapLabels?: boolean;
+  valueMode?: 'inline' | 'tooltip';
 }) {
   if (baseN <= 0) {
     return <p className="dash-tile__empty">No AC1 answers on the accessibility path yet.</p>;
   }
 
-  return <HorizontalBars buckets={buckets} valueMode="tooltip" />;
+  return (
+    <HorizontalBars buckets={buckets} valueMode={valueMode} wrapLabels={wrapLabels} />
+  );
 }

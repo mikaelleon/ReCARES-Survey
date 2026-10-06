@@ -151,12 +151,15 @@ service cloud.firestore {
     }
 
     // Signup access code + survey window (public read; superadmin write).
+    // Survey doc may be deleted to restore open defaults. Signup code is never deleted here.
     match /appConfig/{docId} {
       allow read: if true;
       allow create, update: if request.auth != null
         && isActiveSuperadmin(request.auth.uid)
         && (docId == 'signup' || docId == 'survey');
-      allow delete: if false;
+      allow delete: if request.auth != null
+        && isActiveSuperadmin(request.auth.uid)
+        && docId == 'survey';
     }
   }
 }

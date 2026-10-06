@@ -10,6 +10,8 @@ const APP_PREFIXES = [
   '/admin/responses',
   '/admin/interviews',
   '/admin/members',
+  '/admin/inquiries',
+  '/admin/survey',
 ];
 
 function isAppRoute(pathname: string): boolean {
@@ -19,8 +21,9 @@ function isAppRoute(pathname: string): boolean {
 }
 
 /**
- * Admin chrome. Auth gates use a slim top bar (no EN/FIL).
- * Active app pages supply their own sidebar via AdminAppShell.
+ * Admin chrome. Auth gates (login/signup/pending/removed/complete) use a slim top bar.
+ * Active app pages (dashboard, responses, interviews, members, inquiries, survey)
+ * supply their own sidebar via AdminAppShell — no auth top bar.
  */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';

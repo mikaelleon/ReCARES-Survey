@@ -114,7 +114,7 @@ Do not treat “PWD screening” as interchangeable with “Accessibility path.�
 
 **Choice: bounded Survey control page for superadmin — not an empty Configuration dump.**
 
-`/admin/survey/` writes `appConfig/survey` (`status`, `instrumentVersion`, `residentMessage`). Public read; superadmin write. Missing doc = **open** so existing deployments keep accepting responses.
+`/admin/survey/` CRUD on `appConfig/survey` (`status`, `instrumentVersion`, `residentMessage`). Public read; superadmin create/update/delete. Missing doc = **open** so existing deployments keep accepting responses. Reset deletes the doc.
 
 Resident submit is blocked in `SurveyFlow` and `submitNeedsAssessment`, and Firestore `needsAssessmentResponses` create requires `status == 'open'` (or no survey doc). Each submit stores `instrumentVersion`.
 
