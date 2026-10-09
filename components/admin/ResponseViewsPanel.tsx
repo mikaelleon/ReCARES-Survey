@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, MoreVertical, Plus } from 'lucide-react';
 import { ExtendedWidgetCard } from '@/components/admin/charts/ExtendedWidgetCard';
@@ -8,6 +9,8 @@ import { GatedSectionChips } from '@/components/admin/GatedSectionChips';
 import { ResponseEmptyState } from '@/components/admin/ResponseEmptyState';
 import { ResponseTable } from '@/components/admin/ResponseTable';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/lib/auth/AuthProvider';
+import { canWriteFindingNotes } from '@/lib/admin/access';
 import {
   EXTENDED_COMPACT_IDS,
   EXTENDED_FULL_IDS,
@@ -117,6 +120,21 @@ export function ResponseViewsPanel({
   initialTab?: ResponseViewTab;
   focusResponseId?: string | null;
 }) {
+  const { user, can } = useAuth();
+  const canAddFindingNote =
+    can('findingNotes') &&
+    canWriteFindingNotes(
+      user
+        ? {
+            fullName: user.name || '',
+            email: user.email,
+            requestedRole: user.requestedRole || '',
+            role: user.role,
+            status: user.status === 'active' ? 'active' : 'pending',
+            permissions: user.permissions,
+          }
+        : null,
+    );
   const [tab, setTab] = useState<ResponseViewTab>(initialTab ?? 'summary');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [individualIndex, setIndividualIndex] = useState(0);
@@ -369,11 +387,22 @@ export function ResponseViewsPanel({
             {filtered.length === 0 ? (
               <ResponseEmptyState kind="filtered" onReset={onResetFilters} />
             ) : currentQuestion ? (
-              <ChartById
-                id={currentQuestion.id}
-                records={chartSource}
-                responseCount={responseCount}
-              />
+              <>
+                <ChartById
+                  id={currentQuestion.id}
+                  records={chartSource}
+                  responseCount={responseCount}
+                />
+                {canAddFindingNote ? (
+                  <p className="gf-question__note-link">
+                    <Link
+                      href={`/admin/notes/?new=1&questionId=${encodeURIComponent(currentQuestion.id)}`}
+                    >
+                      Add note for this question
+                    </Link>
+                  </p>
+                ) : null}
+              </>
             ) : null}
           </div>
         ) : null}

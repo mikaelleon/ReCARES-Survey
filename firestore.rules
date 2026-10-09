@@ -18,6 +18,174 @@ service cloud.firestore {
         && adminDoc(request.auth.uid).status == 'active';
     }
 
+    function isActiveProponentOrSuperadmin() {
+      return isActiveAdmin()
+        && (adminDoc(request.auth.uid).role == 'admin'
+          || adminDoc(request.auth.uid).role == 'superadmin');
+    }
+
+    function isActiveAdviserOrSuperadmin() {
+      return isActiveAdmin()
+        && (adminDoc(request.auth.uid).role == 'adviser'
+          || adminDoc(request.auth.uid).role == 'superadmin');
+    }
+
+    function staffRole() {
+      return adminDoc(request.auth.uid).role;
+    }
+
+    function feedbackSeverityOk(value) {
+      return value == 'suggestion' || value == 'required_fix' || value == 'approved';
+    }
+
+    function feedbackTargetOk(value) {
+      return value == 'note' || value == 'question' || value == 'instrument';
+    }
+
+    function feedbackCommentOk(value) {
+      return value is string && value.size() >= 5 && value.size() <= 1000;
+    }
+
+    function feedbackParent(parentId) {
+      return get(/databases/$(database)/documents/adviserFeedback/$(parentId)).data;
+    }
+
+    function feedbackNoteTargetOk() {
+      return request.resource.data.targetType != 'note'
+        || exists(/databases/$(database)/documents/findingNotes/$(request.resource.data.targetId));
+    }
+
+    function feedbackAuthorOk() {
+      return request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.authorRole == staffRole()
+        && request.resource.data.authorName is string
+        && request.resource.data.authorName.size() >= 1
+        && request.resource.data.authorName.size() <= 120
+        && request.resource.data.targetId is string
+        && request.resource.data.targetId.size() >= 1
+        && request.resource.data.targetId.size() <= 200
+        && feedbackTargetOk(request.resource.data.targetType)
+        && feedbackCommentOk(request.resource.data.comment)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.edited == false;
+    }
+
+    function feedbackRootCreateOk() {
+      return isActiveAdviserOrSuperadmin()
+        && request.resource.data.keys().hasOnly([
+          'targetType', 'targetId', 'comment', 'severity', 'status', 'parentId',
+          'authorUid', 'authorName', 'authorRole', 'createdAt', 'updatedAt',
+          'resolvedAt', 'replyCount', 'edited'
+        ])
+        && request.resource.data.parentId == null
+        && request.resource.data.status == 'open'
+        && request.resource.data.resolvedAt == null
+        && request.resource.data.replyCount == 0
+        && feedbackSeverityOk(request.resource.data.severity)
+        && feedbackAuthorOk()
+        && feedbackNoteTargetOk();
+    }
+
+    function feedbackReplyCreateOk() {
+      return isActiveAdmin()
+        && request.resource.data.keys().hasOnly([
+          'targetType', 'targetId', 'comment', 'parentId',
+          'authorUid', 'authorName', 'authorRole', 'createdAt', 'updatedAt', 'edited'
+        ])
+        && request.resource.data.parentId is string
+        && request.resource.data.parentId.size() > 0
+        && exists(/databases/$(database)/documents/adviserFeedback/$(request.resource.data.parentId))
+        && feedbackParent(request.resource.data.parentId).parentId == null
+        && feedbackParent(request.resource.data.parentId).status != 'resolved'
+        && request.resource.data.targetType == feedbackParent(request.resource.data.parentId).targetType
+        && request.resource.data.targetId == feedbackParent(request.resource.data.parentId).targetId
+        && feedbackAuthorOk();
+    }
+
+    function feedbackCommentEditOk() {
+      return resource.data.authorUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['comment', 'updatedAt', 'edited'])
+        && feedbackCommentOk(request.resource.data.comment)
+        && request.resource.data.edited == true
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function feedbackStatusChangeOk() {
+      return resource.data.parentId == null
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'updatedAt', 'resolvedAt'])
+        && request.resource.data.updatedAt == request.time
+        && (
+          (resource.data.status == 'open'
+            && request.resource.data.status == 'addressed'
+            && request.resource.data.resolvedAt == null
+            && isActiveAdmin())
+          || (resource.data.status == 'addressed'
+            && request.resource.data.status == 'resolved'
+            && request.resource.data.resolvedAt == request.time
+            && isActiveAdviserOrSuperadmin())
+          || (resource.data.status == 'resolved'
+            && request.resource.data.status == 'open'
+            && request.resource.data.resolvedAt == null
+            && isActiveAdviserOrSuperadmin())
+        );
+    }
+
+    function feedbackReplyCountOk() {
+      return resource.data.parentId == null
+        && isActiveAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount'])
+        && request.resource.data.replyCount is int
+        && resource.data.replyCount is int
+        && request.resource.data.replyCount >= 0
+        && (
+          request.resource.data.replyCount == resource.data.replyCount + 1
+          || request.resource.data.replyCount == resource.data.replyCount - 1
+        );
+    }
+
+    function findingTagOk(value) {
+      return value == 'barrier'
+        || value == 'theme'
+        || value == 'anomaly'
+        || value == 'recommendation';
+    }
+
+    function findingStatusOk(value) {
+      return value == 'draft' || value == 'reviewed' || value == 'final';
+    }
+
+    function findingNoteShapeOk() {
+      return request.resource.data.keys().hasAll([
+          'title', 'body', 'tag', 'status', 'questionId',
+          'authorUid', 'authorName', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 3
+        && request.resource.data.title.size() <= 100
+        && request.resource.data.body is string
+        && request.resource.data.body.size() >= 10
+        && request.resource.data.body.size() <= 2000
+        && findingTagOk(request.resource.data.tag)
+        && findingStatusOk(request.resource.data.status)
+        && request.resource.data.questionId is string
+        && request.resource.data.questionId.size() >= 1
+        && request.resource.data.questionId.size() <= 80
+        && request.resource.data.authorUid is string
+        && request.resource.data.authorName is string
+        && request.resource.data.authorName.size() >= 1
+        && request.resource.data.authorName.size() <= 120;
+    }
+
+    function findingNoteFinalUnlock() {
+      return resource.data.status == 'final'
+        && request.resource.data.status == 'draft'
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'updatedAt']);
+    }
+
     function inviteDoc(inviteId) {
       return get(/databases/$(database)/documents/invites/$(inviteId)).data;
     }
@@ -148,6 +316,48 @@ service cloud.firestore {
     match /inquiries/{inquiryId} {
       allow create: if true;
       allow read, update, delete: if isActiveAdmin();
+    }
+
+    // Analysis findings log — active team may read; proponents/superadmins write.
+    match /findingNotes/{noteId} {
+      allow read: if isActiveAdmin();
+
+      allow create: if isActiveProponentOrSuperadmin()
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.status == 'draft'
+        && findingNoteShapeOk();
+
+      allow update: if isActiveProponentOrSuperadmin()
+        && (request.auth.uid == resource.data.authorUid
+          || isActiveSuperadmin(request.auth.uid))
+        && request.resource.data.authorUid == resource.data.authorUid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && findingNoteShapeOk()
+        && (resource.data.status != 'final' || findingNoteFinalUnlock());
+
+      allow delete: if isActiveProponentOrSuperadmin()
+        && (request.auth.uid == resource.data.authorUid
+          || isActiveSuperadmin(request.auth.uid))
+        && resource.data.status != 'final';
+    }
+
+    // Adviser review threads. Deleting a root is blocked while replyCount > 0
+    // (delete replies first). Replies do not carry severity or status.
+    match /adviserFeedback/{commentId} {
+      allow read: if isActiveAdmin();
+
+      allow create: if feedbackRootCreateOk() || feedbackReplyCreateOk();
+
+      allow update: if isActiveAdmin()
+        && (feedbackCommentEditOk() || feedbackStatusChangeOk() || feedbackReplyCountOk());
+
+      allow delete: if isActiveAdmin()
+        && (resource.data.authorUid == request.auth.uid
+          || isActiveSuperadmin(request.auth.uid))
+        && (
+          resource.data.parentId is string
+          || (resource.data.parentId == null && resource.data.replyCount == 0)
+        );
     }
 
     // Signup access code + survey window (public read; superadmin write).

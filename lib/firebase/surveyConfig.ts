@@ -1,8 +1,8 @@
 'use client';
 
-import { FirebaseError } from 'firebase/app';
 import { deleteDoc, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase/config';
+import { messageForFirestoreWriteError } from '@/lib/firebase/writeErrors';
 import {
   DEFAULT_SURVEY_CONFIG,
   isSurveyWindowStatus,
@@ -50,18 +50,11 @@ export function mapSurveyConfig(data: Record<string, unknown> | undefined): Surv
 }
 
 function messageForWriteError(error: unknown, action: 'save' | 'reset'): string {
-  if (error instanceof FirebaseError) {
-    if (error.code === 'permission-denied') {
-      return action === 'reset'
-        ? 'Could not reset. Confirm you are a superadmin and Firestore rules for appConfig/survey are deployed.'
-        : 'Could not save. Confirm you are a superadmin and Firestore rules for appConfig/survey are deployed.';
-    }
-    if (error.code === 'unavailable') {
-      return 'Could not reach Firestore. Check your connection and allow trackers for this site.';
-    }
-  }
-  if (error instanceof Error && error.message) return error.message;
-  return action === 'reset' ? 'Could not reset survey settings.' : 'Could not save survey settings.';
+  return messageForFirestoreWriteError(
+    error,
+    action === 'reset' ? 'Could not reset survey settings.' : 'Could not save survey settings.',
+    { resourceHint: 'appConfig/survey' },
+  );
 }
 
 /**

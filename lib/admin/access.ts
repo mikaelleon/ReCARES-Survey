@@ -42,6 +42,7 @@ export function isActiveGrantedRole(role: AdminRole | null | undefined): boolean
 export const DASHBOARD_PERMISSION_KEYS = [
   'responsesDashboard',
   'interviewInvites',
+  'findingNotes',
 ] as const;
 
 export type DashboardPermissionKey = (typeof DASHBOARD_PERMISSION_KEYS)[number];
@@ -49,6 +50,7 @@ export type DashboardPermissionKey = (typeof DASHBOARD_PERMISSION_KEYS)[number];
 export const DASHBOARD_PERMISSION_LABELS: Record<DashboardPermissionKey, string> = {
   responsesDashboard: 'Responses dashboard',
   interviewInvites: 'Interview invites',
+  findingNotes: 'Findings log',
 };
 
 export type AdminPermissions = Partial<Record<DashboardPermissionKey, boolean>> & {
@@ -113,7 +115,26 @@ export function emptyPermissions(): AdminPermissions {
   return {
     responsesDashboard: false,
     interviewInvites: false,
+    findingNotes: false,
   };
+}
+
+/** Proponents and superadmins may create/edit/delete finding notes; advisers are read-only. */
+export function canWriteFindingNotes(
+  adminDoc: AdminProfile | null | undefined,
+): boolean {
+  if (!adminDoc || adminDoc.status !== 'active') return false;
+  return adminDoc.role === 'admin' || adminDoc.role === 'superadmin';
+}
+
+/** Advisers and superadmins may start a review thread. Proponents may only reply. */
+export function canCreateRootFeedback(role: AdminRole | null | undefined): boolean {
+  return role === 'adviser' || role === 'superadmin';
+}
+
+/** Only advisers and superadmins may mark a thread resolved or reopen it. */
+export function canResolveThread(role: AdminRole | null | undefined): boolean {
+  return role === 'adviser' || role === 'superadmin';
 }
 
 export function pathForAccessState(state: AdminAccessState): string {

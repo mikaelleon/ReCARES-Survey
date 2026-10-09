@@ -8,14 +8,15 @@ import {
   Mail,
   MessageCircle,
   StickyNote,
-  UserRoundX,
 } from 'lucide-react';
 import { InterviewNotesDrawer } from '@/components/admin/InterviewNotesDrawer';
 import type { InterviewInviteRow } from '@/lib/firebase/interviewManage';
 import type { InterviewContactStatus } from '@/survey/schema';
 
+type BoardColumnId = Exclude<InterviewContactStatus, 'withdrawn'>;
+
 const COLUMNS: {
-  id: InterviewContactStatus;
+  id: BoardColumnId;
   title: string;
   shortTitle: string;
 }[] = [
@@ -33,11 +34,6 @@ const COLUMNS: {
     id: 'confirmed',
     title: 'Confirmed',
     shortTitle: 'Confirmed',
-  },
-  {
-    id: 'withdrawn',
-    title: 'Withdrawn',
-    shortTitle: 'Withdrawn',
   },
 ];
 
@@ -66,12 +62,17 @@ function emailInitials(email: string): string {
   return local.slice(0, 2).toUpperCase();
 }
 
-function ColumnIcon({ id }: { id: InterviewContactStatus }) {
+/** Legacy `withdrawn` invites stay visible under Not contacted so they can be deleted. */
+function boardColumnFor(status: InterviewContactStatus): BoardColumnId {
+  if (status === 'pending_confirmation' || status === 'confirmed') return status;
+  return 'not_contacted';
+}
+
+function ColumnIcon({ id }: { id: BoardColumnId }) {
   if (id === 'not_contacted') return <Mail size={16} strokeWidth={2.2} aria-hidden="true" />;
   if (id === 'pending_confirmation') {
     return <MessageCircle size={16} strokeWidth={2.2} aria-hidden="true" />;
   }
-  if (id === 'withdrawn') return <UserRoundX size={16} strokeWidth={2.2} aria-hidden="true" />;
   return <CalendarCheck size={16} strokeWidth={2.2} aria-hidden="true" />;
 }
 
@@ -81,19 +82,15 @@ function InviteCard({
   busyId,
   onMarkContacted,
   onConfirm,
-  onWithdraw,
-  onRestore,
-  onDelete,
+  onRequestDelete,
   onOpenNotes,
 }: {
   row: InterviewInviteRow;
-  columnId: InterviewContactStatus;
+  columnId: BoardColumnId;
   busyId: string | null;
   onMarkContacted: (id: string, email: string) => void;
   onConfirm: (id: string, email: string) => void;
-  onWithdraw: (id: string, email: string) => void;
-  onRestore: (id: string, email: string) => void;
-  onDelete: (id: string, email: string) => void;
+  onRequestDelete: (row: InterviewInviteRow) => void;
   onOpenNotes: (row: InterviewInviteRow) => void;
 }) {
   const noteCount = row.notes?.length ?? 0;
@@ -149,53 +146,14 @@ function InviteCard({
             Confirm
           </button>
         ) : null}
-        {columnId === 'withdrawn' ? (
-          <>
-            <button
-              type="button"
-              className="admin-kanban-icon-btn admin-kanban-icon-btn--primary"
-              disabled={busyId === row.id}
-              onClick={() => onRestore(row.id, row.email)}
-            >
-              Restore
-            </button>
-            <button
-              type="button"
-              className="admin-kanban-icon-btn"
-              disabled={busyId === row.id}
-              onClick={() => {
-                if (
-                  !window.confirm(
-                    `Permanently delete the interview invite for ${row.email}? This cannot be undone.`,
-                  )
-                ) {
-                  return;
-                }
-                onDelete(row.id, row.email);
-              }}
-            >
-              Delete
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            className="admin-kanban-icon-btn"
-            disabled={busyId === row.id}
-            onClick={() => {
-              if (
-                !window.confirm(
-                  `Mark ${row.email} as withdrawn? Their contact details stay here so you do not reach out again by mistake.`,
-                )
-              ) {
-                return;
-              }
-              onWithdraw(row.id, row.email);
-            }}
-          >
-            Withdraw
-          </button>
-        )}
+        <button
+          type="button"
+          className="admin-kanban-icon-btn"
+          disabled={busyId === row.id}
+          onClick={() => onRequestDelete(row)}
+        >
+          Delete
+        </button>
         <button
           type="button"
           className="admin-kanban-icon-btn"
@@ -210,25 +168,21 @@ function InviteCard({
 }
 
 /**
- * Interview Invites Kanban — four columns on desktop; tabbed single column on mobile.
+ * Interview Invites Kanban — three columns on desktop; tabbed single column on mobile.
  */
 export function InterviewBoard({
   rows,
   busyId,
   onMarkContacted,
   onConfirm,
-  onWithdraw,
-  onRestore,
-  onDelete,
+  onRequestDelete,
   onAddNote,
 }: {
   rows: InterviewInviteRow[];
   busyId: string | null;
   onMarkContacted: (id: string, email: string) => void;
   onConfirm: (id: string, email: string) => void;
-  onWithdraw: (id: string, email: string) => void;
-  onRestore: (id: string, email: string) => void;
-  onDelete: (id: string, email: string) => void;
+  onRequestDelete: (row: InterviewInviteRow) => void;
   onAddNote: (id: string, existing: InterviewInviteRow['notes'], text: string) => void;
 }) {
   const [notesRow, setNotesRow] = useState<InterviewInviteRow | null>(null);
@@ -241,26 +195,24 @@ export function InterviewBoard({
   }, [rows]);
 
   const byColumn = useMemo(() => {
-    const map: Record<InterviewContactStatus, InterviewInviteRow[]> = {
+    const map: Record<BoardColumnId, InterviewInviteRow[]> = {
       not_contacted: [],
       pending_confirmation: [],
       confirmed: [],
-      withdrawn: [],
     };
     for (const row of rows) {
-      map[row.contactStatus].push(row);
+      map[boardColumnFor(row.contactStatus)].push(row);
     }
     return map;
   }, [rows]);
 
-  const defaultTab = useMemo<InterviewContactStatus>(() => {
+  const defaultTab = useMemo<BoardColumnId>(() => {
     if (byColumn.not_contacted.length > 0) return 'not_contacted';
     if (byColumn.pending_confirmation.length > 0) return 'pending_confirmation';
-    if (byColumn.confirmed.length > 0) return 'confirmed';
-    return 'withdrawn';
+    return 'confirmed';
   }, [byColumn]);
 
-  const [mobileTab, setMobileTab] = useState<InterviewContactStatus>(defaultTab);
+  const [mobileTab, setMobileTab] = useState<BoardColumnId>(defaultTab);
 
   useEffect(() => {
     setMobileTab(defaultTab);
@@ -272,9 +224,7 @@ export function InterviewBoard({
     busyId,
     onMarkContacted,
     onConfirm,
-    onWithdraw,
-    onRestore,
-    onDelete,
+    onRequestDelete,
     onOpenNotes: setNotesRow,
   };
 

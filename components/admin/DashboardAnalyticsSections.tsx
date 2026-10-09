@@ -8,6 +8,7 @@ import { HorizontalBars } from '@/components/admin/charts/HorizontalBars';
 import { MeanBars } from '@/components/admin/charts/MeanBars';
 import { PhaseBarChart } from '@/components/admin/charts/PhaseBarChart';
 import { ChartSkeleton } from '@/components/ui/Skeleton';
+import type { CountBucket } from '@/lib/admin/analytics';
 import {
   accessibilityNeeds,
   openProblems,

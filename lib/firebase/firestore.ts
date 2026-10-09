@@ -3,6 +3,7 @@
 import { addDoc, collection, deleteDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase/config';
 import { getSurveyConfig } from '@/lib/firebase/surveyConfig';
+import { messageForFirestoreWriteError, requireDocumentId } from '@/lib/firebase/writeErrors';
 import { surveyAcceptsResponses } from '@/survey/instrument';
 import type { InterviewInvitation, SurveyResponseDocument } from '@/survey/schema';
 
@@ -30,11 +31,18 @@ export async function submitNeedsAssessment(data: SurveyResponseDocument): Promi
 
 /** Active-admin delete of a submitted needs-assessment document. */
 export async function deleteNeedsAssessment(responseId: string): Promise<void> {
-  const db = getFirestoreDb();
-  if (!db) throw new Error('Firebase is not configured.');
-  const id = responseId.trim();
-  if (!id) throw new Error('Missing response id.');
-  await deleteDoc(doc(db, 'needsAssessmentResponses', id));
+  try {
+    const db = getFirestoreDb();
+    if (!db) throw new Error('Firebase is not configured. Add the project keys to .env.local.');
+    const id = requireDocumentId(responseId, 'response');
+    await deleteDoc(doc(db, 'needsAssessmentResponses', id));
+  } catch (error) {
+    throw new Error(
+      messageForFirestoreWriteError(error, 'Could not delete that response.', {
+        resourceHint: 'needsAssessmentResponses',
+      }),
+    );
+  }
 }
 
 /**

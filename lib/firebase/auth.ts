@@ -109,7 +109,15 @@ export function mapAdminDoc(data: Record<string, unknown>): AdminProfile {
     normalizedRole === 'admin' &&
     Object.keys(permissions).length === 0
   ) {
-    permissions = { responsesDashboard: true, interviewInvites: false };
+    permissions = { responsesDashboard: true, interviewInvites: false, findingNotes: true };
+  }
+  // Advisers with an empty map get read-only Findings Log by default.
+  if (
+    status === 'active' &&
+    normalizedRole === 'adviser' &&
+    Object.keys(permissions).length === 0
+  ) {
+    permissions = { responsesDashboard: false, interviewInvites: false, findingNotes: true };
   }
 
   return {

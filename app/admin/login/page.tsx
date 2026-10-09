@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { FormEvent, useEffect, useRef, useState } from 'react';
-import { RecaresWordmark } from '@/components/brand/RecaresWordmark';
+import { AuthPageShell } from '@/components/admin/AuthPageShell';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { PageLoader } from '@/components/ui/PageLoader';
@@ -144,91 +144,95 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="auth-page">
-      <div className="auth-page__inner">
-        <div className="auth-page__brand">
-          <RecaresWordmark size={28} />
-          <p className="auth-page__eyebrow">Proponent access</p>
+    <AuthPageShell>
+      <form ref={formRef} className="auth-card" data-auth="" onSubmit={handleSubmit} noValidate>
+        <div className="auth-card__intro">
+          <h1 className="auth-card__title">Log in</h1>
+          <p className="auth-card__lead">
+            Use your institutional email. Access follows your approved role.
+          </p>
         </div>
 
-        <form ref={formRef} className="auth-card" data-auth="" onSubmit={handleSubmit} noValidate>
-          <h1 className="auth-card__title">Proponent login</h1>
-          <p className="auth-card__lead">Use your institutional email. Access depends on your approved role.</p>
+        <Input
+          id="login-email"
+          name="email"
+          label="Email"
+          type="email"
+          inputMode="email"
+          autoComplete="username"
+          placeholder="name@ub.edu.ph"
+          value={email}
+          autoFocus
+          disabled={busy}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (emailError) setEmailError(null);
+          }}
+          required
+          error={emailError}
+        />
+        <Input
+          id="login-password"
+          name="password"
+          label="Password"
+          type="password"
+          autoComplete="current-password"
+          placeholder="••••••••"
+          value={password}
+          disabled={busy}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (passwordError) setPasswordError(null);
+          }}
+          required
+          error={passwordError}
+        />
 
-          <Input
-            id="login-email"
-            name="email"
-            label="Email"
-            type="email"
-            inputMode="email"
-            autoComplete="username"
-            placeholder="name@ub.edu.ph"
-            value={email}
-            autoFocus
-            disabled={busy}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (emailError) setEmailError(null);
-            }}
-            required
-            error={emailError}
-          />
-          <Input
-            id="login-password"
-            name="password"
-            label="Password"
-            type="password"
-            autoComplete="current-password"
-            placeholder="••••••••"
-            value={password}
-            disabled={busy}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (passwordError) setPasswordError(null);
-            }}
-            required
-            error={passwordError}
-          />
-
-          {formError ? (
-            <p role="alert" className="auth-card__alert">
-              {formError}
-            </p>
-          ) : null}
-
-          <div className="auth-card__actions">
-            <Button variant="primary" onDark type="submit" fullWidth loading={busy && method === 'email'} disabled={busy}>
-              {busy && method === 'email' ? 'Signing in…' : 'Log in'}
-            </Button>
-            <div className="auth-card__split" role="separator">
-              <span>or</span>
-            </div>
-            <Button
-              variant="secondary"
-              onDark
-              type="button"
-              fullWidth
-              icon={<GoogleMark />}
-              onClick={handleGoogle}
-              loading={busy && method === 'google'}
-              disabled={busy}
-            >
-              {busy && method === 'google' ? 'Continuing…' : 'Continue with Google'}
-            </Button>
-          </div>
-
-          <p className="auth-card__footer">
-            New to the team?{' '}
-            <Link href="/admin/signup/" className="auth-card__link">
-              Create an account
-            </Link>
+        {formError ? (
+          <p role="alert" className="auth-card__alert">
+            {formError}
           </p>
-        </form>
+        ) : null}
 
-        <p className="auth-page__back">
-          <Link href="/">Back to the resident site</Link>
+        <div className="auth-card__actions">
+          <Button
+            variant="primary"
+            onDark
+            type="submit"
+            fullWidth
+            loading={busy && method === 'email'}
+            disabled={busy}
+          >
+            {busy && method === 'email' ? 'Signing in…' : 'Log in'}
+          </Button>
+          <div className="auth-card__split" role="separator">
+            <span>or</span>
+          </div>
+          <Button
+            variant="secondary"
+            onDark
+            type="button"
+            fullWidth
+            icon={<GoogleMark />}
+            onClick={handleGoogle}
+            loading={busy && method === 'google'}
+            disabled={busy}
+          >
+            {busy && method === 'google' ? 'Continuing…' : 'Continue with Google'}
+          </Button>
+        </div>
+
+        <p className="auth-card__footer">
+          New to the team?{' '}
+          <Link href="/admin/signup/" className="auth-card__link">
+            Create an account
+          </Link>
         </p>
-      </div>
-    </div>
+      </form>
+
+      <p className="auth-page__back">
+        <Link href="/">Back to the resident site</Link>
+      </p>
+    </AuthPageShell>
   );
 }

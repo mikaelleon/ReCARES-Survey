@@ -79,8 +79,10 @@ function ResponsesContent() {
   const [flashId, setFlashId] = useState<string | null>(null);
   const [copyNote, setCopyNote] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const liveDelete = source === 'firestore' && !usingDemoSample;
+  const canDelete = liveDelete || usingDemoSample;
 
   useEffect(() => {
     setDateRange(loadStoredDateRange());
@@ -210,6 +212,19 @@ function ResponsesContent() {
     setTimeout(() => setCopyNote(null), 2000);
   }, [workingRecords]);
 
+  const requestDelete = useCallback(
+    (record: SampleRecord) => {
+      if (!canDelete) {
+        setCopyNote('Delete is unavailable until live Firestore responses are loaded.');
+        setTimeout(() => setCopyNote(null), 3000);
+        return;
+      }
+      setDeleteError(null);
+      setDeleteTarget(record);
+    },
+    [canDelete],
+  );
+
   const confirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
     const index = records.findIndex((r) => r.id === deleteTarget.id);
@@ -221,28 +236,37 @@ function ResponsesContent() {
 
     if (liveDelete) {
       setDeleteBusy(true);
+      setDeleteError(null);
       try {
         await deleteNeedsAssessment(removed.id);
         setRecords((prev) => prev.filter((r) => r.id !== removed.id));
+        if (viewRecord?.id === removed.id) setViewRecord(null);
         setDeleteTarget(null);
         setUndo(null);
         setCopyNote('Response deleted from Firestore.');
         setTimeout(() => setCopyNote(null), 2000);
-      } catch {
-        setCopyNote('Could not delete that response.');
-        setTimeout(() => setCopyNote(null), 3000);
+      } catch (err) {
+        setDeleteError(
+          err instanceof Error && err.message ? err.message : 'Could not delete that response.',
+        );
       } finally {
         setDeleteBusy(false);
       }
       return;
     }
 
+    if (!usingDemoSample) {
+      setDeleteError('Delete is unavailable until live Firestore responses are loaded.');
+      return;
+    }
+
     setRecords((prev) => prev.filter((r) => r.id !== removed.id));
+    if (viewRecord?.id === removed.id) setViewRecord(null);
     setDeleteTarget(null);
     setUndo({ record: removed, index });
     if (undoTimer.current) clearTimeout(undoTimer.current);
     undoTimer.current = setTimeout(() => setUndo(null), 5000);
-  }, [deleteTarget, records, setRecords, liveDelete]);
+  }, [deleteTarget, records, setRecords, liveDelete, usingDemoSample, viewRecord?.id]);
 
   const handleUndo = useCallback(() => {
     if (!undo) return;
@@ -337,7 +361,7 @@ function ResponsesContent() {
                   copyNote={copyNote}
                   exportDisabled={filtered.length === 0}
                   onView={setViewRecord}
-                  onDelete={setDeleteTarget}
+                  onDelete={requestDelete}
                   highlightId={flashId}
                   onResetFilters={resetFilters}
                   emptyDataset={workingRecords.length === 0}
@@ -360,14 +384,21 @@ function ResponsesContent() {
         onToggle={handleToggleWidget}
       />
 
-      <ResponseDetailDrawer record={viewRecord} onClose={() => setViewRecord(null)} />
+      <ResponseDetailDrawer
+        record={viewRecord}
+        onClose={() => setViewRecord(null)}
+        onDelete={canDelete ? requestDelete : undefined}
+        deleteDisabled={deleteBusy}
+      />
       <DeleteConfirmModal
         record={deleteTarget}
         live={liveDelete}
         busy={deleteBusy}
+        error={deleteError}
         onCancel={() => {
           if (deleteBusy) return;
           setDeleteTarget(null);
+          setDeleteError(null);
         }}
         onConfirm={() => void confirmDelete()}
       />

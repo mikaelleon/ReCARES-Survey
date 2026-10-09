@@ -97,7 +97,7 @@ There is a minimum time on the survey before submit is accepted (`MIN_MS_BEFORE_
 
 ## Interview form
 
-If the resident opts in, they can give contact details and preferred days/times. The team processes these on **Interview Invites** (`/admin/interviews/`). Statuses include not contacted, contacted, confirmed, and withdrawn (see [For proponents](for-proponents.md)).
+If the resident opts in, they can give contact details and preferred days/times. The team processes these on **Interview Invites** (`/admin/interviews/`). Statuses include not contacted, contacted, and confirmed; delete removes an invite completely (see [For proponents](for-proponents.md)).
 
 ---
 

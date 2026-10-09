@@ -15,6 +15,7 @@ import {
   serviceQualityGauge,
   waitTimeStat,
 } from '@/lib/admin/extendedWidgets';
+import type { SampleRecord } from '@/lib/admin/sampleResponses';
 import { StatSkeleton } from '@/components/ui/Skeleton';
 
 /**

@@ -11,7 +11,8 @@ If a word is unclear, open the [glossary](glossary.md).
 1. [Project overview](overview.md) — what ReCARES is, and what it is not.
 2. Pick your role:
    - [For residents](for-residents.md)
-   - [For proponents](for-proponents.md) (research team and adviser)
+   - [For proponents](for-proponents.md) (research team)
+   - [For advisers](for-advisers.md) (review comments)
 3. If you work on the survey instrument: [The survey](survey.md).
 4. If you grant or request admin access: [Roles and access](roles-and-access.md).
 5. If you handle personal data or ethics: [Data and privacy](data-and-privacy.md).
@@ -28,6 +29,7 @@ The repository [README](../README.md) is the short front door. This folder is th
 | [For residents](for-residents.md) | Homepage, FAQ, survey, chat, inquiry form |
 | [The survey](survey.md) | Steps, branching, drafts, submit |
 | [For proponents](for-proponents.md) | Dashboard, Responses, Interviews, Inquiries, Survey control, Members |
+| [For advisers](for-advisers.md) | Review comments on findings, questions, and the instrument |
 | [Roles and access](roles-and-access.md) | Superadmin, Proponent, Adviser, invites, pending |
 | [Data and privacy](data-and-privacy.md) | What is stored, drafts, HOA, Brave/ad blockers |
 | [Glossary](glossary.md) | Shared vocabulary |

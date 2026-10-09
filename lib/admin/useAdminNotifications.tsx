@@ -11,7 +11,9 @@ import {
   type ReactNode,
 } from 'react';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { canResolveThread } from '@/lib/admin/access';
 import { getFirestoreDb } from '@/lib/firebase/config';
+import { messageForFirestoreWriteError } from '@/lib/firebase/writeErrors';
 import { mapSurveyConfig } from '@/lib/firebase/surveyConfig';
 import { surveyAcceptsResponses } from '@/survey/instrument';
 
@@ -63,10 +65,11 @@ function createdMs(data: Record<string, unknown>, fallbackKeys: string[]): numbe
 
 /**
  * Live inbox for the admin bell: new inquiries, uncontacted interviews, pending members,
- * and a survey-window notice when the instrument is paused or closed.
+ * a survey-window notice, and review threads that need this role's attention.
  */
 export function AdminNotificationsProvider({ children }: { children: ReactNode }) {
   const { user, isSuperadmin, can } = useAuth();
+  const role = user?.role ?? null;
   const [items, setItems] = useState<AdminNotificationItem[]>([]);
   const [seenMs, setSeenMs] = useState(0);
 
@@ -88,16 +91,17 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
       interviews: [],
       pending: [],
       survey: [],
+      feedback: [],
     };
 
     const publish = () => {
-      const merged = [
+      const rest = [
         ...buckets.inquiries,
         ...buckets.interviews,
         ...buckets.pending,
         ...buckets.survey,
       ].sort((a, b) => b.atMs - a.atMs);
-      setItems(merged.slice(0, 12));
+      setItems([...buckets.feedback.slice(0, 40), ...rest.slice(0, 8)]);
     };
 
     unsubs.push(
@@ -166,6 +170,97 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
       );
     }
 
+    const feedbackError = (error: unknown) => {
+      buckets.feedback = [
+        {
+          id: 'review-error',
+          title: 'Reviews unavailable',
+          detail: messageForFirestoreWriteError(error, 'Could not load review alerts.', {
+            resourceHint: 'adviserFeedback',
+          }),
+          href: '/admin/reviews/',
+          atMs: Date.now(),
+        },
+      ];
+      publish();
+    };
+
+    if (canResolveThread(role)) {
+      unsubs.push(
+        onSnapshot(
+          query(collection(db, 'adviserFeedback'), where('status', '==', 'addressed')),
+          (snap) => {
+            buckets.feedback = snap.docs.flatMap((item) => {
+              const data = item.data() as Record<string, unknown>;
+              if (data.parentId != null) return [];
+              const comment = typeof data.comment === 'string' ? data.comment : 'Review';
+              return [
+                {
+                  id: `review-${item.id}`,
+                  title: 'Review awaiting resolution',
+                  detail: comment.slice(0, 80),
+                  href: `/admin/reviews/?thread=${item.id}`,
+                  atMs: createdMs(data, ['updatedAt']),
+                } satisfies AdminNotificationItem,
+              ];
+            });
+            publish();
+          },
+          feedbackError,
+        ),
+      );
+    } else if (role === 'admin') {
+      const uid = user.uid;
+      let myNoteIds = new Set<string>();
+      let fixRows: { noteId: string; item: AdminNotificationItem }[] = [];
+      const publishProponent = () => {
+        buckets.feedback = fixRows
+          .filter((row) => myNoteIds.has(row.noteId))
+          .map((row) => row.item);
+        publish();
+      };
+      unsubs.push(
+        onSnapshot(
+          query(collection(db, 'findingNotes'), where('authorUid', '==', uid)),
+          (snap) => {
+            myNoteIds = new Set(snap.docs.map((item) => item.id));
+            publishProponent();
+          },
+          feedbackError,
+        ),
+      );
+      unsubs.push(
+        onSnapshot(
+          query(collection(db, 'adviserFeedback'), where('severity', '==', 'required_fix')),
+          (snap) => {
+            fixRows = snap.docs.flatMap((item) => {
+              const data = item.data() as Record<string, unknown>;
+              if (data.parentId != null || data.status !== 'open' || data.targetType !== 'note') {
+                return [];
+              }
+              const targetId = typeof data.targetId === 'string' ? data.targetId : '';
+              if (!targetId) return [];
+              const comment = typeof data.comment === 'string' ? data.comment : 'Required fix';
+              return [
+                {
+                  noteId: targetId,
+                  item: {
+                    id: `review-${item.id}`,
+                    title: 'Required fix on your note',
+                    detail: comment.slice(0, 80),
+                    href: `/admin/reviews/?thread=${item.id}`,
+                    atMs: createdMs(data, ['updatedAt']),
+                  },
+                },
+              ];
+            });
+            publishProponent();
+          },
+          feedbackError,
+        ),
+      );
+    }
+
     unsubs.push(
       onSnapshot(doc(db, 'appConfig', 'survey'), (snap) => {
         const config = mapSurveyConfig(snap.data() as Record<string, unknown> | undefined);
@@ -189,10 +284,13 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
     return () => {
       for (const stop of unsubs) stop();
     };
-  }, [user, isSuperadmin, can]);
+  }, [user, isSuperadmin, can, role]);
 
   const unreadCount = useMemo(
-    () => items.filter((item) => item.atMs > seenMs || item.id === 'survey-window').length,
+    () =>
+      items.filter(
+        (item) => item.atMs > seenMs || item.id === 'survey-window' || item.id.startsWith('review-'),
+      ).length,
     [items, seenMs],
   );
 

@@ -19,6 +19,8 @@ import {
   Inbox,
   LayoutDashboard,
   LogOut,
+  MessageSquare,
+  NotebookPen,
   Settings2,
   Users,
   X,
@@ -136,6 +138,13 @@ export function SidebarNav({
       Icon: CalendarHeart,
       show: can('interviewInvites'),
     },
+    {
+      href: '/admin/notes/',
+      label: 'Findings Log',
+      Icon: NotebookPen,
+      show: can('findingNotes'),
+    },
+    { href: '/admin/reviews/', label: 'Reviews', Icon: MessageSquare, show: true },
   ];
 
   const manageLinks: { href: string; label: string; Icon: IconType; show: boolean }[] = [

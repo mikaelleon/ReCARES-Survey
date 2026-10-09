@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
+import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import {
@@ -51,6 +52,9 @@ function InquiryInboxContent() {
   const [filter, setFilter] = useState('All');
   const [sortBy, setSortBy] = useState('Newest first');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<InquiryRow | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const next = await listInquiries();
@@ -86,32 +90,30 @@ function InquiryInboxContent() {
       await updateInquiryStatus(row.id, status);
       await refresh();
       setNote(`Marked ${row.email || 'inquiry'} as ${filterLabel(status).toLowerCase()}.`);
-    } catch {
-      setError('Could not update that inquiry.');
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : 'Could not update that inquiry.');
     } finally {
       setBusyId(null);
     }
   };
 
-  const removeInquiry = async (row: InquiryRow) => {
-    if (
-      !window.confirm(
-        `Delete the inquiry from ${row.email || row.name || 'this person'}? This cannot be undone.`,
-      )
-    ) {
-      return;
-    }
-    setBusyId(row.id);
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteBusy(true);
+    setDeleteError(null);
     setError(null);
     setNote(null);
     try {
-      await deleteInquiry(row.id);
+      await deleteInquiry(deleteTarget.id);
       await refresh();
-      setNote(`Deleted inquiry from ${row.email || row.name || 'unknown sender'}.`);
-    } catch {
-      setError('Could not delete that inquiry.');
+      setNote(`Deleted inquiry from ${deleteTarget.email || deleteTarget.name || 'unknown sender'}.`);
+      setDeleteTarget(null);
+    } catch (err) {
+      setDeleteError(
+        err instanceof Error && err.message ? err.message : 'Could not delete that inquiry.',
+      );
     } finally {
-      setBusyId(null);
+      setDeleteBusy(false);
     }
   };
 
@@ -154,10 +156,24 @@ function InquiryInboxContent() {
         <p className="na-intro" role="status">
           Loading inquiries…
         </p>
+      ) : rows.length === 0 ? (
+        <div className="admin-empty" role="status">
+          <p className="admin-empty__title">No inquiries yet</p>
+          <p className="admin-empty__body">
+            When someone submits the contact form on the resident homepage, their message will
+            appear here.
+          </p>
+        </div>
       ) : shown.length === 0 ? (
-        <p className="na-intro" role="status">
-          No inquiries in this filter.
-        </p>
+        <div className="admin-empty" role="status">
+          <p className="admin-empty__title">No inquiries match</p>
+          <p className="admin-empty__body">Try a different status filter.</p>
+          {filter !== 'All' ? (
+            <button type="button" className="admin-empty__btn" onClick={() => setFilter('All')}>
+              Show all
+            </button>
+          ) : null}
+        </div>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
@@ -186,7 +202,7 @@ function InquiryInboxContent() {
                         <Button
                           variant="secondary"
                           size="sm"
-                          disabled={busyId === row.id}
+                          disabled={busyId === row.id || deleteBusy}
                           onClick={() => void setStatus(row, 'in_progress')}
                         >
                           In progress
@@ -196,7 +212,7 @@ function InquiryInboxContent() {
                         <Button
                           variant="secondary"
                           size="sm"
-                          disabled={busyId === row.id}
+                          disabled={busyId === row.id || deleteBusy}
                           onClick={() => void setStatus(row, 'resolved')}
                         >
                           Resolved
@@ -205,7 +221,7 @@ function InquiryInboxContent() {
                         <Button
                           variant="secondary"
                           size="sm"
-                          disabled={busyId === row.id}
+                          disabled={busyId === row.id || deleteBusy}
                           onClick={() => void setStatus(row, 'new')}
                         >
                           Reopen
@@ -214,8 +230,11 @@ function InquiryInboxContent() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        disabled={busyId === row.id}
-                        onClick={() => void removeInquiry(row)}
+                        disabled={busyId === row.id || deleteBusy}
+                        onClick={() => {
+                          setDeleteError(null);
+                          setDeleteTarget(row);
+                        }}
                       >
                         Delete
                       </Button>
@@ -227,6 +246,20 @@ function InquiryInboxContent() {
           </table>
         </div>
       )}
+
+      <ConfirmDeleteModal
+        open={Boolean(deleteTarget)}
+        title={`Delete inquiry from ${deleteTarget?.email || deleteTarget?.name || 'this person'}?`}
+        body="Permanently removes this homepage contact message from Firestore. This cannot be undone."
+        busy={deleteBusy}
+        error={deleteError}
+        onCancel={() => {
+          if (deleteBusy) return;
+          setDeleteTarget(null);
+          setDeleteError(null);
+        }}
+        onConfirm={() => void confirmDelete()}
+      />
     </section>
   );
 }

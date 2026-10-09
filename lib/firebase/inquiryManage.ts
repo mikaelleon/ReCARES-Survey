@@ -2,6 +2,7 @@
 
 import { collection, deleteDoc, doc, getDocs, updateDoc, type Timestamp } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase/config';
+import { messageForFirestoreWriteError, requireDocumentId } from '@/lib/firebase/writeErrors';
 import type { InquiryStatus } from '@/survey/schema';
 
 export interface InquiryRow {
@@ -71,6 +72,15 @@ export async function updateInquiryStatus(id: string, status: InquiryStatus): Pr
 }
 
 export async function deleteInquiry(id: string): Promise<void> {
-  const db = requireDb();
-  await deleteDoc(doc(db, 'inquiries', id));
+  try {
+    const db = requireDb();
+    const docId = requireDocumentId(id, 'inquiry');
+    await deleteDoc(doc(db, 'inquiries', docId));
+  } catch (error) {
+    throw new Error(
+      messageForFirestoreWriteError(error, 'Could not delete that inquiry.', {
+        resourceHint: 'inquiries',
+      }),
+    );
+  }
 }

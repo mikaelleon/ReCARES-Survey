@@ -126,6 +126,7 @@ function sortInvites(rows: InviteRow[], sortBy: MemberSort): InviteRow[] {
 const PERMISSION_ICONS: Record<DashboardPermissionKey, ReactNode> = {
   responsesDashboard: <BarChart3 size={14} strokeWidth={2.2} aria-hidden="true" />,
   interviewInvites: <CalendarCheck size={14} strokeWidth={2.2} aria-hidden="true" />,
+  findingNotes: <BookOpen size={14} strokeWidth={2.2} aria-hidden="true" />,
 };
 
 function memberInitials(name?: string, email?: string): string {

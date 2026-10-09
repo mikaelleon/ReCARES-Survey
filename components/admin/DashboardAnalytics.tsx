@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ChartSkeleton } from '@/components/ui/Skeleton';
+import type { CountBucket, GateCoverage, LikertMean } from '@/lib/admin/analytics';
 
 function useInViewOnce<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);

@@ -27,7 +27,6 @@ export interface InterviewKpis {
   notContacted: number;
   pending: number;
   confirmed: number;
-  withdrawn: number;
   online: number;
   faceToFace: number;
   topDay: { label: string; count: number } | null;
@@ -41,7 +40,7 @@ export interface AvailabilityDay {
   isoDate: string;
   weekday: string;
   count: number;
-  /** Open invites (not confirmed or withdrawn) who prefer this weekday. */
+  /** Open invites (not confirmed) who prefer this weekday. */
   matches: InterviewInviteRow[];
   isPeak: boolean;
   inMonth: boolean;
@@ -74,10 +73,11 @@ export function computeInterviewKpis(rows: InterviewInviteRow[]): InterviewKpis 
 
   return {
     total: rows.length,
-    notContacted: rows.filter((r) => r.contactStatus === 'not_contacted').length,
+    notContacted: rows.filter(
+      (r) => r.contactStatus === 'not_contacted' || r.contactStatus === 'withdrawn',
+    ).length,
     pending: rows.filter((r) => r.contactStatus === 'pending_confirmation').length,
     confirmed: rows.filter((r) => r.contactStatus === 'confirmed').length,
-    withdrawn: rows.filter((r) => r.contactStatus === 'withdrawn').length,
     online: rows.filter((r) => r.interviewFormat === 'Online').length,
     faceToFace: rows.filter((r) => r.interviewFormat === 'Face-to-face').length,
     topDay: topOf(dayCounts),
@@ -103,9 +103,7 @@ export function buildAvailabilityMonth(
   year: number,
   monthIndex: number,
 ): { days: AvailabilityDay[]; maxCount: number; peakWeekday: string | null } {
-  const open = rows.filter(
-    (r) => r.contactStatus !== 'confirmed' && r.contactStatus !== 'withdrawn',
-  );
+  const open = rows.filter((r) => r.contactStatus !== 'confirmed');
   const first = new Date(year, monthIndex, 1);
   const startPad = first.getDay(); // 0 = Sunday
   const gridStart = new Date(year, monthIndex, 1 - startPad);

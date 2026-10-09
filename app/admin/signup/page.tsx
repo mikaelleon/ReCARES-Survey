@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useRef, useState } from 'react';
-import { RecaresWordmark } from '@/components/brand/RecaresWordmark';
+import { AuthPageShell } from '@/components/admin/AuthPageShell';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { ADMIN_ROLE_LABELS, ADMIN_ROLE_OPTIONS } from '@/lib/admin/access';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useQueryParam } from '@/lib/navigation/useQueryParam';
 import {
@@ -13,6 +15,8 @@ import {
   registerAdminFromInvite,
   signupErrorMessage,
 } from '@/lib/firebase/auth';
+
+const REQUESTED_ROLE_OPTIONS = ADMIN_ROLE_OPTIONS.map((role) => ADMIN_ROLE_LABELS[role]);
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -127,155 +131,155 @@ export default function AdminSignupPage() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-page__inner">
-        <div className="auth-page__brand">
-          <RecaresWordmark size={28} />
-          <p className="auth-page__eyebrow">Proponent access</p>
-        </div>
-
-        <form ref={formRef} className="auth-card" data-auth="" onSubmit={handleSubmit} noValidate>
+    <AuthPageShell>
+      <form
+        ref={formRef}
+        className="auth-card auth-card--signup"
+        data-auth=""
+        onSubmit={handleSubmit}
+        noValidate
+      >
+        <div className="auth-card__intro">
           <h1 className="auth-card__title">
-            {inviteId ? 'Accept invite' : 'Create proponent account'}
+            {inviteId ? 'Accept invite' : 'Create account'}
           </h1>
           <p className="auth-card__lead">
             {inviteId
-              ? 'You were invited. Use the same email the invite was issued for. Access is granted immediately after signup.'
-              : 'Self-registration creates a pending account. A superadmin must approve you before the dashboard opens.'}
+              ? 'Use the same email the invite was issued for. Access opens right after signup.'
+              : 'Self-registration stays pending until a superadmin approves you.'}
           </p>
+        </div>
 
-          <Input
-            id="signup-name"
-            name="name"
-            label="Name"
-            autoComplete="name"
-            placeholder="Full name"
-            value={name}
-            autoFocus
-            disabled={busy}
-            onChange={(e) => {
-              setName(e.target.value);
-              if (nameError) setNameError(null);
-            }}
-            required
-            error={nameError}
-          />
-          <Input
-            id="signup-email"
-            name="email"
-            label="Institutional or team email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            placeholder="name@ub.edu.ph"
-            value={email}
-            disabled={busy}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (emailError) setEmailError(null);
-            }}
-            required
-            error={emailError}
-          />
-          {!inviteId ? (
-            <>
-              <Input
-                id="signup-role"
-                name="requestedRole"
-                label="Requested role"
-                autoComplete="organization-title"
-                placeholder="Proponent"
-                value={requestedRole}
-                disabled={busy}
-                onChange={(e) => {
-                  setRequestedRole(e.target.value);
-                  if (roleError) setRoleError(null);
-                }}
-                required
-                error={roleError}
-                helperText="Shown to the superadmin during approval. Does not grant access by itself."
-              />
-              <Input
-                id="signup-code"
-                name="accessCode"
-                label="Access code"
-                autoComplete="one-time-code"
-                placeholder="Shared with the proponent team"
-                value={code}
-                disabled={busy}
-                spellCheck={false}
-                onChange={(e) => {
-                  setCode(e.target.value.toUpperCase());
-                  if (codeError) setCodeError(null);
-                }}
-                required
-                error={codeError}
-                helperText="Required for self-registration. Access stays pending until approved. Case does not matter."
-              />
-            </>
-          ) : null}
-          <Input
-            id="signup-password"
-            name="password"
-            label="Password"
-            type="password"
-            autoComplete="new-password"
-            placeholder="••••••••"
-            value={password}
-            disabled={busy}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (passwordError) setPasswordError(null);
-            }}
-            required
-            error={passwordError}
-            helperText={passwordHint}
-          />
-          <Input
-            id="signup-password2"
-            name="passwordConfirm"
-            label="Confirm password"
-            type="password"
-            autoComplete="new-password"
-            placeholder="••••••••"
-            value={password2}
-            disabled={busy}
-            onChange={(e) => {
-              setPassword2(e.target.value);
-              if (password2Error) setPassword2Error(null);
-            }}
-            required
-            error={password2Error}
-          />
+        <Input
+          id="signup-name"
+          name="name"
+          label="Name"
+          autoComplete="name"
+          placeholder="Full name"
+          value={name}
+          autoFocus
+          disabled={busy}
+          onChange={(e) => {
+            setName(e.target.value);
+            if (nameError) setNameError(null);
+          }}
+          required
+          error={nameError}
+        />
+        <Input
+          id="signup-email"
+          name="email"
+          label="Institutional or team email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder="name@ub.edu.ph"
+          value={email}
+          disabled={busy}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (emailError) setEmailError(null);
+          }}
+          required
+          error={emailError}
+        />
+        {!inviteId ? (
+          <>
+            <Select
+              id="signup-role"
+              label="Requested role"
+              options={REQUESTED_ROLE_OPTIONS}
+              placeholder="Select a role"
+              value={requestedRole}
+              disabled={busy}
+              onChange={(e) => {
+                setRequestedRole(e.target.value);
+                if (roleError) setRoleError(null);
+              }}
+              required
+              error={roleError}
+              helperText="Shown during approval. Does not grant access by itself."
+            />
+            <Input
+              id="signup-code"
+              name="accessCode"
+              label="Access code"
+              autoComplete="one-time-code"
+              placeholder="Shared with the proponent team"
+              value={code}
+              disabled={busy}
+              spellCheck={false}
+              onChange={(e) => {
+                setCode(e.target.value.toUpperCase());
+                if (codeError) setCodeError(null);
+              }}
+              required
+              error={codeError}
+              helperText="Required for self-registration. Case does not matter."
+            />
+          </>
+        ) : null}
+        <Input
+          id="signup-password"
+          name="password"
+          label="Password"
+          type="password"
+          autoComplete="new-password"
+          placeholder="••••••••"
+          value={password}
+          disabled={busy}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (passwordError) setPasswordError(null);
+          }}
+          required
+          error={passwordError}
+          helperText={passwordHint}
+        />
+        <Input
+          id="signup-password2"
+          name="passwordConfirm"
+          label="Confirm password"
+          type="password"
+          autoComplete="new-password"
+          placeholder="••••••••"
+          value={password2}
+          disabled={busy}
+          onChange={(e) => {
+            setPassword2(e.target.value);
+            if (password2Error) setPassword2Error(null);
+          }}
+          required
+          error={password2Error}
+        />
 
-          {formError ? (
-            <p role="alert" className="auth-card__alert">
-              {formError}
-            </p>
-          ) : null}
-
-          <div className="auth-card__actions">
-            <Button variant="primary" onDark type="submit" fullWidth loading={busy} disabled={busy}>
-              {busy
-                ? 'Creating account…'
-                : inviteId
-                  ? 'Create account from invite'
-                  : 'Create account'}
-            </Button>
-          </div>
-
-          <p className="auth-card__footer">
-            Already have an account?{' '}
-            <Link href="/admin/login" className="auth-card__link">
-              Log in
-            </Link>
+        {formError ? (
+          <p role="alert" className="auth-card__alert">
+            {formError}
           </p>
-        </form>
+        ) : null}
 
-        <p className="auth-page__back">
-          <Link href="/">Back to the resident site</Link>
+        <div className="auth-card__actions">
+          <Button variant="primary" onDark type="submit" fullWidth loading={busy} disabled={busy}>
+            {busy
+              ? 'Creating account…'
+              : inviteId
+                ? 'Create account from invite'
+                : 'Create account'}
+          </Button>
+        </div>
+
+        <p className="auth-card__footer">
+          Already have an account?{' '}
+          <Link href="/admin/login/" className="auth-card__link">
+            Log in
+          </Link>
         </p>
-      </div>
-    </div>
+      </form>
+
+      <p className="auth-page__back">
+        <Link href="/">Back to the resident site</Link>
+      </p>
+    </AuthPageShell>
   );
 }

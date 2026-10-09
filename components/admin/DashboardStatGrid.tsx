@@ -10,6 +10,7 @@ import {
   Users,
 } from 'lucide-react';
 import { FIELD_CODE_HELP, FieldCodeHint } from '@/components/admin/FieldCodeHint';
+import type { DashboardKpis } from '@/lib/admin/analytics';
 import { StatSkeleton } from '@/components/ui/Skeleton';
 
 /** Research sample-size target for Total Respondents progress. */

@@ -25,9 +25,9 @@ If the login card never finishes loading, turn down Brave Shields or allow `fire
 
 ## The workspace layout
 
-- **Green sidebar** (left): Dashboard, Responses, Interview Invites, Inquiries, Members & Invites, and (superadmin) Survey control. On a phone this is a menu.
+- **Green sidebar** (left): Dashboard, Responses, Interview Invites, Findings Log, Reviews, Inquiries, Members & Invites, and (superadmin) Survey control. On a phone this is a menu.
 - **Account footer:** your name, role, status, **Log out**, and **Back to resident site**.
-- **Bell:** unread inquiries, uncontacted interview opt-ins, pending access requests (superadmin), and a notice if the survey is paused or closed.
+- **Bell:** unread inquiries, uncontacted interview opt-ins, pending access requests (superadmin), review threads that need your role (required fixes on your notes, or addressed threads if you are an adviser), and a notice if the survey is paused or closed.
 - **Moon:** dark / light theme.
 
 You only see Responses or Interview Invites if a superadmin turned on those **permissions** for your account (superadmins see everything).
@@ -65,9 +65,35 @@ Three ways to look at the same answers:
 | Question | One question at a time |
 | Individual | Each submission as a row, then a side panel for detail |
 
-You can filter by phase and branch, sort, export CSV, and copy a text summary. Deleting a row on the Individual tab **removes the live Firestore document** (active admins). Demo sample mode (`?demo=sample`) still only deletes locally and can be undone for a few seconds.
+You can filter by phase and branch, sort, export CSV, and copy a text summary. **Delete** (Individual table, detail card, or detail drawer) permanently removes the live Firestore document after confirmation. Demo sample mode (`?demo=sample`) still only deletes locally and can be undone for a few seconds. Delete stays disabled if Firestore is not loaded.
 
 Gated fields the resident was not asked show as **`not_shown`**.
+
+---
+
+## Findings Log
+
+Analysis notes about survey results, linked to a Responses question. Permission: **Findings log**.
+
+| Who | Can |
+| --- | --- |
+| Proponent / Superadmin | Create, edit, and delete **their own** notes |
+| Adviser | Read the list and detail only (no create/edit/delete controls; rules block writes) |
+
+Each note has a title, body, tag (barrier / theme / anomaly / recommendation), status (draft → reviewed → final), and a linked question. **Final** notes are locked until the author reverts status to draft. Duplicate titles for the same question (same author) and a 100-note cap per author are enforced in the app.
+
+From Responses → **Question**, use **Add note for this question** to open the form with that question prefilled. Filter/sort on the Findings Log page; use **My notes** to see only yours. Open a note to read the adviser review thread, reply, and mark it addressed. An **Approved** badge appears on notes an adviser has approved. You cannot start a review or resolve one — that stays with the adviser. See [For advisers](for-advisers.md).
+
+Deploy updated `firestore.rules` and `firestore.indexes.json` so reads/writes and composite filters succeed.
+
+**Manual checks (rules + UI)**
+
+1. Proponent with Findings log on: create a note → appears in the list; edit title/body/status; delete a draft.
+2. Mark a note **final** → edit/delete blocked until status is reverted to draft (unlock flow).
+3. Duplicate title on the same question (same author) → client error, no new doc.
+4. Adviser with Findings log on: list/detail visible; no New/Edit/Delete; a direct `create`/`update`/`delete` from the console as that user is denied.
+5. Offline / blocked Firestore → error banner or empty-state message, not a blank page.
+6. Responses → Question → **Add note for this question** opens `/admin/notes/?new=1&questionId=…` with the question selected.
 
 ---
 
@@ -75,9 +101,8 @@ Gated fields the resident was not asked show as **`not_shown`**.
 
 People who agreed to a follow-up interview.
 
-- Board columns follow outreach: not contacted → contacted → confirmed → **withdrawn**.
-- Withdrawn people stay on the board so the team does not email them again. Restore moves them back to not contacted.
-- **Delete** on a withdrawn card permanently removes the invite from Firestore. Use it for test opt-ins or when the person asked to be forgotten.
+- Board columns follow outreach: not contacted → contacted → confirmed.
+- **Delete** on any card permanently removes the invite from Firestore (including notes). Use it for test opt-ins or when the person asked to be forgotten.
 - Sort the board by newest, oldest, or email.
 - Each card has **Notes** for call/email history (team only — never joined to anonymous survey answers).
 - **Export contacts CSV** downloads this roster only (email, preferences, status, notes). It is not the full survey CSV.
@@ -137,6 +162,7 @@ Bump the instrument version only when the question set actually changes, so char
 | --- | --- |
 | Responses dashboard | `/admin/responses/` |
 | Interview invites | `/admin/interviews/` |
+| Findings log | `/admin/notes/` (write for Proponent/Superadmin; read-only for Adviser) |
 
 Dashboard and Members remain available to active admins. Superadmin ignores the permission flags and can do all of the above.
 

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
+import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { InterviewAvailabilityCalendar } from '@/components/admin/InterviewAvailabilityCalendar';
@@ -10,6 +11,7 @@ import { InterviewKpiGrid } from '@/components/admin/InterviewKpiGrid';
 import { computeInterviewKpis, buildInterviewContactsCsv } from '@/lib/admin/interviewAnalytics';
 import { downloadCsv } from '@/lib/admin/csvDownload';
 import { useInterviewInvites } from '@/lib/admin/useInterviewInvites';
+import type { InterviewInviteRow } from '@/lib/firebase/interviewManage';
 import { useAuth } from '@/lib/auth/AuthProvider';
 
 const INTERVIEW_SORT = ['Newest first', 'Oldest first', 'Email (A–Z)'];
@@ -24,12 +26,13 @@ function InterviewInvitesContent() {
     busyId,
     markContacted,
     confirm,
-    withdraw,
-    restore,
     remove,
     addNote,
   } = useInterviewInvites();
   const [sortBy, setSortBy] = useState('Newest first');
+  const [deleteTarget, setDeleteTarget] = useState<InterviewInviteRow | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const kpis = useMemo(() => computeInterviewKpis(rows), [rows]);
   const sortedRows = useMemo(() => {
     const list = [...rows];
@@ -46,6 +49,15 @@ function InterviewInvitesContent() {
   const handleExport = () => {
     if (rows.length === 0) return;
     downloadCsv('recares-interview-contacts.csv', buildInterviewContactsCsv(rows));
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteBusy(true);
+    setDeleteError(null);
+    const ok = await remove(deleteTarget.id, deleteTarget.email);
+    setDeleteBusy(false);
+    if (ok) setDeleteTarget(null);
   };
 
   return (
@@ -70,7 +82,7 @@ function InterviewInvitesContent() {
         </div>
       </div>
 
-      {error ? (
+      {error && !deleteTarget ? (
         <p className="na-error" role="alert">
           {error}
         </p>
@@ -87,9 +99,10 @@ function InterviewInvitesContent() {
           busyId={busyId}
           onMarkContacted={(id, email) => void markContacted(id, email)}
           onConfirm={(id, email) => void confirm(id, email)}
-          onWithdraw={(id, email) => void withdraw(id, email)}
-          onRestore={(id, email) => void restore(id, email)}
-          onDelete={(id, email) => void remove(id, email)}
+          onRequestDelete={(row) => {
+            setDeleteError(null);
+            setDeleteTarget(row);
+          }}
           onAddNote={(id, existing, text) =>
             void addNote(id, existing, text, user?.uid || '', user?.name || user?.email || 'Team')
           }
@@ -162,6 +175,20 @@ function InterviewInvitesContent() {
           </article>
         </aside>
       </div>
+
+      <ConfirmDeleteModal
+        open={Boolean(deleteTarget)}
+        title={`Delete invite for ${deleteTarget?.email || 'this person'}?`}
+        body="Permanently removes this interview opt-in from Firestore, including contact notes. This cannot be undone."
+        busy={deleteBusy || Boolean(deleteTarget && busyId === deleteTarget.id)}
+        error={deleteError || (deleteTarget ? error : null)}
+        onCancel={() => {
+          if (deleteBusy) return;
+          setDeleteTarget(null);
+          setDeleteError(null);
+        }}
+        onConfirm={() => void confirmDelete()}
+      />
     </section>
   );
 }

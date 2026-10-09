@@ -1,21 +1,45 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect } from 'react';
 import { AdminOverlayPortal } from '@/components/admin/AdminOverlayPortal';
 import { GatedSectionChips } from '@/components/admin/GatedSectionChips';
+import { Button } from '@/components/ui/Button';
+import { canWriteFindingNotes } from '@/lib/admin/access';
+import { useAuth } from '@/lib/auth/AuthProvider';
 import type { SampleRecord } from '@/lib/admin/sampleResponses';
 import { formatSubmissionLabel } from '@/lib/admin/submissionLabel';
 
 /**
- * Read-only response detail drawer.
+ * Response detail drawer with optional delete action.
  */
 export function ResponseDetailDrawer({
   record,
   onClose,
+  onDelete,
+  deleteDisabled = false,
 }: {
   record: SampleRecord | null;
   onClose: () => void;
+  onDelete?: (record: SampleRecord) => void;
+  deleteDisabled?: boolean;
 }) {
+  const { user, can } = useAuth();
+  const canAddFindingNote =
+    can('findingNotes') &&
+    canWriteFindingNotes(
+      user
+        ? {
+            fullName: user.name || '',
+            email: user.email,
+            requestedRole: user.requestedRole || '',
+            role: user.role,
+            status: user.status === 'active' ? 'active' : 'pending',
+            permissions: user.permissions,
+          }
+        : null,
+    );
+
   useEffect(() => {
     if (!record) return;
     const onKey = (e: KeyboardEvent) => {
@@ -66,9 +90,22 @@ export function ResponseDetailDrawer({
               </h2>
               <p className="admin-drawer__sub">{record.ts}</p>
             </div>
-            <button type="button" className="admin-drawer__close" onClick={onClose}>
-              Close
-            </button>
+            <div className="admin-drawer__head-actions">
+              {onDelete ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onDark
+                  disabled={deleteDisabled}
+                  onClick={() => onDelete(record)}
+                >
+                  Delete
+                </Button>
+              ) : null}
+              <button type="button" className="admin-drawer__close" onClick={onClose}>
+                Close
+              </button>
+            </div>
           </header>
 
           <div className="admin-drawer__body">
@@ -132,9 +169,17 @@ export function ResponseDetailDrawer({
             </ul>
 
             <p className="admin-drawer__hint">
-              Edit is unavailable until Firestore writes are wired. Unasked gated fields stay{' '}
-              <code>not_shown</code>, not blank.
+              Unasked gated fields stay <code>not_shown</code>, not blank. Delete permanently
+              removes the Firestore document when live data is loaded.
             </p>
+
+            {canAddFindingNote ? (
+              <p className="admin-drawer__hint">
+                <Link href="/admin/notes/?new=1">Add note for this question</Link>
+                {' — '}
+                opens the Findings Log; pick the matching Responses question on the form.
+              </p>
+            ) : null}
           </div>
         </aside>
       </div>

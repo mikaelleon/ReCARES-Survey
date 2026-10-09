@@ -12,6 +12,7 @@ export interface SelectProps {
   error?: string | null;
   helperText?: string | null;
   id?: string;
+  disabled?: boolean;
 }
 
 export function Select({
@@ -24,6 +25,7 @@ export function Select({
   error = null,
   helperText = null,
   id,
+  disabled = false,
 }: SelectProps) {
   const autoId = useId();
   const selectId = id ?? autoId;
@@ -88,7 +90,8 @@ export function Select({
         id={selectId}
         value={value}
         onChange={onChange}
-        style={selectStyle}
+        disabled={disabled}
+        style={{ ...selectStyle, opacity: disabled ? 0.65 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
       >

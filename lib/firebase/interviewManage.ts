@@ -9,6 +9,7 @@ import {
   type Timestamp,
 } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase/config';
+import { messageForFirestoreWriteError, requireDocumentId } from '@/lib/firebase/writeErrors';
 import type {
   InterviewContactStatus,
   InterviewInvitation,
@@ -139,6 +140,15 @@ export async function addInterviewNote(
 }
 
 export async function deleteInterviewInvite(id: string): Promise<void> {
-  const db = requireDb();
-  await deleteDoc(doc(db, 'interviewInterest', id));
+  try {
+    const db = requireDb();
+    const docId = requireDocumentId(id, 'interview invite');
+    await deleteDoc(doc(db, 'interviewInterest', docId));
+  } catch (error) {
+    throw new Error(
+      messageForFirestoreWriteError(error, 'Could not delete that interview invite.', {
+        resourceHint: 'interviewInterest',
+      }),
+    );
+  }
 }

@@ -33,7 +33,7 @@ export function useInterviewInvites() {
   }, [refresh]);
 
   const run = useCallback(
-    async (id: string, action: () => Promise<void>, success: string) => {
+    async (id: string, action: () => Promise<void>, success: string): Promise<boolean> => {
       setBusyId(id);
       setError(null);
       setNote(null);
@@ -41,8 +41,14 @@ export function useInterviewInvites() {
         await action();
         await refresh();
         setNote(success);
-      } catch {
-        setError('That action failed. Check your connection and permissions.');
+        return true;
+      } catch (err) {
+        setError(
+          err instanceof Error && err.message
+            ? err.message
+            : 'That action failed. Check your connection and permissions.',
+        );
+        return false;
       } finally {
         setBusyId(null);
       }
@@ -66,32 +72,12 @@ export function useInterviewInvites() {
     [run],
   );
 
-  const withdraw = useCallback(
-    (id: string, email: string) =>
-      run(
-        id,
-        () => updateInterviewContactStatus(id, 'withdrawn'),
-        `Marked ${email} as withdrawn. Contact details stay on this board.`,
-      ),
-    [run],
-  );
-
-  const restore = useCallback(
-    (id: string, email: string) =>
-      run(
-        id,
-        () => updateInterviewContactStatus(id, 'not_contacted'),
-        `Restored ${email} to not contacted.`,
-      ),
-    [run],
-  );
-
   const remove = useCallback(
     (id: string, email: string) =>
       run(
         id,
         () => deleteInterviewInvite(id),
-        `Deleted interview invite for ${email}.`,
+        `Permanently deleted interview invite for ${email}.`,
       ),
     [run],
   );
@@ -125,8 +111,6 @@ export function useInterviewInvites() {
     busyId,
     markContacted,
     confirm,
-    withdraw,
-    restore,
     remove,
     addNote,
   };

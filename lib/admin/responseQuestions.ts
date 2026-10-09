@@ -148,6 +148,13 @@ export function getQuestionById(id: string): ResponseQuestion | undefined {
   return RESPONSE_QUESTIONS.find((q) => q.id === id);
 }
 
+export function isKnownQuestionId(id: string): boolean {
+  return RESPONSE_QUESTIONS.some((q) => q.id === id);
+}
+
+export const RESPONSE_QUESTION_OPTIONS: { id: string; title: string }[] =
+  RESPONSE_QUESTIONS.map((q) => ({ id: q.id, title: q.title }));
+
 export const SUMMARY_PIE_IDS = ['phase', 'resident', 'pwd', 'language'] as const;
 export const SUMMARY_FULL_IDS = ['gated', 'comm-by-resident'] as const;
 export const SUMMARY_LIKERT_IDS = LIKERT_LABELS.map((l) => l.key);
