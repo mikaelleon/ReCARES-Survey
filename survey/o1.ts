@@ -1,5 +1,34 @@
 export const O1_CATEGORIES = [
   {
+    id: 'water_supply',
+    label: 'Water supply or interruptions',
+    items: [
+      'Frequent water interruptions or no water supply',
+      'Water interruptions happen without advance notice',
+      'Scheduled interruptions are announced too late',
+      'Water stays out for many hours or days',
+      'Low water pressure',
+      'Dirty, discolored, or foul-smelling water',
+      'Leaking or broken water pipes are not repaired quickly',
+      'No alternative water source during outages (tanker or refill)',
+      'Unclear who to contact or how to report a water problem',
+      'No updates on when the water will return',
+      'Unfair or unclear water charges',
+      'Other',
+    ],
+  },
+  {
+    id: 'electricity_power',
+    label: 'Power interruptions or electrical hazards',
+    items: [
+      'Frequent power interruptions',
+      'Power outages with no announcement',
+      'Hanging, exposed, or unsafe electrical wires',
+      'Slow follow-up on reported power problems',
+      'Other',
+    ],
+  },
+  {
     id: 'garbage_collection',
     label: 'Garbage collection',
     items: [
@@ -7,6 +36,7 @@ export const O1_CATEGORIES = [
       'Collection schedule is unclear',
       'Garbage left uncollected for days',
       'Improper waste segregation not enforced',
+      'Foul odor or pests from garbage areas',
       'Other',
     ],
   },
@@ -47,6 +77,7 @@ export const O1_CATEGORIES = [
       'Guards not visible or not patrolling regularly',
       'Slow response to concerns',
       'Procedures are unclear',
+      'Long queues or delays at the gate',
       'Other',
     ],
   },
@@ -74,6 +105,27 @@ export const O1_CATEGORIES = [
     id: 'pet_animal',
     label: 'Pet or animal concerns',
     items: ['Stray animals', 'Pets not kept leashed or contained', 'Noise from animals', 'Other'],
+  },
+  {
+    id: 'facilities_amenities',
+    label: 'Common areas or facilities',
+    items: [
+      'Clubhouse, court, or playground not well maintained',
+      'Gate or perimeter fence damaged',
+      'Overgrown grass or untrimmed trees in common areas',
+      'Facility reservation is difficult or unclear',
+      'Other',
+    ],
+  },
+  {
+    id: 'neighbor_disputes',
+    label: 'Disputes between neighbors',
+    items: [
+      'Boundary or fence disagreements',
+      'Complaints are not mediated',
+      'Unclear process for filing a complaint',
+      'Other',
+    ],
   },
 ] as const;
 

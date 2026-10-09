@@ -12,6 +12,8 @@ import {
 import type { O1Details, SurveyAnswers } from '@/survey/schema';
 
 const O1_CATEGORIES = [
+  'water_supply',
+  'electricity_power',
   'garbage_collection',
   'street_lights',
   'roads_drainage',
@@ -21,6 +23,8 @@ const O1_CATEGORIES = [
   'billing_dues',
   'renovation_permits',
   'pet_animal',
+  'facilities_amenities',
+  'neighbor_disputes',
 ] as const;
 
 const VACANT = 'No one lives in the unit right now';

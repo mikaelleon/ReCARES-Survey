@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { useT } from '@/components/survey/SurveyLanguage';
 import { optionDisabled, toggleMulti } from '@/survey/exclusive';
 
 export const REQUIRED_NOTE =
@@ -31,16 +32,17 @@ function Question({
   text: string;
   required?: boolean;
 }) {
+  const t = useT();
   return (
     <div className="na-q" id={id}>
-      {text}
+      {t(text)}
       {required ? (
         <>
           {' '}
           <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
             *
           </span>
-          <span className="visually-hidden"> required</span>
+          <span className="visually-hidden"> {t('required')}</span>
         </>
       ) : null}
     </div>
@@ -48,10 +50,11 @@ function Question({
 }
 
 function FieldError({ id, message }: { id: string; message?: string }) {
+  const t = useT();
   if (!message) return null;
   return (
     <p id={id} className="na-error" role="alert">
-      {message}
+      {t(message)}
     </p>
   );
 }
@@ -85,13 +88,14 @@ function RadioMark({
   checked: boolean;
   onChange: () => void;
 }) {
+  const t = useT();
   return (
     <label className={option.wide ? 'na-radio na-radio-wide' : 'na-radio'}>
       <input type="radio" name={name} value={option.id} checked={checked} onChange={onChange} />
       <span className="na-dot" aria-hidden="true" />
       <span className="na-radio-copy">
-        <span>{option.label}</span>
-        {option.hint ? <span className="na-radio-hint">{option.hint}</span> : null}
+        <span>{t(option.label)}</span>
+        {option.hint ? <span className="na-radio-hint">{t(option.hint)}</span> : null}
       </span>
     </label>
   );
@@ -120,13 +124,14 @@ export function SingleChoice({
   columns?: 1 | 2;
   className?: string;
 }) {
+  const t = useT();
   const errorId = `${code}-error`;
   const labelId = `${code}-label`;
   return (
     <Card error={error} className={className}>
       <div role="radiogroup" aria-labelledby={labelId} aria-describedby={error ? errorId : undefined}>
         <Question id={labelId} text={question} required={required} />
-        {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{hint}</p> : null}
+        {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{t(hint)}</p> : null}
         <div className={columns === 2 ? 'na-radios na-radios--2' : 'na-radios'}>
           {options.map((option) => (
             <RadioMark
@@ -167,13 +172,14 @@ export function MultiChoice({
   onChange: (value: string[]) => void;
   hint?: string;
 }) {
+  const t = useT();
   const errorId = `${code}-error`;
   const labelId = `${code}-label`;
   return (
     <Card error={error}>
       <div role="group" aria-labelledby={labelId} aria-describedby={error ? errorId : undefined}>
         <Question id={labelId} text={question} required={required} />
-        {hint ? <p className="na-hint">{hint}</p> : null}
+        {hint ? <p className="na-hint">{t(hint)}</p> : null}
         <div className="na-checks">
           {options.map((option) => {
             const disabled = optionDisabled(value, option.id, exclusiveId, maxNonExclusive);
@@ -191,7 +197,7 @@ export function MultiChoice({
                 <span className="na-box" aria-hidden="true">
                   {checked ? '✓' : ''}
                 </span>
-                <span>{option.label}</span>
+                <span>{t(option.label)}</span>
               </label>
             );
           })}
@@ -217,6 +223,7 @@ export function LikertChoice({
   error?: string;
   onChange: (value: number) => void;
 }) {
+  const t = useT();
   const options = scale === 'likelihood' ? LIKELIHOOD : AGREEMENT;
   const errorId = `${code}-error`;
   const labelId = `${code}-label`;
@@ -233,7 +240,7 @@ export function LikertChoice({
                 type="button"
                 className="na-likert-btn"
                 aria-pressed={selected}
-                aria-label={option.label}
+                aria-label={t(option.label)}
                 onClick={() => onChange(Number(option.id))}
               >
                 {option.id}
@@ -241,9 +248,12 @@ export function LikertChoice({
             );
           })}
         </div>
+        <p className="na-likert-selected" aria-live="polite">
+          {value ? `${t('Your choice:')} ${value} — ${t(options.find((option) => option.id === String(value))?.label ?? '')}` : ' '}
+        </p>
         <div className="na-likert-ends">
-          <span>{options[0].label}</span>
-          <span>{options.find((option) => option.id === '5')?.label}</span>
+          <span>{t(options[0].label)}</span>
+          <span>{t(options.find((option) => option.id === '5')?.label ?? '')}</span>
         </div>
         <FieldError id={errorId} message={error} />
       </div>
@@ -270,19 +280,20 @@ export function NumberField({
   error?: string;
   onChange: (value: number | undefined) => void;
 }) {
+  const t = useT();
   const errorId = `${code}-error`;
   const inputId = `${code}-input`;
   return (
     <Card error={error}>
       <label className="na-q" htmlFor={inputId}>
-        {question}
+        {t(question)}
         {required ? (
           <>
             {' '}
             <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
               *
             </span>
-            <span className="visually-hidden"> required</span>
+            <span className="visually-hidden"> {t('required')}</span>
           </>
         ) : null}
       </label>
@@ -331,23 +342,24 @@ export function TextField({
   onChange: (value: string) => void;
   hint?: string;
 }) {
+  const t = useT();
   const errorId = `${code}-error`;
   const inputId = `${code}-input`;
   return (
     <Card error={error}>
       <label className="na-q" htmlFor={inputId}>
-        {question}
+        {t(question)}
         {required ? (
           <>
             {' '}
             <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
               *
             </span>
-            <span className="visually-hidden"> required</span>
+            <span className="visually-hidden"> {t('required')}</span>
           </>
         ) : null}
       </label>
-      {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{hint}</p> : null}
+      {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{t(hint)}</p> : null}
       <textarea
         id={inputId}
         className={error ? 'na-area na-area--error' : 'na-area'}
@@ -379,19 +391,20 @@ export function SelectChoice({
   error?: string;
   onChange: (value: string) => void;
 }) {
+  const t = useT();
   const errorId = `${code}-error`;
   const inputId = `${code}-input`;
   return (
     <Card error={error}>
       <label className="na-q" htmlFor={inputId}>
-        {question}
+        {t(question)}
         {required ? (
           <>
             {' '}
             <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
               *
             </span>
-            <span className="visually-hidden"> required</span>
+            <span className="visually-hidden"> {t('required')}</span>
           </>
         ) : null}
       </label>
@@ -404,11 +417,11 @@ export function SelectChoice({
         onChange={(event) => onChange(event.target.value)}
       >
         <option value="" disabled>
-          Select…
+          {t('Select…')}
         </option>
         {options.map((option) => (
           <option key={option.id} value={option.id}>
-            {option.label}
+            {t(option.label)}
           </option>
         ))}
       </select>
@@ -426,6 +439,7 @@ export function ResidentTypeField({
   error?: string;
   onChange: (value: number) => void;
 }) {
+  const t = useT();
   const errorId = 'A1-error';
 
   return (
@@ -440,7 +454,7 @@ export function ResidentTypeField({
             onChange={() => onChange(1)}
           />
           <fieldset className="na-sub">
-            <legend className="na-sub-legend">Homeowner who does not live in the unit</legend>
+            <legend className="na-sub-legend">{t('Homeowner who does not live in the unit')}</legend>
             <RadioMark
               name="A1"
               option={{ id: '2', label: 'OFW homeowner', hint: '(the owner works abroad)' }}

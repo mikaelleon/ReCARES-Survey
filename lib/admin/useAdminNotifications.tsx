@@ -19,6 +19,9 @@ import { surveyAcceptsResponses } from '@/survey/instrument';
 
 const SEEN_KEY = 'recares-admin-bell-seen';
 
+/** Stable clock for synthetic status rows so remounts do not re-bump unread. */
+const SYNTHETIC_AT_MS = 1;
+
 export interface AdminNotificationItem {
   id: string;
   title: string;
@@ -35,13 +38,38 @@ interface AdminNotificationsValue {
 
 const AdminNotificationsContext = createContext<AdminNotificationsValue | null>(null);
 
-function readSeenMs(): number {
+function seenStorageKey(uid: string): string {
+  return `${SEEN_KEY}:${uid}`;
+}
+
+function readSeenMs(uid: string): number {
   try {
-    const raw = localStorage.getItem(SEEN_KEY);
-    const n = raw ? Number(raw) : 0;
-    return Number.isFinite(n) ? n : 0;
+    const raw = localStorage.getItem(seenStorageKey(uid));
+    if (raw != null) {
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : 0;
+    }
+    // One-time migrate from the pre-uid key.
+    const legacy = localStorage.getItem(SEEN_KEY);
+    if (legacy != null) {
+      const n = Number(legacy);
+      if (Number.isFinite(n)) {
+        writeSeenMs(uid, n);
+        localStorage.removeItem(SEEN_KEY);
+        return n;
+      }
+    }
+    return 0;
   } catch {
     return 0;
+  }
+}
+
+function writeSeenMs(uid: string, ms: number): void {
+  try {
+    localStorage.setItem(seenStorageKey(uid), String(ms));
+  } catch {
+    /* ignore quota / private mode */
   }
 }
 
@@ -74,8 +102,12 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
   const [seenMs, setSeenMs] = useState(0);
 
   useEffect(() => {
-    setSeenMs(readSeenMs());
-  }, []);
+    if (!user) {
+      setSeenMs(0);
+      return;
+    }
+    setSeenMs(readSeenMs(user.uid));
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -179,7 +211,8 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
             resourceHint: 'adviserFeedback',
           }),
           href: '/admin/reviews/',
-          atMs: Date.now(),
+          // Stable so opening the bell (and later sessions) can clear the badge.
+          atMs: SYNTHETIC_AT_MS,
         },
       ];
       publish();
@@ -263,17 +296,19 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
 
     unsubs.push(
       onSnapshot(doc(db, 'appConfig', 'survey'), (snap) => {
-        const config = mapSurveyConfig(snap.data() as Record<string, unknown> | undefined);
+        const raw = snap.data() as Record<string, unknown> | undefined;
+        const config = mapSurveyConfig(raw);
         if (surveyAcceptsResponses(config.status)) {
           buckets.survey = [];
         } else {
+          const statusAt = createdMs(raw ?? {}, ['updatedAt']);
           buckets.survey = [
             {
-              id: 'survey-window',
+              id: `survey-window-${config.status}`,
               title: config.status === 'paused' ? 'Survey paused' : 'Survey closed',
               detail: 'Residents cannot submit until a superadmin reopens it.',
               href: isSuperadmin ? '/admin/survey/' : '/admin/dashboard/',
-              atMs: Date.now(),
+              atMs: statusAt > 0 ? statusAt : SYNTHETIC_AT_MS,
             },
           ];
         }
@@ -286,23 +321,19 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
     };
   }, [user, isSuperadmin, can, role]);
 
+  // Unread = newer than last open. Review/survey rows stay in the list until resolved,
+  // but opening the bell clears the badge (including across logout/login on this browser).
   const unreadCount = useMemo(
-    () =>
-      items.filter(
-        (item) => item.atMs > seenMs || item.id === 'survey-window' || item.id.startsWith('review-'),
-      ).length,
+    () => items.filter((item) => item.atMs > seenMs).length,
     [items, seenMs],
   );
 
   const markSeen = useCallback(() => {
+    if (!user) return;
     const now = Date.now();
     setSeenMs(now);
-    try {
-      localStorage.setItem(SEEN_KEY, String(now));
-    } catch {
-      /* ignore */
-    }
-  }, []);
+    writeSeenMs(user.uid, now);
+  }, [user]);
 
   const value = useMemo(
     () => ({ items, unreadCount, markSeen }),

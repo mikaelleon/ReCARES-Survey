@@ -95,6 +95,10 @@ export interface SurveyAnswers {
 }
 
 export interface O1Details {
+  water_supply?: string[];
+  water_supply_other?: string;
+  electricity_power?: string[];
+  electricity_power_other?: string;
   garbage_collection?: string[];
   garbage_collection_other?: string;
   street_lights?: string[];
@@ -113,6 +117,10 @@ export interface O1Details {
   renovation_permits_other?: string;
   pet_animal?: string[];
   pet_animal_other?: string;
+  facilities_amenities?: string[];
+  facilities_amenities_other?: string;
+  neighbor_disputes?: string[];
+  neighbor_disputes_other?: string;
 }
 
 export interface SurveyResponseDocument {

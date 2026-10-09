@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { useT } from '@/components/survey/SurveyLanguage';
 import { submitInterviewInvitation } from '@/lib/firebase/firestore';
 import type { InterviewInvitation } from '@/survey/schema';
 
@@ -49,6 +50,7 @@ export function InterviewInvitationForm({
   onSkip?: () => void;
   onBack?: () => void;
 }) {
+  const t = useT();
   const embedded = variant === 'embedded';
   const [email, setEmail] = useState('');
   const [interviewFormat, setInterviewFormat] = useState<
@@ -106,18 +108,18 @@ export function InterviewInvitationForm({
     return (
       <div className="survey-card">
         <p className="na-intro" style={{ margin: 0 }}>
-          Your interview interest was saved separately from your survey answers.
-          {embedded ? ' You can continue to the next screen when ready.' : ''}
+          {t('Your interview interest was saved separately from your survey answers.')}
+          {embedded ? ` ${t('You can continue to the next screen when ready.')}` : ''}
         </p>
         {!embedded && onSkip ? (
           <div className="survey-actions" style={{ marginTop: 16 }}>
             {onBack ? (
               <Button variant="secondary" onClick={onBack}>
-                Back
+                {t('Back')}
               </Button>
             ) : null}
             <Button variant="primary" onClick={onSkip}>
-              Continue
+              {t('Continue')}
             </Button>
           </div>
         ) : null}
@@ -127,23 +129,11 @@ export function InterviewInvitationForm({
 
   return (
     <>
-      <p className="na-intro">
-        Some respondents may be invited to a short follow-up interview to explore certain topics
-        from the survey in more depth. This form is separate from your survey answers — what you
-        provide here cannot be linked to them. Taking part is completely voluntary. Providing your
-        details here doesn&apos;t guarantee you&apos;ll be selected; participants are chosen based
-        on the study&apos;s needs and the overall survey results. If you&apos;re interested,
-        we&apos;ll email you ahead of time before scheduling anything.
-      </p>
+      <p className="na-intro">{t("Some respondents may be invited to a short follow-up interview to explore certain topics from the survey in more depth. This form is separate from your survey answers — what you provide here cannot be linked to them. Taking part is completely voluntary. Providing your details here doesn't guarantee you'll be selected; participants are chosen based on the study's needs and the overall survey results. If you're interested, we'll email you ahead of time before scheduling anything.")}</p>
       {embedded ? (
-        <p className="na-required-note">
-          Optional. Complete the fields below and save your interest, or continue without them.
-        </p>
+        <p className="na-required-note">{t("Optional. Complete the fields below and save your interest, or continue without them.")}</p>
       ) : (
-        <p className="na-required-note">
-          A red asterisk (*) means you need to answer that question before you can continue. You may
-          skip this form and continue.
-        </p>
+        <p className="na-required-note">{t("A red asterisk (*) means you need to answer that question before you can continue. You may skip this form and continue.")}</p>
       )}
 
       <div
@@ -153,15 +143,12 @@ export function InterviewInvitationForm({
       >
         <div className="survey-card">
           <label className="na-q" htmlFor="interview-email">
-            Email address{' '}
+            {t('Email address')}{' '}
             <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
               *
             </span>
           </label>
-          <p className="na-hint">
-            Your email is stored separately from your survey answers and is used only to contact
-            you about a possible interview.
-          </p>
+          <p className="na-hint">{t("Your email is stored separately from your survey answers and is used only to contact you about a possible interview.")}</p>
           <input
             id="interview-email"
             className="na-input"
@@ -175,7 +162,7 @@ export function InterviewInvitationForm({
 
         <div className="survey-card">
           <div className="na-q" id="interview-format-label">
-            Preferred interview format{' '}
+            {t('Preferred interview format')}{' '}
             <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
               *
             </span>
@@ -191,7 +178,7 @@ export function InterviewInvitationForm({
                 />
                 <span className="na-dot" aria-hidden="true" />
                 <span className="na-radio-copy">
-                  <span>{format.label}</span>
+                  <span>{t(format.label)}</span>
                 </span>
               </label>
             ))}
@@ -200,7 +187,7 @@ export function InterviewInvitationForm({
 
         <div className="survey-card">
           <div className="na-q" id="preferred-days-label">
-            Preferred day(s), select all that apply{' '}
+            {t('Preferred day(s), select all that apply')}{' '}
             <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
               *
             </span>
@@ -214,7 +201,7 @@ export function InterviewInvitationForm({
                   <span className="na-box" aria-hidden="true">
                     {checked ? '✓' : ''}
                   </span>
-                  <span>{day}</span>
+                  <span>{t(day)}</span>
                 </label>
               );
             })}
@@ -223,7 +210,7 @@ export function InterviewInvitationForm({
 
         <div className="survey-card">
           <div className="na-q" id="preferred-time-label">
-            Preferred time of day{' '}
+            {t('Preferred time of day')}{' '}
             <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
               *
             </span>
@@ -239,7 +226,7 @@ export function InterviewInvitationForm({
                 />
                 <span className="na-dot" aria-hidden="true" />
                 <span className="na-radio-copy">
-                  <span>{time.label}</span>
+                  <span>{t(time.label)}</span>
                 </span>
               </label>
             ))}
@@ -247,7 +234,7 @@ export function InterviewInvitationForm({
           {preferredTime === 'Other' ? (
             <div className="interview-invite-fields__other">
               <label className="na-q" htmlFor="preferred-time-other">
-                Specific time{' '}
+                {t('Specific time')}{' '}
                 <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
                   *
                 </span>
@@ -257,7 +244,7 @@ export function InterviewInvitationForm({
                 className="na-input"
                 value={preferredTimeOther}
                 onChange={(event) => setPreferredTimeOther(event.target.value)}
-                placeholder="for example, around 6:30 PM"
+                placeholder={t('for example, around 6:30 PM')}
               />
             </div>
           ) : null}
@@ -266,7 +253,7 @@ export function InterviewInvitationForm({
 
       {error ? (
         <p className="na-error" role="alert">
-          {error}
+          {t(error)}
         </p>
       ) : null}
 
@@ -275,16 +262,16 @@ export function InterviewInvitationForm({
       >
         {!embedded && onBack ? (
           <Button variant="secondary" onClick={onBack}>
-            Back
+            {t('Back')}
           </Button>
         ) : null}
         {!embedded && onSkip ? (
           <Button variant="secondary" onClick={onSkip}>
-            Skip for now
+            {t('Skip for now')}
           </Button>
         ) : null}
         <Button variant="primary" disabled={!canSubmit} onClick={submit}>
-          Save interview interest
+          {t('Save interview interest')}
         </Button>
       </div>
     </>

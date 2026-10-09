@@ -16,6 +16,7 @@ import { INCLUDE_SEX_AND_CIVIL_STATUS, TENANT_ANSWERS_NOT_SHARED_WITH_LANDLORD_O
 import { optionDisabled, toggleMulti } from '@/survey/exclusive';
 import { O1_CATEGORIES } from '@/survey/o1';
 import type { O1Details, SurveyAnswers } from '@/survey/schema';
+import { useT } from '@/components/survey/SurveyLanguage';
 import { InterviewInvitationForm } from '@/components/survey/InterviewInvitationForm';
 import {
   LikertChoice,
@@ -49,6 +50,7 @@ export function StepView({
   errors: Record<string, string>;
   onPatch: (patch: Patch) => void;
 }) {
+  const t = useT();
   const a3Options = [
     { id: '1', label: '1' },
     { id: '2', label: '2' },
@@ -75,13 +77,12 @@ export function StepView({
     return (
       <>
         <p className="na-required-note" style={{ color: 'var(--text-body)', fontSize: 16, lineHeight: 1.45 }}>
-          {REQUIRED_NOTE}
+          {t(REQUIRED_NOTE)}
         </p>
         <p className="na-intro" style={{ color: 'var(--text-body)', fontSize: 16, lineHeight: 1.45 }}>
-          Your answers in this pre-screening form decides which sets of questions would be shown to
-          you.
+          {t('Your answers in this pre-screening form decides which sets of questions would be shown to you.')}
           <br />
-          You may choose &apos;Prefer not to say&apos; for personal questions.
+          {t("You may choose 'Prefer not to say' for personal questions.")}
         </p>
         <div className="survey-bento">
         <ResidentTypeField
@@ -265,9 +266,7 @@ export function StepView({
   if (step === 3) {
     return (
       <>
-        <p className="na-intro">
-          These questions help us understand what kind of online service would work for residents.
-        </p>
+        <p className="na-intro">{t('These questions help us understand what kind of online service would work for residents.')}</p>
         <MultiChoice
           code="B1"
           question="Which devices do you use regularly? Select all that apply."
@@ -284,7 +283,7 @@ export function StepView({
           onChange={(B1) => onPatch({ B1 })}
         />
         {!showDeviceDependentItems(answers) && answers.B1?.includes('none') ? (
-          <p className="na-hint">{ASSISTED_NOTE}</p>
+          <p className="na-hint">{t(ASSISTED_NOTE)}</p>
         ) : null}
         {showDeviceDependentItems(answers) ? (
           <SingleChoice
@@ -349,7 +348,7 @@ export function StepView({
   if (step === 4) {
     return (
       <>
-        {!showDeviceDependentItems(answers) ? <p className="na-hint">{ASSISTED_NOTE}</p> : null}
+        {!showDeviceDependentItems(answers) ? <p className="na-hint">{t(ASSISTED_NOTE)}</p> : null}
         <SingleChoice
           code="B6"
           columns={2}
@@ -403,12 +402,7 @@ export function StepView({
   if (step === 5) {
     return (
       <>
-        <p className="na-intro">
-          Imagine a website that Camella Homes Tibig residents could open on a phone or computer to
-          do some HOA transactions from home. The following questions describe some things this
-          website could do. Please tell us how likely you would be to use each one. There are no
-          right or wrong answers.
-        </p>
+        <p className="na-intro">{t('Imagine a website that Camella Homes Tibig residents could open on a phone or computer to do some HOA transactions from home. The following questions describe some things this website could do. Please tell us how likely you would be to use each one. There are no right or wrong answers.')}</p>
         <LikertChoice
           code="F1"
           scale="likelihood"
@@ -522,8 +516,8 @@ export function StepView({
   if (step === 7) {
     return (
       <>
-        <p className="na-intro">These questions are about how you reach the HOA today.</p>
-        {isOwnerLivingElsewhere(answers) ? <p className="na-hint">{OWNER_NOTE}</p> : null}
+        <p className="na-intro">{t('These questions are about how you reach the HOA today.')}</p>
+        {isOwnerLivingElsewhere(answers) ? <p className="na-hint">{t(OWNER_NOTE)}</p> : null}
         <LikertChoice
           code="S1"
           scale="agreement"
@@ -555,7 +549,7 @@ export function StepView({
   if (step === 8) {
     return (
       <>
-        {isOwnerLivingElsewhere(answers) ? <p className="na-hint">{OWNER_NOTE}</p> : null}
+        {isOwnerLivingElsewhere(answers) ? <p className="na-hint">{t(OWNER_NOTE)}</p> : null}
         <MultiChoice
           code="P1"
           question="In the past 3 months, who did you or your household need to bring through the gate? Select all that apply."
@@ -616,7 +610,7 @@ export function StepView({
   if (step === 9) {
     return (
       <>
-        {isOwnerLivingElsewhere(answers) ? <p className="na-hint">{OWNER_NOTE}</p> : null}
+        {isOwnerLivingElsewhere(answers) ? <p className="na-hint">{t(OWNER_NOTE)}</p> : null}
         <SingleChoice
           code="C1"
           question="In the past 12 months, which describes you?"
@@ -653,10 +647,7 @@ export function StepView({
   if (step === 10) {
     return (
       <>
-        <p className="na-intro">
-          Some online services need you to register and show a valid ID. These questions are about
-          how you feel about that.
-        </p>
+        <p className="na-intro">{t('Some online services need you to register and show a valid ID. These questions are about how you feel about that.')}</p>
         <LikertChoice
           code="R1"
           scale="agreement"
@@ -744,9 +735,7 @@ export function StepView({
     return (
       <>
         {TENANT_ANSWERS_NOT_SHARED_WITH_LANDLORD_OR_HOA ? (
-          <p className="na-intro">
-            Your answers will not be shared with your landlord or the Homeowners Association.
-          </p>
+          <p className="na-intro">{t('Your answers will not be shared with your landlord or the Homeowners Association.')}</p>
         ) : null}
         <MultiChoice
           code="T1"
@@ -795,18 +784,14 @@ export function StepView({
 
   if (step === 11) {
     return (
-      <p className="na-error" role="alert">
-        Please go back and choose which best describes you.
-      </p>
+      <p className="na-error" role="alert">{t('Please go back and choose which best describes you.')}</p>
     );
   }
 
   if (step === 12) {
     return (
       <>
-        <p className="na-intro">
-          These questions are voluntary. You may choose Prefer not to say for any of them.
-        </p>
+        <p className="na-intro">{t('These questions are voluntary. You may choose Prefer not to say for any of them.')}</p>
         <LikertChoice
           code="AC2"
           scale="agreement"
@@ -842,7 +827,7 @@ export function StepView({
 
   return (
     <>
-      <p className="na-intro">This last part helps us find problems we may have missed.</p>
+      <p className="na-intro">{t('This last part helps us find problems we may have missed.')}</p>
       <O1Field answers={answers} error={errors.O1} onPatch={onPatch} />
       <TextField
         code="O2"
@@ -878,6 +863,7 @@ function O1Field({
   error?: string;
   onPatch: (patch: Patch) => void;
 }) {
+  const t = useT();
   const selected = answers.O1 ?? [];
   const details = answers.O1Details ?? {};
   const options = [
@@ -891,8 +877,7 @@ function O1Field({
   return (
     <div className={error ? 'survey-card survey-card--error' : 'survey-card'}>
       <div className="na-q" id="O1-label">
-        Besides what was asked, which of these HOA-related problems have you experienced? Select all
-        that apply.{' '}
+        {t('Besides what was asked, which of these HOA-related problems have you experienced? Select all that apply.')}{' '}
         <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
           *
         </span>
@@ -916,7 +901,7 @@ function O1Field({
                 <span className="na-box" aria-hidden="true">
                   {checked ? '✓' : ''}
                 </span>
-                <span>{option.label}</span>
+                <span>{t(option.label)}</span>
               </label>
               {checked && category ? (
                 <div className="na-sub" style={{ marginLeft: 28 }}>
@@ -937,7 +922,7 @@ function O1Field({
                         <span className="na-box" aria-hidden="true">
                           {itemChecked ? '✓' : ''}
                         </span>
-                        <span>{item}</span>
+                        <span>{t(item)}</span>
                       </label>
                     );
                   })}
@@ -945,7 +930,7 @@ function O1Field({
                     <textarea
                       className="na-area"
                       maxLength={200}
-                      aria-label={`${category.label} other`}
+                      aria-label={`${t(category.label)} — ${t('Other')}`}
                       value={details[otherKey] ?? ''}
                       onChange={(event) =>
                         setDetails({ ...details, [otherKey]: event.target.value })
@@ -963,15 +948,15 @@ function O1Field({
           className="na-area"
           style={{ marginTop: 12 }}
           maxLength={200}
-          aria-label="Other problem"
-          placeholder="Other problem"
+          aria-label={t('Other problem')}
+          placeholder={t('Other problem')}
           value={answers.O1_other ?? ''}
           onChange={(event) => onPatch({ O1_other: event.target.value })}
         />
       ) : null}
       {error ? (
         <p className="na-error" role="alert">
-          {error}
+          {t(error)}
         </p>
       ) : null}
     </div>

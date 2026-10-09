@@ -10703,3 +10703,471 @@ html.admin-fit-viewport body {
 }
 
 
+
+/* ==========================================================================
+   Admin mobile pass — keep LAST so it wins over base rules above.
+   (The drawer trigger was hidden because base `display: none` rules for
+   .admin-topbar--mobile-only / .admin-topbar__menu were declared after the
+   earlier 900px media block.)
+   ========================================================================== */
+@media (max-width: 900px) {
+  .admin-topbar--mobile-only {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    min-height: 56px;
+    padding: 8px 16px;
+    padding-top: max(8px, env(safe-area-inset-top, 0px));
+  }
+
+  .admin-topbar__menu {
+    display: grid;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+  }
+
+  .admin-app__main {
+    min-height: 100dvh;
+  }
+
+  .admin-app__content {
+    padding: 16px 16px max(48px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .admin-sidebar__close {
+    width: 44px;
+    height: 44px;
+  }
+
+  .admin-sidebar__nav {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-sidebar__link {
+    min-height: 44px;
+  }
+
+  /* Page headers / toolbars wrap instead of squeezing */
+  .dash-page__header,
+  .dash-page__tools,
+  .iv-page__header-tools,
+  .admin-toolbar__filters,
+  .admin-toolbar__actions,
+  .members-toolbar__actions,
+  .finding-notes-toolbar__actions {
+    flex-wrap: wrap;
+  }
+
+  .admin-toolbar__search,
+  .admin-toolbar__select,
+  .finding-notes-toolbar__select,
+  .finding-notes-toolbar__search {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Wide tables scroll inside their wrapper, not the page */
+  .admin-table-wrap {
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gf-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .gf-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gf-tabs__tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-app__content {
+    padding: 12px 12px max(40px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .dash-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dash-bento__charts,
+  .dash-bento__detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dash-page__header {
+    align-items: flex-start;
+  }
+
+  /* Drawers go full width, modals fit the viewport */
+  .admin-drawer {
+    width: 100%;
+    border-left: none;
+  }
+
+  .admin-member-modal {
+    width: 100%;
+    max-height: 92dvh;
+  }
+
+  /* Inputs >=16px stop iOS zoom-on-focus */
+  .admin-app input:not([type='checkbox']):not([type='radio']),
+  .admin-app select,
+  .admin-app textarea {
+    font-size: 16px;
+  }
+
+  .admin-toolbar__filters > *,
+  .members-toolbar__chips {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .dash-stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Admin mobile pass 2 — drawer polish + wide-content guards */
+@media (max-width: 900px) {
+  .admin-topbar--mobile-only {
+    background: var(--page-bg);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .admin-topbar__menu:focus-visible,
+  .admin-sidebar__close:focus-visible {
+    outline: 2px solid var(--bright-amber, #f5b301);
+    outline-offset: 2px;
+  }
+
+  .admin-sidebar,
+  .admin-sidebar.is-collapsed {
+    height: 100dvh;
+    padding-top: max(18px, env(safe-area-inset-top, 0px));
+    visibility: hidden;
+    transition: transform 220ms ease-in-out, visibility 0s linear 220ms;
+  }
+
+  .admin-sidebar.is-open {
+    visibility: visible;
+    transition: transform 220ms ease-in-out, visibility 0s;
+  }
+
+  .admin-sidebar__popover,
+  .admin-sidebar:not(.is-collapsed) .admin-sidebar__popover {
+    left: 0;
+    right: 0;
+    min-width: 0;
+    max-width: none;
+    max-height: 50dvh;
+    overflow-y: auto;
+  }
+
+  .admin-sidebar__logout,
+  .admin-sidebar__resident,
+  .admin-sidebar__icon-btn {
+    min-height: 44px;
+  }
+
+  .admin-app__content img,
+  .admin-app__content canvas,
+  .admin-app__content svg {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-app__content h1 {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ==========================================================================
+   Survey layout pass — language toggle, long-copy resilience (Tagalog runs
+   ~25% longer), review rows, sticky mobile actions.
+   ========================================================================== */
+.survey-lang {
+  display: flex;
+  justify-content: flex-end;
+  margin: 4px 0 0;
+}
+
+.survey-lang button {
+  height: 36px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+}
+
+.survey-title {
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.na-q,
+.na-radio,
+.na-check,
+.na-hint,
+.na-intro {
+  overflow-wrap: anywhere;
+}
+
+.na-check {
+  align-items: flex-start;
+  padding: 8px 0;
+}
+
+.na-box {
+  flex: 0 0 auto;
+}
+
+.na-likert-ends > span {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.na-likert-ends > span:last-child {
+  text-align: right;
+}
+
+.survey-review-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.survey-review-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 12px;
+  padding: 10px 0;
+  margin-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.survey-review-row__q {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-caption);
+  overflow-wrap: anywhere;
+}
+
+.survey-review-row__a {
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 700;
+  color: var(--text-body);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .survey-flow {
+    padding-bottom: 96px !important;
+  }
+
+  .survey-card {
+    padding: 18px 16px 16px;
+    border-radius: 14px;
+  }
+
+  .survey-questions {
+    margin-top: 20px;
+    gap: 14px;
+  }
+
+  .survey-title--section {
+    font-size: clamp(22px, 6.4vw, 28px);
+  }
+
+  .survey-review-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .survey-review-head {
+    flex-wrap: wrap;
+  }
+
+  .na-likert {
+    gap: 6px;
+  }
+
+  .na-likert-btn {
+    height: 48px;
+  }
+
+  .na-radio {
+    min-height: 40px;
+    padding: 6px 0;
+  }
+
+  .na-input,
+  .na-area {
+    font-size: 16px;
+  }
+
+  .na-sub {
+    margin-left: 0 !important;
+  }
+
+  /* Keep Back / Continue reachable without scrolling to the bottom */
+  .survey-flow > .survey-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    margin: 20px -16px 0;
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom, 0px));
+    background: var(--page-bg);
+    border-top: 1px solid var(--border-subtle);
+    flex-wrap: nowrap;
+  }
+
+  .survey-flow > .survey-actions > * {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 380px) {
+  .na-likert-btn {
+    font-size: 14px;
+  }
+
+  .na-likert-ends {
+    font-size: 12px;
+  }
+}
+
+/* Survey UX pass 2 */
+.survey-title:focus {
+  outline: none;
+}
+
+.survey-saved {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--text-caption);
+}
+
+.survey-error-summary {
+  margin-top: 20px;
+}
+
+.na-likert-selected {
+  margin: 10px 0 0;
+  min-height: 1.4em;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-headline);
+}
+
+.survey-card--error {
+  scroll-margin-top: 96px;
+}
+
+.na-likert-btn:focus-visible,
+.na-radio input:focus-visible + .na-dot {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Larger tap area for whole option rows */
+.na-radio,
+.na-check {
+  border-radius: 8px;
+}
+
+@media (hover: hover) {
+  .na-radio:hover,
+  .na-check:hover {
+    background: color-mix(in srgb, var(--surface-1) 70%, transparent);
+  }
+}
+
+/* Leave the survey */
+.survey-leave {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px 0 8px;
+  margin-left: -8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--text-caption);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.survey-leave:hover {
+  color: var(--text-headline);
+  background: var(--surface-1);
+}
+
+.survey-leave:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.survey-dialog {
+  width: min(440px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--surface-3-border);
+  border-radius: var(--radius-lg, 16px);
+  background: var(--surface-3);
+  color: var(--text-body);
+  box-shadow: var(--shadow-modal);
+}
+
+.survey-dialog::backdrop {
+  background: var(--overlay-backdrop, rgba(0, 0, 0, 0.5));
+}
+
+.survey-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+}
+
+.survey-dialog__title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 22px;
+  color: var(--text-headline);
+}
+
+.survey-dialog__text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.survey-dialog__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.survey-dialog__actions .survey-linkbtn {
+  align-self: center;
+  text-align: center;
+}

@@ -2,12 +2,18 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PageLoader } from '@/components/ui/PageLoader';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { ReviewSummary } from '@/components/survey/ReviewSummary';
+import { LeaveSurvey } from '@/components/survey/LeaveSurvey';
 import { REQUIRED_NOTE } from '@/components/survey/SurveyFields';
+import {
+  SurveyLanguageProvider,
+  SurveyLanguageToggle,
+  useT,
+} from '@/components/survey/SurveyLanguage';
 import { STEP_TITLES, StepView } from '@/components/survey/SurveySteps';
 import { submitNeedsAssessment } from '@/lib/firebase/firestore';
 import { getSurveyConfig } from '@/lib/firebase/surveyConfig';
@@ -30,7 +36,7 @@ import {
 import type { SurveyAnswers, SurveyResponseDocument } from '@/survey/schema';
 import { CHOOSE_ONE, validateStep } from '@/survey/validate';
 
-type Screen = 'welcome' | 'consent' | 'x1' | 'x2' | 'step' | 'review';
+type Screen = 'welcome' | 'consent' | 'step' | 'review';
 
 const MIN_MS_BEFORE_SUBMIT = 30_000;
 
@@ -50,6 +56,15 @@ function newResponseId(): string {
 }
 
 export function SurveyFlow() {
+  return (
+    <SurveyLanguageProvider>
+      <SurveyFlowInner />
+    </SurveyLanguageProvider>
+  );
+}
+
+function SurveyFlowInner() {
+  const t = useT();
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [screen, setScreen] = useState<Screen>('welcome');
@@ -65,6 +80,8 @@ export function SurveyFlow() {
   const [honeypot, setHoneypot] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
+  const mounted = useRef(false);
   const [surveyConfig, setSurveyConfig] = useState<SurveyConfig>(DEFAULT_SURVEY_CONFIG);
 
   useEffect(() => {
@@ -86,6 +103,27 @@ export function SurveyFlow() {
     };
     writeDraft(draft);
   }, [ready, screen, step, answers, lastStepReached, consentedAt]);
+
+  // New screen or step: return to the top and move focus to the heading
+  // so keyboard and screen-reader users start at the new content.
+  useEffect(() => {
+    if (!ready) return;
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    titleRef.current?.focus({ preventScroll: true });
+  }, [ready, screen, step]);
+
+  // Validation failed: bring the first problem into view and focus it.
+  useEffect(() => {
+    if (Object.values(errors).every((message) => !message)) return;
+    const card = document.querySelector<HTMLElement>('.survey-card--error');
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.querySelector<HTMLElement>('input, button, textarea, select')?.focus({ preventScroll: true });
+  }, [errors]);
 
   const patch = (next: Partial<SurveyAnswers>) => {
     setAnswers((prev) => normalizeAnswers({ ...prev, ...next }));
@@ -125,22 +163,11 @@ export function SurveyFlow() {
   };
 
   const continueConsent = () => {
-    if (!e1) {
-      setErrors({ E1: CHOOSE_ONE });
-      return;
-    }
-    if (e1 === 'decline') {
-      clearDraft();
-      setScreen('x1');
-      return;
-    }
-    if (!e2) {
-      setErrors({ E2: CHOOSE_ONE });
-      return;
-    }
-    if (e2 === 'no') {
-      clearDraft();
-      setScreen('x2');
+    const next: Record<string, string> = {};
+    if (e1 !== 'agree') next.E1 = 'Please tick this box to agree before continuing.';
+    if (e2 !== 'yes') next.E2 = 'Please tick this box to confirm you are eligible before continuing.';
+    if (Object.keys(next).length > 0) {
+      setErrors(next);
       return;
     }
     const now = Date.now();
@@ -235,15 +262,13 @@ export function SurveyFlow() {
       ? 'Resident Needs Assessment Survey'
       : screen === 'consent'
         ? 'Consent and eligibility'
-        : screen === 'x1' || screen === 'x2'
-          ? 'Thank you'
-          : screen === 'review'
-            ? 'Review and submit'
-            : step === 11
-              ? isHomeownerBranch(answers)
-                ? 'Homeowner'
-                : 'Tenant and lessee'
-              : STEP_TITLES[step];
+        : screen === 'review'
+          ? 'Review and submit'
+          : step === 11
+            ? isHomeownerBranch(answers)
+              ? 'Homeowner'
+              : 'Tenant and lessee'
+            : STEP_TITLES[step];
 
   return (
     <div
@@ -261,28 +286,40 @@ export function SurveyFlow() {
               display: 'flex',
               justifyContent: 'space-between',
               gap: 16,
-              alignItems: 'baseline',
+              alignItems: 'center',
               marginBottom: 10,
               flexWrap: 'wrap',
             }}
           >
-            <div className="survey-eyebrow">{screen === 'review' ? 'Review' : `Step ${step} of 13`}</div>
-            <Link href="/" className="survey-leave">
-              Leave the survey
-            </Link>
+            <div className="survey-eyebrow">{screen === 'review' ? t('Review') : `${t('Step')} ${step} ${t('of')} 13`}</div>
+            <LeaveSurvey hasProgress />
           </div>
-          {screen === 'step' ? <ProgressBar value={step} max={13} /> : <ProgressBar value={13} max={13} />}
+          <div
+            role="progressbar"
+            aria-label={t('Step')}
+            aria-valuemin={1}
+            aria-valuemax={13}
+            aria-valuenow={screen === 'step' ? step : 13}
+            aria-valuetext={`${t('Step')} ${screen === 'step' ? step : 13} ${t('of')} 13`}
+          >
+            <ProgressBar value={screen === 'step' ? step : 13} max={13} />
+          </div>
+          <p className="survey-saved">{t('Your progress is saved on this device.')}</p>
         </>
       ) : (
         <div style={{ marginBottom: 12 }}>
-          <Link href="/" className="survey-leave">
-            Leave the survey
-          </Link>
+          <LeaveSurvey hasProgress={false} />
         </div>
       )}
 
-      <h1 className={screen === 'step' ? 'survey-title survey-title--section' : 'survey-title'}>
-        {title}
+      <SurveyLanguageToggle />
+
+      <h1
+        ref={titleRef}
+        tabIndex={-1}
+        className={screen === 'step' ? 'survey-title survey-title--section' : 'survey-title'}
+      >
+        {title ? t(title) : title}
       </h1>
 
       {screen === 'welcome' ? (
@@ -297,24 +334,13 @@ export function SurveyFlow() {
             ) : (
               <>
             {alreadySent ? (
-              <p className="na-intro">
-                A response was already sent from this device. Continue only if you are a different
-                person. This reminder cannot block a second response.
-              </p>
+              <p className="na-intro">{t("A response was already sent from this device. Continue only if you are a different person. This reminder cannot block a second response.")}</p>
             ) : null}
             <div className="survey-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>
-                This survey is part of a capstone study by BSIT students of the University of Batangas,
-                Lipa Campus. The study looks at how online services could make everyday transactions
-                easier for residents of Camella Homes Tibig, including residents who find it hard to
-                visit the HOA office. The study team is exploring a possible collaboration with the
-                Homeowners Association. This is a student survey and is not an official HOA survey.
-              </p>
-              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>
-                The survey takes about 11 to 13 minutes. Your answers are anonymous.
-              </p>
+              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>{t("This survey is part of a capstone study by BSIT students of the University of Batangas, Lipa Campus. The study looks at how online services could make everyday transactions easier for residents of Camella Homes Tibig, including residents who find it hard to visit the HOA office. The study team is exploring a possible collaboration with the Homeowners Association. This is a student survey and is not an official HOA survey.")}</p>
+              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>{t("The survey takes about 11 to 13 minutes. Your answers are anonymous.")}</p>
               <p className="na-intro">
-                Questions about the study? Use the <Link href="/#contact">inquiry form</Link>.
+                {t('Questions about the study? Use the')} <Link href="/#contact">{t('inquiry form')}</Link>.
               </p>
             </div>
               </>
@@ -324,17 +350,17 @@ export function SurveyFlow() {
           <div className="survey-actions">
             {hasDraft ? (
               <Button variant="primary" onClick={resume}>
-                Resume where you stopped
+                {t('Resume where you stopped')}
               </Button>
             ) : null}
             <Button variant={hasDraft ? 'secondary' : 'primary'} onClick={startOver}>
-              Start the survey
+              {t('Start the survey')}
             </Button>
           </div>
           ) : (
             <div className="survey-actions">
               <Button variant="secondary" href="/">
-                Back to home
+                {t('Back to home')}
               </Button>
             </div>
           )}
@@ -344,97 +370,79 @@ export function SurveyFlow() {
       {screen === 'consent' ? (
         <>
           <div className="survey-questions">
-            <p className="na-required-note">{REQUIRED_NOTE}</p>
+            <p className="na-required-note">{t(REQUIRED_NOTE)}</p>
             <div className="survey-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>
-                Your answers in this survey are anonymous. We do not ask for your name, and your
-                responses will be reported only as numbers and group totals, such as percentages and
-                averages, and not by name. No answer will be linked to you, your household, or your
-                unit. Written answers, if you choose to give any, will be summarized without names or
-                identifying details.
-              </p>
-              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>
-                Some questions ask about your age, sex, civil status, and disability. You may choose
-                &quot;Prefer not to say&quot; for any of them. Taking part is voluntary. You may skip any
-                question you are not comfortable with or stop at any time. Your answers will be used
-                only for this study and handled in line with the Data Privacy Act of 2012 (Republic Act
-                10173).
-              </p>
+              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>{t("Your answers in this survey are anonymous. We do not ask for your name, and your responses will be reported only as numbers and group totals, such as percentages and averages, and not by name. No answer will be linked to you, your household, or your unit. Written answers, if you choose to give any, will be summarized without names or identifying details.")}</p>
+              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>{t("Some questions ask about your age, sex, civil status, and disability. You may choose \"Prefer not to say\" for any of them. Taking part is voluntary. You may skip any question you are not comfortable with or stop at any time. Your answers will be used only for this study and handled in line with the Data Privacy Act of 2012 (Republic Act 10173).")}</p>
             </div>
-            <div className={errors.E1 ? 'survey-card survey-card--error' : 'survey-card'}>
-              <div className="na-q" id="E1-label">
-                I have read the information above and I agree to take part in this survey.{' '}
-                <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
-                  *
-                </span>
+            <div className={errors.E1 || errors.E2 ? 'survey-card survey-card--error' : 'survey-card'}>
+              <div className="na-q" id="consent-label">
+                {t('To begin, please confirm both statements.')}
               </div>
-              <div className="na-chips" role="radiogroup" aria-labelledby="E1-label">
-                <button type="button" className="na-chip" aria-pressed={e1 === 'agree'} onClick={() => setE1('agree')}>
-                  I agree
-                </button>
-                <button
-                  type="button"
-                  className="na-chip"
-                  aria-pressed={e1 === 'decline'}
-                  onClick={() => setE1('decline')}
-                >
-                  I do not agree
-                </button>
+              <div className="na-checks" role="group" aria-labelledby="consent-label">
+                <label className="na-check">
+                  <input
+                    id="E1-input"
+                    type="checkbox"
+                    checked={e1 === 'agree'}
+                    aria-invalid={errors.E1 ? true : undefined}
+                    aria-describedby={errors.E1 ? 'E1-error' : undefined}
+                    onChange={(event) => {
+                      setE1(event.target.checked ? 'agree' : '');
+                      setErrors((prev) => ({ ...prev, E1: '' }));
+                    }}
+                  />
+                  <span className="na-box" aria-hidden="true">
+                    {e1 === 'agree' ? '✓' : ''}
+                  </span>
+                  <span>
+                    {t('I have read the information above and I agree to take part in this survey.')}{' '}
+                    <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
+                      *
+                    </span>
+                  </span>
+                </label>
+                {errors.E1 ? (
+                  <p id="E1-error" className="na-error" role="alert">
+                    {t(errors.E1)}
+                  </p>
+                ) : null}
+                <label className="na-check">
+                  <input
+                    id="E2-input"
+                    type="checkbox"
+                    checked={e2 === 'yes'}
+                    aria-invalid={errors.E2 ? true : undefined}
+                    aria-describedby={errors.E2 ? 'E2-error' : undefined}
+                    onChange={(event) => {
+                      setE2(event.target.checked ? 'yes' : '');
+                      setErrors((prev) => ({ ...prev, E2: '' }));
+                    }}
+                  />
+                  <span className="na-box" aria-hidden="true">
+                    {e2 === 'yes' ? '✓' : ''}
+                  </span>
+                  <span>
+                    {t('I am 18 years old or older, and I own, rent, or live in a home in Camella Homes Tibig.')}{' '}
+                    <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
+                      *
+                    </span>
+                  </span>
+                </label>
+                {errors.E2 ? (
+                  <p id="E2-error" className="na-error" role="alert">
+                    {t(errors.E2)}
+                  </p>
+                ) : null}
               </div>
-              {errors.E1 ? (
-                <p className="na-error" role="alert">
-                  {errors.E1}
-                </p>
-              ) : null}
-            </div>
-            <div className={errors.E2 ? 'survey-card survey-card--error' : 'survey-card'}>
-              <div className="na-q" id="E2-label">
-                I am 18 years old or older, and I own, rent, or live in a home in Camella Homes Tibig.{' '}
-                <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
-                  *
-                </span>
-              </div>
-              <div className="na-chips" role="radiogroup" aria-labelledby="E2-label">
-                <button type="button" className="na-chip" aria-pressed={e2 === 'yes'} onClick={() => setE2('yes')}>
-                  Yes
-                </button>
-                <button type="button" className="na-chip" aria-pressed={e2 === 'no'} onClick={() => setE2('no')}>
-                  No
-                </button>
-              </div>
-              {errors.E2 ? (
-                <p className="na-error" role="alert">
-                  {errors.E2}
-                </p>
-              ) : null}
             </div>
           </div>
           <div className="survey-actions">
             <Button variant="primary" onClick={continueConsent}>
-              Continue
+              {t('Continue')}
             </Button>
           </div>
         </>
-      ) : null}
-
-      {screen === 'x1' ? (
-        <div className="survey-questions">
-          <div className="survey-card">
-            <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>
-              Thank you for your time. You chose not to take part, so no answers were recorded.
-            </p>
-          </div>
-        </div>
-      ) : null}
-      {screen === 'x2' ? (
-        <div className="survey-questions">
-          <div className="survey-card">
-            <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>
-              Thank you. This survey is only for adult owners, tenants, and household members of Camella
-              Homes Tibig.
-            </p>
-          </div>
-        </div>
       ) : null}
 
       {screen === 'step' ? (
@@ -442,12 +450,21 @@ export function SurveyFlow() {
           <div className="survey-questions">
             <StepView step={step} answers={answers} errors={errors} onPatch={patch} />
           </div>
+          {Object.values(errors).some(Boolean) ? (
+            <p className="na-error survey-error-summary" role="alert">
+              {t(
+                Object.values(errors).filter(Boolean).length > 1
+                  ? 'Please answer the highlighted questions to continue.'
+                  : 'Please answer the highlighted question to continue.',
+              )}
+            </p>
+          ) : null}
           <div className="survey-actions">
             <Button variant="secondary" onClick={back}>
-              Back
+              {t('Back')}
             </Button>
             <Button variant="primary" onClick={continueStep}>
-              Continue
+              {t('Continue')}
             </Button>
           </div>
         </>
@@ -464,7 +481,7 @@ export function SurveyFlow() {
             }}
           />
           <label className="visually-hidden" htmlFor="company">
-            Company
+            {t('Company')}
           </label>
           <input
             id="company"
@@ -476,15 +493,15 @@ export function SurveyFlow() {
           />
           {submitError ? (
             <p className="na-error" role="alert">
-              {submitError}
+              {t(submitError)}
             </p>
           ) : null}
           <div className="survey-actions">
             <Button variant="secondary" onClick={back}>
-              Back
+              {t('Back')}
             </Button>
             <Button variant="primary" disabled={submitting} onClick={submit}>
-              Submit
+              {t('Submit')}
             </Button>
           </div>
         </>
