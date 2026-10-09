@@ -96,7 +96,7 @@ function createdMs(data: Record<string, unknown>, fallbackKeys: string[]): numbe
  * a survey-window notice, and review threads that need this role's attention.
  */
 export function AdminNotificationsProvider({ children }: { children: ReactNode }) {
-  const { user, isSuperadmin, can } = useAuth();
+  const { user, isSuperadmin, can, canTeamOps } = useAuth();
   const role = user?.role ?? null;
   const [items, setItems] = useState<AdminNotificationItem[]>([]);
   const [seenMs, setSeenMs] = useState(0);
@@ -136,26 +136,28 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
       setItems([...buckets.feedback.slice(0, 40), ...rest.slice(0, 8)]);
     };
 
-    unsubs.push(
-      onSnapshot(collection(db, 'inquiries'), (snap) => {
-        buckets.inquiries = snap.docs
-          .map((item) => {
-            const data = item.data() as Record<string, unknown>;
-            const status = data.status === 'resolved' ? 'resolved' : data.status;
-            if (status === 'resolved') return null;
-            const email = typeof data.email === 'string' ? data.email : 'Inquiry';
-            return {
-              id: `inq-${item.id}`,
-              title: status === 'in_progress' ? 'Inquiry in progress' : 'New inquiry',
-              detail: email,
-              href: '/admin/inquiries/',
-              atMs: createdMs(data, []),
-            } satisfies AdminNotificationItem;
-          })
-          .filter((row): row is AdminNotificationItem => Boolean(row));
-        publish();
-      }),
-    );
+    if (canTeamOps) {
+      unsubs.push(
+        onSnapshot(collection(db, 'inquiries'), (snap) => {
+          buckets.inquiries = snap.docs
+            .map((item) => {
+              const data = item.data() as Record<string, unknown>;
+              const status = data.status === 'resolved' ? 'resolved' : data.status;
+              if (status === 'resolved') return null;
+              const email = typeof data.email === 'string' ? data.email : 'Inquiry';
+              return {
+                id: `inq-${item.id}`,
+                title: status === 'in_progress' ? 'Inquiry in progress' : 'New inquiry',
+                detail: email,
+                href: '/admin/inquiries/',
+                atMs: createdMs(data, []),
+              } satisfies AdminNotificationItem;
+            })
+            .filter((row): row is AdminNotificationItem => Boolean(row));
+          publish();
+        }),
+      );
+    }
 
     if (can('interviewInvites')) {
       unsubs.push(
@@ -319,7 +321,7 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
     return () => {
       for (const stop of unsubs) stop();
     };
-  }, [user, isSuperadmin, can, role]);
+  }, [user, isSuperadmin, can, canTeamOps, role]);
 
   // Unread = newer than last open. Review/survey rows stay in the list until resolved,
   // but opening the bell clears the badge (including across logout/login on this browser).

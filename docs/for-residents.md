@@ -27,10 +27,12 @@ The **sticky bar** at the top stays on screen: Home, About, FAQ, Start the surve
 
 1. Choose **Start the survey**.
 2. Read the welcome screen. You can continue, or resume a draft if this device already started one.
-3. Complete **consent and eligibility** (you must agree before numbered questions appear).
+3. Complete **consent and eligibility**: tick both boxes (you agree to take part; you are 18 or older and own, rent, or live in a home in Camella Homes Tibig). The numbered questions only appear after both are ticked. If you do not agree or are not eligible, use the small links under the boxes.
 4. Answer the household and service questions. A red asterisk means the question is required to go forward. Personal items often include **Prefer not to say**.
 5. Some screens appear only if an earlier answer said they apply (for example accessibility details after you say someone in the household has a disability or mobility limit).
 6. Review, then submit. You will see a thank-you page.
+
+Use **Leave the survey** at the top at any time. Midway, it asks what to do with your answers: keep them on this device to resume later, or erase them (useful on a shared phone). Nothing is sent until you submit.
 
 You can leave and come back **on the same phone or computer**. The draft is stored only on that device until you submit. Clearing the browser’s site data deletes the draft.
 
@@ -69,7 +71,7 @@ At the bottom of the homepage you can send a message to the student team. Give a
 ## Language and theme
 
 - **Theme:** the moon button switches light and dark. The choice is remembered on that browser.
-- **Language:** English is the resident UI. Filipino survey strings exist in the product for later; language selection is intended at the survey consent gate, not in the site footer.
+- **Language:** the survey has an **English / Tagalog** switch at the top of every survey screen. Your choice is remembered on that browser. The homepage is currently English only.
 
 ---
 

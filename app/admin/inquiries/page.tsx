@@ -5,6 +5,7 @@ import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
+import { useAuth } from '@/lib/auth/AuthProvider';
 import {
   deleteInquiry,
   listInquiries,
@@ -265,9 +266,25 @@ function InquiryInboxContent() {
 }
 
 export default function AdminInquiriesPage() {
+  const { canTeamOps } = useAuth();
+
   return (
     <AdminAppShell>
-      <InquiryInboxContent />
+      {canTeamOps ? (
+        <InquiryInboxContent />
+      ) : (
+        <section className="dash-page" aria-labelledby="inquiries-title">
+          <div className="dash-page__header">
+            <h1 id="inquiries-title" className="dash-page__title">
+              Inquiries
+            </h1>
+          </div>
+          <p className="na-error" role="alert">
+            Advisers cannot view the public inquiry inbox. Ask a proponent or superadmin if you need
+            a message forwarded.
+          </p>
+        </section>
+      )}
     </AdminAppShell>
   );
 }

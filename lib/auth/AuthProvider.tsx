@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import {
+  canAccessTeamOps,
   getAdminAccessState,
   hasPermission,
   type AdminAccessState,
@@ -51,6 +52,8 @@ interface AuthContextValue {
   reloadProfile: () => Promise<void>;
   can: (key: DashboardPermissionKey) => boolean;
   isSuperadmin: boolean;
+  /** Members & Inquiries — proponents and superadmins only (not advisers). */
+  canTeamOps: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -194,10 +197,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const isSuperadmin = Boolean(user?.authorized && user.role === 'superadmin');
+  const canTeamOps = Boolean(
+    user?.authorized &&
+      canAccessTeamOps({
+        fullName: user.name || '',
+        email: user.email,
+        requestedRole: user.requestedRole || '',
+        role: user.role,
+        status: 'active',
+        permissions: user.permissions,
+      }),
+  );
 
   const value = useMemo(
-    () => ({ user, ready, firestoreError, logout, reloadProfile, can, isSuperadmin }),
-    [user, ready, firestoreError, logout, reloadProfile, can, isSuperadmin],
+    () => ({
+      user,
+      ready,
+      firestoreError,
+      logout,
+      reloadProfile,
+      can,
+      isSuperadmin,
+      canTeamOps,
+    }),
+    [user, ready, firestoreError, logout, reloadProfile, can, isSuperadmin, canTeamOps],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

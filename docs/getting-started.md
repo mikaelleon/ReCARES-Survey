@@ -99,7 +99,20 @@ Restart `npm run dev` after saving `.env.local` so Next.js picks up the variable
 | `npm run dev` | Local server with live reload |
 | `npm run build` | Production static files in `out/` |
 | `npm run lint` | Checks TypeScript/React lint rules |
+| `npx tsc --noEmit` | Type-checks the whole project without building |
 | `npm start` | Serves a previously built Next server — **not** the usual path for this repo, because the project is configured as a **static export** |
+
+---
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| Old behavior or an old error message after you changed code | You are viewing a stale build (for example a static server pointed at `out/`) | Use `npm run dev` for development. If you serve `out/`, run `npm run build` first, then hard-refresh (Ctrl+Shift+R) |
+| “Sign-up was blocked by the database access rules” | Firestore rules rejected the sign-up | See [Roles and access](roles-and-access.md#common-problems); deploy `firestore.rules` |
+| “Could not reach Firestore…” | No connection, or a blocker | Allow `firestore.googleapis.com`; lower Brave Shields; check `.env.local` |
+| Pages open but nothing saves | `.env.local` missing or from another project | Fill every `NEXT_PUBLIC_FIREBASE_*` value and restart `npm run dev` |
+| Type errors | — | `npx tsc --noEmit` lists them |
 
 ---
 

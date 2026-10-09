@@ -235,13 +235,14 @@ service cloud.firestore {
     }
 
     match /admins/{uid} {
-      // Active admins may read the member directory (roles/emails).
+      // Proponents/superadmins may read the member directory (roles/emails).
+      // Advisers may only read their own profile (or an email-matched doc).
       // Mutations that grant/remove roles stay superadmin-only below.
       allow read: if request.auth != null
         && (
           request.auth.uid == uid
           || emailMatches(resource.data.email)
-          || isActiveAdmin()
+          || isActiveProponentOrSuperadmin()
           || isActiveSuperadmin(request.auth.uid)
         );
 
@@ -315,7 +316,8 @@ service cloud.firestore {
 
     match /inquiries/{inquiryId} {
       allow create: if true;
-      allow read, update, delete: if isActiveAdmin();
+      // Public inbox — proponents and superadmins only (not advisers).
+      allow read, update, delete: if isActiveProponentOrSuperadmin();
     }
 
     // Analysis findings log — active team may read; proponents/superadmins write.

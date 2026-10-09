@@ -25,7 +25,7 @@ A submitted response is a document in Firestore collection **`needsAssessmentRes
 - **`not_shown`** for gated questions they were never asked
 - A submit date
 - The **instrument version** in use at submit time
-- Language and similar metadata used for analysis
+- Device class (phone or computer) and similar metadata used for analysis. The language the resident viewed the survey in is **not** saved with the response; stored answers are always the English values
 - **No** name, block, lot, or street fields in the current schema
 
 If they opt in to an interview, a separate **`interviewInterest`** document can hold the contact details they typed. That is the most directly identifying information the site is designed to collect, and it is optional.
@@ -34,7 +34,7 @@ If they opt in to an interview, a separate **`interviewInterest`** document can 
 
 ## What stays only on the resident’s device
 
-Unfinished surveys are drafts in **browser storage** (`localStorage`) on that phone or computer. The team cannot see drafts. Clearing site data, switching browsers, or using another device starts over (unless they already submitted).
+Unfinished surveys are drafts in **browser storage** (`localStorage`) on that phone or computer. The chosen survey language (`recares-survey-lang`) is stored the same way. A resident can wipe the draft at any time with **Leave the survey → Leave and erase my answers from this device**. The team cannot see drafts. Clearing site data, switching browsers, or using another device starts over (unless they already submitted).
 
 ---
 

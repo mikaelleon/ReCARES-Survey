@@ -11547,3 +11547,217 @@ html.admin-fit-viewport body {
     animation: none;
   }
 }
+
+/* ==========================================================================
+   Interview Invites UX pass — no clipped cards, aligned toolbar, readable
+   chart labels, honest calendar heat, dimmed past days, legend.
+   ========================================================================== */
+.iv-page__header-tools {
+  align-items: flex-end;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+}
+
+.iv-page__header-tools .iv-summary {
+  align-self: flex-end;
+}
+
+.iv-page__header-tools .field__label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.iv-page__header-tools select,
+.iv-page__header-tools .btn,
+.iv-page__header-tools a,
+.iv-page__header-tools button {
+  min-height: 44px;
+}
+
+.iv-summary__item {
+  min-height: 44px;
+  align-items: center;
+  padding: 6px 12px;
+}
+
+.iv-summary__label {
+  font-size: 11px;
+}
+
+.iv-summary__value {
+  font-size: 14px;
+}
+
+/* Cards never shrink: the column body scrolls instead of squashing buttons */
+.iv-page .admin-kanban-card {
+  flex: 0 0 auto;
+  padding: 14px;
+}
+
+.iv-page .admin-kanban-card::before {
+  display: none;
+}
+
+.iv-page .admin-kanban-col {
+  min-height: 0;
+  max-height: min(60vh, 560px);
+}
+
+.iv-page .admin-kanban-col__body {
+  scroll-padding: 12px;
+}
+
+.iv-page .admin-kanban-card__name {
+  word-break: normal;
+}
+
+.interview-board__format {
+  flex-shrink: 0;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--dark-emerald) 12%, transparent);
+  color: var(--dark-emerald);
+  border: 1px solid color-mix(in srgb, var(--dark-emerald) 30%, transparent);
+}
+
+[data-theme='dark'] .interview-board__format {
+  color: #6ee7a8;
+}
+
+.iv-page .admin-kanban-card__actions {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.iv-page .admin-kanban-card__actions .admin-kanban-icon-btn--primary {
+  background: var(--dark-emerald);
+  border-color: var(--dark-emerald);
+  color: #fff;
+}
+
+.iv-page .admin-kanban-card__actions .admin-kanban-icon-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+  background: var(--dark-emerald);
+}
+
+.iv-page .admin-kanban-card__actions .admin-kanban-icon-btn--danger {
+  margin-left: auto;
+}
+
+.iv-page .admin-kanban-empty {
+  min-height: 0;
+  padding: 24px 16px;
+}
+
+/* Chart rows: label column fits "Afternoon" instead of overlapping the bar */
+.iv-prefs-card--times .iv-day-bars__row,
+.iv-prefs-card--times .iv-day-bars--roomy .iv-day-bars__row {
+  grid-template-columns: 6.5rem minmax(0, 1fr) 2.4ch;
+}
+
+.iv-prefs-card--days .iv-day-bars__row,
+.iv-prefs-card--days .iv-day-bars--roomy .iv-day-bars__row {
+  grid-template-columns: 4ch minmax(0, 1fr) 2.4ch;
+}
+
+.iv-day-bars__label {
+  white-space: nowrap;
+}
+
+/* Calendar heat: soft steps, strongest only for real overlap */
+.iv-cal__day.is-low {
+  background: rgba(19, 105, 63, 0.14);
+}
+
+.iv-cal__day.is-mid {
+  background: rgba(19, 105, 63, 0.3);
+}
+
+.iv-cal__day.is-high {
+  background: rgba(19, 105, 63, 0.5);
+  color: var(--white);
+}
+
+.iv-cal__day.is-peak {
+  background: var(--dark-emerald);
+  color: var(--white);
+}
+
+.iv-cal__day.is-past {
+  opacity: 0.45;
+}
+
+.iv-cal__day.is-today::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--harvest-orange);
+}
+
+.iv-cal__day:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.iv-cal__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 4px;
+  font-size: 12px;
+  color: var(--dash-muted, var(--text-caption));
+}
+
+.iv-cal__swatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.iv-cal__swatch.is-low {
+  background: rgba(19, 105, 63, 0.14);
+}
+
+.iv-cal__swatch.is-mid {
+  background: rgba(19, 105, 63, 0.3);
+}
+
+.iv-cal__swatch.is-high {
+  background: rgba(19, 105, 63, 0.5);
+}
+
+.iv-cal__swatch.is-peak {
+  background: var(--dark-emerald);
+}
+
+.iv-cal__legend-note {
+  margin-left: auto;
+}
+
+@media (max-width: 900px) {
+  .iv-page__header-tools {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .iv-page__main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .iv-cal__day {
+    min-height: 46px;
+    padding: 4px;
+  }
+
+  .iv-page .admin-kanban-card__actions .admin-kanban-icon-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 44px;
+  }
+}

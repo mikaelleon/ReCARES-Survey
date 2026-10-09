@@ -71,7 +71,9 @@ Field guide: [For advisers](for-advisers.md).
 1. Superadmin opens **Members & Invites** → create invite (email, role, optional permissions).
 2. Superadmin copies the signup link (the app does not email it).
 3. The person opens the link, creates a password (or completes Google if that flow is used), **using the same email**.
-4. They become **active immediately**.
+4. They become **active immediately**, with the role in the invite (Proponent, Adviser, or Superadmin).
+
+The app creates the sign-in account **first** and then checks for duplicates and the invite, because the `admins` collection is only readable when signed in. If a check fails, the new sign-in account is removed again so no half-created account is left behind.
 
 ### Path B — Self-registration
 
@@ -128,6 +130,9 @@ Active admins can **read** the directory (who is on the team). Only superadmin c
 | Stuck on Finish access | Firestore blocked, or `admins` document ID is not the Auth UID | Allow Firestore in the browser; check document ID; use **Check access again** |
 | Two cards for the same person | Profile was created under the wrong document ID, then relinked | Superadmin should see one active row after relink; extras are soft-removed |
 | Invite signup fails | Email does not match the invite | Use the invited inbox exactly |
+| “Sign-up was blocked by the database access rules” | Firestore rules refused the write: the invite is already used, was issued for a different email, or the deployed `firestore.rules` are out of date | Superadmin checks the invite is unused and for this exact email; run `firebase deploy --only firestore:rules`; the browser console shows the exact `FirebaseError` code |
+| “Could not reach Firestore…” | The request never reached Firestore (offline, or a blocker) | Check the connection; allow `firestore.googleapis.com` / lower Brave Shields; retry |
+| Old error text still shows after a code fix | The browser is serving an old build (for example the static `out/` folder) | Use `npm run dev`, or run `npm run build` again, then hard-refresh (Ctrl+Shift+R) |
 | Login works, Dashboard bounces to pending | `status` is not `active`, or `role` is missing | Superadmin approves and assigns a role |
 
 ---

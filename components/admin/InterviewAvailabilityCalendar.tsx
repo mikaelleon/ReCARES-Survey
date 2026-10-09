@@ -11,13 +11,21 @@ import type { InterviewInviteRow } from '@/lib/firebase/interviewManage';
 
 const WEEK_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+/**
+ * Absolute scale, so one invite is never shown as the darkest "peak".
+ * Peak only marks the busiest day(s) once at least two people overlap.
+ */
 function heatClass(count: number, max: number): string {
   if (count <= 0 || max <= 0) return 'is-empty';
-  const ratio = count / max;
-  if (ratio >= 1) return 'is-peak';
-  if (ratio >= 0.67) return 'is-high';
-  if (ratio >= 0.34) return 'is-mid';
+  if (count >= 2 && count === max) return 'is-peak';
+  if (count >= 3) return 'is-high';
+  if (count >= 2) return 'is-mid';
   return 'is-low';
+}
+
+function startOfToday(): number {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
 
 function timeLabel(row: InterviewInviteRow): string {
@@ -115,6 +123,12 @@ export function InterviewAvailabilityCalendar({
         ))}
         {days.map((day) => {
           const selectedDay = selected?.isoDate === day.isoDate;
+          const dayTime = new Date(
+            day.date.getFullYear(),
+            day.date.getMonth(),
+            day.date.getDate(),
+          ).getTime();
+          const today = startOfToday();
           return (
             <button
               key={day.isoDate}
@@ -124,7 +138,9 @@ export function InterviewAvailabilityCalendar({
                 'iv-cal__day',
                 heatClass(day.inMonth ? day.count : 0, maxCount),
                 day.inMonth ? '' : 'is-outside',
-                day.isPeak ? 'is-peak-day' : '',
+                day.isPeak && maxCount >= 2 ? 'is-peak-day' : '',
+                day.inMonth && dayTime < today ? 'is-past' : '',
+                day.inMonth && dayTime === today ? 'is-today' : '',
                 selectedDay ? 'is-selected' : '',
               ]
                 .filter(Boolean)
@@ -145,6 +161,16 @@ export function InterviewAvailabilityCalendar({
             </button>
           );
         })}
+      </div>
+
+      <div className="iv-cal__legend" aria-hidden="true">
+        <span>Fewer</span>
+        <i className="iv-cal__swatch is-low" />
+        <i className="iv-cal__swatch is-mid" />
+        <i className="iv-cal__swatch is-high" />
+        <i className="iv-cal__swatch is-peak" />
+        <span>More available</span>
+        <span className="iv-cal__legend-note">Past days are dimmed</span>
       </div>
 
       <div className="iv-cal__detail" aria-live="polite">

@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
  * Real navigation shortcuts for the Dashboard mid-row (no fabricated destinations).
  */
 export function DashboardQuickActions() {
-  const { can, isSuperadmin } = useAuth();
+  const { can, canTeamOps } = useAuth();
 
   return (
     <article className="dash-insight dash-quick" aria-label="Quick actions">
@@ -28,7 +28,7 @@ export function DashboardQuickActions() {
             Interview Invites
           </Link>
         ) : null}
-        {isSuperadmin ? (
+        {canTeamOps ? (
           <Link href="/admin/members/" className="dash-quick__btn">
             <Users size={16} strokeWidth={2.2} aria-hidden="true" />
             Members &amp; Invites

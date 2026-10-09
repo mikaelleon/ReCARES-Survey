@@ -58,6 +58,8 @@ The moon button switches theme. The choice is remembered in that browser (`recar
 - Required questions have a **red asterisk** and a written error.
 - Helper text sits with the field.
 - Checkboxes and dropdowns are sized for a finger on a phone.
+- On phones the admin sidebar becomes a drawer opened from a menu button, and the survey keeps Back / Continue pinned to the bottom of the screen.
+- Tagalog text runs longer than English, so survey cards, options, and titles are built to wrap instead of overflow.
 - Emoji are not used. Icons are simple line drawings.
 
 ---

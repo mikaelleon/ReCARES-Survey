@@ -127,6 +127,17 @@ export function canWriteFindingNotes(
   return adminDoc.role === 'admin' || adminDoc.role === 'superadmin';
 }
 
+/**
+ * Members & Invites + Inquiries — proponents and superadmins only.
+ * Advisers review findings/responses; they do not manage the team or public inbox.
+ */
+export function canAccessTeamOps(
+  adminDoc: AdminProfile | null | undefined,
+): boolean {
+  if (!adminDoc || adminDoc.status !== 'active') return false;
+  return adminDoc.role === 'admin' || adminDoc.role === 'superadmin';
+}
+
 /** Advisers and superadmins may start a review thread. Proponents may only reply. */
 export function canCreateRootFeedback(role: AdminRole | null | undefined): boolean {
   return role === 'adviser' || role === 'superadmin';

@@ -33,6 +33,7 @@ The repository [README](../README.md) is the short front door. This folder is th
 | [Roles and access](roles-and-access.md) | Superadmin, Proponent, Adviser, invites, pending |
 | [Data and privacy](data-and-privacy.md) | What is stored, drafts, HOA, Brave/ad blockers |
 | [Glossary](glossary.md) | Shared vocabulary |
+| [Changelog](../CHANGELOG.md) | What changed, release by release |
 | [Design (plain language)](design.md) | Why the site looks the way it does |
 
 ---

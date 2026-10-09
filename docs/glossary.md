@@ -28,6 +28,9 @@ Words used the same way across ReCARES documentation.
 | **Instrument version** | Short label (for example `v1`) stored on each submitted survey so later question-set changes can be compared. |
 | **Survey window** | Open, paused, or closed. Only open accepts new submissions. |
 | **Kanban** | Column board (for example Invited / Pending / Active / Removed). |
+| **Language toggle** | English / Tagalog switch on every survey screen. Changes displayed text only; stored answers stay English. |
+| **O1 (open problem discovery)** | Step 13 question listing HOA-related problem categories, including water supply or interruptions. Defined in `survey/o1.ts`. |
+| **Leave dialog** | Confirmation shown when leaving the survey midway: keep progress, or erase the local draft. |
 | **Shields** | Brave browser tracker blocking. Often breaks Firestore until lowered for this site. |
 
 If you add a new resident-facing term in the product, add it here in the same pull request.

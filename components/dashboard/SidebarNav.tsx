@@ -68,7 +68,7 @@ export function SidebarNav({
   onCollapsedChange?: (collapsed: boolean) => void;
 }) {
   const pathname = usePathname() || '';
-  const { user, logout, can, isSuperadmin } = useAuth();
+  const { user, logout, can, isSuperadmin, canTeamOps } = useAuth();
   const { items: notifications, unreadCount, markSeen } = useAdminNotifications();
   const { toggleTheme, themeLabel } = useTheme();
   const titleId = useId();
@@ -148,8 +148,8 @@ export function SidebarNav({
   ];
 
   const manageLinks: { href: string; label: string; Icon: IconType; show: boolean }[] = [
-    { href: '/admin/inquiries/', label: 'Inquiries', Icon: Inbox, show: true },
-    { href: '/admin/members/', label: 'Members & Invites', Icon: Users, show: true },
+    { href: '/admin/inquiries/', label: 'Inquiries', Icon: Inbox, show: canTeamOps },
+    { href: '/admin/members/', label: 'Members & Invites', Icon: Users, show: canTeamOps },
     { href: '/admin/survey/', label: 'Survey control', Icon: Settings2, show: isSuperadmin },
   ];
 

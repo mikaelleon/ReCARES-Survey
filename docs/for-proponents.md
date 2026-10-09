@@ -21,11 +21,13 @@ This page is a field guide to the admin workspace. For *who is allowed to do wha
 
 If the login card never finishes loading, turn down Brave Shields or allow `firestore.googleapis.com`. The app cannot read your profile if Firestore is blocked.
 
+If **sign-up** fails, read the exact message. “Sign-up was blocked by the database access rules” is a permissions problem (see [Roles and access](roles-and-access.md#common-problems)), not an ad-blocker problem.
+
 ---
 
 ## The workspace layout
 
-- **Green sidebar** (left): Dashboard, Responses, Interview Invites, Findings Log, Reviews, Inquiries, Members & Invites, and (superadmin) Survey control. On a phone this is a menu.
+- **Green sidebar** (left): Dashboard, Responses, Interview Invites, Findings Log, Reviews, Inquiries, Members & Invites, and (superadmin) Survey control. At **900px wide and below** (phones, small tablets) the sidebar becomes a drawer: tap the **menu button** (☰) in the top bar to open it; tap the backdrop, the ✕, or press Esc to close it. Proponent, adviser, and superadmin accounts all use the same layout.
 - **Account footer:** your name, role, status, **Log out**, and **Back to resident site**.
 - **Bell:** unread inquiries, uncontacted interview opt-ins, pending access requests (superadmin), review threads that need your role (required fixes on your notes, or addressed threads if you are an adviser), and a notice if the survey is paused or closed.
 - **Moon:** dark / light theme.
@@ -125,6 +127,8 @@ Only a **superadmin** can:
 - Permanently delete an unused invite or an already-removed record
 
 The board is a kanban: **Invited → Pending approval → Active → Removed**.
+
+Each card has a coloured rail for the role (green Proponent, blue Adviser, orange Superadmin). Long names and emails are shortened with an ellipsis; hover to see the full value. Confirmations such as “Invite link copied.” appear as a dismissible notice that hides itself after a few seconds.
 
 Invites do **not** send email from this app. Copy the signup link and send it yourself.
 

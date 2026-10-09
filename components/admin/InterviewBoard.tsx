@@ -8,6 +8,7 @@ import {
   Mail,
   MessageCircle,
   StickyNote,
+  Trash2,
 } from 'lucide-react';
 import { InterviewNotesDrawer } from '@/components/admin/InterviewNotesDrawer';
 import type { InterviewInviteRow } from '@/lib/firebase/interviewManage';
@@ -101,12 +102,14 @@ function InviteCard({
           {emailInitials(row.email)}
         </span>
         <div className="admin-kanban-card__meta">
-          <div className="admin-kanban-card__name">{row.email}</div>
+          <div className="admin-kanban-card__name" title={row.email}>
+            {row.email}
+          </div>
           <div className="admin-kanban-card__muted">
             Submitted {formatSubmitted(row.submittedAt)}
           </div>
         </div>
-        <span className="admin-kanban-role">{row.interviewFormat}</span>
+        <span className="admin-kanban-role interview-board__format">{row.interviewFormat}</span>
       </div>
       <dl className="interview-board__details">
         <div>
@@ -148,10 +151,11 @@ function InviteCard({
         ) : null}
         <button
           type="button"
-          className="admin-kanban-icon-btn"
+          className="admin-kanban-icon-btn admin-kanban-icon-btn--danger"
           disabled={busyId === row.id}
           onClick={() => onRequestDelete(row)}
         >
+          <Trash2 size={14} aria-hidden="true" />
           Delete
         </button>
         <button
