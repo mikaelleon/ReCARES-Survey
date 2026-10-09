@@ -454,6 +454,13 @@ const FIL: Record<string, string> = {
   "Leave and keep my progress": "Umalis at itago ang aking progreso",
   "Leave and erase my answers from this device": "Umalis at burahin ang aking mga sagot sa device na ito",
 
+  "Close": "Isara",
+  "Erase your answers?": "Buburahin ang iyong mga sagot?",
+  "This deletes everything you have answered on this device. It cannot be undone.": "Buburahin nito ang lahat ng sinagot mo sa device na ito. Hindi na ito maibabalik.",
+  "Go back": "Bumalik",
+  "Yes, erase and leave": "Oo, burahin at umalis",
+  "Use this on a shared or public device.": "Gamitin ito sa pinagsasaluhan o pampublikong device.",
+
   // ---- Likert scales ----
   'Strongly disagree': 'Lubos na hindi sumasang-ayon',
   Disagree: 'Hindi sumasang-ayon',

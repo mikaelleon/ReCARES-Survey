@@ -11171,3 +11171,130 @@ html.admin-fit-viewport body {
   align-self: center;
   text-align: center;
 }
+
+/* Leave dialog polish */
+.survey-dialog {
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  margin: auto;
+}
+
+.survey-dialog[open] {
+  animation: riseIn 200ms ease-out both;
+}
+
+.survey-dialog__body {
+  position: relative;
+  gap: 14px;
+  padding: 28px 24px 24px;
+}
+
+.survey-dialog__title {
+  padding-right: 40px;
+  line-height: 1.2;
+}
+
+.survey-dialog__text {
+  color: var(--text-body);
+}
+
+.survey-dialog__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-caption);
+  cursor: pointer;
+}
+
+.survey-dialog__close:hover {
+  background: var(--surface-1);
+  color: var(--text-headline);
+}
+
+.survey-dialog__close:focus-visible,
+.survey-dialog__erase:focus-visible,
+.survey-dialog__danger:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.survey-dialog__actions {
+  gap: 12px;
+}
+
+.survey-dialog__actions > * {
+  width: 100%;
+}
+
+.survey-dialog__divider {
+  height: 1px;
+  margin: 4px 0 0;
+  background: var(--border-subtle);
+}
+
+.survey-dialog__erase,
+.survey-dialog__danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  cursor: pointer;
+}
+
+.survey-dialog__erase {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--status-error);
+}
+
+.survey-dialog__erase:hover {
+  background: color-mix(in srgb, var(--status-error) 10%, transparent);
+}
+
+.survey-dialog__danger {
+  border: 1px solid var(--status-error);
+  background: var(--status-error);
+  color: #fff;
+}
+
+.survey-dialog__danger:hover {
+  filter: brightness(0.92);
+}
+
+.survey-dialog__note {
+  margin: -4px 0 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--text-caption);
+}
+
+@media (max-width: 480px) {
+  .survey-dialog {
+    width: calc(100vw - 24px);
+  }
+
+  .survey-dialog__body {
+    padding: 24px 18px 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .survey-dialog[open] {
+    animation: none;
+  }
+}
