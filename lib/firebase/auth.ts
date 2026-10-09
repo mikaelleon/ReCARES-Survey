@@ -176,9 +176,15 @@ async function queryAdminsByEmail(
   const seen = new Set<string>();
   const out: { id: string; profile: AdminProfile }[] = [];
   for (const candidate of Array.from(new Set([email.trim(), normalized]))) {
-    const snap = await getDocs(
-      query(collection(db, 'admins'), where('email', '==', candidate)),
-    );
+    let snap;
+    try {
+      snap = await getDocs(query(collection(db, 'admins'), where('email', '==', candidate)));
+    } catch (error) {
+      // Rules only allow reading admins by the signed-in user's own (lowercase) email.
+      // A denied candidate simply has no visible matches; do not abort sign-up over it.
+      if (firebaseCode(error) === 'permission-denied') continue;
+      throw error;
+    }
     for (const item of snap.docs) {
       if (seen.has(item.id)) continue;
       seen.add(item.id);
@@ -297,7 +303,7 @@ export async function getInvite(inviteId: string): Promise<(AdminInvite & { id: 
   return {
     id: snapshot.id,
     email: typeof data.email === 'string' ? data.email : '',
-    role: data.role === 'superadmin' ? 'superadmin' : 'admin',
+    role: parseRole(data.role) ?? 'admin',
     permissions: parsePermissions(data.permissions),
     createdAt: (data.createdAt as AdminInvite['createdAt']) ?? null,
     createdBy: typeof data.createdBy === 'string' ? data.createdBy : '',
@@ -321,7 +327,7 @@ async function findUnusedInviteByEmail(email: string): Promise<(AdminInvite & { 
   return {
     id: first.id,
     email: typeof data.email === 'string' ? data.email : '',
-    role: data.role === 'superadmin' ? 'superadmin' : 'admin',
+    role: parseRole(data.role) ?? 'admin',
     permissions: parsePermissions(data.permissions),
     createdAt: (data.createdAt as AdminInvite['createdAt']) ?? null,
     createdBy: typeof data.createdBy === 'string' ? data.createdBy : '',
@@ -371,22 +377,29 @@ export async function registerAdmin(params: {
     throw new Error('Invalid access code.');
   }
   const { auth, db } = requireServices();
-  await assertEmailFreeForNewAdmin(params.email);
+  // Create the Auth account first: the admins collection is only readable when
+  // signed in, so the duplicate-email check must run authenticated.
   const credential = await createUserWithEmailAndPassword(
     auth,
     params.email.trim(),
     params.password,
   );
   const email = (credential.user.email ?? params.email).trim().toLowerCase();
-  await setDoc(doc(db, 'admins', credential.user.uid), {
-    fullName: params.fullName.trim(),
-    email,
-    requestedRole: params.requestedRole.trim() || 'Proponent',
-    role: null,
-    status: 'pending',
-    permissions: {},
-    createdAt: serverTimestamp(),
-  });
+  try {
+    await assertEmailFreeForNewAdmin(email, credential.user.uid);
+    await setDoc(doc(db, 'admins', credential.user.uid), {
+      fullName: params.fullName.trim(),
+      email,
+      requestedRole: params.requestedRole.trim() || 'Proponent',
+      role: null,
+      status: 'pending',
+      permissions: {},
+      createdAt: serverTimestamp(),
+    });
+  } catch (error) {
+    await credential.user.delete().catch(() => undefined);
+    throw error;
+  }
 }
 
 /**
@@ -400,13 +413,19 @@ export async function registerAdminFromInvite(params: {
   inviteId: string;
 }): Promise<void> {
   const { auth } = requireServices();
-  await assertEmailFreeForNewAdmin(params.email);
   const credential = await createUserWithEmailAndPassword(
     auth,
     params.email.trim(),
     params.password,
   );
   const email = (credential.user.email ?? params.email).trim().toLowerCase();
+
+  try {
+    await assertEmailFreeForNewAdmin(email, credential.user.uid);
+  } catch (error) {
+    await credential.user.delete().catch(() => undefined);
+    throw error;
+  }
 
   const invite = await getInvite(params.inviteId);
   if (!invite || invite.used) {
@@ -573,8 +592,11 @@ export function signupErrorMessage(error: unknown): string {
   if (code === 'auth/weak-password') {
     return 'Password must be at least 6 characters.';
   }
-  if (code === 'permission-denied' || code === 'unavailable') {
-    return 'Could not reach Firestore. Disable Brave Shields / ad blockers for this site and try again.';
+  if (code === 'permission-denied') {
+    return 'Sign-up was blocked by the database access rules. Ask a superadmin to check that your invite is unused and issued for this exact email.';
+  }
+  if (code === 'unavailable') {
+    return 'Could not reach Firestore. Check your connection, or disable Brave Shields / ad blockers for this site, and try again.';
   }
   return 'Could not create the account. Try again.';
 }

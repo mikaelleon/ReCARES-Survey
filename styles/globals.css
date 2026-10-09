@@ -11298,3 +11298,252 @@ html.admin-fit-viewport body {
     animation: none;
   }
 }
+
+/* ==========================================================================
+   Members screen UX pass — calm neutral cards with a role accent, aligned
+   toolbar, truncated identities, compact empty states, dismissible notice.
+   ========================================================================== */
+.members-page {
+  --role-proponent: #13693f;
+  --role-adviser: #2563eb;
+  --role-superadmin: #f78021;
+}
+
+/* Toolbar: one label style + one control height so all three line up */
+.members-toolbar__filters .field__label,
+.members-toolbar__filters label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.members-toolbar__filters input,
+.members-toolbar__filters select {
+  height: 44px;
+  box-sizing: border-box;
+}
+
+.members-toolbar__filters {
+  align-items: start;
+}
+
+/* Cards: neutral surface, colored left rail, readable text in both themes */
+.admin-kanban-card,
+.admin-kanban-card--proponent,
+.admin-kanban-card--adviser,
+.admin-kanban-card--superadmin {
+  --accent: var(--role-proponent);
+  position: relative;
+  padding: 14px 14px 12px 18px;
+  background: var(--surface-card, var(--card-fill-neutral, #fff));
+  border: 1px solid var(--dash-card-border, var(--border-subtle));
+  color: var(--text-body);
+  overflow: hidden;
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+
+.admin-kanban-card--adviser {
+  --accent: var(--role-adviser);
+}
+
+.admin-kanban-card--superadmin {
+  --accent: var(--role-superadmin);
+}
+
+.admin-kanban-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--accent);
+}
+
+@media (hover: hover) {
+  .admin-kanban-card:hover {
+    box-shadow: 0 6px 16px rgba(16, 40, 28, 0.1);
+    transform: translateY(-1px);
+  }
+}
+
+.admin-kanban-card .admin-kanban-card__name,
+.admin-kanban-card--proponent .admin-kanban-card__name,
+.admin-kanban-card--adviser .admin-kanban-card__name,
+.admin-kanban-card--superadmin .admin-kanban-card__name {
+  color: var(--text-headline);
+  font-size: 15px;
+  word-break: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-kanban-card .admin-kanban-card__muted,
+.admin-kanban-card--proponent .admin-kanban-card__muted,
+.admin-kanban-card--adviser .admin-kanban-card__muted,
+.admin-kanban-card--superadmin .admin-kanban-card__muted,
+.admin-kanban-card .admin-kanban-card__history,
+.admin-kanban-card--superadmin .admin-kanban-card__history {
+  color: var(--text-caption);
+  font-size: 13px;
+  word-break: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-kanban-card .admin-kanban-card__history {
+  white-space: normal;
+}
+
+.admin-kanban-card .admin-kanban-role,
+.admin-kanban-card--proponent .admin-kanban-role,
+.admin-kanban-card--adviser .admin-kanban-role,
+.admin-kanban-card--superadmin .admin-kanban-role {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+[data-theme='dark'] .admin-kanban-card--adviser .admin-kanban-role {
+  color: #93b4ff;
+}
+
+[data-theme='dark'] .admin-kanban-card--proponent .admin-kanban-role {
+  color: #6ee7a8;
+}
+
+.admin-kanban-card .admin-avatar,
+.admin-kanban-card--proponent .admin-avatar,
+.admin-kanban-card--adviser .admin-avatar,
+.admin-kanban-card--superadmin .admin-avatar {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+
+.admin-kanban-card .admin-permission-chip,
+.admin-kanban-card--proponent .admin-permission-chip,
+.admin-kanban-card--adviser .admin-permission-chip,
+.admin-kanban-card--superadmin .admin-permission-chip {
+  background: var(--surface-1);
+  border-color: var(--border-subtle);
+  color: var(--text-body);
+}
+
+.admin-kanban-card .admin-kanban-card__actions,
+.admin-kanban-card--proponent .admin-kanban-card__actions,
+.admin-kanban-card--adviser .admin-kanban-card__actions,
+.admin-kanban-card--superadmin .admin-kanban-card__actions {
+  border-top-color: var(--border-subtle);
+  padding-top: 10px;
+}
+
+.admin-kanban-card .admin-kanban-icon-btn,
+.admin-kanban-card--proponent .admin-kanban-icon-btn,
+.admin-kanban-card--adviser .admin-kanban-icon-btn,
+.admin-kanban-card--superadmin .admin-kanban-icon-btn {
+  min-height: 36px;
+  background: transparent;
+  border-color: var(--border-default);
+  color: var(--text-body);
+}
+
+.admin-kanban-card .admin-kanban-icon-btn:hover:not(:disabled) {
+  background: var(--surface-1);
+  border-color: var(--text-caption);
+}
+
+.admin-kanban-card .admin-kanban-icon-btn--danger,
+.admin-kanban-card--proponent .admin-kanban-icon-btn--danger,
+.admin-kanban-card--adviser .admin-kanban-icon-btn--danger,
+.admin-kanban-card--superadmin .admin-kanban-icon-btn--danger {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--status-error) 40%, transparent);
+  color: var(--status-error);
+}
+
+.admin-kanban-card .admin-kanban-icon-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--status-error) 10%, transparent);
+}
+
+/* Empty columns: compact, top-aligned instead of a huge dashed void */
+.admin-kanban-empty {
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 24px 16px;
+  margin-top: 4px;
+}
+
+/* Column headers carry the status colour subtly */
+.admin-kanban-col__count {
+  min-width: 24px;
+  height: 24px;
+}
+
+/* Notice: dismissible success pill with icon (auto-hides after 5s) */
+.admin-kanban-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin: 0 0 12px;
+  padding: 8px 8px 8px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--emerald-500, #10b981) 40%, transparent);
+  background: color-mix(in srgb, var(--emerald-500, #10b981) 12%, transparent);
+  color: var(--text-headline);
+  font-size: 14px;
+  font-weight: 600;
+  animation: riseIn 200ms ease-out both;
+}
+
+.admin-kanban-note svg {
+  flex: 0 0 auto;
+  color: var(--emerald-500, #10b981);
+}
+
+.admin-kanban-note__close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-caption);
+  cursor: pointer;
+}
+
+.admin-kanban-note__close:hover {
+  background: color-mix(in srgb, var(--text-caption) 15%, transparent);
+}
+
+.admin-kanban-note__close:focus-visible,
+.admin-kanban-card .admin-kanban-icon-btn:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .members-page .dash-page__tools {
+    width: 100%;
+  }
+
+  .members-page .dash-page__tools > * {
+    flex: 1 1 0;
+  }
+
+  .admin-kanban-col {
+    flex-basis: 88vw;
+    width: 88vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-kanban-card,
+  .admin-kanban-note {
+    transition: none;
+    animation: none;
+  }
+}

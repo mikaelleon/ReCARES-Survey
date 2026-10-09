@@ -16,6 +16,7 @@ import {
   User,
   UserMinus,
   UserPlus,
+  X,
   XCircle,
 } from 'lucide-react';
 import { AdminOverlayPortal } from '@/components/admin/AdminOverlayPortal';
@@ -486,6 +487,11 @@ export function MemberManagement() {
   const [invites, setInvites] = useState<InviteRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (!note) return;
+    const timer = window.setTimeout(() => setNote(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [note]);
   const [busy, setBusy] = useState(false);
   const [showRemoved, setShowRemoved] = useState(false);
   const [query, setQuery] = useState('');
@@ -769,7 +775,16 @@ export function MemberManagement() {
       ) : null}
       {note ? (
         <p role="status" className="admin-kanban-note">
-          {note}
+          <CheckCircle2 size={16} strokeWidth={2.2} aria-hidden="true" />
+          <span>{note}</span>
+          <button
+            type="button"
+            className="admin-kanban-note__close"
+            aria-label="Dismiss message"
+            onClick={() => setNote(null)}
+          >
+            <X size={14} strokeWidth={2.4} aria-hidden="true" />
+          </button>
         </p>
       ) : null}
 
@@ -886,7 +901,7 @@ export function MemberManagement() {
                       <div className="admin-kanban-card__top admin-kanban-card__top--polish">
                         <Avatar initials={emailInitials(invite.email)} />
                         <div className="admin-kanban-card__meta">
-                          <div className="admin-kanban-card__name">{invite.email}</div>
+                          <div className="admin-kanban-card__name" title={invite.email}>{invite.email}</div>
                           <div className="admin-kanban-card__muted">Pending signup</div>
                         </div>
                         <RoleBadge role={invite.role} />
@@ -960,7 +975,7 @@ export function MemberManagement() {
                           <div className="admin-kanban-card__name">
                             {account.fullName || 'Unnamed'}
                           </div>
-                          <div className="admin-kanban-card__muted">{account.email}</div>
+                          <div className="admin-kanban-card__muted" title={account.email}>{account.email}</div>
                           <div className="admin-kanban-card__muted">
                             Requested: {account.requestedRole || '—'}
                           </div>
@@ -1037,10 +1052,10 @@ export function MemberManagement() {
                       <div className="admin-kanban-card__top admin-kanban-card__top--polish">
                         <Avatar initials={memberInitials(member.fullName, member.email)} />
                         <div className="admin-kanban-card__meta">
-                          <div className="admin-kanban-card__name">
+                          <div className="admin-kanban-card__name" title={member.fullName || 'Unnamed'}>
                             {member.fullName || 'Unnamed'}
                           </div>
-                          <div className="admin-kanban-card__muted">{member.email}</div>
+                          <div className="admin-kanban-card__muted" title={member.email}>{member.email}</div>
                         </div>
                         <RoleBadge role={member.role || 'admin'} />
                       </div>
@@ -1117,7 +1132,7 @@ export function MemberManagement() {
                             <div className="admin-kanban-card__name">
                               {member.fullName || 'Unnamed'}
                             </div>
-                            <div className="admin-kanban-card__muted">{member.email}</div>
+                            <div className="admin-kanban-card__muted" title={member.email}>{member.email}</div>
                           </div>
                           <RoleBadge role={member.role || 'admin'} />
                         </div>
