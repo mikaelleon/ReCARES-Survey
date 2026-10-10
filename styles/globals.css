@@ -1165,10 +1165,11 @@ html.admin-fit-viewport body {
   bottom: 0;
 }
 
-/* Expanded sidebar: open the panel into the main canvas so long text is readable. */
+/* Expanded sidebar: grow into the main canvas from the bell. */
 .admin-sidebar:not(.is-collapsed) .admin-sidebar__popover {
   left: 0;
   right: auto;
+  transform-origin: bottom left;
 }
 
 .admin-sidebar__nav {
@@ -1407,9 +1408,12 @@ html.admin-fit-viewport body {
 }
 
 .admin-sidebar__popover-empty {
-  margin: 0;
+  margin: 4px 0 2px;
+  padding: 10px 4px;
   font-size: 13px;
+  line-height: 1.45;
   color: rgba(229, 235, 232, 0.72);
+  text-align: center;
 }
 
 .admin-sidebar__resident {
@@ -10095,41 +10099,7 @@ html.admin-fit-viewport body {
 }
 
 
-.admin-sidebar__notify-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 280px;
-  overflow: auto;
-}
-
-.admin-sidebar__notify-link {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px;
-  border-radius: 8px;
-  color: var(--white);
-  text-decoration: none;
-}
-
-.admin-sidebar__notify-link:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.admin-sidebar__notify-title {
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.admin-sidebar__notify-detail {
-  font-size: 12px;
-  color: rgba(229, 235, 232, 0.72);
-  word-break: break-word;
-}
+/* Notification list styles live with the Notifications block below. */
 
 .survey-window-chip {
   display: inline-flex;
@@ -10161,53 +10131,7 @@ html.admin-fit-viewport body {
   color: #f0a060;
 }
 
-.survey-control-card {
-  max-width: 560px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.survey-control-card__meta {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--text-caption);
-}
-
-.survey-control-card__preview {
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--border-subtle);
-  background: rgba(19, 105, 63, 0.06);
-}
-
-.survey-control-card__preview-label {
-  margin: 0 0 6px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-caption);
-}
-
-.survey-control-card__preview-body {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--text-body);
-  text-wrap: pretty;
-}
-
-.survey-control-card__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  padding-top: 4px;
-}
+/* Legacy single-card helpers removed — Survey control uses the layout block below. */
 
 .inquiries-page__filter {
   min-width: 180px;
@@ -11759,5 +11683,1213 @@ html.admin-fit-viewport body {
     flex: 1 1 auto;
     justify-content: center;
     min-height: 44px;
+  }
+}
+
+/* Destructive confirm button */
+.confirm-delete__danger {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--status-error);
+  border-radius: 8px;
+  background: var(--status-error);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: var(--text-button-size, 14px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.confirm-delete__danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.confirm-delete__danger:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.confirm-delete__danger:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+/* ==========================================================================
+   Notifications: timestamps, read / unread
+   ========================================================================== */
+.admin-sidebar__popover {
+  min-width: 304px;
+  max-width: min(360px, calc(100vw - 24px));
+  padding: 12px 12px 10px;
+}
+
+.admin-sidebar__popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-sidebar__popover-head .admin-sidebar__popover-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.admin-sidebar__popover-count {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--harvest-orange);
+  color: var(--black);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.admin-sidebar__popover-action {
+  min-height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(229, 235, 232, 0.92);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-sidebar__popover-action:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--white);
+}
+
+.admin-sidebar__notify-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.admin-sidebar__notify-row {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.admin-sidebar__notify-row.is-unread {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(247, 128, 33, 0.28);
+  box-shadow: inset 3px 0 0 var(--harvest-orange);
+}
+
+.admin-sidebar__notify-row.is-read {
+  opacity: 0.88;
+}
+
+.admin-sidebar__notify-row:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.admin-sidebar__notify-row .admin-sidebar__notify-link {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-sidebar__notify-link,
+.admin-sidebar__notify-link:link,
+.admin-sidebar__notify-link:visited,
+.admin-sidebar__notify-link:hover,
+.admin-sidebar__notify-link:active,
+.admin-sidebar__notify-link:focus {
+  display: block;
+  padding: 10px 8px 10px 12px;
+  border-radius: 10px;
+  color: var(--white) !important;
+  text-decoration: none !important;
+  background: transparent;
+}
+
+.admin-sidebar__notify-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-sidebar__notify-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--white);
+}
+
+.admin-sidebar__notify-row.is-unread .admin-sidebar__notify-title {
+  font-weight: 800;
+}
+
+.admin-sidebar__notify-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--harvest-orange);
+  box-shadow: 0 0 0 2px rgba(247, 128, 33, 0.22);
+}
+
+.admin-sidebar__notify-detail {
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(229, 235, 232, 0.78);
+  word-break: break-word;
+}
+
+.admin-sidebar__notify-time {
+  margin-top: 1px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(229, 235, 232, 0.58);
+}
+
+.admin-sidebar__notify-row.is-unread .admin-sidebar__notify-time {
+  color: rgba(229, 235, 232, 0.72);
+}
+
+.admin-sidebar__notify-toggle {
+  flex: 0 0 auto;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 6px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(229, 235, 232, 0.72);
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.admin-sidebar__notify-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--white);
+}
+
+.admin-sidebar__notify-row.is-unread .admin-sidebar__notify-toggle {
+  color: rgba(229, 235, 232, 0.9);
+}
+
+.admin-sidebar__popover-action:focus-visible,
+.admin-sidebar__notify-toggle:focus-visible {
+  outline: 2px solid var(--bright-amber, #ffc72c);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .admin-sidebar__notify-toggle {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* ==========================================================================
+   Survey control
+   ========================================================================== */
+.survey-control-page .dash-page__header {
+  margin-bottom: 14px;
+}
+
+.survey-control__tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--dash-card-border, var(--border-default));
+  border-radius: 999px;
+  background: var(--dash-card-bg, var(--card-fill-neutral));
+  color: var(--text-headline);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.survey-control__tool:hover {
+  border-color: var(--dark-emerald);
+  background: rgba(19, 105, 63, 0.06);
+}
+
+.survey-control__tool--primary {
+  background: var(--dark-emerald);
+  border-color: var(--dark-emerald);
+  color: var(--white);
+}
+
+.survey-control__tool--primary:hover {
+  background: var(--emerald-700, #1b7c4c);
+  border-color: var(--emerald-700, #1b7c4c);
+  color: var(--white);
+}
+
+.survey-overview {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.survey-banner {
+  --tone: var(--dark-emerald);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--tone) 28%, transparent);
+  border-left: 4px solid var(--tone);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--tone) 8%, var(--dash-card-bg, var(--card-fill-neutral)));
+}
+
+.survey-banner--paused {
+  --tone: #d97706;
+}
+
+.survey-banner--closed {
+  --tone: #b91c1c;
+}
+
+.survey-banner__dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--tone);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 22%, transparent);
+}
+
+.survey-banner__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-headline);
+}
+
+.survey-banner__version,
+.survey-banner__unsaved {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.survey-banner__version {
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+  color: var(--tone);
+}
+
+.survey-banner__unsaved {
+  background: var(--harvest-orange);
+  color: var(--black);
+}
+
+.survey-banner__detail {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-body);
+}
+
+.survey-stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.survey-stats__item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 10px 12px;
+  border: 1px solid var(--dash-card-border, var(--border-subtle));
+  border-radius: 10px;
+  background: var(--dash-card-bg, var(--card-fill-neutral));
+}
+
+.survey-stats__value {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text-headline);
+}
+
+.survey-stats__value--text {
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.survey-stats__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--dash-muted, var(--text-caption));
+}
+
+.survey-control-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.9fr);
+  gap: 16px;
+  align-items: start;
+  padding-bottom: 88px;
+}
+
+.survey-control-main,
+.survey-control-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.survey-control-side__sticky {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 12px;
+}
+
+.survey-control-card {
+  padding: 16px 18px;
+}
+
+.survey-fieldset {
+  margin: 0;
+  min-width: 0;
+  border: 1px solid var(--dash-card-border, var(--border-subtle));
+}
+
+.survey-fieldset__legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-section-heading, var(--text-headline));
+}
+
+.survey-fieldset__legend span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--dash-muted, var(--text-caption));
+}
+
+.survey-fieldset__help {
+  margin: 8px 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dash-muted, var(--text-caption));
+}
+
+.survey-fieldset__help--tight {
+  margin: 4px 0 10px;
+}
+
+.survey-status-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.survey-status-card {
+  --tone: var(--dark-emerald);
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 12px 12px 12px 10px;
+  border: 1.5px solid var(--dash-card-border, var(--border-default));
+  border-radius: 12px;
+  background: var(--dash-card-bg, var(--card-fill-neutral));
+  color: var(--text-body);
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.survey-status-card--paused {
+  --tone: #d97706;
+}
+
+.survey-status-card--closed {
+  --tone: #b91c1c;
+}
+
+.survey-status-card input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.survey-status-card__radio {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 2px solid rgba(19, 105, 63, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: inset 0 0 0 0 var(--tone);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.survey-status-card--paused .survey-status-card__radio {
+  border-color: rgba(217, 119, 6, 0.4);
+}
+
+.survey-status-card--closed .survey-status-card__radio {
+  border-color: rgba(185, 28, 28, 0.4);
+}
+
+.survey-status-card__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--tone) 12%, transparent);
+  color: var(--tone);
+}
+
+.survey-status-card__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.survey-status-card:hover {
+  border-color: color-mix(in srgb, var(--tone) 55%, transparent);
+  background: color-mix(in srgb, var(--tone) 5%, var(--dash-card-bg, var(--card-fill-neutral)));
+}
+
+.survey-status-card.is-selected {
+  border-color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 10%, var(--dash-card-bg, var(--card-fill-neutral)));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tone) 35%, transparent);
+}
+
+.survey-status-card.is-selected .survey-status-card__radio {
+  border-color: var(--tone);
+  box-shadow: inset 0 0 0 4px var(--tone);
+}
+
+.survey-status-card:has(input:focus-visible) {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.survey-status-card__title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-headline);
+}
+
+.survey-status-card__hint {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--dash-muted, var(--text-caption));
+}
+
+.survey-schedule {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.survey-version {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.survey-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.survey-chip {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--dash-card-border, var(--border-default));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-body);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.survey-chip:hover {
+  border-color: var(--harvest-orange);
+  background: var(--dash-accent-soft, rgba(247, 128, 33, 0.12));
+}
+
+.survey-chip--quiet {
+  border-style: dashed;
+  color: var(--text-caption);
+}
+
+.survey-callout {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--dash-accent-soft, rgba(247, 128, 33, 0.12));
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-body);
+}
+
+.survey-message-foot {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.survey-counter {
+  flex: 0 0 auto;
+  margin-top: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-caption);
+}
+
+.survey-counter.is-near {
+  color: #b45309;
+}
+
+.survey-side-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-section-heading, var(--text-headline));
+}
+
+.survey-preview__screen {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--dash-card-border, var(--border-default));
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(19, 105, 63, 0.05) 0%, transparent 40%),
+    var(--surface-1);
+}
+
+.survey-preview__screen--paused {
+  background:
+    linear-gradient(180deg, rgba(217, 119, 6, 0.08) 0%, transparent 40%),
+    var(--surface-1);
+}
+
+.survey-preview__screen--closed {
+  background:
+    linear-gradient(180deg, rgba(185, 28, 28, 0.07) 0%, transparent 40%),
+    var(--surface-1);
+}
+
+.survey-preview__kicker {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dark-emerald);
+}
+
+.survey-preview__screen--paused .survey-preview__kicker {
+  color: #b45309;
+}
+
+.survey-preview__screen--closed .survey-preview__kicker {
+  color: #b91c1c;
+}
+
+.survey-preview__heading {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-headline);
+}
+
+.survey-preview__body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-body);
+}
+
+.survey-preview__btn {
+  align-self: flex-start;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--harvest-orange);
+  color: var(--black);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.survey-preview__btn--ghost {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-headline);
+}
+
+.survey-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.survey-history__item {
+  padding-left: 12px;
+  border-left: 3px solid var(--dash-card-border, var(--border-default));
+}
+
+.survey-history__summary {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-headline);
+}
+
+.survey-history__meta,
+.survey-history__empty {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-caption);
+}
+
+.survey-danger {
+  border: 1px dashed rgba(185, 28, 28, 0.35);
+  border-radius: 12px;
+  background: color-mix(in srgb, #b91c1c 4%, var(--dash-card-bg, var(--card-fill-neutral)));
+  padding: 0;
+}
+
+.survey-danger__summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9f1239;
+  cursor: pointer;
+  list-style: none;
+}
+
+.survey-danger__summary::-webkit-details-marker {
+  display: none;
+}
+
+.survey-danger__summary::after {
+  content: '';
+  margin-left: auto;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.7;
+}
+
+.survey-danger[open] .survey-danger__summary::after {
+  transform: rotate(-135deg);
+  margin-top: 4px;
+}
+
+.survey-danger__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 14px 14px;
+}
+
+.survey-danger .survey-fieldset__help {
+  margin: 0;
+}
+
+.survey-danger .button,
+.survey-danger button {
+  align-self: flex-start;
+}
+
+.survey-savebar {
+  position: fixed;
+  left: var(--admin-sidebar-width, 272px);
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px clamp(16px, 4vw, 32px) max(12px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border-subtle);
+  background: var(--page-bg);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(110%);
+  visibility: hidden;
+  transition: transform 200ms ease, visibility 0s linear 200ms;
+}
+
+.survey-savebar.is-visible {
+  transform: none;
+  visibility: visible;
+  transition: transform 200ms ease;
+}
+
+.survey-savebar__text {
+  margin: 0 auto 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-headline);
+}
+
+.survey-savebar__hint {
+  font-weight: 500;
+  color: var(--text-caption);
+}
+
+@media (max-width: 1100px) {
+  .survey-control-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .survey-control-side__sticky {
+    position: static;
+  }
+
+  .survey-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .survey-savebar {
+    left: 0;
+  }
+
+  .survey-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .survey-status-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .survey-schedule {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .survey-version {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .survey-savebar__hint {
+    display: none;
+  }
+
+  .survey-control-page .dash-page__tools {
+    width: 100%;
+  }
+
+  .survey-control__tool {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .survey-savebar,
+  .survey-savebar.is-visible,
+  .survey-status-card {
+    transition: none;
+  }
+}
+
+/* Page sub-text: what this screen shows and what to do here */
+.dash-page__heading {
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+.dash-page__sub {
+  max-width: 62ch;
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--dash-muted, var(--text-caption));
+}
+
+.survey-subtitle {
+  max-width: 60ch;
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-caption);
+}
+
+/* The dashboard locks to the viewport on short screens: keep the header compact there */
+@media (max-height: 760px) {
+  .admin-app.is-fit-viewport .dash-page__sub {
+    display: none;
+  }
+}
+
+/* Survey control UX pass 3 */
+.survey-feedback:empty {
+  display: none;
+}
+
+.survey-feedback {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  margin-bottom: 12px;
+}
+
+.survey-feedback .na-error {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--status-error) 40%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--status-error) 8%, var(--dash-card-bg, var(--card-fill-neutral)));
+}
+
+.survey-chips__label {
+  align-self: center;
+  min-width: 3.4rem;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dash-muted, var(--text-caption));
+}
+
+.survey-schedule .field__help,
+.survey-schedule .field__helper {
+  font-weight: 600;
+  color: var(--text-headline);
+}
+
+.survey-schedule input[type='datetime-local'] {
+  min-height: 44px;
+}
+
+.survey-callout {
+  border-left: 3px solid var(--harvest-orange);
+}
+
+/* Disabled-looking schedule when the window is not open: still editable, but visibly secondary */
+.survey-chip:focus-visible,
+.survey-control__tool:focus-visible,
+.survey-danger__summary:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.survey-stats__item {
+  position: relative;
+}
+
+@media (max-width: 640px) {
+  .survey-chips__label {
+    flex: 0 0 100%;
+  }
+
+  .survey-chip {
+    min-height: 44px;
+  }
+
+  .survey-feedback {
+    top: 56px;
+  }
+}
+
+/* ==========================================================================
+   Survey control — Dashboard design language
+   Same tokens, bento grid, stat tiles, insight cards, type scale and motion.
+   ========================================================================== */
+.survey-control-page {
+  --dash-gap: 12px;
+}
+
+.survey-kpis {
+  margin-bottom: var(--dash-gap);
+}
+
+/* Hero tile follows the window state */
+.dash-page .dash-stat--hero.survey-kpi--paused {
+  background: linear-gradient(160deg, #92400e 0%, #b45309 55%, #d97706 100%);
+  box-shadow: 0 12px 28px rgba(180, 83, 9, 0.3);
+}
+
+.dash-page .dash-stat--hero.survey-kpi--closed {
+  background: linear-gradient(160deg, #7f1d1d 0%, #991b1b 55%, #b91c1c 100%);
+  box-shadow: 0 12px 28px rgba(153, 27, 27, 0.3);
+}
+
+.survey-kpi__status {
+  letter-spacing: 0.01em;
+}
+
+.dash-stat--hero .dash-stat__bar {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.dash-stat--hero .dash-stat__bar-fill {
+  background: var(--white);
+}
+
+/* Bento: settings on the left, preview + history on the right rail */
+.dash-bento.survey-bento {
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--dash-gap);
+  padding-bottom: 88px;
+}
+
+.survey-bento .dash-bento__main,
+.survey-bento .dash-bento__rail {
+  gap: var(--dash-gap);
+}
+
+.survey-control-side__sticky {
+  gap: var(--dash-gap);
+  top: 8px;
+}
+
+/* Cards: identical to .dash-insight (radius, border, shadow, padding, hover, entrance) */
+.survey-control-card,
+.survey-fieldset {
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--dash-card-bg, var(--card-fill-neutral));
+  border: 1px solid var(--dash-card-border, var(--border-subtle));
+  box-shadow: 0 6px 14px rgba(19, 105, 63, 0.05);
+  animation: dashSoftPop 440ms ease-out both;
+}
+
+.survey-bento .dash-bento__main > :nth-child(2) {
+  animation-delay: 60ms;
+}
+.survey-bento .dash-bento__main > :nth-child(3) {
+  animation-delay: 120ms;
+}
+.survey-bento .dash-bento__main > :nth-child(4) {
+  animation-delay: 180ms;
+}
+
+/* Card titles = dash-insight__title */
+.survey-fieldset__legend,
+.survey-side-title {
+  float: left;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-headline);
+}
+
+.survey-side-title {
+  float: none;
+}
+
+.survey-fieldset__legend + * {
+  clear: both;
+}
+
+.survey-fieldset__legend span {
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--dash-muted, var(--text-caption));
+}
+
+/* Muted helper copy = dash-insight__hint */
+.survey-fieldset__help,
+.survey-history__empty,
+.survey-history__meta {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--dash-muted, var(--text-caption));
+}
+
+.survey-fieldset__help {
+  margin: 0 0 10px;
+}
+
+/* Status choices follow dash-quick / insight tile rhythm */
+.survey-status-cards {
+  gap: var(--dash-gap);
+}
+
+.survey-status-card {
+  border-radius: 12px;
+  box-shadow: none;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease,
+    background 200ms ease;
+}
+
+@media (hover: hover) {
+  .survey-status-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(19, 105, 63, 0.12);
+  }
+}
+
+.survey-status-card.is-selected {
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--tone) 20%, transparent);
+}
+
+/* Preview + history sit on the rail like the dashboard's activity cards */
+.survey-preview__screen {
+  border-style: solid;
+  border-color: var(--dash-card-border, var(--border-subtle));
+  border-radius: 12px;
+}
+
+.survey-history__item {
+  border-left-color: var(--dash-icon-bg, rgba(19, 105, 63, 0.18));
+}
+
+.survey-history__summary {
+  font-size: 13px;
+  color: var(--dash-ink, var(--text-headline));
+}
+
+/* Quiet chips = dash date-range presets */
+.survey-chip {
+  background: rgba(19, 105, 63, 0.05);
+  border-color: rgba(19, 105, 63, 0.14);
+  color: var(--text-headline);
+}
+
+.survey-chip:hover {
+  background: rgba(19, 105, 63, 0.1);
+  border-color: rgba(19, 105, 63, 0.28);
+}
+
+.survey-chip--quiet {
+  background: transparent;
+  border-style: dashed;
+  color: var(--dash-muted, var(--text-caption));
+}
+
+/* Header chip uses the Dashboard's pill; add the open state tint */
+.survey-window-chip--open {
+  background: var(--dash-icon-bg, rgba(19, 105, 63, 0.1));
+  color: var(--dash-ink, var(--text-headline));
+}
+
+@media (max-width: 1100px) {
+  .dash-bento.survey-bento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .survey-control-side__sticky {
+    position: static;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .survey-control-card,
+  .survey-fieldset {
+    animation: none;
   }
 }

@@ -6,6 +6,7 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -334,6 +335,20 @@ export async function deleteNote(
   try {
     const db = requireDb();
     const docId = requireDocumentId(id, 'finding note');
+    // Review threads point at the note; deleting it would orphan them.
+    const threads = await getDocs(
+      query(
+        collection(db, 'adviserFeedback'),
+        where('targetType', '==', 'note'),
+        where('targetId', '==', docId),
+        limit(1),
+      ),
+    );
+    if (!threads.empty) {
+      throw new Error(
+        'This note has adviser review threads. Resolve and delete those threads first, then delete the note.',
+      );
+    }
     await deleteDoc(doc(db, 'findingNotes', docId));
   } catch (error) {
     throw new Error(

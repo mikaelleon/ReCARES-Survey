@@ -15,12 +15,14 @@ import {
   BarChart3,
   Bell,
   CalendarHeart,
+  Check,
   ChevronLeft,
   Inbox,
   LayoutDashboard,
   LogOut,
   MessageSquare,
   NotebookPen,
+  RotateCcw,
   Settings2,
   Users,
   X,
@@ -28,6 +30,7 @@ import {
 import { AdminNavLink } from '@/components/admin/AdminNavLink';
 import { roleLabel } from '@/lib/admin/access';
 import { useAdminNotifications } from '@/lib/admin/useAdminNotifications';
+import { formatAbsoluteTime, formatRelativeTime, hasRealTime } from '@/lib/admin/relativeTime';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { goToAdminLogin } from '@/lib/firebase/auth';
@@ -69,7 +72,14 @@ export function SidebarNav({
 }) {
   const pathname = usePathname() || '';
   const { user, logout, can, isSuperadmin, canTeamOps } = useAuth();
-  const { items: notifications, unreadCount, markSeen } = useAdminNotifications();
+  const {
+    items: notifications,
+    unreadCount,
+    markRead,
+    markUnread,
+    markAllRead,
+  } = useAdminNotifications();
+  const [now, setNow] = useState(() => Date.now());
   const { toggleTheme, themeLabel } = useTheme();
   const titleId = useId();
   const bellId = useId();
@@ -102,6 +112,14 @@ export function SidebarNav({
       window.removeEventListener('keydown', onKey);
     };
   }, [open, onOpenChange]);
+
+  // Keep "5 min ago" honest while the list is open.
+  useEffect(() => {
+    if (!bellOpen) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [bellOpen]);
 
   useEffect(() => {
     if (!bellOpen) return;
@@ -275,13 +293,7 @@ export function SidebarNav({
                 }
                 aria-expanded={bellOpen}
                 aria-controls={bellId}
-                onClick={() => {
-                  setBellOpen((v) => {
-                    const next = !v;
-                    if (next) markSeen();
-                    return next;
-                  });
-                }}
+                onClick={() => setBellOpen((v) => !v)}
               >
                 <Bell size={18} strokeWidth={2.2} aria-hidden="true" />
                 {unreadCount > 0 ? (
@@ -289,27 +301,86 @@ export function SidebarNav({
                 ) : null}
               </button>
               {bellOpen ? (
-                <div id={bellId} className="admin-sidebar__popover" role="status">
-                  <p className="admin-sidebar__popover-title">Notifications</p>
+                <div id={bellId} className="admin-sidebar__popover" role="region" aria-label="Notifications">
+                  <div className="admin-sidebar__popover-head">
+                    <p className="admin-sidebar__popover-title">
+                      Notifications
+                      {unreadCount > 0 ? (
+                        <span className="admin-sidebar__popover-count">{unreadCount} unread</span>
+                      ) : null}
+                    </p>
+                    {unreadCount > 0 ? (
+                      <button
+                        type="button"
+                        className="admin-sidebar__popover-action"
+                        onClick={markAllRead}
+                      >
+                        Mark all as read
+                      </button>
+                    ) : null}
+                  </div>
                   {notifications.length === 0 ? (
-                    <p className="admin-sidebar__popover-empty">No notifications yet.</p>
+                    <p className="admin-sidebar__popover-empty">You&apos;re all caught up.</p>
                   ) : (
                     <ul className="admin-sidebar__notify-list">
-                      {notifications.map((item) => (
-                        <li key={item.id}>
-                          <AdminNavLink
-                            href={item.href}
-                            className="admin-sidebar__notify-link"
-                            onNavigate={() => {
-                              setBellOpen(false);
-                              onOpenChange(false);
-                            }}
+                      {notifications.map((item) => {
+                        const real = hasRealTime(item.atMs);
+                        return (
+                          <li
+                            key={item.id}
+                            className={`admin-sidebar__notify-row${item.read ? ' is-read' : ' is-unread'}`}
                           >
-                            <span className="admin-sidebar__notify-title">{item.title}</span>
-                            <span className="admin-sidebar__notify-detail">{item.detail}</span>
-                          </AdminNavLink>
-                        </li>
-                      ))}
+                            <AdminNavLink
+                              href={item.href}
+                              className="admin-sidebar__notify-link"
+                              onNavigate={() => {
+                                markRead(item.id);
+                                setBellOpen(false);
+                                onOpenChange(false);
+                              }}
+                            >
+                              <span className="admin-sidebar__notify-body">
+                                <span className="admin-sidebar__notify-title">
+                                  {!item.read ? (
+                                    <span className="admin-sidebar__notify-dot" aria-hidden="true" />
+                                  ) : null}
+                                  {item.title}
+                                  <span className="visually-hidden">
+                                    {item.read ? ' (read)' : ' (unread)'}
+                                  </span>
+                                </span>
+                                <span className="admin-sidebar__notify-detail">{item.detail}</span>
+                                {real ? (
+                                  <time
+                                    className="admin-sidebar__notify-time"
+                                    dateTime={new Date(item.atMs).toISOString()}
+                                    title={formatAbsoluteTime(item.atMs)}
+                                  >
+                                    {formatRelativeTime(item.atMs, now)}
+                                  </time>
+                                ) : null}
+                              </span>
+                            </AdminNavLink>
+                            <button
+                              type="button"
+                              className="admin-sidebar__notify-toggle"
+                              aria-label={
+                                item.read
+                                  ? `Mark "${item.title}" as unread`
+                                  : `Mark "${item.title}" as read`
+                              }
+                              title={item.read ? 'Mark as unread' : 'Mark as read'}
+                              onClick={() => (item.read ? markUnread(item.id) : markRead(item.id))}
+                            >
+                              {item.read ? (
+                                <RotateCcw size={15} strokeWidth={2.2} aria-hidden="true" />
+                              ) : (
+                                <Check size={15} strokeWidth={2.4} aria-hidden="true" />
+                              )}
+                            </button>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </div>

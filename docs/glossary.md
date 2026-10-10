@@ -26,7 +26,7 @@ Words used the same way across ReCARES documentation.
 | **RAGbot** | Chat helper on the resident site for survey/FAQ questions. |
 | **Phase** | Subdivision phase (1–6, including Heights, Highlands, Eastgrove). |
 | **Instrument version** | Short label (for example `v1`) stored on each submitted survey so later question-set changes can be compared. |
-| **Survey window** | Open, paused, or closed. Only open accepts new submissions. |
+| **Survey window** | Open, paused, or closed. Only open accepts new submissions. An optional schedule (opens at / closes at) can open or close it automatically. |
 | **Kanban** | Column board (for example Invited / Pending / Active / Removed). |
 | **Language toggle** | English / Tagalog switch on every survey screen. Changes displayed text only; stored answers stay English. |
 | **O1 (open problem discovery)** | Step 13 question listing HOA-related problem categories, including water supply or interruptions. Defined in `survey/o1.ts`. |

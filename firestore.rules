@@ -289,19 +289,36 @@ service cloud.firestore {
         && resource.data.used == false;
     }
 
+    // Open, and inside the optional schedule window (opensAt / closesAt).
     function surveyAcceptsResponses() {
       return !exists(/databases/$(database)/documents/appConfig/survey)
-        || get(/databases/$(database)/documents/appConfig/survey).data.status == 'open';
+        || (
+          get(/databases/$(database)/documents/appConfig/survey).data.status == 'open'
+          && (get(/databases/$(database)/documents/appConfig/survey).data.get('opensAt', null) == null
+            || request.time >= get(/databases/$(database)/documents/appConfig/survey).data.get('opensAt', null))
+          && (get(/databases/$(database)/documents/appConfig/survey).data.get('closesAt', null) == null
+            || request.time < get(/databases/$(database)/documents/appConfig/survey).data.get('closesAt', null))
+        );
+    }
+
+    // Audit trail of survey-control changes. Superadmin only.
+    match /surveyConfigHistory/{entryId} {
+      allow read: if request.auth != null && isActiveSuperadmin(request.auth.uid);
+      allow create: if request.auth != null && isActiveSuperadmin(request.auth.uid);
+      allow update, delete: if false;
     }
 
     match /needsAssessmentResponses/{responseId} {
       allow create: if surveyAcceptsResponses();
-      allow read, update, delete: if isActiveAdmin();
+      allow read, update: if isActiveAdmin();
+      // Hard-deleting research data is not an adviser action.
+      allow delete: if isActiveProponentOrSuperadmin();
     }
 
     match /interviewInterest/{invitationId} {
       allow create: if true;
-      allow read, update, delete: if isActiveAdmin();
+      allow read, update: if isActiveAdmin();
+      allow delete: if isActiveProponentOrSuperadmin();
     }
 
     match /responses/{responseId} {

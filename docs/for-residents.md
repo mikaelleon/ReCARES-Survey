@@ -27,7 +27,7 @@ The **sticky bar** at the top stays on screen: Home, About, FAQ, Start the surve
 
 1. Choose **Start the survey**.
 2. Read the welcome screen. You can continue, or resume a draft if this device already started one.
-3. Complete **consent and eligibility**: tick both boxes (you agree to take part; you are 18 or older and own, rent, or live in a home in Camella Homes Tibig). The numbered questions only appear after both are ticked. If you do not agree or are not eligible, use the small links under the boxes.
+3. Complete **consent and eligibility**: tick both boxes (you agree to take part; you are 18 or older and own, rent, or live in a home in Camella Homes Tibig). The numbered questions only appear after both are ticked. If you do not agree or are not eligible, use **Leave the survey**; nothing is recorded.
 4. Answer the household and service questions. A red asterisk means the question is required to go forward. Personal items often include **Prefer not to say**.
 5. Some screens appear only if an earlier answer said they apply (for example accessibility details after you say someone in the household has a disability or mobility limit).
 6. Review, then submit. You will see a thank-you page.

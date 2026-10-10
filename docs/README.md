@@ -65,6 +65,7 @@ These files stay in the repo so past decisions are not lost. Prefer the current 
 - **Lead with the reader’s job**, then supporting detail.
 - **Define jargon once**, then use the same word everywhere (see the glossary).
 - **Do not invent features.** If something is not built (for example average completion time), the page says so.
+- **Every screen explains itself.** Each admin page and survey screen has a one-line sub-text under its title saying what it shows and what to do. Use the `PageHeading` component for new admin pages.
 - **Technical files stay technical.** Access-control decisions and CSS tokens remain in their own pages so operators are not mixed with residents.
 
 When you change a resident-facing flow or an admin screen, update the matching page in this folder in the same change.

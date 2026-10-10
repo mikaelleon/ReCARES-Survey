@@ -29,7 +29,7 @@ If **sign-up** fails, read the exact message. “Sign-up was blocked by the data
 
 - **Green sidebar** (left): Dashboard, Responses, Interview Invites, Findings Log, Reviews, Inquiries, Members & Invites, and (superadmin) Survey control. At **900px wide and below** (phones, small tablets) the sidebar becomes a drawer: tap the **menu button** (☰) in the top bar to open it; tap the backdrop, the ✕, or press Esc to close it. Proponent, adviser, and superadmin accounts all use the same layout.
 - **Account footer:** your name, role, status, **Log out**, and **Back to resident site**.
-- **Bell:** unread inquiries, uncontacted interview opt-ins, pending access requests (superadmin), review threads that need your role (required fixes on your notes, or addressed threads if you are an adviser), and a notice if the survey is paused or closed.
+- **Bell:** unread inquiries, uncontacted interview opt-ins, pending access requests (superadmin), review threads that need your role (required fixes on your notes, or addressed threads if you are an adviser), and a notice if the survey is paused or closed. Each notification shows **when it happened** (for example “5 min ago”; hover for the exact date and time) and a button to **mark it as read or unread**. Unread items are bold with an orange dot. **Mark all as read** clears the badge. Opening the bell no longer marks everything read, and clicking a notification marks just that one read. Read state is kept per person in this browser.
 - **Moon:** dark / light theme.
 
 You only see Responses or Interview Invites if a superadmin turned on those **permissions** for your account (superadmins see everything).
@@ -71,6 +71,8 @@ You can filter by phase and branch, sort, export CSV, and copy a text summary. *
 
 Gated fields the resident was not asked show as **`not_shown`**.
 
+**Who can delete:** Proponents and Superadmins. Advisers do not see Delete controls, and the Firestore rules refuse a delete from an adviser account.
+
 ---
 
 ## Findings Log
@@ -104,7 +106,7 @@ Deploy updated `firestore.rules` and `firestore.indexes.json` so reads/writes an
 People who agreed to a follow-up interview.
 
 - Board columns follow outreach: not contacted → contacted → confirmed.
-- **Delete** on any card permanently removes the invite from Firestore (including notes). Use it for test opt-ins or when the person asked to be forgotten.
+- **Delete** on any card (Proponent and Superadmin only; hidden for Advisers) permanently removes the invite from Firestore (including notes) after a confirmation dialog. Use it for test opt-ins or when the person asked to be forgotten.
 - Sort the board by newest, oldest, or email.
 - Each card has **Notes** for call/email history (team only — never joined to anonymous survey answers).
 - **Export contacts CSV** downloads this roster only (email, preferences, status, notes). It is not the full survey CSV.
@@ -130,6 +132,8 @@ The board is a kanban: **Invited → Pending approval → Active → Removed**.
 
 Each card has a coloured rail for the role (green Proponent, blue Adviser, orange Superadmin). Long names and emails are shortened with an ellipsis; hover to see the full value. Confirmations such as “Invite link copied.” appear as a dismissible notice that hides itself after a few seconds.
 
+Revoking an invite, rejecting a request, removing a member, and deleting a removed member all ask for confirmation in an in-app dialog (Esc or Cancel backs out; focus stays inside the dialog).
+
 Invites do **not** send email from this app. Copy the signup link and send it yourself.
 
 ---
@@ -148,15 +152,39 @@ Messages from the homepage contact form. All active admins can open this list.
 
 ## Survey control (superadmin)
 
-Pause or close the public survey without a code change.
+Decide when residents can take the survey, and what they see when they can’t. No code change or redeploy needed.
 
-| Window | What residents see |
+**Layout (same language as the Dashboard)**
+
+- The header has the title, sub-text and a status pill (for example “Survey open · v1 · Unsaved”).
+- A four-tile strip: **Survey window** (a filled hero tile that turns amber when paused and red when closed, with a progress bar through a scheduled window), **Total responses** toward the 100 target, **On instrument vN** with its share, and **Last 7 days** with its share.
+- Below it, settings cards on the left and a rail on the right with the resident preview, recent changes, and reset.
+
+**Also at the top**
+
+- A status banner says what residents experience *right now* (open, scheduled to open, paused, closed, or closed by schedule), with a countdown when a schedule is set.
+- Four numbers: total responses, responses on the current instrument version, submissions in the last 7 days, and the latest submission.
+- **View live survey** and **Copy link**.
+
+**Settings**
+
+| Setting | What it does |
 | --- | --- |
-| **Open** | They can start and submit. Each new response is stamped with the **instrument version** (starts at `v1`). |
-| **Paused** | A message that the survey is on hold. Submits are blocked in the app and in Firestore rules. |
-| **Closed** | A message that the study has ended. Same block as paused. |
+| **Survey window** | Three cards: **Open** (residents can submit), **Paused** (a temporary hold), **Closed** (data collection finished). Paused and closed block submit in the app and in Firestore rules. |
+| **Schedule** (optional) | **Opens at** and **Closes at**. Enforced by the database, so nobody has to be online at midnight. Only applies while the window is **Open**. Each time is echoed in plain words (for example “Mon, Oct 13, 8:00 AM”), with shortcuts: open tomorrow 8 AM or next Monday 8 AM; close in 7 days, in 30 days, or at the end of the month; clear both times. Notes warn you when a time has already passed, when the schedule will be ignored (paused or closed), or when residents will see a waiting message first. The closing time must be after the opening time. |
+| **Instrument version** | The label stamped on each new response. **Use vN** suggests the next one. A note shows how many responses already use the current version and what changes for new ones. Bump it only when the question set actually changes. |
+| **Message to residents** | Optional text shown while paused or closed (500 characters, with a counter). Quick templates for maintenance, reopening, and thank-you; **Use default** clears it. |
 
-Bump the instrument version only when the question set actually changes, so charts can still be split later.
+**Safe editing**
+
+- A live **What residents see** preview updates as you type.
+- Save results and errors appear at the top of the page (successes fade after a few seconds), and a failed save jumps to the first field that needs fixing.
+- A save bar appears when something changed: **Save changes** (also Ctrl/Cmd+S) or **Discard**. Leaving the page with unsaved changes warns you.
+- Pausing or closing asks for confirmation first, in an in-app dialog.
+- **Recent changes** lists who changed what and when (stored in `surveyConfigHistory`, superadmin-only).
+- **Reset to defaults** deletes the saved settings (open, instrument `v1`, no schedule).
+
+Deploy `firestore.rules` after pulling this change: the schedule check and the history collection live there.
 
 ---
 

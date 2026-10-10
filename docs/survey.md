@@ -12,12 +12,11 @@ Residents see a progress bar and step titles, not field codes. Field codes (A1, 
 | --- | --- | --- |
 | Welcome | Introduction | Continue, or resume a draft on this device |
 | Consent | Consent and eligibility | Two checkboxes, both required: agree to take part, and confirm 18+ and a Camella Homes Tibig owner/tenant/household member |
-| Exit screens | Thank-you screens `x1`, `x2` | Reached from the two quiet links under the checkboxes (“I do not agree”, “I am not 18 or not a resident”). No answers are recorded |
 | Steps 1–13 | Numbered survey | Branching; required items marked with * |
 | Review | Summary | Check answers, then submit |
 | Thank you | Confirmation | Optional interview note if they opted in |
 
-Every screen has an **English / Tagalog** toggle and a **Leave the survey** control (see [Language](#language-english-and-tagalog) and [Leaving the survey](#leaving-the-survey)).
+Every screen has a one-line **sub-text under its title** saying what the screen is for and what to do, an **English / Tagalog** toggle and a **Leave the survey** control (see [Language](#language-english-and-tagalog) and [Leaving the survey](#leaving-the-survey)).
 
 Drafts are written to **this device’s browser storage** after consent, on later steps. **Firestore** (the online database) receives a document only on successful submit. Each saved response includes an **instrument version** (for example `v1`) so later edits to the question set can be compared fairly.
 

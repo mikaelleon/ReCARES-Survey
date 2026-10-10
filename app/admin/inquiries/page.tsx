@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeading } from '@/components/admin/PageHeading';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
@@ -121,9 +122,7 @@ function InquiryInboxContent() {
   return (
     <section className="dash-page inquiries-page" aria-labelledby="inquiries-title">
       <div className="dash-page__header">
-        <h1 id="inquiries-title" className="dash-page__title">
-          Inquiries
-        </h1>
+        <PageHeading id="inquiries-title" title="Inquiries" sub={"Messages from the homepage contact form. Reply from your own email, then set a status so the team knows where each one stands."} />
         <div className="dash-page__tools">
           <div className="admin-toolbar__select inquiries-page__filter">
             <Select
@@ -275,9 +274,7 @@ export default function AdminInquiriesPage() {
       ) : (
         <section className="dash-page" aria-labelledby="inquiries-title">
           <div className="dash-page__header">
-            <h1 id="inquiries-title" className="dash-page__title">
-              Inquiries
-            </h1>
+            <PageHeading id="inquiries-title" title="Inquiries" sub={"Messages from the homepage contact form. Reply from your own email, then set a status so the team knows where each one stands."} />
           </div>
           <p className="na-error" role="alert">
             Advisers cannot view the public inquiry inbox. Ask a proponent or superadmin if you need

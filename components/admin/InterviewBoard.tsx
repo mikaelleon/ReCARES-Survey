@@ -85,8 +85,10 @@ function InviteCard({
   onConfirm,
   onRequestDelete,
   onOpenNotes,
+  canDelete,
 }: {
   row: InterviewInviteRow;
+  canDelete: boolean;
   columnId: BoardColumnId;
   busyId: string | null;
   onMarkContacted: (id: string, email: string) => void;
@@ -149,6 +151,7 @@ function InviteCard({
             Confirm
           </button>
         ) : null}
+        {canDelete ? (
         <button
           type="button"
           className="admin-kanban-icon-btn admin-kanban-icon-btn--danger"
@@ -158,6 +161,7 @@ function InviteCard({
           <Trash2 size={14} aria-hidden="true" />
           Delete
         </button>
+        ) : null}
         <button
           type="button"
           className="admin-kanban-icon-btn"
@@ -181,7 +185,9 @@ export function InterviewBoard({
   onConfirm,
   onRequestDelete,
   onAddNote,
+  canDelete = true,
 }: {
+  canDelete?: boolean;
   rows: InterviewInviteRow[];
   busyId: string | null;
   onMarkContacted: (id: string, email: string) => void;
@@ -230,6 +236,7 @@ export function InterviewBoard({
     onConfirm,
     onRequestDelete,
     onOpenNotes: setNotesRow,
+    canDelete,
   };
 
   return (

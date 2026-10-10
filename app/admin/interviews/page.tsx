@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeading } from '@/components/admin/PageHeading';
 import { useMemo, useState } from 'react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
@@ -63,9 +64,7 @@ function InterviewInvitesContent() {
   return (
     <section className="dash-page iv-page" aria-labelledby="admin-interview-title">
       <div className="dash-page__header iv-page__header">
-        <h1 id="admin-interview-title" className="dash-page__title">
-          Interview Invites
-        </h1>
+        <PageHeading id="admin-interview-title" title="Interview Invites" sub={"Residents who agreed to a follow-up interview. Move each card through outreach, keep notes, and check when people are free."} />
         <div className="iv-page__header-tools">
           <InterviewKpiGrid kpis={kpis} loading={loading} />
           <div className="admin-toolbar__select inquiries-page__filter">
@@ -95,6 +94,7 @@ function InterviewInvitesContent() {
 
       {!loading ? (
         <InterviewBoard
+          canDelete={user?.role !== 'adviser'}
           rows={sortedRows}
           busyId={busyId}
           onMarkContacted={(id, email) => void markContacted(id, email)}
@@ -207,9 +207,7 @@ export default function AdminInterviewsPage() {
       ) : (
         <section className="dash-page" aria-labelledby="admin-interview-title">
           <div className="dash-page__header">
-            <h1 id="admin-interview-title" className="dash-page__title">
-              Interview Invites
-            </h1>
+            <PageHeading id="admin-interview-title" title="Interview Invites" sub={"Residents who agreed to a follow-up interview. Move each card through outreach, keep notes, and check when people are free."} />
           </div>
           <p className="na-error" role="alert">
             You do not have permission to view interview invites. Ask a superadmin if you need

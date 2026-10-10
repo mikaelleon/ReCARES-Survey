@@ -1,10 +1,24 @@
 'use client';
 
-import { deleteDoc, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+} from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase/config';
 import { messageForFirestoreWriteError } from '@/lib/firebase/writeErrors';
 import {
   DEFAULT_SURVEY_CONFIG,
+  effectiveSurveyStatus,
   isSurveyWindowStatus,
   normalizeInstrumentVersion,
   type SurveyConfig,
@@ -45,6 +59,8 @@ export function mapSurveyConfig(data: Record<string, unknown> | undefined): Surv
     status: isSurveyWindowStatus(data.status) ? data.status : 'open',
     instrumentVersion: normalizeInstrumentVersion(data.instrumentVersion),
     residentMessage: typeof data.residentMessage === 'string' ? data.residentMessage : '',
+    opensAt: tsToMs(data.opensAt),
+    closesAt: tsToMs(data.closesAt),
     updatedBy: typeof data.updatedBy === 'string' ? data.updatedBy : undefined,
   };
 }
@@ -82,10 +98,57 @@ export async function getSurveyConfigRecord(): Promise<SurveyConfigRecord> {
   }
 }
 
-/** Public read. Missing doc means the survey is open (existing deployments stay live). */
+/**
+ * Public read for residents. `status` is the *effective* status (schedule applied).
+ * Missing doc means the survey is open (existing deployments stay live).
+ */
 export async function getSurveyConfig(): Promise<SurveyConfig> {
   const { config } = await getSurveyConfigRecord();
-  return config;
+  return { ...config, status: effectiveSurveyStatus(config) };
+}
+
+export interface SurveyHistoryEntry {
+  id: string;
+  atMs: number | null;
+  byName: string;
+  summary: string;
+}
+
+const HISTORY_COLLECTION = 'surveyConfigHistory';
+
+/** Best-effort audit trail; never blocks a save. */
+async function logHistory(byUid: string, byName: string, summary: string): Promise<void> {
+  try {
+    const db = requireDb();
+    await addDoc(collection(db, HISTORY_COLLECTION), {
+      byUid,
+      byName,
+      summary: summary.slice(0, 300),
+      at: serverTimestamp(),
+    });
+  } catch {
+    /* history is optional */
+  }
+}
+
+export async function listSurveyHistory(max = 8): Promise<SurveyHistoryEntry[]> {
+  try {
+    const db = requireDb();
+    const snap = await getDocs(
+      query(collection(db, HISTORY_COLLECTION), orderBy('at', 'desc'), limit(max)),
+    );
+    return snap.docs.map((item) => {
+      const data = item.data() as Record<string, unknown>;
+      return {
+        id: item.id,
+        atMs: tsToMs(data.at),
+        byName: typeof data.byName === 'string' ? data.byName : 'Superadmin',
+        summary: typeof data.summary === 'string' ? data.summary : '',
+      };
+    });
+  } catch {
+    return [];
+  }
 }
 
 /** Superadmin create/update of `appConfig/survey`. */
@@ -94,8 +157,11 @@ export async function saveSurveyConfig(
     status: SurveyWindowStatus;
     instrumentVersion: string;
     residentMessage: string;
+    opensAt?: number | null;
+    closesAt?: number | null;
   },
   updatedBy: string,
+  summary?: { byName: string; text: string },
 ): Promise<SurveyConfigRecord> {
   try {
     const db = requireDb();
@@ -103,16 +169,24 @@ export async function saveSurveyConfig(
       status: next.status,
       instrumentVersion: normalizeInstrumentVersion(next.instrumentVersion),
       residentMessage: next.residentMessage.trim().slice(0, 500),
+      opensAt: next.opensAt ?? null,
+      closesAt: next.closesAt ?? null,
       updatedBy,
     };
     await setDoc(
       doc(db, CONFIG_DOC[0], CONFIG_DOC[1]),
       {
-        ...payload,
+        status: payload.status,
+        instrumentVersion: payload.instrumentVersion,
+        residentMessage: payload.residentMessage,
+        opensAt: payload.opensAt != null ? Timestamp.fromMillis(payload.opensAt) : null,
+        closesAt: payload.closesAt != null ? Timestamp.fromMillis(payload.closesAt) : null,
+        updatedBy,
         updatedAt: serverTimestamp(),
       },
       { merge: true },
     );
+    if (summary) await logHistory(updatedBy, summary.byName, summary.text);
     return {
       config: payload,
       exists: true,
@@ -127,10 +201,11 @@ export async function saveSurveyConfig(
  * Superadmin delete of `appConfig/survey`.
  * After delete, the app falls back to open + default instrument version.
  */
-export async function resetSurveyConfig(): Promise<void> {
+export async function resetSurveyConfig(by?: { uid: string; name: string }): Promise<void> {
   try {
     const db = requireDb();
     await deleteDoc(doc(db, CONFIG_DOC[0], CONFIG_DOC[1]));
+    if (by) await logHistory(by.uid, by.name, 'Reset to defaults (open, instrument v1).');
   } catch (error) {
     throw new Error(messageForWriteError(error, 'reset'));
   }

@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeading } from '@/components/admin/PageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CheckCircle2,
@@ -282,9 +283,7 @@ function FindingNotesContent() {
     return (
       <section className="dash-page finding-notes-page" aria-labelledby="finding-notes-title">
         <div className="dash-page__header">
-          <h1 id="finding-notes-title" className="dash-page__title">
-            Findings Log
-          </h1>
+          <PageHeading id="finding-notes-title" title="Findings Log" sub={"Analysis notes linked to Responses questions. Advisers can read; only authors (and superadmins) can edit."} />
         </div>
         <div className="dash-empty" role="status">
           <p className="dash-empty__title">Findings log not enabled</p>
@@ -308,15 +307,7 @@ function FindingNotesContent() {
   return (
     <section className="dash-page finding-notes-page" aria-labelledby="finding-notes-title">
       <div className="dash-page__header">
-        <div>
-          <h1 id="finding-notes-title" className="dash-page__title">
-            Findings Log
-          </h1>
-          <p className="finding-notes-page__intro">
-            Analysis notes linked to Responses questions. Advisers can read; only authors (and
-            superadmins) can edit.
-          </p>
-        </div>
+        <PageHeading id="finding-notes-title" title="Findings Log" sub={"Analysis notes linked to Responses questions. Advisers can read; only authors (and superadmins) can edit."} />
         <div className="dash-page__tools">
           {canWrite ? (
             <Button

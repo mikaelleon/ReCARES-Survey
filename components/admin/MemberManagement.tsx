@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeading } from '@/components/admin/PageHeading';
 import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import {
   BarChart3,
@@ -20,6 +21,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { AdminOverlayPortal } from '@/components/admin/AdminOverlayPortal';
+import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -493,6 +495,12 @@ export function MemberManagement() {
     return () => window.clearTimeout(timer);
   }, [note]);
   const [busy, setBusy] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState<{
+    title: string;
+    body: string;
+    label: string;
+    action: () => void;
+  } | null>(null);
   const [showRemoved, setShowRemoved] = useState(false);
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -747,9 +755,7 @@ export function MemberManagement() {
   return (
     <section className="dash-page members-page" aria-labelledby="admin-members-title">
       <div className="dash-page__header">
-        <h1 id="admin-members-title" className="dash-page__title">
-          Members
-        </h1>
+        <PageHeading id="admin-members-title" title="Members" sub={"Who can use this workspace. Invite teammates, approve access requests, and change roles and page permissions."} />
         <div className="dash-page__tools">
           {canManage ? (
             <>
@@ -879,6 +885,20 @@ export function MemberManagement() {
         </div>
       </div>
 
+      <ConfirmDeleteModal
+        open={pendingConfirm !== null}
+        title={pendingConfirm?.title ?? ''}
+        body={pendingConfirm?.body ?? ''}
+        confirmLabel={pendingConfirm?.label ?? 'Confirm'}
+        busy={busy}
+        onCancel={() => setPendingConfirm(null)}
+        onConfirm={() => {
+          const next = pendingConfirm;
+          setPendingConfirm(null);
+          next?.action();
+        }}
+      />
+
       <div className="admin-kanban" role="region" aria-label="Members pipeline">
         <div className="admin-kanban__scroller">
           {/* Invited */}
@@ -936,11 +956,16 @@ export function MemberManagement() {
                             variant="danger"
                             disabled={busy}
                             onClick={() => {
-                              if (!window.confirm(`Revoke invite for ${invite.email}?`)) return;
-                              void run(
-                                () => revokeInvite(invite.id),
-                                `Revoked invite for ${invite.email}.`,
-                              );
+                              setPendingConfirm({
+                                title: `Revoke invite for ${invite.email}?`,
+                                body: 'The signup link stops working immediately. You can create a new invite later.',
+                                label: 'Revoke invite',
+                                action: () =>
+                                  void run(
+                                    () => revokeInvite(invite.id),
+                                    `Revoked invite for ${invite.email}.`,
+                                  ),
+                              });
                             }}
                           />
                         </CardActions>
@@ -1010,17 +1035,16 @@ export function MemberManagement() {
                             variant="danger"
                             disabled={busy}
                             onClick={() => {
-                              if (
-                                !window.confirm(
-                                  `Reject ${account.email}? Their pending profile will be deleted.`,
-                                )
-                              ) {
-                                return;
-                              }
-                              void run(
-                                () => rejectPendingAdmin(account.uid),
-                                `Rejected ${account.email}.`,
-                              );
+                              setPendingConfirm({
+                                title: `Reject ${account.email}?`,
+                                body: 'Their pending profile is deleted. They can request access again with the access code.',
+                                label: 'Reject request',
+                                action: () =>
+                                  void run(
+                                    () => rejectPendingAdmin(account.uid),
+                                    `Rejected ${account.email}.`,
+                                  ),
+                              });
                             }}
                           />
                         </CardActions>
@@ -1081,21 +1105,20 @@ export function MemberManagement() {
                               variant="danger"
                               disabled={busy}
                               onClick={() => {
-                                if (
-                                  !window.confirm(
-                                    `Remove access for ${member.email}? This is a soft removal (status: removed).`,
-                                  )
-                                ) {
-                                  return;
-                                }
-                                void run(
-                                  () =>
-                                    removeActiveMember({
-                                      uid: member.uid,
-                                      removedBy: user.uid,
-                                    }),
-                                  `Removed ${member.email}.`,
-                                );
+                                setPendingConfirm({
+                                  title: `Remove access for ${member.email}?`,
+                                  body: 'They lose access to the workspace right away. This is a soft removal: the record is kept under Removed and can be deleted permanently later.',
+                                  label: 'Remove access',
+                                  action: () =>
+                                    void run(
+                                      () =>
+                                        removeActiveMember({
+                                          uid: member.uid,
+                                          removedBy: user.uid,
+                                        }),
+                                      `Removed ${member.email}.`,
+                                    ),
+                                });
                               }}
                             />
                           ) : null}

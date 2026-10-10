@@ -38,6 +38,36 @@ import { CHOOSE_ONE, validateStep } from '@/survey/validate';
 
 type Screen = 'welcome' | 'consent' | 'step' | 'review';
 
+
+const STEP_SUBTITLES: Record<number, string> = {
+  1: 'A few quick questions about your home. Your answers decide which questions come next.',
+  2: 'Tell us a little about yourself and how you deal with the HOA today.',
+  3: 'The devices and internet you use help us design something that works for everyone.',
+  4: 'Tell us about your internet cost and connection. Pick the answer that fits best.',
+  5: 'Imagine an HOA website. Tell us how likely you would be to use each feature.',
+  6: 'More about the website: what you would want first, and what might hold you back.',
+  7: 'How easy is it to reach the HOA today? Say how much you agree with each statement.',
+  8: 'About bringing visitors, workers, and deliveries through the gate.',
+  9: 'About street and event closures, and the permits they need.',
+  10: 'How you feel about registering online and showing a valid ID.',
+  12: 'Optional questions about access needs. You can choose Prefer not to say.',
+  13: 'The last step: tell us about any problems we may have missed.',
+};
+
+function screenSubtitle(screen: Screen, step: number, homeowner: boolean): string {
+  if (screen === 'welcome') return 'Read this first, then start. You can stop at any time.';
+  if (screen === 'consent') return 'Please read the information below, then tick both boxes to begin.';
+  if (screen === 'review') {
+    return 'Check your answers. Use Edit to change a section, then submit when you are ready.';
+  }
+  if (step === 11) {
+    return homeowner
+      ? 'Your experience as a homeowner dealing with the HOA.'
+      : 'Your experience as a tenant dealing with the HOA.';
+  }
+  return STEP_SUBTITLES[step] ?? '';
+}
+
 const MIN_MS_BEFORE_SUBMIT = 30_000;
 
 function deviceClass(): 'phone' | 'computer' {
@@ -321,6 +351,9 @@ function SurveyFlowInner() {
       >
         {title ? t(title) : title}
       </h1>
+      {screenSubtitle(screen, step, isHomeownerBranch(answers)) ? (
+        <p className="survey-subtitle">{t(screenSubtitle(screen, step, isHomeownerBranch(answers)))}</p>
+      ) : null}
 
       {screen === 'welcome' ? (
         <>

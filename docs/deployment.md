@@ -86,12 +86,13 @@ deploys rules and indexes together.
 
 | Piece | Collection or service | Who writes |
 | --- | --- | --- |
-| Submitted surveys | `needsAssessmentResponses` | Anyone (create). Active admins read. |
-| Interview opt-in | `interviewInterest` | Anyone (create). Active admins read. |
+| Submitted surveys | `needsAssessmentResponses` | Anyone (create). Active admins read. Proponent/Superadmin delete. |
+| Interview opt-in | `interviewInterest` | Anyone (create). Active admins read and update. Proponent/Superadmin delete. |
 | Team profiles | `admins` | Signed-in user (own pending/invite create); superadmin manages |
 | Invites | `invites` | Superadmin create; invitee may mark used |
 | Signup access code | `appConfig/signup` | Public read; superadmin update |
-| Survey window + version | `appConfig/survey` | Public read; superadmin create/update/delete. Missing doc means open |
+| Survey window + version + schedule | `appConfig/survey` | Public read; superadmin create/update/delete. Missing doc means open. Optional `opensAt` / `closesAt` are enforced by the rules |
+| Survey-control change log | `surveyConfigHistory` | Superadmin read and create; never edited or deleted |
 | Homepage inquiries | `inquiries` | Anyone (create). Active admins read and update status |
 | Older leftover names | `responses`, `interview_contacts` | Still allowed in rules for compatibility; the **current** app writes the collections above |
 

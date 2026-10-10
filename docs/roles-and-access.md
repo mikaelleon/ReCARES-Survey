@@ -33,6 +33,8 @@ Superadmin does not need those switches turned on.
 | **Removed** | May still sign in, but cannot use Dashboard or data pages |
 | *(no profile)* | Google user who has not finished the access-code step |
 
+**Deleting survey data** (a submitted response, or an interview invite) is limited to Proponents and Superadmins. Advisers can read and review but not delete; the Firestore rules enforce this, so deploy `firestore.rules` after pulling this change.
+
 Active members are **soft-removed** (`status: removed`). They are not silently deleted. Unused invites and already-removed rows may be hard-deleted by a superadmin after confirmation.
 
 ---

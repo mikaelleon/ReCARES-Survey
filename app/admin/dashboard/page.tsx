@@ -109,6 +109,7 @@ function DashboardContent() {
               <h1 id="admin-overview-title" className="dash-page__title">
                 Dashboard <span className="dash-page__greet">· Hi, {greetName}!</span>
               </h1>
+              <p className="dash-page__sub">A live summary of survey responses. Use the date range to focus on a period, and the cards to jump into detail.</p>
               <p
                 className={`survey-window-chip survey-window-chip--${surveyWindow.status}`}
                 style={{ marginTop: 8 }}

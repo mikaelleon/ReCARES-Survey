@@ -15,7 +15,7 @@ import { canResolveThread } from '@/lib/admin/access';
 import { getFirestoreDb } from '@/lib/firebase/config';
 import { messageForFirestoreWriteError } from '@/lib/firebase/writeErrors';
 import { mapSurveyConfig } from '@/lib/firebase/surveyConfig';
-import { surveyAcceptsResponses } from '@/survey/instrument';
+import { effectiveSurveyStatus } from '@/survey/instrument';
 
 const SEEN_KEY = 'recares-admin-bell-seen';
 
@@ -27,14 +27,38 @@ export interface AdminNotificationItem {
   title: string;
   detail: string;
   href: string;
+  /** When the underlying event happened. 0 / 1 mean "no real timestamp". */
   atMs: number;
 }
 
+export interface AdminNotificationView extends AdminNotificationItem {
+  read: boolean;
+}
+
 interface AdminNotificationsValue {
-  items: AdminNotificationItem[];
+  items: AdminNotificationView[];
   unreadCount: number;
+  /** Mark one notification read. */
+  markRead: (id: string) => void;
+  /** Put a notification back to unread. */
+  markUnread: (id: string) => void;
+  /** Mark everything currently listed as read. */
+  markAllRead: () => void;
+  /** @deprecated Use markAllRead. */
   markSeen: () => void;
 }
+
+/** Per-user read state, kept in this browser. */
+interface ReadState {
+  /** Everything at or before this time counts as read. */
+  baselineMs: number;
+  /** id -> event time that was read. A newer event on the same id is unread again. */
+  read: Record<string, number>;
+  /** ids the user explicitly put back to unread (wins over everything). */
+  unread: Record<string, true>;
+}
+
+const EMPTY_STATE: ReadState = { baselineMs: 0, read: {}, unread: {} };
 
 const AdminNotificationsContext = createContext<AdminNotificationsValue | null>(null);
 
@@ -42,35 +66,49 @@ function seenStorageKey(uid: string): string {
   return `${SEEN_KEY}:${uid}`;
 }
 
-function readSeenMs(uid: string): number {
+function stateStorageKey(uid: string): string {
+  return `recares-admin-notif-state:${uid}`;
+}
+
+function readState(uid: string): ReadState {
   try {
-    const raw = localStorage.getItem(seenStorageKey(uid));
-    if (raw != null) {
-      const n = Number(raw);
-      return Number.isFinite(n) ? n : 0;
+    const raw = localStorage.getItem(stateStorageKey(uid));
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<ReadState>;
+      return {
+        baselineMs: Number.isFinite(parsed.baselineMs) ? Number(parsed.baselineMs) : 0,
+        read: parsed.read && typeof parsed.read === 'object' ? parsed.read : {},
+        unread: parsed.unread && typeof parsed.unread === 'object' ? parsed.unread : {},
+      };
     }
-    // One-time migrate from the pre-uid key.
-    const legacy = localStorage.getItem(SEEN_KEY);
-    if (legacy != null) {
-      const n = Number(legacy);
-      if (Number.isFinite(n)) {
-        writeSeenMs(uid, n);
-        localStorage.removeItem(SEEN_KEY);
-        return n;
-      }
-    }
-    return 0;
+    // Migrate the old "last opened" timestamp so existing users do not see everything as new.
+    const legacy = localStorage.getItem(seenStorageKey(uid)) ?? localStorage.getItem(SEEN_KEY);
+    const n = legacy != null ? Number(legacy) : 0;
+    return { ...EMPTY_STATE, baselineMs: Number.isFinite(n) ? n : 0 };
   } catch {
-    return 0;
+    return { ...EMPTY_STATE };
   }
 }
 
-function writeSeenMs(uid: string, ms: number): void {
+function writeState(uid: string, state: ReadState): void {
   try {
-    localStorage.setItem(seenStorageKey(uid), String(ms));
+    // Keep the map from growing forever: only the newest 300 ids.
+    const entries = Object.entries(state.read);
+    const trimmed =
+      entries.length > 300
+        ? Object.fromEntries(entries.sort((a, b) => b[1] - a[1]).slice(0, 300))
+        : state.read;
+    localStorage.setItem(stateStorageKey(uid), JSON.stringify({ ...state, read: trimmed }));
   } catch {
     /* ignore quota / private mode */
   }
+}
+
+function isRead(item: AdminNotificationItem, state: ReadState): boolean {
+  if (state.unread[item.id]) return false;
+  const readAt = state.read[item.id];
+  if (readAt != null && readAt >= item.atMs) return true;
+  return item.atMs <= state.baselineMs;
 }
 
 function createdMs(data: Record<string, unknown>, fallbackKeys: string[]): number {
@@ -98,15 +136,15 @@ function createdMs(data: Record<string, unknown>, fallbackKeys: string[]): numbe
 export function AdminNotificationsProvider({ children }: { children: ReactNode }) {
   const { user, isSuperadmin, can, canTeamOps } = useAuth();
   const role = user?.role ?? null;
-  const [items, setItems] = useState<AdminNotificationItem[]>([]);
-  const [seenMs, setSeenMs] = useState(0);
+  const [rawItems, setItems] = useState<AdminNotificationItem[]>([]);
+  const [readStateValue, setReadStateValue] = useState<ReadState>(EMPTY_STATE);
 
   useEffect(() => {
     if (!user) {
-      setSeenMs(0);
+      setReadStateValue(EMPTY_STATE);
       return;
     }
-    setSeenMs(readSeenMs(user.uid));
+    setReadStateValue(readState(user.uid));
   }, [user]);
 
   useEffect(() => {
@@ -300,14 +338,15 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
       onSnapshot(doc(db, 'appConfig', 'survey'), (snap) => {
         const raw = snap.data() as Record<string, unknown> | undefined;
         const config = mapSurveyConfig(raw);
-        if (surveyAcceptsResponses(config.status)) {
+        const effective = effectiveSurveyStatus(config);
+        if (effective === 'open') {
           buckets.survey = [];
         } else {
           const statusAt = createdMs(raw ?? {}, ['updatedAt']);
           buckets.survey = [
             {
               id: `survey-window-${config.status}`,
-              title: config.status === 'paused' ? 'Survey paused' : 'Survey closed',
+              title: effective === 'paused' ? 'Survey paused' : 'Survey closed',
               detail: 'Residents cannot submit until a superadmin reopens it.',
               href: isSuperadmin ? '/admin/survey/' : '/admin/dashboard/',
               atMs: statusAt > 0 ? statusAt : SYNTHETIC_AT_MS,
@@ -323,23 +362,55 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
     };
   }, [user, isSuperadmin, can, canTeamOps, role]);
 
-  // Unread = newer than last open. Review/survey rows stay in the list until resolved,
-  // but opening the bell clears the badge (including across logout/login on this browser).
-  const unreadCount = useMemo(
-    () => items.filter((item) => item.atMs > seenMs).length,
-    [items, seenMs],
+  const items = useMemo<AdminNotificationView[]>(
+    () => rawItems.map((item) => ({ ...item, read: isRead(item, readStateValue) })),
+    [rawItems, readStateValue],
   );
 
-  const markSeen = useCallback(() => {
-    if (!user) return;
-    const now = Date.now();
-    setSeenMs(now);
-    writeSeenMs(user.uid, now);
-  }, [user]);
+  const unreadCount = useMemo(() => items.filter((item) => !item.read).length, [items]);
+
+  const update = useCallback(
+    (change: (prev: ReadState) => ReadState) => {
+      if (!user) return;
+      setReadStateValue((prev) => {
+        const next = change(prev);
+        writeState(user.uid, next);
+        return next;
+      });
+    },
+    [user],
+  );
+
+  const markRead = useCallback(
+    (id: string) => {
+      const item = rawItems.find((row) => row.id === id);
+      update((prev) => {
+        const unread = { ...prev.unread };
+        delete unread[id];
+        return {
+          ...prev,
+          unread,
+          read: { ...prev.read, [id]: Math.max(item?.atMs ?? 0, Date.now()) },
+        };
+      });
+    },
+    [rawItems, update],
+  );
+
+  const markUnread = useCallback(
+    (id: string) => {
+      update((prev) => ({ ...prev, unread: { ...prev.unread, [id]: true } }));
+    },
+    [update],
+  );
+
+  const markAllRead = useCallback(() => {
+    update((prev) => ({ baselineMs: Date.now(), read: prev.read, unread: {} }));
+  }, [update]);
 
   const value = useMemo(
-    () => ({ items, unreadCount, markSeen }),
-    [items, unreadCount, markSeen],
+    () => ({ items, unreadCount, markRead, markUnread, markAllRead, markSeen: markAllRead }),
+    [items, unreadCount, markRead, markUnread, markAllRead],
   );
 
   return (
@@ -350,7 +421,14 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
 export function useAdminNotifications(): AdminNotificationsValue {
   const ctx = useContext(AdminNotificationsContext);
   if (!ctx) {
-    return { items: [], unreadCount: 0, markSeen: () => undefined };
+    return {
+      items: [],
+      unreadCount: 0,
+      markRead: () => undefined,
+      markUnread: () => undefined,
+      markAllRead: () => undefined,
+      markSeen: () => undefined,
+    };
   }
   return ctx;
 }

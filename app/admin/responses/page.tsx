@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeading } from '@/components/admin/PageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { BranchingGuide } from '@/components/admin/BranchingGuide';
@@ -82,7 +83,7 @@ function ResponsesContent() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const liveDelete = source === 'firestore' && !usingDemoSample;
-  const canDelete = liveDelete || usingDemoSample;
+  const canDelete = (liveDelete || usingDemoSample) && user?.role !== 'adviser';
 
   useEffect(() => {
     setDateRange(loadStoredDateRange());
@@ -287,9 +288,7 @@ function ResponsesContent() {
         {!canResponses ? (
           <>
             <div className="dash-page__header">
-              <h1 id="admin-responses-title" className="dash-page__title">
-                Responses
-              </h1>
+              <PageHeading id="admin-responses-title" title="Responses" sub={"Explore every submitted answer as a summary, one question at a time, or one resident at a time. Filter, export, or open a response for detail."} />
             </div>
             <p className="na-error" role="alert">
               You do not have permission to view responses. Ask a superadmin if you need access.
@@ -298,9 +297,7 @@ function ResponsesContent() {
         ) : (
           <>
             <div className="dash-page__header">
-              <h1 id="admin-responses-title" className="dash-page__title">
-                Responses
-              </h1>
+              <PageHeading id="admin-responses-title" title="Responses" sub={"Explore every submitted answer as a summary, one question at a time, or one resident at a time. Filter, export, or open a response for detail."} />
               <DashboardHeaderTools dateRange={dateRange} onDateRangeChange={handleDateChange} />
             </div>
 

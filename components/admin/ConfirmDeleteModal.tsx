@@ -13,6 +13,7 @@ export function ConfirmDeleteModal({
   busy = false,
   error = null,
   confirmLabel = 'Delete',
+  busyLabel = 'Deleting…',
   onCancel,
   onConfirm,
 }: {
@@ -22,6 +23,7 @@ export function ConfirmDeleteModal({
   busy?: boolean;
   error?: string | null;
   confirmLabel?: string;
+  busyLabel?: string;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -42,9 +44,15 @@ export function ConfirmDeleteModal({
         <Button variant="secondary" onClick={onCancel} disabled={busy}>
           Cancel
         </Button>
-        <Button variant="primary" onClick={onConfirm} loading={busy} disabled={busy}>
-          {confirmLabel}
-        </Button>
+        <button
+          type="button"
+          className="confirm-delete__danger"
+          onClick={onConfirm}
+          disabled={busy}
+          aria-busy={busy}
+        >
+          {busy ? busyLabel : confirmLabel}
+        </button>
       </div>
     </Modal>
   );
