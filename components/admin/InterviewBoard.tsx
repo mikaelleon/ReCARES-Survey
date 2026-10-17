@@ -1,5 +1,6 @@
 'use client';
 
+import { formatClock, formatDate } from '@/survey/interviewSchedule';
 import { useEffect, useMemo, useState } from 'react';
 import {
   CalendarCheck,
@@ -52,6 +53,7 @@ function formatSubmitted(iso: string): string {
 }
 
 function timeLabel(row: InterviewInviteRow): string {
+  if (row.preferredClock) return formatClock(row.preferredClock);
   if (row.preferredTime === 'Other' && row.preferredTimeOther) {
     return row.preferredTimeOther;
   }
@@ -115,8 +117,14 @@ function InviteCard({
       </div>
       <dl className="interview-board__details">
         <div>
-          <dt>Preferred days</dt>
-          <dd>{row.preferredDays.length > 0 ? row.preferredDays.join(', ') : '—'}</dd>
+          <dt>{row.preferredDate ? 'Preferred date' : 'Preferred days'}</dt>
+          <dd>
+            {row.preferredDate
+              ? formatDate(row.preferredDate)
+              : row.preferredDays.length > 0
+                ? row.preferredDays.join(', ')
+                : '—'}
+          </dd>
         </div>
         <div>
           <dt>Preferred time</dt>

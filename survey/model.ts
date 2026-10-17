@@ -28,6 +28,8 @@ export interface OptionDef {
   hint?: string;
   /** Spans both columns in a two-column list. */
   wide?: boolean;
+  /** Sentence shown under the option once it is selected: what choosing it means. */
+  note?: string;
   /** Consecutive options with the same group render under one legend. */
   group?: string;
   /** Option is offered only while this holds. */
@@ -56,6 +58,8 @@ export interface QuestionDef {
   stepId: string;
   type: QuestionType;
   text: string;
+  /** Plain-language help under the question: what it means, with examples. */
+  subtitle?: string;
   /** First matching variant replaces `text`. */
   textVariants?: TextVariant[];
   /** Defaults to true, except text and number fields. */
@@ -63,6 +67,8 @@ export interface QuestionDef {
   options?: OptionDef[];
   columns?: 1 | 2;
   scale?: 'agreement' | 'likelihood';
+  /** likert: adds a Not applicable choice, saved as "not_applicable". */
+  allowNA?: boolean;
   /** multi: choosing this clears every other choice. */
   exclusiveId?: string;
   /** multi: most non-exclusive choices allowed. */
@@ -133,6 +139,9 @@ export interface Instrument {
 }
 
 export type Answers = Record<string, unknown>;
+
+/** Saved for a scale question the respondent marks as not applicable. */
+export const NOT_APPLICABLE = 'not_applicable';
 
 export const CHOOSE_ONE = 'Please choose one answer to continue.';
 export const CHOOSE_ANY = 'Please select at least one answer to continue.';
@@ -311,6 +320,51 @@ export function stepProgress(
   return { position: Math.max(1, position), total: Math.max(1, total, position) };
 }
 
+/** One entry per step in the pager. Steps still undecided by earlier answers are listed but not shown yet. */
+export function stepRoster(
+  inst: Instrument,
+  a: Answers,
+  current: number,
+): Array<{ number: number; shown: boolean }> {
+  const stepOf = new Map<string, number>();
+  inst.questions.forEach((q) => stepOf.set(q.code, inst.steps.findIndex((st) => st.id === q.stepId) + 1));
+  const out: Array<{ number: number; shown: boolean }> = [];
+  inst.steps.forEach((step, index) => {
+    const n = index + 1;
+    const own = questionsOfStep(inst, step.id);
+    const shown = own.some((q) => questionVisible(q, a));
+    const undecided =
+      n > current &&
+      own.some((q) =>
+        Array.from(conditionRefs(q.showWhen)).some((ref) => (stepOf.get(ref) ?? 0) >= current),
+      );
+    if (shown || undecided) out.push({ number: n, shown });
+  });
+  return out;
+}
+
+/**
+ * Which steps the respondent may open. A step opens only when every shown step
+ * before it passes its checks, so nobody can jump past an unanswered page.
+ */
+export function stepAccess(
+  inst: Instrument,
+  a: Answers,
+): { reachable: Set<number>; done: Set<number>; review: boolean } {
+  const reachable = new Set<number>();
+  const done = new Set<number>();
+  let review = true;
+  for (const n of activeStepNumbers(inst, a)) {
+    reachable.add(n);
+    if (Object.keys(validateStep(inst, n, a)).length > 0) {
+      review = false;
+      break;
+    }
+    done.add(n);
+  }
+  return { reachable, done, review };
+}
+
 export function firstStepNumber(inst: Instrument, a: Answers): number {
   return activeStepNumbers(inst, a)[0] ?? 1;
 }
@@ -380,7 +434,8 @@ export function normalizeAnswers<T extends Answers>(inst: Instrument, input: T):
         const wrongType = q.numericValues ? typeof value !== 'number' : typeof value !== 'string';
         if (wrongType || !allowed.some((o) => String(o.id) === String(value))) delete next[q.code];
       } else if (q.type === 'likert') {
-        if (typeof value !== 'number' || value < 1 || value > 5) delete next[q.code];
+        const na = q.allowNA && value === NOT_APPLICABLE;
+        if (!na && (typeof value !== 'number' || value < 1 || value > 5)) delete next[q.code];
       } else if (q.type === 'multi') {
         if (!Array.isArray(value)) {
           delete next[q.code];
@@ -418,7 +473,9 @@ export function validateStep(inst: Instrument, stepNumber: number, a: Answers): 
       const allowed = visibleOptions(q, a).some((o) => String(o.id) === String(value));
       if (required && (missing(value) || !allowed)) errors[q.code] = CHOOSE_ONE;
     } else if (q.type === 'likert') {
-      const ok = typeof value === 'number' && value >= 1 && value <= 5;
+      const ok =
+        (typeof value === 'number' && value >= 1 && value <= 5) ||
+        (Boolean(q.allowNA) && value === NOT_APPLICABLE);
       if (required && !ok) errors[q.code] = CHOOSE_ONE;
     } else if (q.type === 'multi') {
       const list = Array.isArray(value) ? (value as string[]) : [];
@@ -478,6 +535,7 @@ function answerText(q: QuestionDef, a: Answers): string {
     case 'single':
       return label(value);
     case 'likert': {
+      if (value === NOT_APPLICABLE) return 'Not applicable';
       const scale = q.scale === 'likelihood' ? LIKELIHOOD_LABELS : AGREEMENT_LABELS;
       return typeof value === 'number' && value >= 1 && value <= 5 ? `${value} — ${scale[value]}` : '';
     }

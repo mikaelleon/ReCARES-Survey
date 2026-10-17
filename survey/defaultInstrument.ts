@@ -422,7 +422,7 @@ const questions: QuestionDef[] = [
       ['not_sure', 'Not sure'],
     ),
   },
-  likert('B7', 's4', 'My internet connection is stable enough to finish an online form without interruption.'),
+  likert('B7', 's4', 'My internet connection is stable enough to finish an online form without interruption.', 'agreement', { allowNA: true }),
   likert('B8', 's4', 'I avoid installing new apps because of limited phone storage or mobile data.', 'agreement', {
     showWhen: HAS_DEVICE,
     skipCode: 'not_shown',
@@ -511,9 +511,9 @@ const questions: QuestionDef[] = [
   },
 
   // ---- Step 7 ----
-  likert('S1', 's7', 'The HOA office hours make it hard for me to do my transactions.'),
-  likert('S2', 's7', 'I have to visit the HOA office in person even for simple matters.'),
-  likert('S3', 's7', 'I receive a response to my concerns within a reasonable time.'),
+  likert('S1', 's7', 'The HOA office hours make it hard for me to do my transactions.', 'agreement', { allowNA: true }),
+  likert('S2', 's7', 'I have to visit the HOA office in person even for simple matters.', 'agreement', { allowNA: true }),
+  likert('S3', 's7', 'I receive a response to my concerns within a reasonable time.', 'agreement', { allowNA: true }),
 
   // ---- Step 8 ----
   {
@@ -530,10 +530,12 @@ const questions: QuestionDef[] = [
     ),
   },
   likert('P2', 's8', 'Waiting at the gate to get a permit or pass takes too long for my visitors, workers, or drivers.', 'agreement', {
+    allowNA: true,
     showWhen: { op: 'notIncludes', q: 'P1', value: 'none_of_these' },
     skipCode: 'not_shown',
   }),
   likert('P3', 's8', 'Leaving an ID at the gate is inconvenient for my household or guests.', 'agreement', {
+    allowNA: true,
     showWhen: { op: 'notIncludes', q: 'P1', value: 'none_of_these' },
     skipCode: 'not_shown',
   }),
@@ -562,8 +564,8 @@ const questions: QuestionDef[] = [
       ['neither', 'Neither'],
     ),
   },
-  likert('C2', 's9', 'The process of getting a street or event closure permit is clear.'),
-  likert('C3', 's9', 'Notices about street closures and rerouting reach me in time.'),
+  likert('C2', 's9', 'The process of getting a street or event closure permit is clear.', 'agreement', { allowNA: true }),
+  likert('C3', 's9', 'Notices about street closures and rerouting reach me in time.', 'agreement', { allowNA: true }),
 
   // ---- Step 10 ----
   likert('R1', 's10', 'I am comfortable uploading a photo of my valid ID to a secure online form.'),
@@ -601,6 +603,7 @@ const questions: QuestionDef[] = [
     ),
   },
   likert('H2', 's11', 'Completing HOA clearances, forms, and permits needs more office visits than it should.', 'agreement', {
+    allowNA: true,
     showWhen: HOMEOWNER,
     review: { code: 'H', title: 'Homeowner' },
   }),
@@ -640,6 +643,7 @@ const questions: QuestionDef[] = [
     ),
   },
   likert('T2', 's11', "The HOA's forms and requirements for tenants are clear.", 'agreement', {
+    allowNA: true,
     showWhen: TENANT,
     review: { code: 'T', title: 'Tenant and lessee' },
   }),
@@ -648,7 +652,7 @@ const questions: QuestionDef[] = [
     's11',
     "Completing HOA requirements as a tenant takes more steps than it should, such as needing the owner's documents or signature.",
     'agreement',
-    { showWhen: TENANT, review: { code: 'T', title: 'Tenant and lessee' } },
+    { allowNA: true, showWhen: TENANT, review: { code: 'T', title: 'Tenant and lessee' } },
   ),
   {
     code: 'T4',
@@ -661,12 +665,11 @@ const questions: QuestionDef[] = [
   },
 
   // ---- Step 12 ----
-  likert('AC2', 's12', 'Going to the HOA office in person is difficult for me or for someone in my household.'),
+  likert('AC2', 's12', 'Going to the HOA office in person is difficult for me or for someone in my household.', 'agreement', { allowNA: true }),
   likert(
     'AC3',
     's12',
-    'Larger text, higher contrast, or screen reader support would help me or someone in my household use an online form.',
-  ),
+    'Larger text, higher contrast, or screen reader support would help me or someone in my household use an online form.', 'agreement', { allowNA: true }),
   {
     code: 'AC4',
     stepId: 's12',
@@ -695,6 +698,14 @@ const questions: QuestionDef[] = [
     stepId: 's13',
     type: 'text',
     text: 'Is there any other problem with HOA services that you would like us to know about?',
+    maxLength: 500,
+    hints: [{ text: 'Please do not write names.' }],
+  },
+  {
+    code: 'O3',
+    stepId: 's13',
+    type: 'text',
+    text: 'What other problems do you and your household face in the community, even if they have nothing to do with the HOA?',
     maxLength: 500,
     hints: [{ text: 'Please do not write names.' }],
   },

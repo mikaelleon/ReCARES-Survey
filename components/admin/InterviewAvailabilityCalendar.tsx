@@ -1,5 +1,6 @@
 'use client';
 
+import { formatClock } from '@/survey/interviewSchedule';
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
@@ -29,6 +30,7 @@ function startOfToday(): number {
 }
 
 function timeLabel(row: InterviewInviteRow): string {
+  if (row.preferredClock) return formatClock(row.preferredClock);
   if (row.preferredTime === 'Other' && row.preferredTimeOther) {
     return row.preferredTimeOther;
   }

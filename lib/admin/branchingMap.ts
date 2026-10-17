@@ -345,6 +345,7 @@ export const BRANCH_SECTIONS: BranchSection[] = [
         })),
       },
       { code: 'O2', question: 'Any other problem with HOA services?' },
+      { code: 'O3', question: 'Other problems faced in the community (not HOA-related)?' },
       {
         code: 'IV1',
         question: 'Would you be open to being contacted for a possible follow-up interview?',

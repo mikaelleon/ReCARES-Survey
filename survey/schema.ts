@@ -6,6 +6,8 @@
 export type AgreementScore = 1 | 2 | 3 | 4 | 5;
 /** Gated item the respondent was not asked. Not a scale answer. */
 export type NotShown = 'not_shown';
+/** Scale item the respondent marked as not applicable to them. Left out of scores. */
+export type NotApplicable = 'not_applicable';
 export type LikelihoodScore = 1 | 2 | 3 | 4 | 5;
 
 export interface SurveyAnswers {
@@ -36,7 +38,7 @@ export interface SurveyAnswers {
   B4: 'several_times_a_day' | 'about_once_a_day' | 'few_times_a_week' | 'about_once_a_week_or_less' | 'rarely_or_never';
   B5: 'weekly_or_more' | 'few_times_a_month' | 'few_times_a_year' | 'never';
   B6: 'none' | 'under_100' | '100_299' | '300_499' | '500_999' | '1000_1999' | '2000_plus' | 'not_sure';
-  B7: AgreementScore;
+  B7: AgreementScore | NotApplicable;
   /** `not_shown` when B1 is None of these and the item is skipped. */
   B8: AgreementScore | NotShown;
   B9: AgreementScore | NotShown;
@@ -52,44 +54,46 @@ export interface SurveyAnswers {
   F9: string[];
   F10?: string;
 
-  S1: AgreementScore;
-  S2: AgreementScore;
-  S3: AgreementScore;
+  S1: AgreementScore | NotApplicable;
+  S2: AgreementScore | NotApplicable;
+  S3: AgreementScore | NotApplicable;
 
   P1: string[];
   /** Present as 1–5, or `not_shown` when P1 is None of these. */
-  P2?: AgreementScore | NotShown;
-  P3?: AgreementScore | NotShown;
+  P2?: AgreementScore | NotApplicable | NotShown;
+  P3?: AgreementScore | NotApplicable | NotShown;
   P4?: number;
   P5?: AgreementScore;
 
   C1: 'requested' | 'affected' | 'both' | 'neither';
-  C2: AgreementScore;
-  C3: AgreementScore;
+  C2: AgreementScore | NotApplicable;
+  C3: AgreementScore | NotApplicable;
 
   R1: AgreementScore;
   R2: AgreementScore;
   R3: 'deleted_after_verification' | 'kept_while_resident' | 'no_preference' | 'not_sure';
 
   H1?: string[];
-  H2?: AgreementScore;
+  H2?: AgreementScore | NotApplicable;
   /** Present as 1–5, or `not_shown` when H1 has no tenant registration. */
   H3?: AgreementScore | NotShown;
   H4?: string;
 
   T1?: string[];
-  T2?: AgreementScore;
-  T3?: AgreementScore;
+  T2?: AgreementScore | NotApplicable;
+  T3?: AgreementScore | NotApplicable;
   T4?: string;
 
-  AC2: AgreementScore;
-  AC3: AgreementScore;
+  AC2: AgreementScore | NotApplicable;
+  AC3: AgreementScore | NotApplicable;
   AC4: 'the_person_themselves' | 'family_member' | 'caregiver_or_rep' | 'not_applicable';
 
   O1: string[];
   O1_other?: string;
   O1Details?: O1Details;
   O2?: string;
+  /** Problems the household faces in the community that are not about the HOA. */
+  O3?: string;
   /** Interest flag only. No contact details. Never joined to interviewInterest. */
   IV1: 'yes' | 'no';
 }
@@ -158,9 +162,15 @@ export interface InterviewNote {
 export interface InterviewInvitation {
   email: string;
   interviewFormat: 'Online' | 'Face-to-face';
-  preferredDays: string[]; // e.g. ['Monday', 'Wednesday']
+  /** Exact interview date the resident picked (YYYY-MM-DD). Older invites have only preferredDays. */
+  preferredDate?: string;
+  /** Exact start time the resident picked (24-hour HH:mm). */
+  preferredClock?: string;
+  /** Weekday of preferredDate, or the weekdays chosen on older invites. */
+  preferredDays: string[];
+  /** Part of day of preferredClock, or the bucket chosen on older invites. */
   preferredTime: 'Morning' | 'Afternoon' | 'Evening' | 'Other';
-  preferredTimeOther?: string; // required only when preferredTime === 'Other'
+  preferredTimeOther?: string; // older invites: free-text time when preferredTime === 'Other'
   submittedAt: string; // server timestamp (ISO or Firestore Timestamp serialized)
   /** Outreach pipeline — never joined to anonymous survey answers. */
   contactStatus: InterviewContactStatus;

@@ -4,6 +4,11 @@
  * reads is translated. Unknown strings fall back to the English original.
  */
 
+import { O1_NEW_FIL } from '@/survey/o1';
+import { O1_NOTES_FIL } from '@/survey/o1Notes';
+import { OPTION_NOTES_FIL, SCALE_NOTES_FIL } from '@/survey/optionNotes';
+import { SUBTITLES_FIL } from '@/survey/subtitles';
+
 export type SurveyLang = 'EN' | 'FIL';
 
 const FIL: Record<string, string> = {
@@ -328,6 +333,8 @@ const FIL: Record<string, string> = {
     'Bukod sa mga naitanong, alin sa mga problemang may kinalaman sa HOA ang naranasan mo? Piliin ang lahat ng naaangkop.',
   'Is there any other problem with HOA services that you would like us to know about?':
     'May iba pa bang problema sa mga serbisyo ng HOA na nais mong malaman namin?',
+  'What other problems do you and your household face in the community, even if they have nothing to do with the HOA?':
+    'Anong iba pang problema ang kinakaharap mo at ng sambahayan mo sa komunidad, kahit walang kinalaman sa HOA?',
   'Please do not write names.': 'Huwag magsulat ng mga pangalan.',
   'Would you be open to being contacted for a possible follow-up interview?':
     'Bukas ka ba na makontak para sa posibleng follow-up na panayam?',
@@ -542,6 +549,24 @@ const FIL: Record<string, string> = {
   'Which HOA-related problems have you experienced?': 'Anong mga problemang may kinalaman sa HOA ang naranasan mo?',
   'Any other problem with HOA services?': 'May iba pa bang problema sa mga serbisyo ng HOA?',
 };
+
+Object.assign(FIL, SUBTITLES_FIL, O1_NEW_FIL, O1_NOTES_FIL, OPTION_NOTES_FIL, SCALE_NOTES_FIL, {
+  'Survey pages': 'Mga pahina ng survey',
+  Page: 'Pahina',
+  'Answer the earlier pages first to open this one.': 'Sagutin muna ang mga naunang pahina para mabuksan ito.',
+  'Preferred interview date': 'Gustong petsa ng panayam',
+  'Pick the exact date you can be interviewed. We will email you to confirm before anything is scheduled.':
+    'Piliin ang eksaktong petsa na maaari kang makapanayam. Mag-eemail kami para kumpirmahin bago magtakda ng anuman.',
+  'Preferred interview time': 'Gustong oras ng panayam',
+  'Pick an exact start time between 8:00 AM and 10:00 PM.':
+    'Pumili ng eksaktong oras ng simula sa pagitan ng 8:00 AM at 10:00 PM.',
+  Hour: 'Oras',
+  Minute: 'Minuto',
+  AM: 'AM',
+  PM: 'PM',
+  'Please pick a time between 8:00 AM and 10:00 PM.': 'Pumili ng oras sa pagitan ng 8:00 AM at 10:00 PM.',
+  'Please pick a date from tomorrow onward.': 'Pumili ng petsa mula bukas pataas.',
+});
 
 /** Normalise apostrophes so curly and straight quotes match. */
 function norm(value: string): string {

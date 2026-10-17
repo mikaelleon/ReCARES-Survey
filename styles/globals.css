@@ -16560,3 +16560,1051 @@ textarea.sb-input {
     transition: none;
   }
 }
+
+/* ==========================================================================
+   Survey UX pass 3 — ambient grid + gradient backdrop, question subtitles.
+   ========================================================================== */
+.survey-stage {
+  --stage-grid: rgba(19, 105, 63, 0.075);
+  --stage-glow-warm: rgba(247, 128, 33, 0.14);
+  --stage-glow-cool: rgba(19, 105, 63, 0.18);
+  --stage-glow-gold: rgba(254, 202, 9, 0.10);
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100vh - 56px);
+  overflow: clip;
+  background:
+    radial-gradient(ellipse 60% 45% at 6% 0%, var(--stage-glow-warm), transparent 60%),
+    radial-gradient(ellipse 55% 50% at 100% 100%, var(--stage-glow-cool), transparent 60%),
+    radial-gradient(ellipse 40% 35% at 96% 8%, var(--stage-glow-gold), transparent 65%),
+    var(--page-bg);
+}
+
+[data-theme='dark'] .survey-stage {
+  --stage-grid: rgba(255, 255, 255, 0.055);
+  --stage-glow-warm: rgba(247, 128, 33, 0.12);
+  --stage-glow-cool: rgba(61, 181, 121, 0.14);
+  --stage-glow-gold: rgba(254, 202, 9, 0.06);
+}
+
+/* Grid lines, strongest at the edges where the white space is, soft behind the cards */
+.survey-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--stage-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--stage-grid) 1px, transparent 1px);
+  background-size: 44px 44px;
+  background-position: center top;
+  -webkit-mask-image: radial-gradient(ellipse 55% 85% at 50% 35%, rgba(0, 0, 0, 0.25) 0%, #000 100%);
+  mask-image: radial-gradient(ellipse 55% 85% at 50% 35%, rgba(0, 0, 0, 0.25) 0%, #000 100%);
+}
+
+.survey-flow .survey-card {
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 2px rgba(11, 40, 24, 0.05), 0 8px 24px -12px rgba(11, 40, 24, 0.14);
+}
+
+[data-theme='dark'] .survey-flow .survey-card {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -14px rgba(0, 0, 0, 0.6);
+}
+
+.survey-flow .survey-card--error {
+  border-color: var(--status-error);
+}
+
+/* Question subtitle: what the question means, with examples */
+.na-qsub {
+  margin: 0 0 14px;
+  max-width: none;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-caption);
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
+.na-q:has(+ .na-qsub) {
+  margin-bottom: 4px;
+}
+
+@media (max-width: 760px) {
+  .survey-stage {
+    min-height: calc(100vh - 56px);
+  }
+
+  .survey-stage::before {
+    background-size: 32px 32px;
+  }
+}
+
+/* Paired questions get a full-width card each, not a two-up bento row */
+.survey-flow .bento-pair {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Follow-ups opened by an answer sit inside the card of the question that opened them */
+.na-followups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 16px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--border-default);
+}
+
+.na-followups > .na-hint,
+.na-followups > .na-intro {
+  margin: 0;
+}
+
+.survey-flow .na-followups .survey-card {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.survey-flow .na-followups .survey-card--error {
+  box-shadow: none;
+  padding-left: 12px;
+  border-left: 3px solid var(--status-error);
+}
+
+.na-followups .na-followups {
+  margin-top: 12px;
+  padding-top: 14px;
+}
+
+/* ==========================================================================
+   Survey option rows: one shared row box so hover, mark, and label line up.
+   The row owns its padding; a negative margin keeps the mark flush with the
+   card text, and the hover fill reaches evenly past it on every side.
+   ========================================================================== */
+.survey-flow {
+  --option-hover: rgba(19, 105, 63, 0.08);
+  --option-row-pad-x: 10px;
+}
+
+[data-theme='dark'] .survey-flow {
+  --option-hover: rgba(255, 255, 255, 0.07);
+}
+
+.survey-flow .na-radios {
+  gap: 2px 12px;
+}
+
+.survey-flow .na-checks {
+  gap: 2px;
+}
+
+.survey-flow .na-radio,
+.survey-flow .na-check {
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 44px;
+  margin: 0 calc(var(--option-row-pad-x) * -1);
+  padding: 8px var(--option-row-pad-x);
+  border-radius: 10px;
+  transition: background-color var(--motion-duration) var(--motion-ease);
+}
+
+.survey-flow .na-radio-wide {
+  margin-inline: calc(var(--option-row-pad-x) * -1);
+}
+
+.survey-flow .na-dot {
+  margin-top: 0;
+}
+
+/* Hidden input sits on the mark so focus and screen-reader targets match */
+.survey-flow .na-radio input,
+.survey-flow .na-check input {
+  left: var(--option-row-pad-x);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Grouped options sit inside a bordered box: inset the rows to its padding */
+.survey-flow .na-sub {
+  gap: 2px;
+  --option-row-pad-x: 8px;
+}
+
+.survey-flow .na-sub .na-radio,
+.survey-flow .na-sub .na-check {
+  margin-inline: -4px;
+}
+
+.survey-flow .na-sub .na-radio input,
+.survey-flow .na-sub .na-check input {
+  left: var(--option-row-pad-x);
+}
+
+@media (hover: hover) {
+  .survey-flow .na-radio:hover,
+  .survey-flow .na-check:not(:has(input:disabled)):hover {
+    background: var(--option-hover);
+  }
+
+  .survey-flow .na-likert-btn:not([aria-pressed='true']):hover {
+    background: var(--option-hover);
+    border-color: var(--dark-emerald);
+  }
+
+  [data-theme='dark'] .survey-flow .na-likert-btn:not([aria-pressed='true']):hover {
+    border-color: var(--text-headline);
+  }
+}
+
+.survey-flow .na-check:has(input:disabled):hover {
+  background: transparent;
+}
+
+@media (max-width: 760px) {
+  .survey-flow .na-radio,
+  .survey-flow .na-check {
+    min-height: 44px;
+    padding: 8px var(--option-row-pad-x);
+  }
+}
+
+/* Open problem discovery: sub-choices in two balanced columns, Other box underneath */
+.survey-flow .na-sub-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows, 4), auto);
+  column-gap: 16px;
+  row-gap: 2px;
+}
+
+.survey-flow .na-sub > .na-area {
+  margin-top: 10px;
+}
+
+@media (max-width: 760px) {
+  .survey-flow .na-sub-grid {
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+}
+
+/* Interview scheduling: exact date and time pickers */
+.survey-flow .na-date {
+  max-width: 280px;
+  color-scheme: light;
+}
+
+[data-theme='dark'] .survey-flow .na-date {
+  color-scheme: dark;
+}
+
+.survey-flow .na-time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.survey-flow .na-time__sep {
+  font-weight: 700;
+  color: var(--text-caption);
+}
+
+.survey-flow .na-time .na-input {
+  width: auto;
+  min-width: 88px;
+  padding-right: 8px;
+}
+
+.survey-flow .na-meridiem {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: 4px;
+}
+
+.survey-flow .na-meridiem button {
+  min-width: 56px;
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-default);
+  background: transparent;
+  color: var(--text-body);
+  font: 700 15px var(--font-sans);
+  cursor: pointer;
+  transition: background-color var(--motion-duration) var(--motion-ease);
+}
+
+.survey-flow .na-meridiem button[aria-pressed='true'] {
+  background: var(--dark-emerald);
+  border-color: var(--dark-emerald);
+  color: var(--white);
+}
+
+@media (hover: hover) {
+  .survey-flow .na-meridiem button[aria-pressed='false']:hover {
+    background: var(--option-hover);
+  }
+}
+
+.survey-flow .na-meridiem button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Survey controls: one toolbar (Leave left, language right), a compact
+   progress block, and navigation buttons with a consistent size and rhythm.
+   ========================================================================== */
+.survey-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.survey-toolbar .survey-lang {
+  margin: 0;
+}
+
+/* Leave: an outlined pill so it reads as a control and matches the language switch */
+.survey-flow .survey-leave {
+  min-height: 42px;
+  margin: 0;
+  padding: 0 16px 0 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--card-fill-neutral);
+  color: var(--text-body);
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color var(--motion-duration) var(--motion-ease),
+    border-color var(--motion-duration) var(--motion-ease);
+}
+
+.survey-flow .survey-leave:hover {
+  background: var(--option-hover);
+  border-color: var(--border-default);
+  color: var(--text-headline);
+}
+
+/* Language: one segmented switch, not two loose pills */
+.survey-flow .survey-lang > div {
+  gap: 2px !important;
+  padding: 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--card-fill-neutral);
+}
+
+.survey-flow .survey-lang button {
+  height: 34px !important;
+  padding: 0 16px !important;
+  font-size: 14px !important;
+}
+
+.survey-flow .survey-lang button[aria-pressed='false'] {
+  background: transparent !important;
+}
+
+@media (hover: hover) {
+  .survey-flow .survey-lang button[aria-pressed='false']:hover {
+    background: var(--option-hover) !important;
+  }
+}
+
+.survey-flow .survey-lang button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Progress: step label and save note on one line over the bar */
+.survey-progress {
+  margin-bottom: 4px;
+}
+
+.survey-progress__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 8px;
+}
+
+.survey-progress .survey-saved {
+  margin: 0;
+}
+
+/* Navigation: equal-size buttons, Back left and Continue right */
+.survey-flow .survey-actions {
+  align-items: center;
+  gap: 12px;
+}
+
+.survey-flow .survey-actions--start {
+  justify-content: flex-start;
+}
+
+.survey-flow .survey-actions > button,
+.survey-flow .survey-actions > a {
+  height: 48px !important;
+  min-width: 140px;
+  padding-inline: 24px !important;
+}
+
+@media (max-width: 760px) {
+  .survey-toolbar {
+    margin-bottom: 16px;
+  }
+
+  .survey-flow > .survey-actions.survey-actions--start {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .survey-flow > .survey-actions.survey-actions--start > * {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .survey-flow .survey-lang button {
+    padding: 0 12px !important;
+  }
+}
+
+/* ==========================================================================
+   Survey motion pass: hover, press, focus, and state-change micro-interactions.
+   Everything is transform/opacity/colour only, and switched off for people who
+   ask for reduced motion (see the block at the end).
+   ========================================================================== */
+.survey-flow {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes naPop {
+  0% {
+    transform: scale(0.7);
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes naReveal {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes naShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes naSheen {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes stageDrift {
+  from {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 3%, 0) scale(1.08);
+  }
+}
+
+/* --- Screen entrance: heading, then cards in a short stagger --------------- */
+.survey-flow .survey-title {
+  animation: riseIn 420ms var(--ease-out) both;
+}
+
+.survey-flow .survey-subtitle {
+  animation: riseIn 420ms var(--ease-out) 70ms both;
+}
+
+.survey-flow .survey-questions .survey-card:nth-of-type(2) {
+  animation-delay: 60ms;
+}
+
+.survey-flow .survey-questions .survey-card:nth-of-type(3) {
+  animation-delay: 120ms;
+}
+
+.survey-flow .survey-questions .survey-card:nth-of-type(4) {
+  animation-delay: 180ms;
+}
+
+.survey-flow .survey-questions .survey-card:nth-of-type(n + 5) {
+  animation-delay: 220ms;
+}
+
+/* --- Cards: hover lifts the edge, focus inside lights a ring --------------- */
+.survey-flow .survey-card {
+  transition:
+    border-color 220ms var(--ease-out),
+    box-shadow 220ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  .survey-flow .survey-card:hover {
+    border-color: var(--border-default);
+    box-shadow: 0 1px 2px rgba(11, 40, 24, 0.06), 0 14px 30px -14px rgba(11, 40, 24, 0.24);
+  }
+
+  [data-theme='dark'] .survey-flow .survey-card:hover {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 34px -14px rgba(0, 0, 0, 0.7);
+  }
+}
+
+.survey-flow .survey-card:focus-within:not(.survey-card--error) {
+  border-color: color-mix(in srgb, var(--accent-selected) 70%, transparent);
+}
+
+/* Follow-ups slide in under the answer that opened them */
+.survey-flow .na-followups {
+  animation: naReveal 340ms var(--ease-out) both;
+}
+
+/* A card that fails validation shakes once, and its message eases in */
+.survey-flow .survey-card--error {
+  animation: naShake 420ms var(--ease-out) both;
+}
+
+.survey-flow .na-error {
+  animation: naReveal 240ms var(--ease-out) both;
+}
+
+/* --- Option rows: press feedback, hover on the mark, pop on select --------- */
+.survey-flow .na-radio,
+.survey-flow .na-check {
+  transition:
+    background-color 180ms var(--ease-out),
+    transform 140ms var(--ease-out);
+}
+
+.survey-flow .na-radio:active,
+.survey-flow .na-check:not(:has(input:disabled)):active {
+  transform: scale(0.985);
+}
+
+.survey-flow .na-dot,
+.survey-flow .na-box {
+  transition:
+    border-color 180ms var(--ease-out),
+    background-color 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  .survey-flow .na-radio:hover .na-dot,
+  .survey-flow .na-check:not(:has(input:disabled)):hover .na-box {
+    border-color: var(--dark-emerald);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--dark-emerald) 16%, transparent);
+  }
+
+  [data-theme='dark'] .survey-flow .na-radio:hover .na-dot,
+  [data-theme='dark'] .survey-flow .na-check:not(:has(input:disabled)):hover .na-box {
+    border-color: var(--text-headline);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--text-headline) 18%, transparent);
+  }
+}
+
+.survey-flow .na-radio input:checked + .na-dot,
+.survey-flow .na-check input:checked + .na-box {
+  animation: naPop 300ms var(--ease-spring);
+}
+
+/* --- Likert scale ---------------------------------------------------------- */
+.survey-flow .na-likert-btn {
+  transition:
+    background-color 180ms var(--ease-out),
+    border-color 180ms var(--ease-out),
+    color 180ms var(--ease-out),
+    transform 160ms var(--ease-out),
+    box-shadow 180ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  .survey-flow .na-likert-btn:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.survey-flow .na-likert-btn:active {
+  transform: translateY(0) scale(0.94);
+}
+
+.survey-flow .na-likert-btn[aria-pressed='true'] {
+  animation: naPop 300ms var(--ease-spring);
+  box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--dark-emerald) 70%, transparent);
+}
+
+/* --- Text fields ------------------------------------------------------------ */
+.survey-flow .na-input,
+.survey-flow .na-area {
+  transition:
+    border-color 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  .survey-flow .na-input:hover:not(:focus),
+  .survey-flow .na-area:hover:not(:focus) {
+    border-color: var(--dark-emerald);
+  }
+}
+
+.survey-flow .na-input:focus,
+.survey-flow .na-area:focus {
+  outline: none;
+  border-color: var(--dark-emerald);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dark-emerald) 22%, transparent);
+}
+
+[data-theme='dark'] .survey-flow .na-input:focus,
+[data-theme='dark'] .survey-flow .na-area:focus {
+  border-color: var(--text-headline);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-headline) 24%, transparent);
+}
+
+/* --- Toolbar, language switch, navigation buttons --------------------------- */
+.survey-flow .survey-leave__icon,
+.survey-flow .survey-arrow {
+  transition: transform 220ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  .survey-flow .survey-leave:hover .survey-leave__icon {
+    transform: translateX(-3px);
+  }
+}
+
+.survey-flow .survey-leave:active {
+  transform: scale(0.97);
+}
+
+.survey-flow .survey-lang button {
+  transition:
+    background-color 200ms var(--ease-out),
+    color 200ms var(--ease-out),
+    transform 140ms var(--ease-out) !important;
+}
+
+.survey-flow .survey-lang button:active {
+  transform: scale(0.94);
+}
+
+.survey-flow .survey-actions > button,
+.survey-flow .survey-actions > a {
+  transition:
+    background-color 200ms var(--ease-out),
+    border-color 200ms var(--ease-out),
+    opacity 200ms var(--ease-out),
+    box-shadow 220ms var(--ease-out),
+    transform 160ms var(--ease-out) !important;
+}
+
+@media (hover: hover) {
+  .survey-flow .survey-actions > :is(button, a):not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.45);
+  }
+
+  .survey-flow .survey-actions > :is(button, a):hover .survey-arrow--next {
+    transform: translateX(4px);
+  }
+
+  .survey-flow .survey-actions > :is(button, a):hover .survey-arrow--prev {
+    transform: translateX(-4px);
+  }
+}
+
+.survey-flow .survey-actions > :is(button, a):not(:disabled):active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: none;
+}
+
+.survey-flow .survey-actions > :is(button, a):focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 3px;
+}
+
+/* --- Progress: smooth fill with a slow sheen -------------------------------- */
+.survey-progress [role='progressbar'] > div > div {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  transition: width 650ms var(--ease-out) !important;
+}
+
+.survey-progress [role='progressbar'] > div > div::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: naSheen 2.8s ease-in-out infinite;
+}
+
+/* --- Review rows ------------------------------------------------------------- */
+.survey-flow .survey-review-row {
+  transition: background-color 180ms var(--ease-out);
+  border-radius: 8px;
+}
+
+@media (hover: hover) {
+  .survey-flow .survey-review-row:hover {
+    background: var(--option-hover);
+  }
+}
+
+/* --- Ambient backdrop: slow drifting glow on both stages --------------------- */
+.survey-stage::after,
+.home-stage::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -12%;
+  z-index: -1;
+  width: min(60vw, 720px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--stage-glow-cool), transparent 65%);
+  filter: blur(40px);
+  opacity: 0.75;
+  animation: stageDrift 24s ease-in-out infinite alternate;
+}
+
+/* --- Landing page backdrop ---------------------------------------------------- */
+.home-stage {
+  --stage-grid: rgba(19, 105, 63, 0.065);
+  --stage-glow-warm: rgba(247, 128, 33, 0.12);
+  --stage-glow-cool: rgba(19, 105, 63, 0.16);
+  --stage-glow-gold: rgba(254, 202, 9, 0.09);
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background:
+    radial-gradient(ellipse 55% 16% at 0% 6%, var(--stage-glow-warm), transparent 70%),
+    radial-gradient(ellipse 50% 14% at 100% 28%, var(--stage-glow-cool), transparent 70%),
+    radial-gradient(ellipse 45% 12% at 0% 56%, var(--stage-glow-gold), transparent 70%),
+    radial-gradient(ellipse 55% 16% at 100% 82%, var(--stage-glow-warm), transparent 70%),
+    radial-gradient(ellipse 60% 14% at 50% 100%, var(--stage-glow-cool), transparent 70%);
+}
+
+[data-theme='dark'] .home-stage {
+  --stage-grid: rgba(255, 255, 255, 0.05);
+  --stage-glow-warm: rgba(247, 128, 33, 0.1);
+  --stage-glow-cool: rgba(61, 181, 121, 0.12);
+  --stage-glow-gold: rgba(254, 202, 9, 0.06);
+}
+
+.home-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--stage-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--stage-grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: center top;
+  /* Strongest in the side margins, fades out behind the content column */
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.2) 28%, rgba(0, 0, 0, 0.2) 72%, #000 100%);
+  mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.2) 28%, rgba(0, 0, 0, 0.2) 72%, #000 100%);
+}
+
+/* --- Reduced motion ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .survey-flow *,
+  .survey-flow *::before,
+  .survey-flow *::after,
+  .survey-stage::after,
+  .home-stage::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .survey-flow .survey-actions > :is(button, a):hover,
+  .survey-flow .na-likert-btn:hover,
+  .survey-flow .survey-actions > :is(button, a):hover .survey-arrow,
+  .survey-flow .survey-leave:hover .survey-leave__icon {
+    transform: none !important;
+  }
+}
+
+/* ==========================================================================
+   Selected-choice sentence, option icons, and the Not applicable choice.
+   ========================================================================== */
+.survey-flow .na-optlabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.survey-flow .na-opticon {
+  flex: none;
+  color: var(--text-headline);
+  opacity: 0.85;
+  transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  .survey-flow .na-radio:hover .na-opticon,
+  .survey-flow .na-check:hover .na-opticon {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+.survey-flow .na-check-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.survey-flow .na-optnote {
+  display: block;
+  margin-top: 2px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--text-headline);
+  animation: naReveal 260ms var(--ease-out) both;
+  overflow-wrap: anywhere;
+}
+
+.survey-flow .na-likert-selected + .na-optnote {
+  margin-top: 0;
+}
+
+.survey-flow .na-likert-na {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  margin-top: 12px;
+  padding: 0 16px;
+  border: 1.5px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-body);
+  font: 700 14px var(--font-sans);
+  cursor: pointer;
+  transition:
+    background-color 180ms var(--ease-out),
+    border-color 180ms var(--ease-out),
+    color 180ms var(--ease-out),
+    transform 140ms var(--ease-out);
+}
+
+.survey-flow .na-likert-na[aria-pressed='true'] {
+  background: var(--dark-emerald);
+  border-color: var(--dark-emerald);
+  color: var(--white);
+  animation: naPop 300ms var(--ease-spring);
+}
+
+.survey-flow .na-likert-na:active {
+  transform: scale(0.96);
+}
+
+.survey-flow .na-likert-na:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .survey-flow .na-likert-na[aria-pressed='false']:hover {
+    background: var(--option-hover);
+    border-color: var(--dark-emerald);
+  }
+}
+
+/* ==========================================================================
+   Step pager (replaces the progress bar) and the scale footer.
+   ========================================================================== */
+.survey-pager ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.survey-flow .survey-pager__item {
+  display: inline-grid;
+  place-items: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1.5px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--card-fill-neutral);
+  color: var(--text-body);
+  font: 700 14px var(--font-sans);
+  cursor: pointer;
+  transition:
+    background-color 200ms var(--ease-out),
+    border-color 200ms var(--ease-out),
+    color 200ms var(--ease-out),
+    transform 160ms var(--ease-out),
+    box-shadow 200ms var(--ease-out);
+}
+
+.survey-flow .survey-pager__item--review {
+  padding: 0 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 12.5px;
+}
+
+.survey-flow .survey-pager__item[data-state='done'] {
+  background: var(--dark-emerald);
+  border-color: var(--dark-emerald);
+  color: var(--white);
+}
+
+.survey-flow .survey-pager__item[data-state='current'] {
+  background: var(--harvest-orange);
+  border-color: var(--harvest-orange);
+  color: var(--black);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--harvest-orange) 28%, transparent);
+  cursor: default;
+}
+
+.survey-flow .survey-pager__item[data-state='locked'] {
+  opacity: 0.45;
+  border-style: dashed;
+  background: transparent;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .survey-flow .survey-pager__item[data-state='open']:hover,
+  .survey-flow .survey-pager__item[data-state='done']:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.45);
+  }
+
+  .survey-flow .survey-pager__item[data-state='open']:hover {
+    background: var(--option-hover);
+    border-color: var(--dark-emerald);
+  }
+}
+
+.survey-flow .survey-pager__item:not([data-state='locked']):not([data-state='current']):active {
+  transform: scale(0.94);
+}
+
+.survey-flow .survey-pager__item:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 3px;
+}
+
+.survey-progress__meta {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 760px) {
+  .survey-pager ol {
+    gap: 6px;
+  }
+
+  .survey-flow .survey-pager__item {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+  }
+}
+
+/* Scale footer: the chosen answer on the left, Not applicable on the right */
+.survey-flow .na-likert-foot {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.survey-flow .na-likert-result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  min-height: 42px;
+  flex: 1 1 auto;
+}
+
+.survey-flow .na-likert-result .na-likert-selected {
+  margin: 0;
+  min-height: 0;
+}
+
+.survey-flow .na-likert-foot .na-likert-na {
+  flex: none;
+  margin-top: 0;
+}
+
+@media (max-width: 560px) {
+  .survey-flow .na-likert-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .survey-flow .na-likert-foot .na-likert-na {
+    justify-content: center;
+  }
+}
+
+/* Subtitle followed by a hint line: keep the two tight, with space only before the field */
+.survey-flow .na-qsub:has(+ .na-hint) {
+  margin-bottom: 6px;
+}
+
+.survey-flow .na-qsub + .na-hint {
+  margin-top: 0;
+  margin-bottom: 12px !important;
+}

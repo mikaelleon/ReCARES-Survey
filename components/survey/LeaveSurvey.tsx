@@ -41,7 +41,7 @@ export function LeaveSurvey({ hasProgress }: { hasProgress: boolean }) {
         className="survey-leave"
         onClick={() => (hasProgress ? setOpen(true) : router.push('/'))}
       >
-        <ArrowLeft size={16} strokeWidth={2.2} aria-hidden="true" />
+        <ArrowLeft className="survey-leave__icon" size={16} strokeWidth={2.2} aria-hidden="true" />
         <span>{t('Leave the survey')}</span>
       </button>
 

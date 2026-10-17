@@ -88,6 +88,8 @@ function mapDoc(id: string, data: Record<string, unknown>): InterviewInviteRow {
     preferredDays: Array.isArray(data.preferredDays)
       ? data.preferredDays.filter((d): d is string => typeof d === 'string')
       : [],
+    preferredDate: typeof data.preferredDate === 'string' ? data.preferredDate : undefined,
+    preferredClock: typeof data.preferredClock === 'string' ? data.preferredClock : undefined,
     preferredTime: timeOk,
     preferredTimeOther:
       typeof data.preferredTimeOther === 'string' ? data.preferredTimeOther : undefined,

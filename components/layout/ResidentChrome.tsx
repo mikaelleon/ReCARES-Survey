@@ -21,7 +21,7 @@ export function ResidentChrome({ children }: { children: ReactNode }) {
   return (
     <>
       <Navbar />
-      {children}
+      {survey ? <div className="survey-stage">{children}</div> : children}
       {survey ? null : <Footer />}
       <ScrollToTop />
     </>

@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { PageLoader } from '@/components/ui/PageLoader';
 import { Button } from '@/components/ui/Button';
-import { ProgressBar } from '@/components/ui/ProgressBar';
+import { StepPager } from '@/components/survey/StepPager';
 import { ReviewSummary } from '@/components/survey/ReviewSummary';
 import { LeaveSurvey } from '@/components/survey/LeaveSurvey';
 import { REQUIRED_NOTE } from '@/components/survey/SurveyFields';
@@ -28,7 +29,9 @@ import {
   previousStepNumber,
   resolveStepSubtitle,
   resolveStepTitle,
+  stepAccess,
   stepProgress,
+  stepRoster,
   validateStep as validateWith,
   type Answers,
   type Instrument,
@@ -144,6 +147,8 @@ function SurveyFlowInner() {
   const stepCount = instrument.steps.length;
   const active = activeStepNumbers(instrument, answers);
   const progress = stepProgress(instrument, answers, step);
+  const roster = stepRoster(instrument, answers, step);
+  const access = stepAccess(instrument, answers);
   const position = progress.position;
   const total = progress.total;
   const lastActive = active[active.length - 1] ?? stepCount;
@@ -342,42 +347,42 @@ function SurveyFlowInner() {
         padding: '8px clamp(16px, 4vw, 32px) clamp(48px, 8vw, 96px)',
       }}
     >
-      {screen === 'step' || screen === 'review' ? (
-        <>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: 16,
-              alignItems: 'center',
-              marginBottom: 10,
-              flexWrap: 'wrap',
-            }}
-          >
-            <div className="survey-eyebrow">{screen === 'review' ? t('Review') : `${t('Step')} ${position} ${t('of')} ${total}`}</div>
-            <LeaveSurvey hasProgress />
-          </div>
-          <div
-            role="progressbar"
-            aria-label={t('Step')}
-            aria-valuemin={1}
-            aria-valuemax={total}
-            aria-valuenow={screen === 'step' ? position : total}
-            aria-valuetext={`${t('Step')} ${screen === 'step' ? position : total} ${t('of')} ${total}`}
-          >
-            <ProgressBar value={screen === 'step' ? position : total} max={total} />
-          </div>
-          <p className="survey-saved">{t('Your progress is saved on this device.')}</p>
-        </>
-      ) : (
-        <div style={{ marginBottom: 12 }}>
-          <LeaveSurvey hasProgress={false} />
-        </div>
-      )}
+      <div className="survey-toolbar">
+        <LeaveSurvey hasProgress={screen === 'step' || screen === 'review'} />
+        <SurveyLanguageToggle />
+      </div>
 
-      <SurveyLanguageToggle />
+      {screen === 'step' || screen === 'review' ? (
+        <div className="survey-progress">
+          <div className="survey-progress__meta">
+            <div className="survey-eyebrow">
+              {screen === 'review' ? t('Review') : `${t('Step')} ${position} ${t('of')} ${total}`}
+            </div>
+            <p className="survey-saved">{t('Your progress is saved on this device.')}</p>
+          </div>
+          <StepPager
+            roster={roster}
+            current={screen === 'review' ? 'review' : step}
+            reachable={access.reachable}
+            done={access.done}
+            reviewReachable={access.review}
+            titleOf={(n) => t(resolveStepTitle(instrument.steps[n - 1]!, answers))}
+            onGo={(n) => {
+              setErrors({});
+              setStep(n);
+              setScreen('step');
+            }}
+            onReview={() => {
+              setErrors({});
+              setStep(lastActive);
+              setScreen('review');
+            }}
+          />
+        </div>
+      ) : null}
 
       <h1
+        key={`${screen}-${step}`}
         ref={titleRef}
         tabIndex={-1}
         className={screen === 'step' ? 'survey-title survey-title--section' : 'survey-title'}
@@ -411,7 +416,7 @@ function SurveyFlowInner() {
             )}
           </div>
           {surveyAcceptsResponses(surveyConfig.status) ? (
-          <div className="survey-actions">
+          <div className="survey-actions survey-actions--start">
             {hasDraft ? (
               <Button variant="primary" onClick={resume}>
                 {t('Resume where you stopped')}
@@ -532,11 +537,12 @@ function SurveyFlowInner() {
             </p>
           ) : null}
           <div className="survey-actions">
-            <Button variant="secondary" onClick={back}>
+            <Button variant="secondary" icon={<ArrowLeft className="survey-arrow survey-arrow--prev" size={16} strokeWidth={2.4} aria-hidden="true" />} onClick={back}>
               {t('Back')}
             </Button>
             <Button variant="primary" onClick={continueStep}>
               {t('Continue')}
+              <ArrowRight className="survey-arrow survey-arrow--next" size={16} strokeWidth={2.4} aria-hidden="true" />
             </Button>
           </div>
         </>
@@ -570,7 +576,7 @@ function SurveyFlowInner() {
             </p>
           ) : null}
           <div className="survey-actions">
-            <Button variant="secondary" onClick={back}>
+            <Button variant="secondary" icon={<ArrowLeft className="survey-arrow survey-arrow--prev" size={16} strokeWidth={2.4} aria-hidden="true" />} onClick={back}>
               {t('Back')}
             </Button>
             <Button variant="primary" disabled={submitting} onClick={submit}>

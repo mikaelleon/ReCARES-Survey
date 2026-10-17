@@ -45,6 +45,7 @@ export function LanguageToggle({
           <button
             key={option}
             type="button"
+            aria-pressed={isActive}
             onClick={() => onChange?.(option)}
             style={buttonStyle}
           >

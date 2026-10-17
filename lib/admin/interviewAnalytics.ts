@@ -114,7 +114,11 @@ export function buildAvailabilityMonth(
     const date = new Date(gridStart);
     date.setDate(gridStart.getDate() + i);
     const weekday = INTERVIEW_WEEKDAYS[date.getDay()]!;
-    const matches = open.filter((r) => r.preferredDays.includes(weekday));
+    const iso = toIsoDate(date);
+    // An exact date counts only on that date; older invites only gave weekdays.
+    const matches = open.filter((r) =>
+      r.preferredDate ? r.preferredDate === iso : r.preferredDays.includes(weekday),
+    );
     const count = matches.length;
     if (date.getMonth() === monthIndex && count > maxCount) maxCount = count;
     days.push({
@@ -144,6 +148,8 @@ export function buildInterviewContactsCsv(rows: InterviewInviteRow[]): string {
   const header = [
     'email',
     'interviewFormat',
+    'preferredDate',
+    'preferredClock',
     'preferredDays',
     'preferredTime',
     'preferredTimeOther',
@@ -159,6 +165,8 @@ export function buildInterviewContactsCsv(rows: InterviewInviteRow[]): string {
     return [
       row.email,
       row.interviewFormat,
+      row.preferredDate ?? '',
+      row.preferredClock ?? '',
       row.preferredDays.join('; '),
       row.preferredTime,
       row.preferredTimeOther ?? '',

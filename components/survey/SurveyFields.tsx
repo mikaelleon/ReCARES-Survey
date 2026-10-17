@@ -1,7 +1,10 @@
 'use client';
 
+import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useT } from '@/components/survey/SurveyLanguage';
+import { NOT_APPLICABLE } from '@/survey/model';
+import { SCALE_NOTES } from '@/survey/optionNotes';
 import { optionDisabled, toggleMulti } from '@/survey/exclusive';
 
 export const REQUIRED_NOTE =
@@ -23,17 +26,36 @@ const LIKELIHOOD = [
   { id: '5', label: 'Very likely' },
 ] as const;
 
+/** Plain-language help under a question: what it means, with examples. */
+export function QuestionSubtitle({ id, text }: { id: string; text?: string }) {
+  const t = useT();
+  if (!text) return null;
+  return (
+    <p className="na-qsub" id={id}>
+      {t(text)}
+    </p>
+  );
+}
+
+function describedBy(...ids: Array<string | undefined>): string | undefined {
+  const joined = ids.filter(Boolean).join(' ');
+  return joined || undefined;
+}
+
 export function Question({
   id,
   text,
   required,
+  subtitle,
 }: {
   id: string;
   text: string;
   required?: boolean;
+  subtitle?: string;
 }) {
   const t = useT();
   return (
+    <>
     <div className="na-q" id={id}>
       {t(text)}
       {required ? (
@@ -46,6 +68,8 @@ export function Question({
         </>
       ) : null}
     </div>
+    <QuestionSubtitle id={`${id}-sub`} text={subtitle} />
+    </>
   );
 }
 
@@ -62,20 +86,53 @@ export function FieldError({ id, message }: { id: string; message?: string }) {
 export function Card({
   error,
   className,
+  after,
   children,
 }: {
   error?: string;
   className?: string;
+  /** Follow-up questions opened by an answer here. They stay inside this card. */
+  after?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <div className={`${error ? 'survey-card survey-card--error' : 'survey-card'}${className ? ` ${className}` : ''}`}>
       {children}
+      {after ? <div className="na-followups">{after}</div> : null}
     </div>
   );
 }
 
-export type ChoiceOption = { id: string; label: string; hint?: string; wide?: boolean };
+export type ChoiceOption = {
+  id: string;
+  label: string;
+  hint?: string;
+  wide?: boolean;
+  /** Sentence shown once the option is selected. */
+  note?: string;
+  icon?: LucideIcon;
+};
+
+/** What a selected choice means, in a sentence. Appears only while selected. */
+export function OptionNote({ text }: { text?: string }) {
+  const t = useT();
+  if (!text) return null;
+  return (
+    <span className="na-optnote" role="status">
+      {t(text)}
+    </span>
+  );
+}
+
+function OptionLabel({ label, icon: Icon }: { label: string; icon?: LucideIcon }) {
+  const t = useT();
+  return (
+    <span className="na-optlabel">
+      {Icon ? <Icon className="na-opticon" size={18} strokeWidth={2} aria-hidden="true" /> : null}
+      <span>{t(label)}</span>
+    </span>
+  );
+}
 
 function RadioMark({
   name,
@@ -94,8 +151,9 @@ function RadioMark({
       <input type="radio" name={name} value={option.id} checked={checked} onChange={onChange} />
       <span className="na-dot" aria-hidden="true" />
       <span className="na-radio-copy">
-        <span>{t(option.label)}</span>
+        <OptionLabel label={option.label} icon={option.icon} />
         {option.hint ? <span className="na-radio-hint">{t(option.hint)}</span> : null}
+        {checked ? <OptionNote text={option.note} /> : null}
       </span>
     </label>
   );
@@ -110,6 +168,8 @@ export function SingleChoice({
   error,
   onChange,
   hint,
+  subtitle,
+  after,
   columns = 1,
   className,
 }: {
@@ -121,6 +181,8 @@ export function SingleChoice({
   error?: string;
   onChange: (value: string) => void;
   hint?: string;
+  subtitle?: string;
+  after?: ReactNode;
   columns?: 1 | 2;
   className?: string;
 }) {
@@ -128,9 +190,9 @@ export function SingleChoice({
   const errorId = `${code}-error`;
   const labelId = `${code}-label`;
   return (
-    <Card error={error} className={className}>
-      <div role="radiogroup" aria-labelledby={labelId} aria-describedby={error ? errorId : undefined}>
-        <Question id={labelId} text={question} required={required} />
+    <Card error={error} className={className} after={after}>
+      <div role="radiogroup" aria-labelledby={labelId} aria-describedby={describedBy(subtitle ? `${labelId}-sub` : undefined, error ? errorId : undefined)}>
+        <Question id={labelId} text={question} required={required} subtitle={subtitle} />
         {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{t(hint)}</p> : null}
         <div className={columns === 2 ? 'na-radios na-radios--2' : 'na-radios'}>
           {options.map((option) => (
@@ -160,25 +222,29 @@ export function MultiChoice({
   error,
   onChange,
   hint,
+  subtitle,
+  after,
 }: {
   code: string;
   question: string;
   required?: boolean;
   value?: string[];
-  options: readonly { id: string; label: string }[];
+  options: readonly { id: string; label: string; note?: string; icon?: LucideIcon }[];
   exclusiveId?: string;
   maxNonExclusive?: number;
   error?: string;
   onChange: (value: string[]) => void;
   hint?: string;
+  subtitle?: string;
+  after?: ReactNode;
 }) {
   const t = useT();
   const errorId = `${code}-error`;
   const labelId = `${code}-label`;
   return (
-    <Card error={error}>
-      <div role="group" aria-labelledby={labelId} aria-describedby={error ? errorId : undefined}>
-        <Question id={labelId} text={question} required={required} />
+    <Card error={error} after={after}>
+      <div role="group" aria-labelledby={labelId} aria-describedby={describedBy(subtitle ? `${labelId}-sub` : undefined, error ? errorId : undefined)}>
+        <Question id={labelId} text={question} required={required} subtitle={subtitle} />
         {hint ? <p className="na-hint">{t(hint)}</p> : null}
         <div className="na-checks">
           {options.map((option) => {
@@ -197,7 +263,10 @@ export function MultiChoice({
                 <span className="na-box" aria-hidden="true">
                   {checked ? '✓' : ''}
                 </span>
-                <span>{t(option.label)}</span>
+                <span className="na-check-copy">
+                  <OptionLabel label={option.label} icon={option.icon} />
+                  {checked ? <OptionNote text={option.note} /> : null}
+                </span>
               </label>
             );
           })}
@@ -213,32 +282,39 @@ export function LikertChoice({
   question,
   scale,
   required = true,
+  allowNA = false,
   value,
   error,
   hint,
+  subtitle,
+  after,
   onChange,
 }: {
   code: string;
   question: string;
   scale: 'agreement' | 'likelihood';
   required?: boolean;
-  value?: number;
+  /** Adds a Not applicable choice under the scale. */
+  allowNA?: boolean;
+  value?: number | typeof NOT_APPLICABLE;
   error?: string;
   hint?: string;
-  onChange: (value: number) => void;
+  subtitle?: string;
+  after?: ReactNode;
+  onChange: (value: number | typeof NOT_APPLICABLE) => void;
 }) {
   const t = useT();
   const options = scale === 'likelihood' ? LIKELIHOOD : AGREEMENT;
   const errorId = `${code}-error`;
   const labelId = `${code}-label`;
   return (
-    <Card error={error}>
-      <div role="radiogroup" aria-labelledby={labelId} aria-describedby={error ? errorId : undefined}>
-        <Question id={labelId} text={question} required={required} />
+    <Card error={error} after={after}>
+      <div role="radiogroup" aria-labelledby={labelId} aria-describedby={describedBy(subtitle ? `${labelId}-sub` : undefined, error ? errorId : undefined)}>
+        <Question id={labelId} text={question} required={required} subtitle={subtitle} />
         {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{t(hint)}</p> : null}
         <div className="na-likert">
           {options.map((option) => {
-            const selected = String(value) === option.id;
+            const selected = typeof value === 'number' && String(value) === option.id;
             return (
               <button
                 key={option.id}
@@ -253,12 +329,35 @@ export function LikertChoice({
             );
           })}
         </div>
-        <p className="na-likert-selected" aria-live="polite">
-          {value ? `${t('Your choice:')} ${value} — ${t(options.find((option) => option.id === String(value))?.label ?? '')}` : ' '}
-        </p>
         <div className="na-likert-ends">
           <span>{t(options[0].label)}</span>
           <span>{t(options.find((option) => option.id === '5')?.label ?? '')}</span>
+        </div>
+        <div className="na-likert-foot">
+          <div className="na-likert-result" aria-live="polite">
+            <p className="na-likert-selected">
+              {typeof value === 'number'
+                ? `${t('Your choice:')} ${value} — ${t(options.find((option) => option.id === String(value))?.label ?? '')}`
+                : value === NOT_APPLICABLE
+                  ? `${t('Your choice:')} ${t('Not applicable')}`
+                  : ' '}
+            </p>
+            {typeof value === 'number' ? (
+              <span className="na-optnote">{t(SCALE_NOTES[scale][value] ?? '')}</span>
+            ) : value === NOT_APPLICABLE ? (
+              <span className="na-optnote">{t(SCALE_NOTES.notApplicable)}</span>
+            ) : null}
+          </div>
+          {allowNA ? (
+            <button
+              type="button"
+              className="na-likert-na"
+              aria-pressed={value === NOT_APPLICABLE}
+              onClick={() => onChange(NOT_APPLICABLE)}
+            >
+              {t('Not applicable')}
+            </button>
+          ) : null}
         </div>
         <FieldError id={errorId} message={error} />
       </div>
@@ -275,6 +374,8 @@ export function NumberField({
   max,
   error,
   hint,
+  subtitle,
+  after,
   onChange,
 }: {
   code: string;
@@ -285,13 +386,15 @@ export function NumberField({
   max: number;
   error?: string;
   hint?: string;
+  subtitle?: string;
+  after?: ReactNode;
   onChange: (value: number | undefined) => void;
 }) {
   const t = useT();
   const errorId = `${code}-error`;
   const inputId = `${code}-input`;
   return (
-    <Card error={error}>
+    <Card error={error} after={after}>
       <label className="na-q" htmlFor={inputId}>
         {t(question)}
         {required ? (
@@ -304,6 +407,7 @@ export function NumberField({
           </>
         ) : null}
       </label>
+      <QuestionSubtitle id={`${code}-sub`} text={subtitle} />
       {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{t(hint)}</p> : null}
       <input
         id={inputId}
@@ -315,7 +419,7 @@ export function NumberField({
         step={1}
         value={value ?? ''}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        aria-describedby={describedBy(subtitle ? `${code}-sub` : undefined, error ? errorId : undefined)}
         onChange={(event) => {
           const raw = event.target.value;
           if (raw === '') {
@@ -340,6 +444,8 @@ export function TextField({
   error,
   onChange,
   hint,
+  subtitle,
+  after,
 }: {
   code: string;
   question: string;
@@ -349,12 +455,14 @@ export function TextField({
   error?: string;
   onChange: (value: string) => void;
   hint?: string;
+  subtitle?: string;
+  after?: ReactNode;
 }) {
   const t = useT();
   const errorId = `${code}-error`;
   const inputId = `${code}-input`;
   return (
-    <Card error={error}>
+    <Card error={error} after={after}>
       <label className="na-q" htmlFor={inputId}>
         {t(question)}
         {required ? (
@@ -367,6 +475,7 @@ export function TextField({
           </>
         ) : null}
       </label>
+      <QuestionSubtitle id={`${code}-sub`} text={subtitle} />
       {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{t(hint)}</p> : null}
       <textarea
         id={inputId}
@@ -374,7 +483,7 @@ export function TextField({
         maxLength={maxLength}
         value={value ?? ''}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        aria-describedby={describedBy(subtitle ? `${code}-sub` : undefined, error ? errorId : undefined)}
         onChange={(event) => onChange(event.target.value)}
       />
       <FieldError id={errorId} message={error} />
@@ -447,6 +556,8 @@ export function GroupedSingleChoice({
   options,
   error,
   hint,
+  subtitle,
+  after,
   className,
   onChange,
 }: {
@@ -457,6 +568,8 @@ export function GroupedSingleChoice({
   options: readonly (ChoiceOption & { group?: string })[];
   error?: string;
   hint?: string;
+  subtitle?: string;
+  after?: ReactNode;
   className?: string;
   onChange: (value: string) => void;
 }) {
@@ -472,9 +585,9 @@ export function GroupedSingleChoice({
   }
 
   return (
-    <Card error={error} className={className}>
-      <div role="radiogroup" aria-labelledby={labelId} aria-describedby={error ? errorId : undefined}>
-        <Question id={labelId} text={question} required={required} />
+    <Card error={error} className={className} after={after}>
+      <div role="radiogroup" aria-labelledby={labelId} aria-describedby={describedBy(subtitle ? `${labelId}-sub` : undefined, error ? errorId : undefined)}>
+        <Question id={labelId} text={question} required={required} subtitle={subtitle} />
         {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{t(hint)}</p> : null}
         <div className="na-radios">
           {blocks.map((block) =>

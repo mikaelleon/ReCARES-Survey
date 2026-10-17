@@ -1,9 +1,10 @@
 'use client';
 
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import { InterviewInvitationForm } from '@/components/survey/InterviewInvitationForm';
 import {
   GroupedSingleChoice,
+  QuestionSubtitle,
   LikertChoice,
   MultiChoice,
   NumberField,
@@ -11,9 +12,14 @@ import {
   SingleChoice,
   TextField,
 } from '@/components/survey/SurveyFields';
+import { optionIcon } from '@/components/survey/optionIcons';
 import { useT } from '@/components/survey/SurveyLanguage';
 import { optionDisabled, toggleMulti } from '@/survey/exclusive';
+import { o1CategoryNote, o1ItemNote } from '@/survey/o1Notes';
+import { optionNote } from '@/survey/optionNotes';
+import { questionSubtitle } from '@/survey/subtitles';
 import {
+  NOT_APPLICABLE,
   evalCondition,
   resolveText,
   visibleOptions,
@@ -52,18 +58,26 @@ function QuestionField({
   error,
   errors,
   onPatch,
+  followUps,
 }: {
   q: QuestionDef;
   answers: Answers;
   error?: string;
   errors: Record<string, string>;
   onPatch: (patch: Patch) => void;
+  followUps?: ReactNode;
 }) {
   const text = resolveText(q, answers);
   const hint = hintFor(q, answers);
+  const subtitle = questionSubtitle(q);
   const required = q.required ?? !(q.type === 'text' || q.type === 'number');
   const value = answers[q.code];
-  const options = visibleOptions(q, answers);
+  // Each choice carries the sentence shown once it is selected, and an icon where one helps.
+  const options = visibleOptions(q, answers).map((option) => ({
+    ...option,
+    note: option.note ?? optionNote(q.code, option.id),
+    icon: optionIcon(q.code, option.id),
+  }));
 
   if (q.type === 'single') {
     const current = value == null || typeof value === 'object' ? undefined : String(value);
@@ -78,6 +92,8 @@ function QuestionField({
           options={options}
           error={error}
           hint={hint}
+        subtitle={subtitle}
+        after={followUps}
           className={q.cardClass}
           onChange={choose}
         />
@@ -93,6 +109,8 @@ function QuestionField({
         options={options}
         error={error}
         hint={hint}
+        subtitle={subtitle}
+        after={followUps}
         className={q.cardClass}
         onChange={choose}
       />
@@ -106,9 +124,12 @@ function QuestionField({
         scale={q.scale ?? 'agreement'}
         question={text}
         required={required}
-        value={typeof value === 'number' ? value : undefined}
+        allowNA={q.allowNA}
+        value={typeof value === 'number' || value === NOT_APPLICABLE ? value : undefined}
         error={error}
         hint={hint}
+        subtitle={subtitle}
+        after={followUps}
         onChange={(next) => onPatch({ [q.code]: next })}
       />
     );
@@ -126,6 +147,8 @@ function QuestionField({
         maxNonExclusive={q.maxSelect}
         error={error}
         hint={hint}
+        subtitle={subtitle}
+        after={followUps}
         onChange={(next) => onPatch({ [q.code]: next })}
       />
     );
@@ -141,6 +164,8 @@ function QuestionField({
         maxLength={q.maxLength ?? 300}
         error={error}
         hint={hint}
+        subtitle={subtitle}
+        after={followUps}
         onChange={(next) => onPatch({ [q.code]: next })}
       />
     );
@@ -157,6 +182,8 @@ function QuestionField({
         max={q.max ?? 1_000_000}
         error={error}
         hint={hint}
+        subtitle={subtitle}
+        after={followUps}
         onChange={(next) => onPatch({ [q.code]: next })}
       />
     );
@@ -166,6 +193,8 @@ function QuestionField({
     <NestedChoiceField
       q={q}
       text={text}
+      subtitle={subtitle}
+      after={followUps}
       required={required}
       answers={answers}
       error={error}
@@ -179,6 +208,8 @@ function QuestionField({
 function NestedChoiceField({
   q,
   text,
+  subtitle,
+  after,
   required,
   answers,
   error,
@@ -187,6 +218,8 @@ function NestedChoiceField({
 }: {
   q: QuestionDef;
   text: string;
+  subtitle?: string;
+  after?: ReactNode;
   required: boolean;
   answers: Answers;
   error?: string;
@@ -218,6 +251,7 @@ function NestedChoiceField({
           </>
         ) : null}
       </div>
+      <QuestionSubtitle id={`${q.code}-label-sub`} text={subtitle} />
       <div className="na-checks" role="group" aria-labelledby={`${q.code}-label`}>
         {options.map((option) => {
           const checked = selected.includes(option.id);
@@ -237,10 +271,21 @@ function NestedChoiceField({
                 <span className="na-box" aria-hidden="true">
                   {checked ? '✓' : ''}
                 </span>
-                <span>{t(option.label)}</span>
+                <span className="na-check-copy">
+                  <span>{t(option.label)}</span>
+                  {checked && category && o1CategoryNote(category.id) ? (
+                    <span className="na-optnote" role="status">
+                      {t(o1CategoryNote(category.id) ?? '')}
+                    </span>
+                  ) : null}
+                </span>
               </label>
               {checked && category ? (
                 <div className="na-sub" style={{ marginLeft: 28 }}>
+                  <div
+                    className="na-sub-grid"
+                    style={{ '--rows': Math.ceil(category.items.length / 2) } as CSSProperties}
+                  >
                   {category.items.map((item) => {
                     const itemChecked = picks.includes(item);
                     return (
@@ -253,10 +298,18 @@ function NestedChoiceField({
                         <span className="na-box" aria-hidden="true">
                           {itemChecked ? '✓' : ''}
                         </span>
-                        <span>{t(item)}</span>
+                        <span className="na-check-copy">
+                          <span>{t(item)}</span>
+                          {itemChecked && item !== 'Other' && o1ItemNote(item) ? (
+                            <span className="na-optnote" role="status">
+                              {t(o1ItemNote(item) ?? '')}
+                            </span>
+                          ) : null}
+                        </span>
                       </label>
                     );
                   })}
+                  </div>
                   {picks.includes('Other') && otherKey ? (
                     <textarea
                       className="na-area"
@@ -288,8 +341,33 @@ function NestedChoiceField({
           {t(error || otherError || '')}
         </p>
       ) : null}
+      {after ? <div className="na-followups">{after}</div> : null}
     </div>
   );
+}
+
+/**
+ * A follow-up question (one that appears only because of a single earlier
+ * answer in the same step) belongs to the question that opens it.
+ */
+function groupFollowUps(questions: QuestionDef[]): {
+  roots: QuestionDef[];
+  children: Map<string, QuestionDef[]>;
+} {
+  const parentOf = (q: QuestionDef): string | undefined => {
+    const when = q.showWhen;
+    if (!when || !('q' in when)) return undefined;
+    const index = questions.findIndex((item) => item.code === when.q);
+    return index >= 0 && index < questions.indexOf(q) ? when.q : undefined;
+  };
+  const children = new Map<string, QuestionDef[]>();
+  const roots: QuestionDef[] = [];
+  for (const q of questions) {
+    const parent = parentOf(q);
+    if (parent) children.set(parent, [...(children.get(parent) ?? []), q]);
+    else roots.push(q);
+  }
+  return { roots, children };
 }
 
 interface Item {
@@ -335,25 +413,36 @@ export function InstrumentStep({
 }) {
   const t = useT();
   const questions = visibleQuestions(instrument, step.id, answers);
+  const { roots, children } = groupFollowUps(questions);
   const notes = (step.notes ?? []).filter((n) => evalCondition(n.when, answers));
   const top = notes.filter((n) => !n.after);
 
-  const items: Item[] = questions.map((q) => ({
-    q,
-    node: (
-      <Fragment key={q.code}>
-        <QuestionField q={q} answers={answers} error={errors[q.code]} errors={errors} onPatch={onPatch} />
-        {notes
-          .filter((n) => n.after === q.code)
-          .map((n, index) => (
-            <Note key={`${q.code}-note-${index}`} text={n.text} kind={n.kind ?? 'hint'} />
-          ))}
-        {q.attachForm && evalCondition(q.attachForm.when, answers) ? (
-          <InterviewInvitationForm variant="embedded" />
-        ) : null}
-      </Fragment>
-    ),
-  }));
+  // Everything an answer opens (follow-up questions, hints, the interview form)
+  // renders inside the card of the question that opened it.
+  const renderQuestion = (q: QuestionDef): ReactNode => {
+    const followUps = [
+      ...(children.get(q.code) ?? []).map(renderQuestion),
+      ...notes
+        .filter((n) => n.after === q.code)
+        .map((n, index) => <Note key={`${q.code}-note-${index}`} text={n.text} kind={n.kind ?? 'hint'} />),
+      q.attachForm && evalCondition(q.attachForm.when, answers) ? (
+        <InterviewInvitationForm key={`${q.code}-form`} variant="embedded" />
+      ) : null,
+    ].filter(Boolean);
+    return (
+      <QuestionField
+        key={q.code}
+        q={q}
+        answers={answers}
+        error={errors[q.code]}
+        errors={errors}
+        onPatch={onPatch}
+        followUps={followUps.length ? followUps : undefined}
+      />
+    );
+  };
+
+  const items: Item[] = roots.map((q) => ({ q, node: renderQuestion(q) }));
 
   return (
     <>

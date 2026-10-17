@@ -4,17 +4,17 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useT } from '@/components/survey/SurveyLanguage';
 import { submitInterviewInvitation } from '@/lib/firebase/firestore';
+import {
+  HOURS_12,
+  MINUTES_5,
+  isValidFutureDate,
+  isWithinInterviewHours,
+  partOfDay,
+  to24Hour,
+  tomorrowIso,
+  weekdayOf,
+} from '@/survey/interviewSchedule';
 import type { InterviewInvitation } from '@/survey/schema';
-
-const DAYS = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-] as const;
 
 const FORMATS: { id: InterviewInvitation['interviewFormat']; label: string }[] = [
   {
@@ -26,13 +26,6 @@ const FORMATS: { id: InterviewInvitation['interviewFormat']; label: string }[] =
     label:
       'Face-to-face — at Dear Joe, just outside Camella Homes Tibig, open daily from 8:00 AM to 10:00 PM',
   },
-];
-
-const TIMES: { id: InterviewInvitation['preferredTime']; label: string }[] = [
-  { id: 'Morning', label: 'Morning — 8:00 AM to 12:00 NN' },
-  { id: 'Afternoon', label: 'Afternoon — 12:00 NN to 5:00 PM' },
-  { id: 'Evening', label: 'Evening — 5:00 PM to 10:00 PM' },
-  { id: 'Other', label: 'Other — enter a specific time' },
 ];
 
 function isValidEmail(value: string): boolean {
@@ -56,32 +49,31 @@ export function InterviewInvitationForm({
   const [interviewFormat, setInterviewFormat] = useState<
     InterviewInvitation['interviewFormat'] | ''
   >('');
-  const [preferredDays, setPreferredDays] = useState<string[]>([]);
-  const [preferredTime, setPreferredTime] = useState<InterviewInvitation['preferredTime'] | ''>(
-    '',
-  );
-  const [preferredTimeOther, setPreferredTimeOther] = useState('');
+  const [date, setDate] = useState('');
+  const [hour, setHour] = useState('');
+  const [minute, setMinute] = useState('');
+  const [meridiem, setMeridiem] = useState<'AM' | 'PM' | ''>('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
 
   const emailOk = isValidEmail(email);
   const formatOk = interviewFormat !== '';
-  const daysOk = preferredDays.length > 0;
-  const timeOk =
-    preferredTime !== '' &&
-    (preferredTime !== 'Other' || preferredTimeOther.trim().length > 0);
-  const canSubmit = emailOk && formatOk && daysOk && timeOk && !submitting;
-
-  const toggleDay = (day: string) => {
-    setPreferredDays((current) =>
-      current.includes(day) ? current.filter((item) => item !== day) : [...current, day],
-    );
-  };
+  const minDate = tomorrowIso();
+  const dateOk = isValidFutureDate(date);
+  const clock = to24Hour(hour, minute, meridiem);
+  const timeOk = clock != null && isWithinInterviewHours(clock);
+  const canSubmit = emailOk && formatOk && dateOk && timeOk && !submitting;
 
   const submit = async () => {
-    if (!canSubmit || !interviewFormat || !preferredTime) {
-      setError('Please complete all required fields before submitting.');
+    if (!canSubmit || !interviewFormat || !clock) {
+      setError(
+        !dateOk && date
+          ? 'Please pick a date from tomorrow onward.'
+          : clock && !timeOk
+            ? 'Please pick a time between 8:00 AM and 10:00 PM.'
+            : 'Please complete all required fields before submitting.',
+      );
       return;
     }
     setSubmitting(true);
@@ -90,11 +82,11 @@ export function InterviewInvitationForm({
       await submitInterviewInvitation({
         email: email.trim(),
         interviewFormat,
-        preferredDays,
-        preferredTime,
-        ...(preferredTime === 'Other'
-          ? { preferredTimeOther: preferredTimeOther.trim() }
-          : {}),
+        preferredDate: date,
+        preferredClock: clock,
+        // Kept in the older shape so existing reports still group these invites.
+        preferredDays: [weekdayOf(date) ?? ''],
+        preferredTime: partOfDay(clock),
       });
       setSent(true);
       onSent?.();
@@ -186,67 +178,83 @@ export function InterviewInvitationForm({
         </div>
 
         <div className="survey-card">
-          <div className="na-q" id="preferred-days-label">
-            {t('Preferred day(s), select all that apply')}{' '}
+          <label className="na-q" htmlFor="preferred-date">
+            {t('Preferred interview date')}{' '}
             <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
               *
             </span>
-          </div>
-          <div className="na-checks" role="group" aria-labelledby="preferred-days-label">
-            {DAYS.map((day) => {
-              const checked = preferredDays.includes(day);
-              return (
-                <label key={day} className="na-check">
-                  <input type="checkbox" checked={checked} onChange={() => toggleDay(day)} />
-                  <span className="na-box" aria-hidden="true">
-                    {checked ? '✓' : ''}
-                  </span>
-                  <span>{t(day)}</span>
-                </label>
-              );
-            })}
-          </div>
+          </label>
+          <p className="na-hint">{t('Pick the exact date you can be interviewed. We will email you to confirm before anything is scheduled.')}</p>
+          <input
+            id="preferred-date"
+            className="na-input na-date"
+            type="date"
+            min={minDate}
+            value={date}
+            aria-invalid={date && !dateOk ? true : undefined}
+            onChange={(event) => setDate(event.target.value)}
+          />
         </div>
 
         <div className="survey-card">
           <div className="na-q" id="preferred-time-label">
-            {t('Preferred time of day')}{' '}
+            {t('Preferred interview time')}{' '}
             <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
               *
             </span>
           </div>
-          <div className="na-radios" role="radiogroup" aria-labelledby="preferred-time-label">
-            {TIMES.map((time) => (
-              <label key={time.id} className="na-radio na-radio-wide">
-                <input
-                  type="radio"
-                  name="preferred-time"
-                  checked={preferredTime === time.id}
-                  onChange={() => setPreferredTime(time.id)}
-                />
-                <span className="na-dot" aria-hidden="true" />
-                <span className="na-radio-copy">
-                  <span>{t(time.label)}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-          {preferredTime === 'Other' ? (
-            <div className="interview-invite-fields__other">
-              <label className="na-q" htmlFor="preferred-time-other">
-                {t('Specific time')}{' '}
-                <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
-                  *
-                </span>
-              </label>
-              <input
-                id="preferred-time-other"
-                className="na-input"
-                value={preferredTimeOther}
-                onChange={(event) => setPreferredTimeOther(event.target.value)}
-                placeholder={t('for example, around 6:30 PM')}
-              />
+          <p className="na-hint">{t('Pick an exact start time between 8:00 AM and 10:00 PM.')}</p>
+          <div className="na-time" role="group" aria-labelledby="preferred-time-label">
+            <select
+              className="na-input"
+              aria-label={t('Hour')}
+              value={hour}
+              onChange={(event) => setHour(event.target.value)}
+            >
+              <option value="" disabled>
+                {t('Hour')}
+              </option>
+              {HOURS_12.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+            <span className="na-time__sep" aria-hidden="true">
+              :
+            </span>
+            <select
+              className="na-input"
+              aria-label={t('Minute')}
+              value={minute}
+              onChange={(event) => setMinute(event.target.value)}
+            >
+              <option value="" disabled>
+                {t('Minute')}
+              </option>
+              {MINUTES_5.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+            <div className="na-meridiem" role="group" aria-label="AM / PM">
+              {(['AM', 'PM'] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={meridiem === value}
+                  onClick={() => setMeridiem(value)}
+                >
+                  {value}
+                </button>
+              ))}
             </div>
+          </div>
+          {clock && !timeOk ? (
+            <p className="na-error" role="alert">
+              {t('Please pick a time between 8:00 AM and 10:00 PM.')}
+            </p>
           ) : null}
         </div>
       </div>

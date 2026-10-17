@@ -37,7 +37,7 @@ const heroLetters = [
  */
 export function HomePage() {
   return (
-    <>
+    <div className="home-stage">
       <section className="home-wrap home-wrap--hero" aria-label="Welcome">
         <RevealOnScroll>
           <div className="home-hero">
@@ -179,6 +179,6 @@ export function HomePage() {
           </div>
         </section>
       </div>
-    </>
+    </div>
   );
 }
