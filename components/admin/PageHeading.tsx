@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
+import { PageTitle } from '@/components/admin/PageTitle';
 
 /**
- * Standard admin page heading: a title plus a one-line sub-text that says what the
- * page shows and what the reader can do here. Use on every admin screen.
+ * Standard admin page heading. The title is visible and doubles as the help trigger:
+ * hovering it shows the one-line description (`sub`), and selecting it opens a plain-language
+ * guide to the page (see PAGE_HELP). The description stays in the document for screen readers.
  */
 export function PageHeading({
   id,
@@ -10,18 +12,17 @@ export function PageHeading({
   sub,
   children,
 }: {
+  /** Id of the h1, and the key into PAGE_HELP. */
   id: string;
   title: ReactNode;
   sub: string;
-  /** Optional extra row under the sub-text (for example a status chip). */
+  /** Optional visible row under the title (for example a status chip). */
   children?: ReactNode;
 }) {
   return (
     <div className="dash-page__heading">
-      <h1 id={id} className="dash-page__title">
-        {title}
-      </h1>
-      <p className="dash-page__sub">{sub}</p>
+      <PageTitle pageId={id}>{title}</PageTitle>
+      <p className="visually-hidden">{sub}</p>
       {children}
     </div>
   );

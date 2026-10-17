@@ -2,12 +2,23 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, MoreVertical, Plus } from 'lucide-react';
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  CircleCheck,
+  CircleDashed,
+  Minus,
+  MoreVertical,
+  Plus,
+  StickyNote,
+  Trash2,
+} from 'lucide-react';
 import { ExtendedWidgetCard } from '@/components/admin/charts/ExtendedWidgetCard';
 import { QuestionChartCard } from '@/components/admin/charts/QuestionChartCard';
-import { GatedSectionChips } from '@/components/admin/GatedSectionChips';
+import { IndividualAnswers } from '@/components/admin/IndividualAnswers';
 import { ResponseEmptyState } from '@/components/admin/ResponseEmptyState';
-import { ResponseTable } from '@/components/admin/ResponseTable';
+import { RowMenu } from '@/components/admin/RowMenu';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { canWriteFindingNotes } from '@/lib/admin/access';
@@ -89,12 +100,9 @@ export function ResponseViewsPanel({
   records,
   filtered,
   onCopySummary,
-  copyNote,
   onExport,
   exportDisabled,
-  onView,
   onDelete,
-  highlightId,
   onResetFilters,
   emptyDataset,
   summaryWidgets,
@@ -102,16 +110,15 @@ export function ResponseViewsPanel({
   onRemoveWidget,
   initialTab,
   focusResponseId,
+  rangeEmpty = false,
+  onResetDateRange,
 }: {
   records: SampleRecord[];
   filtered: SampleRecord[];
   onCopySummary: () => void;
-  copyNote: string | null;
   onExport: () => void;
   exportDisabled: boolean;
-  onView: (r: SampleRecord) => void;
   onDelete: (r: SampleRecord) => void;
-  highlightId: string | null;
   onResetFilters: () => void;
   emptyDataset: boolean;
   summaryWidgets: string[];
@@ -119,10 +126,14 @@ export function ResponseViewsPanel({
   onRemoveWidget: (id: string) => void;
   initialTab?: ResponseViewTab;
   focusResponseId?: string | null;
+  /** True when responses exist but the selected date range excludes all of them. */
+  rangeEmpty?: boolean;
+  onResetDateRange?: () => void;
 }) {
   const { user, can } = useAuth();
   const canAddFindingNote =
     can('findingNotes') &&
+    can('findingNotesCreate') &&
     canWriteFindingNotes(
       user
         ? {
@@ -181,6 +192,10 @@ export function ResponseViewsPanel({
     filtered.length === 0 ? 0 : Math.min(individualIndex, filtered.length - 1);
   const currentIndividual = filtered[safeIndividualIndex] ?? null;
 
+  const hasStoredAnswers = Boolean(
+    currentIndividual?.answers && Object.keys(currentIndividual.answers).length > 0,
+  );
+
   const individualDetail = useMemo(() => {
     if (!currentIndividual) return null;
     return currentIndividual;
@@ -189,14 +204,18 @@ export function ResponseViewsPanel({
   if (emptyDataset) {
     return (
       <div className="admin-panel">
-        <ResponseEmptyState kind="empty" />
+        <ResponseEmptyState
+          kind={rangeEmpty ? 'range' : 'empty'}
+          onReset={rangeEmpty ? onResetDateRange : undefined}
+        />
       </div>
     );
   }
 
   return (
     <div className="admin-panel gf-panel">
-      <header className="gf-panel__head gf-panel__head--tabs-only">
+      <div className="gf-panel__bar">
+        <span className="gf-panel__bar-spacer" aria-hidden="true" />
         <div className="gf-tabs" role="tablist" aria-label="Response views">
           {TABS.map((t) => (
             <button
@@ -239,6 +258,7 @@ export function ResponseViewsPanel({
                     onCopySummary();
                     setMenuOpen(false);
                   }}
+                  disabled={records.length === 0}
                 >
                   Copy summary text
                 </button>
@@ -253,17 +273,19 @@ export function ResponseViewsPanel({
                 >
                   Download CSV
                 </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled
+                  title="Manually add a test response (not wired yet)"
+                >
+                  Add response (not available yet)
+                </button>
               </div>
             ) : null}
           </div>
         </div>
-      </header>
-
-      {copyNote ? (
-        <p className="admin-toast-inline" role="status">
-          {copyNote}
-        </p>
-      ) : null}
+      </div>
 
       <div
         id={`gf-panel-${tab}`}
@@ -369,9 +391,19 @@ export function ResponseViewsPanel({
               >
                 <ChevronLeft size={20} strokeWidth={2.4} aria-hidden="true" />
               </button>
-              <span className="gf-pager__label">
-                Question {safeQuestionIndex + 1} of {RESPONSE_QUESTIONS.length}
-              </span>
+              <select
+                className="gf-pager__select"
+                aria-label="Jump to question"
+                value={safeQuestionIndex}
+                onChange={(e) => setQuestionIndex(Number(e.target.value))}
+              >
+                {RESPONSE_QUESTIONS.map((q, i) => (
+                  <option key={q.id} value={i}>
+                    {q.title}
+                  </option>
+                ))}
+              </select>
+              <span className="gf-pager__count">of {RESPONSE_QUESTIONS.length}</span>
               <button
                 type="button"
                 className="gf-pager__btn"
@@ -423,9 +455,19 @@ export function ResponseViewsPanel({
                   >
                     <ChevronLeft size={20} strokeWidth={2.4} aria-hidden="true" />
                   </button>
-                  <span className="gf-pager__label">
-                    Response {safeIndividualIndex + 1} of {filtered.length}
-                  </span>
+                  <select
+                    className="gf-pager__select"
+                    aria-label="Jump to response"
+                    value={safeIndividualIndex}
+                    onChange={(e) => setIndividualIndex(Number(e.target.value))}
+                  >
+                    {filtered.map((r, i) => (
+                      <option key={r.id} value={i}>
+                        {formatSubmissionLabel(r.submissionNumber ?? 0, r.phase)}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="gf-pager__count">of {filtered.length}</span>
                   <button
                     type="button"
                     className="gf-pager__btn"
@@ -440,97 +482,144 @@ export function ResponseViewsPanel({
                 </div>
 
                 {individualDetail ? (
-                  <article className="gf-card gf-individual__card">
+                  <article className="gf-card gf-individual__card" aria-labelledby="gf-individual-title">
                     <header className="gf-individual__head">
-                      <div>
-                        <h3 className="gf-card__title">
+                      <div className="gf-individual__id">
+                        <h3 id="gf-individual-title" className="gf-card__title">
                           {formatSubmissionLabel(
                             individualDetail.submissionNumber ?? 0,
                             individualDetail.phase,
                           )}
                         </h3>
-                        <p className="gf-card__meta">{individualDetail.ts}</p>
+                        <p className="gf-card__meta">
+                          {individualDetail.ts}
+                          <span className={`rr-pill${individualDetail.status === 'partial' ? ' rr-pill--partial' : ''}`}>
+                            {individualDetail.status === 'partial' ? (
+                              <CircleDashed size={14} strokeWidth={2.4} aria-hidden="true" />
+                            ) : (
+                              <CircleCheck size={14} strokeWidth={2.4} aria-hidden="true" />
+                            )}
+                            {individualDetail.status === 'partial' ? 'Partial' : 'Complete'}
+                          </span>
+                        </p>
                       </div>
-                      <div className="gf-individual__actions">
-                        <button
-                          type="button"
-                          className="gf-individual__link"
-                          onClick={() => onView(individualDetail)}
-                        >
-                          Open detail
-                        </button>
-                        <button
-                          type="button"
-                          className="gf-individual__danger"
-                          onClick={() => onDelete(individualDetail)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </header>
-                    <dl className="gf-individual__dl">
-                      <div>
-                        <dt>Phase</dt>
-                        <dd>{individualDetail.phase}</dd>
-                      </div>
-                      <div>
-                        <dt>Resident type</dt>
-                        <dd>{individualDetail.resident}</dd>
-                      </div>
-                      <div>
-                        <dt>PWD (screening)</dt>
-                        <dd>{individualDetail.pwd}</dd>
-                      </div>
-                      <div>
-                        <dt>Language</dt>
-                        <dd>{individualDetail.language}</dd>
-                      </div>
-                    </dl>
-                    <div className="gf-individual__block">
-                      <h4 className="gf-individual__sub">Gated branches</h4>
-                      <GatedSectionChips
-                        homeowner={individualDetail.homeowner}
-                        tenant={individualDetail.tenant}
-                        accessibility={individualDetail.accessibility}
-                        permitsExtended={individualDetail.permitsExtended}
-                        deviceDependent={individualDetail.deviceDependent}
+                      <RowMenu
+                        label="More actions for this response"
+                        items={[
+                          ...(canAddFindingNote
+                            ? [
+                                {
+                                  key: 'note',
+                                  label: 'Add finding note',
+                                  icon: <StickyNote size={16} aria-hidden="true" />,
+                                  href: '/admin/notes/?new=1',
+                                },
+                              ]
+                            : []),
+                          {
+                            key: 'delete',
+                            label: 'Delete response…',
+                            icon: <Trash2 size={16} aria-hidden="true" />,
+                            danger: true,
+                            onSelect: () => onDelete(individualDetail),
+                          },
+                        ]}
                       />
+                    </header>
+
+                    <div className="gf-individual__cols">
+                      <section className="gf-individual__block" aria-labelledby="gf-ind-resp">
+                        <h4 id="gf-ind-resp" className="gf-individual__sub">Respondent</h4>
+                        <dl className="gf-individual__dl">
+                          <div>
+                            <dt>Phase</dt>
+                            <dd>{individualDetail.phase}</dd>
+                          </div>
+                          <div>
+                            <dt>Resident type</dt>
+                            <dd>{individualDetail.resident}</dd>
+                          </div>
+                          <div>
+                            <dt>PWD (screening)</dt>
+                            <dd>{individualDetail.pwd}</dd>
+                          </div>
+                          <div>
+                            <dt>Language</dt>
+                            <dd>{individualDetail.language}</dd>
+                          </div>
+                          <div>
+                            <dt>Survey version</dt>
+                            <dd>{individualDetail.instrumentVersion || 'Not recorded'}</dd>
+                          </div>
+                        </dl>
+                      </section>
+
+                      <section className="gf-individual__block" aria-labelledby="gf-ind-branch">
+                        <h4 id="gf-ind-branch" className="gf-individual__sub">
+                          Extra sections this person saw
+                        </h4>
+                        <ul className="gf-individual__gates">
+                          {[
+                            { label: 'Homeowner', on: individualDetail.homeowner },
+                            { label: 'Tenant / lessee', on: individualDetail.tenant },
+                            { label: 'Accessibility', on: individualDetail.accessibility },
+                            { label: 'Permit follow-ups', on: individualDetail.permitsExtended },
+                            { label: 'Device-dependent digital', on: individualDetail.deviceDependent },
+                          ].map((g) => (
+                            <li key={g.label} className={g.on ? 'is-on' : ''}>
+                              <span>{g.label}</span>
+                              <span className="gf-individual__gate-state">
+                                {g.on ? (
+                                  <Check size={14} strokeWidth={2.6} aria-hidden="true" />
+                                ) : (
+                                  <Minus size={14} strokeWidth={2.6} aria-hidden="true" />
+                                )}
+                                {g.on ? 'Shown' : 'Not shown'}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+
+                      {hasStoredAnswers ? null : (
+                      <section className="gf-individual__block" aria-labelledby="gf-ind-comm">
+                        <h4 id="gf-ind-comm" className="gf-individual__sub">Communication quality</h4>
+                        <ul className="gf-individual__likert">
+                          {LIKERT_LABELS.map(({ key, label }) => (
+                            <li key={key}>
+                              <span>{label}</span>
+                              <meter
+                                className="gf-individual__meter"
+                                min={1}
+                                max={5}
+                                value={individualDetail.section2[key]}
+                                aria-label={`${label}: ${individualDetail.section2[key]} out of 5`}
+                              />
+                              <strong>{individualDetail.section2[key]} / 5</strong>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                      )}
+
+                      <section className="gf-individual__block" aria-labelledby="gf-ind-notes">
+                        <h4 id="gf-ind-notes" className="gf-individual__sub">Screening notes</h4>
+                        <ul className="gf-individual__notes">
+                          {individualDetail.screeningNotes.map((n) => (
+                            <li key={n}>{n}</li>
+                          ))}
+                        </ul>
+                      </section>
                     </div>
-                    <div className="gf-individual__block">
-                      <h4 className="gf-individual__sub">Communication quality</h4>
-                      <ul className="gf-individual__likert">
-                        {LIKERT_LABELS.map(({ key, label }) => (
-                          <li key={key}>
-                            <span>{label}</span>
-                            <strong>{individualDetail.section2[key]} / 5</strong>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="gf-individual__block">
-                      <h4 className="gf-individual__sub">Screening notes</h4>
-                      <ul className="gf-individual__notes">
-                        {individualDetail.screeningNotes.map((n) => (
-                          <li key={n}>{n}</li>
-                        ))}
-                      </ul>
-                    </div>
+
+                    <section className="gf-individual__answers" aria-labelledby="gf-ind-answers">
+                      <h4 id="gf-ind-answers" className="gf-individual__sub">
+                        Their answers
+                      </h4>
+                      <IndividualAnswers record={individualDetail} />
+                    </section>
                   </article>
                 ) : null}
-
-                <div className="gf-individual__table">
-                  <h4 className="gf-individual__sub">All matching responses</h4>
-                  <ResponseTable
-                    records={filtered}
-                    onView={(r) => {
-                      const idx = filtered.findIndex((x) => x.id === r.id);
-                      if (idx >= 0) setIndividualIndex(idx);
-                      onView(r);
-                    }}
-                    onDelete={onDelete}
-                    highlightId={highlightId}
-                  />
-                </div>
               </>
             )}
           </div>
@@ -538,10 +627,8 @@ export function ResponseViewsPanel({
       </div>
 
       <p className="admin-panel__footnote">
-        Fields belonging to a section a respondent never unlocked are stored as{' '}
-        <code>not_shown</code> rather than blank, so an unanswered question and an unasked
-        question stay distinguishable in analysis. Toolbar + tabs stay top-left (F/Z scan)
-        on purpose.
+        Questions in a section a respondent never saw are saved as “not shown”, not left blank,
+        so a skipped question and an unasked one stay distinguishable in analysis.
       </p>
     </div>
   );

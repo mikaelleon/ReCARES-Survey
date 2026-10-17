@@ -3,16 +3,30 @@
 import { useState } from 'react';
 import type { CountBucket } from '@/lib/admin/analytics';
 
+/** Emerald + Bright Amber + Dim Grey only. Harvest Orange is never a data fill. */
 const PIE_COLORS = [
-  '#13693f',
-  '#e87820',
-  '#1a8f56',
-  '#c45c12',
-  '#2d6a4f',
-  '#f0a060',
-  '#0d4d2e',
-  '#8f4510',
+  'var(--emerald-800)',
+  'var(--bright-amber)',
+  'var(--emerald-400)',
+  'var(--dim-grey)',
+  'var(--emerald-900)',
+  'var(--emerald-600)',
+  'var(--emerald-500)',
+  'var(--emerald-700)',
 ];
+
+/** Slice colours light enough that a dark percentage label reads better than a light one. */
+const LIGHT_FILLS = new Set([
+  'var(--bright-amber)',
+  'var(--emerald-400)',
+  'var(--emerald-500)',
+  'var(--emerald-600)',
+  'var(--dim-grey)',
+]);
+
+function labelFill(color: string): string {
+  return LIGHT_FILLS.has(color) ? 'var(--black)' : 'var(--white)';
+}
 
 function polar(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -81,7 +95,14 @@ export function PieChart({
             >
               <title>{tipText(only)}</title>
             </circle>
-            <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" className="gf-pie__label">
+            <text
+              x={cx}
+              y={cy}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className="gf-pie__label"
+              style={{ fill: labelFill(color) }}
+            >
               {only.pct}%
             </text>
           </svg>
@@ -150,6 +171,7 @@ export function PieChart({
                 textAnchor="middle"
                 dominantBaseline="middle"
                 className="gf-pie__label"
+                style={{ fill: labelFill(colorOf(s.label)) }}
                 pointerEvents="none"
               >
                 {s.pct}%
