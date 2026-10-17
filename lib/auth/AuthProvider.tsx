@@ -17,7 +17,7 @@ import {
   type AdminAccessState,
   type AdminPermissions,
   type AdminRole,
-  type DashboardPermissionKey,
+  type PermissionKey,
 } from '@/lib/admin/access';
 import { DEFAULT_SUMMARY_WIDGETS } from '@/lib/admin/summaryWidgets';
 import { logoutAdmin, resolveAdminProfile, signInMethodLabel } from '@/lib/firebase/auth';
@@ -50,7 +50,7 @@ interface AuthContextValue {
   firestoreError: string | null;
   logout: () => Promise<void>;
   reloadProfile: () => Promise<void>;
-  can: (key: DashboardPermissionKey) => boolean;
+  can: (key: PermissionKey) => boolean;
   isSuperadmin: boolean;
   /** Members & Inquiries — proponents and superadmins only (not advisers). */
   canTeamOps: boolean;
@@ -176,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const can = useCallback(
-    (key: DashboardPermissionKey) => {
+    (key: PermissionKey) => {
       if (!user || !user.authorized) return false;
       return hasPermission(
         {

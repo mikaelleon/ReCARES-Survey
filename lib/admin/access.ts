@@ -47,6 +47,21 @@ export const DASHBOARD_PERMISSION_KEYS = [
 
 export type DashboardPermissionKey = (typeof DASHBOARD_PERMISSION_KEYS)[number];
 
+/** Fine-grained actions under each page. Unset means allowed; the parent page must be on. */
+export const ACTION_PERMISSION_PARENTS = {
+  responsesDelete: 'responsesDashboard',
+  interviewsEdit: 'interviewInvites',
+  interviewsExport: 'interviewInvites',
+  interviewsDelete: 'interviewInvites',
+  findingNotesCreate: 'findingNotes',
+  findingNotesEdit: 'findingNotes',
+  findingNotesDelete: 'findingNotes',
+} as const satisfies Record<string, DashboardPermissionKey>;
+
+export type ActionPermissionKey = keyof typeof ACTION_PERMISSION_PARENTS;
+
+export type PermissionKey = DashboardPermissionKey | ActionPermissionKey;
+
 export const DASHBOARD_PERMISSION_LABELS: Record<DashboardPermissionKey, string> = {
   responsesDashboard: 'Responses dashboard',
   interviewInvites: 'Interview invites',
@@ -104,10 +119,14 @@ export function getAdminAccessState(
 /** Superadmin passes every permission check regardless of the permissions map. */
 export function hasPermission(
   adminDoc: AdminProfile | null | undefined,
-  key: DashboardPermissionKey,
+  key: PermissionKey,
 ): boolean {
   if (!adminDoc || adminDoc.status !== 'active') return false;
   if (adminDoc.role === 'superadmin') return true;
+  if (key in ACTION_PERMISSION_PARENTS) {
+    const parent = ACTION_PERMISSION_PARENTS[key as ActionPermissionKey];
+    return Boolean(adminDoc.permissions?.[parent]) && adminDoc.permissions?.[key] !== false;
+  }
   return Boolean(adminDoc.permissions?.[key]);
 }
 
