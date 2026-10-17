@@ -4,6 +4,8 @@ import { ChatWidget } from '@/components/ChatWidget';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
 import '@/styles/globals.css';
+import '@/styles/inquiries.css';
+import '@/styles/workspace-ui.css';
 
 const lato = Lato({
   subsets: ['latin'],

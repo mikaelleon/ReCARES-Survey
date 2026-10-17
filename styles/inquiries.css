@@ -1,0 +1,456 @@
+/* Inquiries screen: layout only.
+   Card, button, chip, pill and switcher looks come from styles/workspace-ui.css. */
+
+.inquiries-page {
+  min-width: 0;
+}
+
+.inq-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin: 0 0 16px;
+  padding: 16px;
+}
+
+.inq-toolbar__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 240px;
+  max-width: 420px;
+  min-width: 0;
+  color: var(--ws-muted);
+}
+
+.inq-toolbar__search > svg {
+  position: absolute;
+  left: 14px;
+  pointer-events: none;
+}
+
+.inq-toolbar__search input {
+  width: 100%;
+  min-height: var(--ws-hit);
+  box-sizing: border-box;
+  border: 1px solid var(--field-border);
+  font-family: var(--font-sans);
+  font-size: var(--text-body-size);
+}
+
+.inq-toolbar__search button,
+.inq-toast button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ws-hit);
+  height: var(--ws-hit);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ws-ink-soft);
+  cursor: pointer;
+}
+
+.inq-toolbar__search button {
+  position: absolute;
+  right: 2px;
+}
+
+.inq-toolbar__search button:hover,
+.inq-toast button:hover {
+  background: var(--ws-tint);
+}
+
+.inq-toolbar__sort {
+  flex: 0 1 180px;
+  min-width: 140px;
+}
+
+.inq-toolbar__sort select {
+  min-height: var(--ws-hit);
+}
+
+.inq-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1 1 100%;
+  padding-top: 12px;
+  border-top: 1px solid var(--ws-card-border);
+}
+
+.inq-chip__count {
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--ws-tint);
+  font-size: 12px;
+  text-align: center;
+}
+
+.inq-chip.is-active .inq-chip__count {
+  background: var(--ws-fill);
+  color: var(--ws-on-fill);
+}
+
+.inq-count {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ws-muted);
+}
+
+.inq-toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 8px 8px 8px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ws-ink);
+  overflow-wrap: anywhere;
+}
+
+.inq-toast > svg {
+  flex: none;
+  color: var(--ws-fill);
+}
+
+.inq-toast > span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.inq-toast--error > svg {
+  color: color-mix(in srgb, var(--error-red) 70%, var(--black));
+}
+
+[data-theme='dark'] .inq-toast--error > svg {
+  color: color-mix(in srgb, var(--error-red) 40%, var(--white));
+}
+
+.inq-state {
+  padding: 32px;
+}
+
+.inq-state .admin-empty__title {
+  color: var(--ws-ink);
+}
+
+.inq-state .admin-empty__body {
+  color: var(--ws-muted);
+}
+
+.inq-link-btn {
+  align-self: flex-start;
+  min-height: var(--ws-hit);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ws-ink-soft);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.inq-link-btn:hover {
+  color: var(--ws-fill);
+}
+
+.inq-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.inq-pill {
+  height: 26px;
+}
+
+.inq-meta {
+  font-size: 13px;
+  color: var(--ws-muted);
+  white-space: nowrap;
+}
+
+.inq-email {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--ws-ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.inq-email:hover {
+  color: var(--ws-fill);
+}
+
+.inq-sender {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.inq-sender__name,
+.inq-card__name {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ws-ink);
+}
+
+/* Cards (comfortable + compact) */
+.inq-cards {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+}
+
+.inq-cards--compact {
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+}
+
+.inq-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.inq-card--compact {
+  gap: 8px;
+  padding: 12px;
+}
+
+.inq-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.inq-card__who {
+  min-width: 0;
+}
+
+.inq-card--compact .inq-email {
+  display: none;
+}
+
+.inq-card__msg {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ws-ink-soft);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.inq-card--compact .inq-card__msg {
+  -webkit-line-clamp: 2;
+}
+
+.inq-card__msg.is-open {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+
+.inq-card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--ws-card-border);
+}
+
+/* List: one row per inquiry */
+.inq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.inq-list__row {
+  display: grid;
+  align-items: center;
+  gap: 8px 16px;
+  grid-template-columns: 128px minmax(160px, 1fr) minmax(0, 2fr) 150px 220px;
+  min-width: 0;
+  padding: 8px 16px;
+}
+
+.inq-list__row > .inq-actions {
+  justify-self: end;
+}
+
+.inq-list__msg {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--ws-ink-soft);
+}
+
+@media (max-width: 1180px) {
+  .inq-list__row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'status sender actions'
+      'msg msg msg'
+      'when when when';
+  }
+
+  .inq-list__status {
+    grid-area: status;
+  }
+
+  .inq-list__row > .inq-sender {
+    grid-area: sender;
+  }
+
+  .inq-list__msg {
+    grid-area: msg;
+  }
+
+  .inq-list__when {
+    grid-area: when;
+  }
+
+  .inq-list__row > .inq-actions {
+    grid-area: actions;
+  }
+}
+
+.inq-list--skel .inq-list__row {
+  grid-template-areas: none;
+  grid-template-columns: 120px minmax(0, 1fr) minmax(0, 2fr);
+  min-height: 56px;
+}
+
+/* Table: sticky sortable header inside one card */
+.inq-table-wrap {
+  max-height: min(70vh, 720px);
+  overflow: auto;
+}
+
+.inq-table {
+  width: 100%;
+  min-width: 880px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.inq-table th,
+.inq-table td {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: middle;
+  border-top: 1px solid var(--ws-card-border);
+  font-size: 14px;
+  color: var(--ws-ink-soft);
+}
+
+.inq-table tbody tr:hover td {
+  background: var(--ws-tint);
+}
+
+.inq-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  border-top: 0;
+  background: var(--ws-card-bg);
+  box-shadow: inset 0 -1px 0 var(--ws-card-border);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ws-muted);
+}
+
+.inq-table th:nth-child(1) {
+  width: 170px;
+}
+
+.inq-table th:nth-child(2) {
+  width: 230px;
+}
+
+.inq-table th:nth-child(4) {
+  width: 140px;
+}
+
+.inq-table th.inq-table__actions-col {
+  width: 250px;
+}
+
+.inq-table__actions-col {
+  text-align: right;
+}
+
+.inq-table__actions-col .inq-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.inq-table__msg p {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.inq-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--ws-hit);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.inq-sort:hover,
+th[aria-sort='ascending'] .inq-sort,
+th[aria-sort='descending'] .inq-sort {
+  color: var(--ws-ink);
+}

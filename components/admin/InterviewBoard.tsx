@@ -252,7 +252,7 @@ export function InterviewBoard({
             return (
               <section
                 key={col.id}
-                className="admin-kanban-col"
+                className={`admin-kanban-col admin-kanban-col--${col.id}`}
                 aria-labelledby={`interview-col-${col.id}`}
               >
                 <header className="admin-kanban-col__head">
