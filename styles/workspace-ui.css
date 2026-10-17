@@ -1,0 +1,591 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Workspace UI: the one shared set of cards, buttons, pills, chips and view
+   switchers for every admin screen. Loaded AFTER globals.css (see app/layout.tsx).
+
+   Reference look is the Dashboard: white cards with a thin soft-emerald border and
+   a soft emerald shadow, and pill-shaped controls (as in the Members Board /
+   Compact / List switcher). Emerald is the single action colour. No colored
+   stripes, rails or role-colored card fills; status is carried by text + icon.
+
+   Two ways to use it:
+   1. New code: use the .ws-* classes directly.
+   2. Existing screens: legacy class names are listed in the groups below, so they
+      pick up the same recipe without markup changes. When adding a screen, prefer
+      .ws-* and do not add per-screen card/button styling.
+
+   Specificity: `.admin-app.admin-app :is(...)` is intentionally above the legacy
+   per-screen rules in globals.css, so this file wins without !important.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
+.admin-app {
+  --ws-ink: #10281c;
+  --ws-ink-soft: #3a5748;
+  --ws-muted: rgba(16, 40, 28, 0.62);
+  --ws-card-bg: #ffffff;
+  --ws-card-border: rgba(19, 105, 63, 0.11);
+  --ws-card-shadow: 0 8px 22px rgba(19, 105, 63, 0.07);
+  --ws-card-shadow-hover: 0 14px 28px rgba(19, 105, 63, 0.12);
+  --ws-tint: rgba(19, 105, 63, 0.1);
+  --ws-fill: var(--dark-emerald);
+  --ws-fill-hover: var(--emerald-700);
+  --ws-on-fill: #ffffff;
+  --ws-control-border: var(--border-default);
+  --ws-radius-card: 16px;
+  --ws-radius-inner: 12px;
+  --ws-hit: 40px;
+}
+
+[data-theme='dark'] .admin-app {
+  --ws-ink: #f2f7f4;
+  --ws-ink-soft: rgba(229, 235, 232, 0.88);
+  --ws-muted: rgba(229, 235, 232, 0.62);
+  --ws-card-bg: #1c221e;
+  --ws-card-border: rgba(142, 228, 181, 0.14);
+  --ws-card-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+  --ws-card-shadow-hover: 0 14px 28px rgba(0, 0, 0, 0.45);
+  --ws-tint: rgba(142, 228, 181, 0.12);
+}
+
+@media (pointer: coarse), (max-width: 640px) {
+  .admin-app {
+    --ws-hit: var(--touch-target-min);
+  }
+}
+
+/* ── Cards ──────────────────────────────────────────────────────────────── */
+.admin-app.admin-app :is(
+    .ws-card,
+    .members-toolbar,
+    .members-table-wrap,
+    .admin-kanban-col,
+    .finding-note-card,
+    .finding-notes-toolbar,
+    .responses-toolbar,
+    .gf-card,
+    .gf-individual__card,
+    .admin-panel,
+    .survey-control-card,
+    .survey-history,
+    .survey-status-card,
+    .inq-toolbar,
+    .inq-toast,
+    .inq-state,
+    .inq-card,
+    .inq-list__row,
+    .inq-table-wrap
+  ) {
+  background: var(--ws-card-bg);
+  border: 1px solid var(--ws-card-border);
+  border-radius: var(--ws-radius-card);
+  box-shadow: var(--ws-card-shadow);
+}
+
+/* Cards that sit inside another card: border only, smaller radius (one elevation level) */
+.admin-app.admin-app :is(.admin-kanban-col .admin-kanban-card, .survey-status-card, .gf-card .gf-card) {
+  border-radius: var(--ws-radius-inner);
+  box-shadow: none;
+}
+
+.admin-app.admin-app .admin-kanban-card {
+  background: var(--ws-card-bg);
+  border: 1px solid var(--ws-card-border);
+  border-radius: var(--ws-radius-inner);
+  box-shadow: none;
+  color: var(--ws-ink-soft);
+}
+
+/* No colored rails, role-colored fills or stage-colored column edges */
+.admin-app.admin-app .admin-kanban-card::before {
+  display: none;
+}
+
+.admin-app.admin-app .members-page .admin-kanban-card,
+.admin-app.admin-app .admin-kanban-card {
+  padding: 12px 16px;
+}
+
+.admin-app.admin-app .admin-kanban-col {
+  border-top: 1px solid var(--ws-card-border);
+}
+
+.admin-app.admin-app .admin-kanban-card :is(.admin-kanban-card__name) {
+  color: var(--ws-ink);
+}
+
+.admin-app.admin-app .admin-kanban-card :is(.admin-kanban-card__muted, .admin-kanban-card__history) {
+  color: var(--ws-muted);
+}
+
+.admin-app.admin-app .admin-kanban-card .admin-avatar {
+  background: var(--ws-tint);
+  color: var(--ws-fill);
+}
+
+.admin-app.admin-app .admin-kanban-card__actions {
+  border-top-color: var(--ws-card-border);
+}
+
+/* Lift on hover for browsable item cards */
+@media (hover: hover) {
+  .admin-app.admin-app :is(.admin-kanban-card, .finding-note-card, .inq-card, .inq-list__row, .ws-card--lift):hover {
+    transform: translateY(-1px);
+    box-shadow: var(--ws-card-shadow-hover);
+    border-color: rgba(19, 105, 63, 0.22);
+  }
+}
+
+.admin-app.admin-app :is(.admin-kanban-card, .finding-note-card, .inq-card, .inq-list__row, .ws-card--lift) {
+  transition:
+    box-shadow 200ms ease,
+    border-color 200ms ease,
+    transform 200ms ease;
+}
+
+/* Survey state cards: tone shows only on the selected/hovered card (see Tone map below) */
+
+.admin-app.admin-app .dash-stat--hero[class*='survey-kpi--'] {
+  background: linear-gradient(160deg, var(--emerald-900) 0%, var(--dark-emerald) 55%, var(--emerald-700) 100%);
+  border-color: transparent;
+}
+
+/* ── Buttons: pill, emerald as the only action colour ───────────────────── */
+.admin-app.admin-app :is(
+    .ws-btn,
+    .admin-kanban-icon-btn,
+    .survey-control__tool,
+    .survey-preview__btn,
+    .rt-toggle,
+    .rt-dir,
+    .rt-clear,
+    .rt-filter-toggle,
+    .admin-toolbar__dir,
+    .admin-empty__btn,
+    .dash-quick__btn,
+    .inq-btn
+  ) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--ws-hit);
+  padding: 0 16px;
+  border: 1px solid var(--ws-control-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ws-ink-soft);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.admin-app.admin-app :is(
+    .ws-btn,
+    .admin-kanban-icon-btn,
+    .survey-control__tool,
+    .survey-preview__btn,
+    .rt-toggle,
+    .rt-dir,
+    .rt-clear,
+    .rt-filter-toggle,
+    .admin-toolbar__dir,
+    .admin-empty__btn,
+    .dash-quick__btn
+  ):hover:not(:disabled) {
+  background: var(--ws-tint);
+  border-color: var(--ws-fill);
+  color: var(--ws-ink);
+}
+
+.admin-app.admin-app :is(.ws-btn, .admin-kanban-icon-btn, .survey-control__tool, .rt-toggle, .rt-dir, .dash-quick__btn, .inq-btn):active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.admin-app.admin-app :is(.ws-btn, .admin-kanban-icon-btn, .survey-control__tool, .survey-preview__btn, .rt-toggle, .rt-dir, .rt-clear, .admin-toolbar__dir, .admin-empty__btn, .dash-quick__btn, .inq-btn):disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary */
+.admin-app.admin-app :is(
+    .ws-btn--primary,
+    .admin-kanban-icon-btn--primary,
+    .survey-control__tool--primary,
+    .survey-preview__btn:not(.survey-preview__btn--ghost),
+    .admin-toolbar__dir,
+    .dash-quick__btn--primary,
+    .inq-btn
+  ) {
+  background: var(--ws-fill);
+  border-color: var(--ws-fill);
+  color: var(--ws-on-fill);
+}
+
+.admin-app.admin-app :is(
+    .ws-btn--primary,
+    .admin-kanban-icon-btn--primary,
+    .survey-control__tool--primary,
+    .survey-preview__btn:not(.survey-preview__btn--ghost),
+    .admin-toolbar__dir,
+    .dash-quick__btn--primary,
+    .inq-btn
+  ):hover:not(:disabled) {
+  background: var(--ws-fill-hover);
+  border-color: var(--ws-fill-hover);
+  color: var(--ws-on-fill);
+  box-shadow: 0 6px 14px rgba(19, 105, 63, 0.22);
+}
+
+[data-theme='dark'] .admin-app.admin-app :is(.ws-btn--primary, .admin-kanban-icon-btn--primary, .survey-control__tool--primary, .dash-quick__btn--primary, .inq-btn) {
+  border-color: var(--emerald-400);
+}
+
+/* Danger: outlined pill, never the most prominent control */
+.admin-app.admin-app :is(.ws-btn--danger, .admin-kanban-icon-btn--danger, .members-bulk__danger, .members-col-danger) {
+  border-radius: 999px;
+  background: transparent;
+  border-color: color-mix(in srgb, var(--error-red) 45%, transparent);
+  color: color-mix(in srgb, var(--error-red) 70%, black);
+}
+
+[data-theme='dark'] .admin-app.admin-app :is(.ws-btn--danger, .admin-kanban-icon-btn--danger, .members-bulk__danger, .members-col-danger) {
+  color: color-mix(in srgb, var(--error-red) 40%, white);
+}
+
+.admin-app.admin-app :is(.ws-btn--danger, .admin-kanban-icon-btn--danger, .members-bulk__danger, .members-col-danger):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--error-red) 10%, transparent);
+  border-color: var(--error-red);
+}
+
+/* Round icon buttons */
+.admin-app.admin-app :is(.ws-icon-btn, .row-menu__trigger, .gf-pager__btn, .overflow-menu__btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ws-hit);
+  height: var(--ws-hit);
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--ws-control-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ws-ink-soft);
+  cursor: pointer;
+}
+
+.admin-app.admin-app :is(.ws-icon-btn, .row-menu__trigger, .gf-pager__btn, .overflow-menu__btn):hover:not(:disabled),
+.admin-app.admin-app :is(.row-menu__trigger, .overflow-menu__btn)[aria-expanded='true'] {
+  background: var(--ws-tint);
+  border-color: var(--ws-fill);
+}
+
+/* ── Chips (filters) ────────────────────────────────────────────────────── */
+.admin-app.admin-app :is(.ws-chip, .members-toolbar__chip, .survey-chip, .inq-chip) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--ws-hit);
+  padding: 0 16px;
+  border: 1px solid var(--ws-card-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ws-ink-soft);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.admin-app.admin-app :is(.ws-chip, .members-toolbar__chip, .survey-chip, .inq-chip):hover {
+  border-color: var(--ws-fill);
+  background: var(--ws-tint);
+}
+
+.admin-app.admin-app :is(.ws-chip, .members-toolbar__chip, .survey-chip, .inq-chip):is(.is-active, .is-selected, [aria-pressed='true']) {
+  border-color: var(--ws-fill);
+  background: var(--ws-tint);
+  color: var(--ws-ink);
+}
+
+/* ── Pills (read-only status / role / tag badges): one tonal recipe ─────── */
+.admin-app.admin-app :is(
+    .ws-pill,
+    .admin-kanban-role,
+    .admin-kanban-card__you,
+    .members-status,
+    .finding-status,
+    [class*='finding-tag'],
+    .survey-window-chip,
+    .rr-pill,
+    .perm-tag,
+    .admin-permission-chip,
+    .inq-pill
+  ) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  --tone: var(--ws-success);
+  padding: 3px 10px;
+  border: 1px solid color-mix(in srgb, var(--tone) 28%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tone) 12%, transparent);
+  color: color-mix(in srgb, var(--tone) 78%, black);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+[data-theme='dark'] .admin-app.admin-app :is(
+    .ws-pill,
+    .admin-kanban-role,
+    .admin-kanban-card__you,
+    .members-status,
+    .finding-status,
+    [class*='finding-tag'],
+    .survey-window-chip,
+    .rr-pill,
+    .perm-tag,
+    .admin-permission-chip,
+    .inq-pill
+  ) {
+  color: color-mix(in srgb, var(--tone) 45%, white);
+}
+
+/* ── Tone map: subtle semantic color ─────────────────────────────────────
+   Hue is a quiet second cue; the label and icon still carry the meaning.
+   success = healthy / done / owner, info = in flight / informational,
+   warn = needs attention, danger = destructive / closed, neutral = inactive.
+   Applied only to small marks (pills, avatars, column dots), never to whole cards. */
+.admin-app {
+  --ws-success: #13693f;
+  --ws-info: #2563eb;
+  --ws-warn: #b45309;
+  --ws-danger: var(--error-red);
+  --ws-neutral: #6b6362;
+}
+
+[data-theme='dark'] .admin-app {
+  --ws-success: #3db579;
+  --ws-info: #5b8def;
+  --ws-warn: #e0a02e;
+  --ws-neutral: #9a9190;
+}
+
+.admin-app.admin-app :is(
+    .ws-tone--success,
+    .members-status--active,
+    .admin-kanban-role--proponent,
+    .admin-kanban-card--proponent,
+    .inq-pill--resolved,
+    .finding-tag--theme,
+    .finding-status--final,
+    .perm-tag--create,
+    .survey-window-chip--open,
+    .survey-status-card--open,
+    .admin-kanban-col--active,
+    .admin-kanban-col--confirmed
+  ) {
+  --tone: var(--ws-success);
+}
+
+.admin-app.admin-app :is(
+    .ws-tone--info,
+    .members-status--invited,
+    .admin-kanban-role--adviser,
+    .admin-kanban-card--adviser,
+    .inq-pill--progress,
+    .finding-tag--recommendation,
+    .perm-tag--update,
+    .admin-kanban-col--invited
+  ) {
+  --tone: var(--ws-info);
+}
+
+.admin-app.admin-app :is(
+    .ws-tone--warn,
+    .members-status--pending,
+    .admin-kanban-role--superadmin,
+    .admin-kanban-card--superadmin,
+    .inq-pill--new,
+    .finding-tag--barrier,
+    .perm-tag--export,
+    .survey-window-chip--paused,
+    .survey-status-card--paused,
+    .rr-pill--partial,
+    .admin-kanban-col--pending,
+    .admin-kanban-col--pending_confirmation
+  ) {
+  --tone: var(--ws-warn);
+}
+
+.admin-app.admin-app :is(
+    .ws-tone--danger,
+    .finding-tag--anomaly,
+    .perm-tag--delete,
+    .survey-window-chip--closed,
+    .survey-status-card--closed
+  ) {
+  --tone: var(--ws-danger);
+}
+
+.admin-app.admin-app :is(
+    .ws-tone--neutral,
+    .members-status--removed,
+    .finding-status--draft,
+    .admin-kanban-col--removed,
+    .admin-kanban-col--not_contacted
+  ) {
+  --tone: var(--ws-neutral);
+}
+
+/* Kanban columns: a small tone dot and tinted count; the card itself stays neutral */
+.admin-app.admin-app :where(.admin-kanban-col) {
+  --tone: var(--ws-neutral);
+}
+
+.admin-app.admin-app .admin-kanban-col__title::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--tone);
+}
+
+.admin-app.admin-app .admin-kanban-col__count {
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+  color: color-mix(in srgb, var(--tone) 78%, black);
+}
+
+[data-theme='dark'] .admin-app.admin-app .admin-kanban-col__count {
+  color: color-mix(in srgb, var(--tone) 45%, white);
+}
+
+/* Member avatars take the role tone */
+.admin-app.admin-app .admin-kanban-card .admin-avatar {
+  background: color-mix(in srgb, var(--tone, var(--ws-success)) 16%, transparent);
+  color: color-mix(in srgb, var(--tone, var(--ws-success)) 78%, black);
+}
+
+[data-theme='dark'] .admin-app.admin-app .admin-kanban-card .admin-avatar {
+  color: color-mix(in srgb, var(--tone, var(--ws-success)) 45%, white);
+}
+
+/* Survey state picker: selected card and its icon pick up the state tone */
+.admin-app.admin-app :where(.survey-status-card) {
+  --tone: var(--ws-success);
+}
+
+.admin-app.admin-app .survey-status-card.is-selected {
+  border-color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 8%, var(--ws-card-bg));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tone) 30%, transparent);
+}
+
+.admin-app.admin-app .survey-status-card__icon {
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+  color: var(--tone);
+}
+
+/* ── Segmented view switcher: the Members pill control ──────────────────── */
+.admin-app.admin-app :is(.ws-seg, .members-view, .view-switcher, .dash-view-toggle) {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--ws-control-border);
+  border-radius: 999px;
+  background: var(--surface-1);
+}
+
+.admin-app.admin-app :is(.ws-seg__btn, .members-view__btn, .view-switcher__btn, .dash-view-toggle__btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.admin-app.admin-app :is(.ws-seg__btn, .members-view__btn, .view-switcher__btn, .dash-view-toggle__btn):hover:not(.is-active) {
+  background: color-mix(in srgb, var(--text-caption) 12%, transparent);
+}
+
+.admin-app.admin-app :is(.ws-seg__btn, .members-view__btn, .view-switcher__btn, .dash-view-toggle__btn).is-active {
+  background: var(--ws-fill);
+  box-shadow: none;
+  color: var(--ws-on-fill);
+}
+
+.admin-app.admin-app :is(.view-switcher__label, .view-switcher__text) {
+  display: inline;
+}
+
+@media (pointer: coarse) {
+  .admin-app.admin-app :is(.ws-seg__btn, .members-view__btn, .view-switcher__btn, .dash-view-toggle__btn) {
+    min-height: var(--touch-target-min);
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-app.admin-app :is(.view-switcher__label, .view-switcher__text, .members-view__btn span) {
+    display: none;
+  }
+
+  .admin-app.admin-app .view-switcher__btn {
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+    padding: 0;
+  }
+}
+
+/* ── Toolbar fields are pills too (inline component styles need !important) ─ */
+.admin-app.admin-app :is(.members-toolbar, .finding-notes-toolbar, .responses-toolbar, .inq-toolbar) :is(input:not([type='checkbox']):not([type='radio']), select) {
+  border-radius: 999px !important;
+  padding-inline: 16px !important;
+}
+
+.admin-app.admin-app .inq-toolbar .inq-toolbar__search input:not([type='checkbox']):not([type='radio']) {
+  padding-inline: 40px 44px !important;
+}
+
+/* ── Motion ─────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .admin-app.admin-app :is(.ws-btn, .admin-kanban-icon-btn, .survey-control__tool, .rt-toggle, .rt-dir, .dash-quick__btn, .inq-btn, .admin-kanban-card, .finding-note-card, .inq-card, .inq-list__row):is(:hover, :active) {
+    transform: none;
+  }
+
+  .admin-app.admin-app :is(.admin-kanban-card, .finding-note-card, .inq-card, .inq-list__row, .ws-btn, .inq-btn) {
+    transition: none;
+    animation: none;
+  }
+}
