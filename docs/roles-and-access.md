@@ -20,6 +20,19 @@ Permissions (separate from role):
 - **Interview invites**
 - **Findings log** — analysis notes at `/admin/notes/`. Proponents and superadmins may create/edit/delete their own notes; advisers with this permission have **read-only** access (Firestore rules reject adviser writes).
 
+
+**Actions under each page** (unset means allowed, so existing members keep what they had):
+
+| Page | Actions | Keys |
+|---|---|---|
+| Responses dashboard | Delete responses | `responsesDelete` |
+| Interview invites | Update outreach, export CSV, delete | `interviewsEdit`, `interviewsExport`, `interviewsDelete` |
+| Findings log | Create, edit, delete notes | `findingNotesCreate`, `findingNotesEdit`, `findingNotesDelete` |
+
+An action only applies when its page is on. Advisers stay read-only on research data whatever the toggles say.
+
+**Sign-in methods** — `signInPassword` (email and password) and `signInGoogle`. Unset means allowed. A blocked method is refused at login and by Firestore rules (via the token sign-in provider). Superadmins can always sign in, so they cannot be locked out. An invite with a method off also blocks signing up with that method.
+
 Superadmin does not need those switches turned on.
 
 ---
@@ -36,6 +49,19 @@ Superadmin does not need those switches turned on.
 **Deleting survey data** (a submitted response, or an interview invite) is limited to Proponents and Superadmins. Advisers can read and review but not delete; the Firestore rules enforce this, so deploy `firestore.rules` after pulling this change.
 
 Active members are **soft-removed** (`status: removed`). They are not silently deleted. Unused invites and already-removed rows may be hard-deleted by a superadmin after confirmation.
+
+---
+
+## Survey builder
+
+| Action | Proponent | Adviser | Superadmin |
+| --- | --- | --- | --- |
+| Open the Survey builder | Yes | No | Yes |
+| Create, edit, and delete drafts (questions, steps, branching) | Yes | No | Yes |
+| Publish a version (makes it live to residents) | Yes | No | Yes |
+| Change open / paused / closed and the schedule (Survey control) | No | No | Yes |
+
+Firestore rules enforce this: published and archived versions cannot be edited, only drafts can be deleted, and a Proponent may change only the live-version pointer on the survey configuration, never its open/closed status. See [The survey](survey.md#editing-the-questions-and-branching-survey-builder).
 
 ---
 

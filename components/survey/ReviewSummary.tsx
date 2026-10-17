@@ -2,18 +2,19 @@
 
 import { Button } from '@/components/ui/Button';
 import { useT } from '@/components/survey/SurveyLanguage';
-import { buildReviewSections } from '@/survey/review';
-import type { SurveyAnswers } from '@/survey/schema';
+import { buildReviewSections, type Answers, type Instrument } from '@/survey/model';
 
 export function ReviewSummary({
+  instrument,
   answers,
   onEdit,
 }: {
-  answers: Partial<SurveyAnswers>;
+  instrument: Instrument;
+  answers: Answers;
   onEdit: (stepNumber: number) => void;
 }) {
   const t = useT();
-  const sections = buildReviewSections(answers);
+  const sections = buildReviewSections(instrument, answers);
 
   return (
     <div className="survey-questions">

@@ -23,7 +23,7 @@ const LIKELIHOOD = [
   { id: '5', label: 'Very likely' },
 ] as const;
 
-function Question({
+export function Question({
   id,
   text,
   required,
@@ -49,7 +49,7 @@ function Question({
   );
 }
 
-function FieldError({ id, message }: { id: string; message?: string }) {
+export function FieldError({ id, message }: { id: string; message?: string }) {
   const t = useT();
   if (!message) return null;
   return (
@@ -59,7 +59,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
-function Card({
+export function Card({
   error,
   className,
   children,
@@ -75,7 +75,7 @@ function Card({
   );
 }
 
-type ChoiceOption = { id: string; label: string; hint?: string; wide?: boolean };
+export type ChoiceOption = { id: string; label: string; hint?: string; wide?: boolean };
 
 function RadioMark({
   name,
@@ -212,15 +212,19 @@ export function LikertChoice({
   code,
   question,
   scale,
+  required = true,
   value,
   error,
+  hint,
   onChange,
 }: {
   code: string;
   question: string;
   scale: 'agreement' | 'likelihood';
+  required?: boolean;
   value?: number;
   error?: string;
+  hint?: string;
   onChange: (value: number) => void;
 }) {
   const t = useT();
@@ -230,7 +234,8 @@ export function LikertChoice({
   return (
     <Card error={error}>
       <div role="radiogroup" aria-labelledby={labelId} aria-describedby={error ? errorId : undefined}>
-        <Question id={labelId} text={question} required />
+        <Question id={labelId} text={question} required={required} />
+        {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{t(hint)}</p> : null}
         <div className="na-likert">
           {options.map((option) => {
             const selected = String(value) === option.id;
@@ -269,6 +274,7 @@ export function NumberField({
   min,
   max,
   error,
+  hint,
   onChange,
 }: {
   code: string;
@@ -278,6 +284,7 @@ export function NumberField({
   min: number;
   max: number;
   error?: string;
+  hint?: string;
   onChange: (value: number | undefined) => void;
 }) {
   const t = useT();
@@ -297,6 +304,7 @@ export function NumberField({
           </>
         ) : null}
       </label>
+      {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{t(hint)}</p> : null}
       <input
         id={inputId}
         className={error ? 'na-input na-input--error' : 'na-input'}
@@ -430,66 +438,69 @@ export function SelectChoice({
   );
 }
 
-export function ResidentTypeField({
+/** Single choice where consecutive options with the same `group` sit under one legend. */
+export function GroupedSingleChoice({
+  code,
+  question,
+  required = true,
   value,
+  options,
   error,
+  hint,
+  className,
   onChange,
 }: {
-  value?: number;
+  code: string;
+  question: string;
+  required?: boolean;
+  value?: string;
+  options: readonly (ChoiceOption & { group?: string })[];
   error?: string;
-  onChange: (value: number) => void;
+  hint?: string;
+  className?: string;
+  onChange: (value: string) => void;
 }) {
   const t = useT();
-  const errorId = 'A1-error';
+  const errorId = `${code}-error`;
+  const labelId = `${code}-label`;
+
+  const blocks: Array<{ group?: string; items: (ChoiceOption & { group?: string })[] }> = [];
+  for (const option of options) {
+    const last = blocks[blocks.length - 1];
+    if (last && last.group && last.group === option.group) last.items.push(option);
+    else blocks.push({ group: option.group, items: [option] });
+  }
 
   return (
-    <Card error={error} className="bento-tall">
-      <div role="radiogroup" aria-labelledby="A1-label" aria-describedby={error ? errorId : undefined}>
-        <Question id="A1-label" text="Which best describes you?" required />
+    <Card error={error} className={className}>
+      <div role="radiogroup" aria-labelledby={labelId} aria-describedby={error ? errorId : undefined}>
+        <Question id={labelId} text={question} required={required} />
+        {hint ? <p className="na-hint" style={{ marginBottom: 12 }}>{t(hint)}</p> : null}
         <div className="na-radios">
-          <RadioMark
-            name="A1"
-            option={{ id: '1', label: 'Homeowner living in the unit' }}
-            checked={value === 1}
-            onChange={() => onChange(1)}
-          />
-          <fieldset className="na-sub">
-            <legend className="na-sub-legend">{t('Homeowner who does not live in the unit')}</legend>
-            <RadioMark
-              name="A1"
-              option={{ id: '2', label: 'OFW homeowner', hint: '(the owner works abroad)' }}
-              checked={value === 2}
-              onChange={() => onChange(2)}
-            />
-            <RadioMark
-              name="A1"
-              option={{
-                id: '3',
-                label: 'Absentee homeowner',
-                hint: '(the owner lives elsewhere in the Philippines)',
-              }}
-              checked={value === 3}
-              onChange={() => onChange(3)}
-            />
-          </fieldset>
-          <RadioMark
-            name="A1"
-            option={{ id: '4', label: 'Family or household member of a homeowner' }}
-            checked={value === 4}
-            onChange={() => onChange(4)}
-          />
-          <RadioMark
-            name="A1"
-            option={{ id: '5', label: 'Tenant or lessee' }}
-            checked={value === 5}
-            onChange={() => onChange(5)}
-          />
-          <RadioMark
-            name="A1"
-            option={{ id: '6', label: 'Family or household member of a tenant or lessee' }}
-            checked={value === 6}
-            onChange={() => onChange(6)}
-          />
+          {blocks.map((block) =>
+            block.group ? (
+              <fieldset key={`g-${block.items[0]!.id}`} className="na-sub">
+                <legend className="na-sub-legend">{t(block.group)}</legend>
+                {block.items.map((option) => (
+                  <RadioMark
+                    key={option.id}
+                    name={code}
+                    option={option}
+                    checked={value === option.id}
+                    onChange={() => onChange(option.id)}
+                  />
+                ))}
+              </fieldset>
+            ) : (
+              <RadioMark
+                key={block.items[0]!.id}
+                name={code}
+                option={block.items[0]!}
+                checked={value === block.items[0]!.id}
+                onChange={() => onChange(block.items[0]!.id)}
+              />
+            ),
+          )}
         </div>
         <FieldError id={errorId} message={error} />
       </div>

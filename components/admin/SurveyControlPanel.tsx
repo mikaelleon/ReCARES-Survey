@@ -783,6 +783,11 @@ export function SurveyControlPanel() {
                     : `No responses use ${savedVersion} yet.`}{' '}
                   Change the label only when the question set changes, so results can be compared fairly.
                 </p>
+                <p className="survey-fieldset__help">
+                  The questions themselves live in the{' '}
+                  <Link href="/admin/survey/builder/">Survey builder</Link>. Publishing a version there sets this label
+                  for you, and residents then see that version&apos;s questions.
+                </p>
                 {versionChanged && versionHasResponses ? (
                   <p className="survey-callout" role="note">
                     New responses will be stamped <strong>{version}</strong>. Existing responses keep{' '}
