@@ -7,6 +7,7 @@ import { DashboardExtendedStats } from '@/components/admin/DashboardExtendedStat
 import { DashboardStatGrid } from '@/components/admin/DashboardStatGrid';
 import { RecentSubmissionsTable } from '@/components/admin/RecentSubmissionsTable';
 import { DashboardHeaderTools } from '@/components/admin/DashboardHeaderTools';
+import { PageTitle } from '@/components/admin/PageTitle';
 import { DashboardSimpleView } from '@/components/admin/DashboardSimpleView';
 import { RecentActivityCard } from '@/components/admin/RecentActivityCard';
 import { computeKpis } from '@/lib/admin/analytics';
@@ -106,10 +107,10 @@ function DashboardContent() {
         <>
           <div className="dash-page__header">
             <div>
-              <h1 id="admin-overview-title" className="dash-page__title">
+              <PageTitle pageId="admin-overview-title">
                 Dashboard <span className="dash-page__greet">· Hi, {greetName}!</span>
-              </h1>
-              <p className="dash-page__sub">A live summary of survey responses. Use the date range to focus on a period, and the cards to jump into detail.</p>
+              </PageTitle>
+              <p className="visually-hidden">A live summary of survey responses. Use the date range to focus on a period, and the cards to jump into detail.</p>
               <p
                 className={`survey-window-chip survey-window-chip--${surveyWindow.status}`}
                 style={{ marginTop: 8 }}

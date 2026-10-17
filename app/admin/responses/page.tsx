@@ -3,13 +3,12 @@
 import { PageHeading } from '@/components/admin/PageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
-import { BranchingGuide } from '@/components/admin/BranchingGuide';
-import { DashboardHeaderTools } from '@/components/admin/DashboardHeaderTools';
+import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
 import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
-import { ResponseDetailDrawer } from '@/components/admin/ResponseDetailDrawer';
 import { ResponseEmptyState } from '@/components/admin/ResponseEmptyState';
 import { ResponseViewsPanel, type ResponseViewTab } from '@/components/admin/ResponseViewsPanel';
 import { AddWidgetModal } from '@/components/dashboard/AddWidgetModal';
+import { ResponsesSkeleton } from '@/components/admin/ResponsesSkeleton';
 import {
   ResponsesToolbar,
   type BranchFilter,
@@ -36,14 +35,13 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { saveSummaryWidgets } from '@/lib/firebase/auth';
 import { deleteNeedsAssessment } from '@/lib/firebase/firestore';
 import { useQueryParam } from '@/lib/navigation/useQueryParam';
-import { TableSkeleton } from '@/components/ui/Skeleton';
 
 type DemoState = 'data' | 'loading' | 'empty' | 'error';
 
 function ResponsesContent() {
   const { can, user, reloadProfile } = useAuth();
   const canResponses = can('responsesDashboard');
-  const { records, setRecords, status, source, usingDemoSample } = useSurveyResponses();
+  const { records, setRecords, status, source, usingDemoSample, reload } = useSurveyResponses();
   const stateParam = useQueryParam('state');
   const focusParam = useQueryParam('focus');
   const tabParam = useQueryParam('tab');
@@ -74,16 +72,16 @@ function ResponsesContent() {
   const [widgetModalOpen, setWidgetModalOpen] = useState(false);
   const focusPinned = useRef<string | null>(null);
   const focusScrolled = useRef<string | null>(null);
-  const [viewRecord, setViewRecord] = useState<SampleRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SampleRecord | null>(null);
   const [undo, setUndo] = useState<{ record: SampleRecord; index: number } | null>(null);
-  const [flashId, setFlashId] = useState<string | null>(null);
   const [copyNote, setCopyNote] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const liveDelete = source === 'firestore' && !usingDemoSample;
-  const canDelete = (liveDelete || usingDemoSample) && user?.role !== 'adviser';
+  const canDelete =
+    (liveDelete || usingDemoSample) && user?.role !== 'adviser' && can('responsesDelete');
 
   useEffect(() => {
     setDateRange(loadStoredDateRange());
@@ -101,6 +99,8 @@ function ResponsesContent() {
     const t = setTimeout(() => setDebouncedQuery(query.trim().toLowerCase()), 160);
     return () => clearTimeout(t);
   }, [query]);
+
+  const loadFailed = status === 'error' && !usingDemoSample && demoState === 'data';
 
   const workingRecords = useMemo(() => {
     const base = demoState === 'empty' ? [] : records;
@@ -126,6 +126,16 @@ function ResponsesContent() {
     });
     return list;
   }, [workingRecords, debouncedQuery, phase, branch, sortKey, sortDir]);
+
+  /** Page-level feedback toast; the latest message replaces the previous one. */
+  const notify = useCallback((message: string, ms = 2400) => {
+    setCopyNote(message);
+    if (noteTimer.current) clearTimeout(noteTimer.current);
+    noteTimer.current = setTimeout(() => setCopyNote(null), ms);
+  }, []);
+
+  /** Responses exist, but the active date range excludes every one of them. */
+  const rangeEmpty = demoState !== 'empty' && records.length > 0 && workingRecords.length === 0;
 
   const resetFilters = useCallback(() => {
     setQuery('');
@@ -200,30 +210,29 @@ function ResponsesContent() {
     a.download = 'recares-responses.csv';
     a.click();
     URL.revokeObjectURL(url);
-  }, [filtered]);
+    notify(`Downloaded ${filtered.length} ${filtered.length === 1 ? 'response' : 'responses'} as CSV`);
+  }, [filtered, notify]);
 
   const handleCopySummary = useCallback(async () => {
     const text = buildSummaryText(workingRecords);
     try {
       await navigator.clipboard.writeText(text);
-      setCopyNote('Summary copied');
+      notify('Summary copied');
     } catch {
-      setCopyNote('Copy failed');
+      notify('Copy failed');
     }
-    setTimeout(() => setCopyNote(null), 2000);
-  }, [workingRecords]);
+  }, [workingRecords, notify]);
 
   const requestDelete = useCallback(
     (record: SampleRecord) => {
       if (!canDelete) {
-        setCopyNote('Delete is unavailable until live Firestore responses are loaded.');
-        setTimeout(() => setCopyNote(null), 3000);
+        notify('Delete is unavailable until live Firestore responses are loaded.', 3000);
         return;
       }
       setDeleteError(null);
       setDeleteTarget(record);
     },
-    [canDelete],
+    [canDelete, notify],
   );
 
   const confirmDelete = useCallback(async () => {
@@ -241,11 +250,9 @@ function ResponsesContent() {
       try {
         await deleteNeedsAssessment(removed.id);
         setRecords((prev) => prev.filter((r) => r.id !== removed.id));
-        if (viewRecord?.id === removed.id) setViewRecord(null);
         setDeleteTarget(null);
         setUndo(null);
-        setCopyNote('Response deleted from Firestore.');
-        setTimeout(() => setCopyNote(null), 2000);
+        notify('Response deleted from Firestore.');
       } catch (err) {
         setDeleteError(
           err instanceof Error && err.message ? err.message : 'Could not delete that response.',
@@ -262,12 +269,11 @@ function ResponsesContent() {
     }
 
     setRecords((prev) => prev.filter((r) => r.id !== removed.id));
-    if (viewRecord?.id === removed.id) setViewRecord(null);
     setDeleteTarget(null);
     setUndo({ record: removed, index });
     if (undoTimer.current) clearTimeout(undoTimer.current);
     undoTimer.current = setTimeout(() => setUndo(null), 5000);
-  }, [deleteTarget, records, setRecords, liveDelete, usingDemoSample, viewRecord?.id]);
+  }, [deleteTarget, records, setRecords, liveDelete, usingDemoSample, notify]);
 
   const handleUndo = useCallback(() => {
     if (!undo) return;
@@ -276,10 +282,8 @@ function ResponsesContent() {
       next.splice(Math.min(undo.index, next.length), 0, undo.record);
       return next;
     });
-    setFlashId(undo.record.id);
     setUndo(null);
     if (undoTimer.current) clearTimeout(undoTimer.current);
-    setTimeout(() => setFlashId(null), 900);
   }, [undo, setRecords]);
 
   return (
@@ -287,9 +291,11 @@ function ResponsesContent() {
       <section className="dash-page resp-page" aria-labelledby="admin-responses-title">
         {!canResponses ? (
           <>
-            <div className="dash-page__header">
-              <PageHeading id="admin-responses-title" title="Responses" sub={"Explore every submitted answer as a summary, one question at a time, or one resident at a time. Filter, export, or open a response for detail."} />
-            </div>
+            <PageHeading
+              id="admin-responses-title"
+              title="Responses"
+              sub="Explore every submitted answer as a summary, one question at a time, or one resident at a time. Filter, export, or open a response for detail."
+            />
             <p className="na-error" role="alert">
               You do not have permission to view responses. Ask a superadmin if you need access.
             </p>
@@ -297,23 +303,16 @@ function ResponsesContent() {
         ) : (
           <>
             <div className="dash-page__header">
-              <PageHeading id="admin-responses-title" title="Responses" sub={"Explore every submitted answer as a summary, one question at a time, or one resident at a time. Filter, export, or open a response for detail."} />
-              <DashboardHeaderTools dateRange={dateRange} onDateRangeChange={handleDateChange} />
+              <PageHeading
+              id="admin-responses-title"
+              title="Responses"
+              sub="Explore every submitted answer as a summary, one question at a time, or one resident at a time. Filter, export, or open a response for detail."
+            />
             </div>
 
             {usingDemoSample ? (
               <p className="na-error" role="status">
                 Demo sample mode (?demo=sample). Not live Firestore data.
-              </p>
-            ) : null}
-            {source === 'error' && !usingDemoSample ? (
-              <p className="na-error" role="alert">
-                Live Firestore query failed — showing empty until reload succeeds.
-              </p>
-            ) : null}
-            {source !== 'firestore' && source !== 'error' && !usingDemoSample ? (
-              <p className="na-error" role="status">
-                Firestore unavailable — showing empty until config/auth is ready.
               </p>
             ) : null}
 
@@ -330,36 +329,45 @@ function ResponsesContent() {
               onToggleSortDir={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
               showing={filtered.length}
               total={workingRecords.length}
-              onExport={handleExport}
-              onCopySummary={() => void handleCopySummary()}
-              exportDisabled={filtered.length === 0}
+              onResetFilters={resetFilters}
+              trailing={<DateRangePicker value={dateRange} onChange={handleDateChange} />}
             />
 
-            <BranchingGuide />
+            <div className="rr-toast-region" role="status" aria-live="polite">
+              {copyNote ? <p className="rr-toast">{copyNote}</p> : null}
+            </div>
 
             <div className="resp-page__body">
-              {demoState === 'error' ? (
+              {demoState === 'error' || loadFailed ? (
                 <div className="admin-panel">
                   <ResponseEmptyState
                     kind="error"
-                    onReset={() => window.location.assign('/admin/responses/')}
+                    detail={
+                      demoState === 'error'
+                        ? undefined
+                        : source === 'error'
+                          ? 'The live Firestore query failed. Check your connection and permissions, then retry.'
+                          : 'Firestore is unavailable. Check that the app is configured and you are signed in, then retry.'
+                    }
+                    onReset={
+                      demoState === 'error'
+                        ? () => window.location.assign('/admin/responses/')
+                        : () => void reload()
+                    }
                   />
                 </div>
               ) : demoState === 'loading' ? (
-                <div className="admin-panel">
-                  <TableSkeleton rows={8} />
-                </div>
+                <ResponsesSkeleton />
               ) : (
                 <ResponseViewsPanel
+                  rangeEmpty={rangeEmpty}
+                  onResetDateRange={() => handleDateChange(DEFAULT_DATE_RANGE)}
                   records={workingRecords}
                   filtered={filtered}
                   onExport={handleExport}
                   onCopySummary={() => void handleCopySummary()}
-                  copyNote={copyNote}
                   exportDisabled={filtered.length === 0}
-                  onView={setViewRecord}
                   onDelete={requestDelete}
-                  highlightId={flashId}
                   onResetFilters={resetFilters}
                   emptyDataset={workingRecords.length === 0}
                   summaryWidgets={summaryWidgets}
@@ -381,12 +389,6 @@ function ResponsesContent() {
         onToggle={handleToggleWidget}
       />
 
-      <ResponseDetailDrawer
-        record={viewRecord}
-        onClose={() => setViewRecord(null)}
-        onDelete={canDelete ? requestDelete : undefined}
-        deleteDisabled={deleteBusy}
-      />
       <DeleteConfirmModal
         record={deleteTarget}
         live={liveDelete}
