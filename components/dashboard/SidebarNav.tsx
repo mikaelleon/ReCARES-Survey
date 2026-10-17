@@ -17,6 +17,7 @@ import {
   CalendarHeart,
   Check,
   ChevronLeft,
+  GitBranch,
   Inbox,
   LayoutDashboard,
   LogOut,
@@ -169,6 +170,7 @@ export function SidebarNav({
     { href: '/admin/inquiries/', label: 'Inquiries', Icon: Inbox, show: canTeamOps },
     { href: '/admin/members/', label: 'Members & Invites', Icon: Users, show: canTeamOps },
     { href: '/admin/survey/', label: 'Survey control', Icon: Settings2, show: isSuperadmin },
+    { href: '/admin/survey/builder/', label: 'Survey builder', Icon: GitBranch, show: canTeamOps },
   ];
 
   const displayName = user.name || user.email.split('@')[0] || user.email;

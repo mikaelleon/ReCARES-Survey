@@ -12,10 +12,31 @@ service cloud.firestore {
         && adminDoc(uid).status == 'active';
     }
 
+    // Superadmins are never locked out. Everyone else can have a sign-in method switched off
+    // (unset means allowed). The provider comes from the signed-in token.
+    function signInMethodOk(uid) {
+      return adminDoc(uid).role == 'superadmin'
+        || (
+          (request.auth.token.firebase.sign_in_provider != 'password'
+            || adminDoc(uid).get('permissions', {}).get('signInPassword', true) == true)
+          && (request.auth.token.firebase.sign_in_provider != 'google.com'
+            || adminDoc(uid).get('permissions', {}).get('signInGoogle', true) == true)
+        );
+    }
+
     function isActiveAdmin() {
       return request.auth != null
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
-        && adminDoc(request.auth.uid).status == 'active';
+        && adminDoc(request.auth.uid).status == 'active'
+        && signInMethodOk(request.auth.uid);
+    }
+
+    // Fine-grained action toggle (unset means allowed; superadmin always passes).
+    function actionOk(key) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && (adminDoc(request.auth.uid).role == 'superadmin'
+          || adminDoc(request.auth.uid).get('permissions', {}).get(key, true) == true);
     }
 
     function isActiveProponentOrSuperadmin() {
@@ -312,13 +333,14 @@ service cloud.firestore {
       allow create: if surveyAcceptsResponses();
       allow read, update: if isActiveAdmin();
       // Hard-deleting research data is not an adviser action.
-      allow delete: if isActiveProponentOrSuperadmin();
+      allow delete: if isActiveProponentOrSuperadmin() && actionOk('responsesDelete');
     }
 
     match /interviewInterest/{invitationId} {
       allow create: if true;
-      allow read, update: if isActiveAdmin();
-      allow delete: if isActiveProponentOrSuperadmin();
+      allow read: if isActiveAdmin();
+      allow update: if isActiveAdmin() && actionOk('interviewsEdit');
+      allow delete: if isActiveProponentOrSuperadmin() && actionOk('interviewsDelete');
     }
 
     match /responses/{responseId} {
@@ -342,11 +364,13 @@ service cloud.firestore {
       allow read: if isActiveAdmin();
 
       allow create: if isActiveProponentOrSuperadmin()
+        && actionOk('findingNotesCreate')
         && request.resource.data.authorUid == request.auth.uid
         && request.resource.data.status == 'draft'
         && findingNoteShapeOk();
 
       allow update: if isActiveProponentOrSuperadmin()
+        && actionOk('findingNotesEdit')
         && (request.auth.uid == resource.data.authorUid
           || isActiveSuperadmin(request.auth.uid))
         && request.resource.data.authorUid == resource.data.authorUid
@@ -355,6 +379,7 @@ service cloud.firestore {
         && (resource.data.status != 'final' || findingNoteFinalUnlock());
 
       allow delete: if isActiveProponentOrSuperadmin()
+        && actionOk('findingNotesDelete')
         && (request.auth.uid == resource.data.authorUid
           || isActiveSuperadmin(request.auth.uid))
         && resource.data.status != 'final';
@@ -389,6 +414,49 @@ service cloud.firestore {
       allow delete: if request.auth != null
         && isActiveSuperadmin(request.auth.uid)
         && docId == 'survey';
+
+      // Publishing an instrument moves the live version pointer. Proponents may change
+      // that pointer (and nothing else on the survey config), and only to a version
+      // that is published in the same write.
+      allow update: if docId == 'survey'
+        && isActiveProponentOrSuperadmin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['instrumentVersion', 'updatedBy', 'updatedAt'])
+        && getAfter(/databases/$(database)/documents/surveyInstruments/$(request.resource.data.instrumentVersion)).data.status == 'published';
+      // First publish on a project with no survey config yet: create it open, with defaults.
+      allow create: if docId == 'survey'
+        && isActiveProponentOrSuperadmin()
+        && request.resource.data.keys().hasOnly(['status', 'residentMessage', 'opensAt', 'closesAt', 'instrumentVersion', 'updatedBy', 'updatedAt'])
+        && request.resource.data.status == 'open'
+        && request.resource.data.residentMessage == ''
+        && request.resource.data.opensAt == null
+        && request.resource.data.closesAt == null
+        && getAfter(/databases/$(database)/documents/surveyInstruments/$(request.resource.data.instrumentVersion)).data.status == 'published';
+    }
+
+    // Survey question sets (steps, questions, branching). Residents read the published one.
+    // Published and archived versions are frozen: only their status may change.
+    // Proponents and superadmins create, edit, publish, and delete drafts.
+    match /surveyInstruments/{version} {
+      allow read: if resource.data.status == 'published' || isActiveAdmin();
+
+      allow create: if isActiveProponentOrSuperadmin()
+        && request.resource.data.status == 'draft'
+        && request.resource.data.version == version;
+
+      allow update: if isActiveProponentOrSuperadmin()
+        && request.resource.data.version == version
+        && (
+          (resource.data.status == 'draft'
+            && request.resource.data.status in ['draft', 'published'])
+          || (resource.data.status in ['published', 'archived']
+            && request.resource.data.status in ['published', 'archived']
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'updatedAt', 'updatedBy', 'updatedByName']))
+        );
+
+      allow delete: if isActiveProponentOrSuperadmin()
+        && resource.data.status == 'draft';
     }
   }
 }

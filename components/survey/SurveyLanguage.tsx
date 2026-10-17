@@ -10,16 +10,20 @@ interface SurveyLanguageValue {
   lang: SurveyLang;
   setLang: (lang: SurveyLang) => void;
   t: (text: string) => string;
+  /** Tagalog wording supplied by the live instrument (English text to Tagalog text). */
+  setOverrides: (overrides: Record<string, string>) => void;
 }
 
 const SurveyLanguageContext = createContext<SurveyLanguageValue>({
   lang: 'EN',
   setLang: () => {},
   t: (text) => text,
+  setOverrides: () => {},
 });
 
 export function SurveyLanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<SurveyLang>('EN');
+  const [overrides, setOverrides] = useState<Record<string, string>>({});
 
   useEffect(() => {
     try {
@@ -46,8 +50,13 @@ export function SurveyLanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<SurveyLanguageValue>(
-    () => ({ lang, setLang, t: (text) => translate(text, lang) }),
-    [lang, setLang],
+    () => ({
+      lang,
+      setLang,
+      setOverrides,
+      t: (text) => (lang === 'FIL' && overrides[text] ? overrides[text]! : translate(text, lang)),
+    }),
+    [lang, setLang, overrides],
   );
 
   return <SurveyLanguageContext.Provider value={value}>{children}</SurveyLanguageContext.Provider>;

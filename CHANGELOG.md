@@ -6,6 +6,7 @@ All notable changes to ReCARES Survey are listed here. The format follows [Keep 
 
 ### Added
 
+- **Survey builder** (`/admin/survey/builder/`) for Proponents and Superadmins: add, edit, delete, and reorder questions and steps from a simple list. Each question shows in plain words when it appears, and branching is edited with a rule builder (comparisons, all-of / any-of groups, per-choice rules). Reordering uses up/down buttons everywhere, plus row dragging on computers; on phones the editor opens full-screen. Also versioned drafts, a live preview, validation, and publish. The survey itself is now data-driven (`survey/model.ts`, `survey/defaultInstrument.ts`); the original question set ships as v1 and is used until a version is published. **Redeploy `firestore.rules`** (new `surveyInstruments` collection; Proponents may move the live-version pointer on `appConfig/survey`).
 - **Tagalog support in the survey.** English / Tagalog toggle on every survey screen, remembered per browser; translations in `survey/i18n.ts`, with English fallback. Stored answers stay in English.
 - **Water supply or interruptions** category in the open problem discovery step (11 choices), plus new categories: power interruptions or electrical hazards, common areas or facilities, and disputes between neighbors. Extra choices under Garbage collection and Security patrol.
 - **Leave the survey dialog.** Mid-survey it offers stay, leave and keep progress, or leave and erase the local draft (with a second confirmation).

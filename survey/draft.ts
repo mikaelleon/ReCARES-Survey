@@ -1,15 +1,16 @@
-import type { SurveyAnswers } from '@/survey/schema';
 
 const DRAFT_KEY = 'recares-na-draft';
 const SUBMITTED_KEY = 'recares-na-submitted';
 
 export interface SurveyDraft {
-  answers: Partial<SurveyAnswers>;
-  /** Step the respondent was on, 1–13, or 14 for review. */
+  answers: Record<string, unknown>;
+  /** Step the respondent was on (1-based), or one past the last step for review. */
   currentStep: number;
   lastStepReached: number;
   /** Milliseconds when consent was passed. Used only as a local bot check. Never stored on the response. */
   consentedAt: number;
+  /** Instrument the answers belong to. A draft from another version is discarded. */
+  instrumentVersion?: string;
 }
 
 export function readDraft(): SurveyDraft | null {

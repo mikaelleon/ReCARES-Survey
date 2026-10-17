@@ -121,6 +121,43 @@ Admin charts call these **gated branches**. “PWD screening = Yes” is the scr
 
 ---
 
+## Editing the questions and branching (Survey builder)
+
+Proponents and Superadmins can change the questions and the branching rules without touching code. Open **Survey builder** (`/admin/survey/builder/`) in the sidebar. Advisers do not see it.
+
+**How it works**
+
+- The question set is stored as a **version** (v1, v2, …) in Firestore (`surveyInstruments`). Residents always see the one version marked **Live**.
+- A version is a **Draft**, **Published**, or **Archived**. Only drafts can be edited. A published version is frozen, because every response is stamped with the version it was answered on.
+- To change the survey: **Edit as new draft** (copies the version) → edit → **Preview** → **Save draft** → **Publish**. Publishing makes it live immediately and archives the previous version.
+- If nothing has been published from the builder, residents see the original question set (v1) that ships with the app.
+
+**The list**
+
+- The survey appears as a list of steps, each with its questions. Every question shows its code, answer type, the text, and, in plain words, **when it appears** ("Always shown", or "Shown only when A1 is “Tenant or lessee”").
+- **Add:** use **Add question to this step** (or **Add step**). **Edit:** open a question or step. **Delete:** the bin on the row, with a confirmation that warns when other questions depend on it.
+- **Reorder:** the up and down arrows work everywhere, including phones. On a computer you can also drag a row by its handle, onto another row or step, to move it. Steps reorder the same way.
+- **Find a question:** the search box filters by code or text. **Collapse all** folds the steps.
+- On a phone or narrow window, opening a question shows the editor full-screen with a **Back to the list** link.
+
+**The editor for one question**
+
+- Text (with an optional Tagalog version), answer type, choices, limits, required, helper text, and different wording for a group.
+- **Show this question** sets the branching. Leave it as "Always shown", or **Add condition**: pick an earlier question, a comparison ("is", "is one of", "includes", "is answered", …) and the answer. Add more rules and choose **all of these** (AND) or **any of these** (OR); groups can be nested.
+- A choice can have its own rule ("if"), so it is offered only to some respondents.
+- **When skipped** sets the value saved when the question is hidden.
+- A rule can read only questions that come **before** it, because a respondent cannot have answered a later one yet. A step with no visible question is skipped, and the progress bar adjusts.
+
+**Rules the builder enforces**
+
+- Question codes and answer types of questions that exist in the version you copied from are **fixed**, and so are their existing choice ids, so older responses stay readable.
+- Eleven questions feed the Dashboard directly (A1, A2, A4, B1, P1, F1–F5, F7). They show a lock, cannot be deleted or renamed, and a version missing one cannot be published.
+- **Publish** is blocked while the problem list shows errors (duplicate codes, a rule pointing at a later or missing question, a choice list with fewer than two choices, and so on). Warnings do not block.
+
+The old plain-language branching summary on Responses ("How the survey branches") describes v1 only; the builder list is the live view.
+
+---
+
 ## Phase question
 
 **Which phase do you live in?** offers only:

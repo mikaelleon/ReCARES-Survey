@@ -9,16 +9,30 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { ReviewSummary } from '@/components/survey/ReviewSummary';
 import { LeaveSurvey } from '@/components/survey/LeaveSurvey';
 import { REQUIRED_NOTE } from '@/components/survey/SurveyFields';
+import { InstrumentStep } from '@/components/survey/InstrumentStep';
 import {
   SurveyLanguageProvider,
   SurveyLanguageToggle,
+  useSurveyLanguage,
   useT,
 } from '@/components/survey/SurveyLanguage';
-import { STEP_TITLES, StepView } from '@/components/survey/SurveySteps';
 import { submitNeedsAssessment } from '@/lib/firebase/firestore';
+import { loadLiveInstrument } from '@/lib/firebase/instruments';
 import { getSurveyConfig } from '@/lib/firebase/surveyConfig';
-import { normalizeAnswers } from '@/survey/answers';
-import { isHomeownerBranch } from '@/survey/branching';
+import { DEFAULT_INSTRUMENT } from '@/survey/defaultInstrument';
+import {
+  activeStepNumbers,
+  firstStepNumber,
+  nextStepNumber,
+  normalizeAnswers as normalizeWith,
+  previousStepNumber,
+  resolveStepSubtitle,
+  resolveStepTitle,
+  stepProgress,
+  validateStep as validateWith,
+  type Answers,
+  type Instrument,
+} from '@/survey/model';
 import {
   clearDraft,
   deviceAlreadySubmitted,
@@ -34,38 +48,16 @@ import {
   type SurveyConfig,
 } from '@/survey/instrument';
 import type { SurveyAnswers, SurveyResponseDocument } from '@/survey/schema';
-import { CHOOSE_ONE, validateStep } from '@/survey/validate';
 
 type Screen = 'welcome' | 'consent' | 'step' | 'review';
 
-
-const STEP_SUBTITLES: Record<number, string> = {
-  1: 'A few quick questions about your home. Your answers decide which questions come next.',
-  2: 'Tell us a little about yourself and how you deal with the HOA today.',
-  3: 'The devices and internet you use help us design something that works for everyone.',
-  4: 'Tell us about your internet cost and connection. Pick the answer that fits best.',
-  5: 'Imagine an HOA website. Tell us how likely you would be to use each feature.',
-  6: 'More about the website: what you would want first, and what might hold you back.',
-  7: 'How easy is it to reach the HOA today? Say how much you agree with each statement.',
-  8: 'About bringing visitors, workers, and deliveries through the gate.',
-  9: 'About street and event closures, and the permits they need.',
-  10: 'How you feel about registering online and showing a valid ID.',
-  12: 'Optional questions about access needs. You can choose Prefer not to say.',
-  13: 'The last step: tell us about any problems we may have missed.',
-};
-
-function screenSubtitle(screen: Screen, step: number, homeowner: boolean): string {
+function screenSubtitle(screen: Screen): string {
   if (screen === 'welcome') return 'Read this first, then start. You can stop at any time.';
   if (screen === 'consent') return 'Please read the information below, then tick both boxes to begin.';
   if (screen === 'review') {
     return 'Check your answers. Use Edit to change a section, then submit when you are ready.';
   }
-  if (step === 11) {
-    return homeowner
-      ? 'Your experience as a homeowner dealing with the HOA.'
-      : 'Your experience as a tenant dealing with the HOA.';
-  }
-  return STEP_SUBTITLES[step] ?? '';
+  return '';
 }
 
 const MIN_MS_BEFORE_SUBMIT = 30_000;
@@ -95,12 +87,14 @@ export function SurveyFlow() {
 
 function SurveyFlowInner() {
   const t = useT();
+  const { setOverrides } = useSurveyLanguage();
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [screen, setScreen] = useState<Screen>('welcome');
   const [step, setStep] = useState(1);
   const [lastStepReached, setLastStepReached] = useState(0);
-  const [answers, setAnswers] = useState<Partial<SurveyAnswers>>({});
+  const [instrument, setInstrument] = useState<Instrument>(DEFAULT_INSTRUMENT);
+  const [answers, setAnswers] = useState<Answers>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [e1, setE1] = useState<'agree' | 'decline' | ''>('');
   const [e2, setE2] = useState<'yes' | 'no' | ''>('');
@@ -115,24 +109,57 @@ function SurveyFlowInner() {
   const [surveyConfig, setSurveyConfig] = useState<SurveyConfig>(DEFAULT_SURVEY_CONFIG);
 
   useEffect(() => {
-    const draft = readDraft();
-    setHasDraft(Boolean(draft));
+    let cancelled = false;
     setAlreadySent(deviceAlreadySubmitted());
-    void getSurveyConfig().then(setSurveyConfig);
-    setReady(true);
+    const finish = (config: SurveyConfig, live: Instrument) => {
+      if (cancelled) return;
+      const draft = readDraft();
+      // A draft from another instrument version may not fit these questions.
+      const usable = draft && (!draft.instrumentVersion || draft.instrumentVersion === live.version);
+      if (draft && !usable) clearDraft();
+      setSurveyConfig(config);
+      setInstrument(live);
+      setOverrides(live.translations ?? {});
+      setHasDraft(Boolean(usable));
+      setReady(true);
+    };
+    const fallback = window.setTimeout(() => finish(DEFAULT_SURVEY_CONFIG, DEFAULT_INSTRUMENT), 8000);
+    void getSurveyConfig()
+      .then(async (config) => ({ config, live: await loadLiveInstrument(config) }))
+      .then(({ config, live }) => {
+        window.clearTimeout(fallback);
+        finish(config, live);
+      })
+      .catch(() => {
+        window.clearTimeout(fallback);
+        finish(DEFAULT_SURVEY_CONFIG, DEFAULT_INSTRUMENT);
+      });
+    return () => {
+      cancelled = true;
+      window.clearTimeout(fallback);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const stepCount = instrument.steps.length;
+  const active = activeStepNumbers(instrument, answers);
+  const progress = stepProgress(instrument, answers, step);
+  const position = progress.position;
+  const total = progress.total;
+  const lastActive = active[active.length - 1] ?? stepCount;
 
   useEffect(() => {
     if (!ready) return;
     if (screen !== 'step' && screen !== 'review') return;
     const draft: SurveyDraft = {
       answers,
-      currentStep: screen === 'review' ? 14 : step,
+      currentStep: screen === 'review' ? stepCount + 1 : step,
       lastStepReached,
       consentedAt,
+      instrumentVersion: instrument.version,
     };
     writeDraft(draft);
-  }, [ready, screen, step, answers, lastStepReached, consentedAt]);
+  }, [ready, screen, step, answers, lastStepReached, consentedAt, instrument.version, stepCount]);
 
   // New screen or step: return to the top and move focus to the heading
   // so keyboard and screen-reader users start at the new content.
@@ -155,8 +182,8 @@ function SurveyFlowInner() {
     card.querySelector<HTMLElement>('input, button, textarea, select')?.focus({ preventScroll: true });
   }, [errors]);
 
-  const patch = (next: Partial<SurveyAnswers>) => {
-    setAnswers((prev) => normalizeAnswers({ ...prev, ...next }));
+  const patch = (next: Answers) => {
+    setAnswers((prev) => normalizeWith(instrument, { ...prev, ...next }));
     setErrors({});
   };
 
@@ -167,14 +194,14 @@ function SurveyFlowInner() {
       setScreen('consent');
       return;
     }
-    setAnswers(normalizeAnswers(draft.answers));
+    setAnswers(normalizeWith(instrument, draft.answers as Answers));
     setLastStepReached(draft.lastStepReached);
     setConsentedAt(draft.consentedAt || Date.now());
-    if (draft.currentStep >= 14) {
+    if (draft.currentStep > stepCount) {
       setScreen('review');
-      setStep(13);
+      setStep(lastActive);
     } else {
-      setStep(Math.min(13, Math.max(1, draft.currentStep)));
+      setStep(Math.min(stepCount, Math.max(1, draft.currentStep)));
       setScreen('step');
     }
   };
@@ -203,37 +230,41 @@ function SurveyFlowInner() {
     const now = Date.now();
     setConsentedAt(now);
     setLastStepReached(0);
-    setStep(1);
+    setStep(firstStepNumber(instrument, answers));
     setScreen('step');
     setErrors({});
   };
 
   const continueStep = () => {
-    const nextErrors = validateStep(step, answers);
+    const nextErrors = validateWith(instrument, step, answers);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
-    const normalized = normalizeAnswers(answers);
+    const normalized = normalizeWith(instrument, answers);
     setAnswers(normalized);
     setLastStepReached(step);
-    if (step >= 13) {
+    const following = nextStepNumber(instrument, normalized, step);
+    if (following == null) {
       setScreen('review');
       return;
     }
-    setStep(step + 1);
+    setStep(following);
   };
 
   const back = () => {
     setErrors({});
     if (screen === 'review') {
       setScreen('step');
-      setStep(13);
+      setStep(lastActive);
       return;
     }
-    if (screen === 'step' && step > 1) {
-      setStep(step - 1);
-      return;
+    if (screen === 'step') {
+      const earlier = previousStepNumber(instrument, answers, step);
+      if (earlier != null) {
+        setStep(earlier);
+        return;
+      }
+      setScreen('consent');
     }
-    if (screen === 'step') setScreen('consent');
   };
 
   const submit = async () => {
@@ -251,15 +282,15 @@ function SurveyFlowInner() {
       setSubmitError('Please take a moment to review your answers before submitting.');
       return;
     }
-    const finalAnswers = normalizeAnswers(answers);
+    const finalAnswers = normalizeWith(instrument, answers) as Partial<SurveyAnswers>;
     const document: SurveyResponseDocument = {
       responseId: newResponseId(),
       submittedDate: dateOnly(),
       status: 'complete',
-      lastStepReached: 13,
+      lastStepReached: lastActive,
       deviceClass: deviceClass(),
       answers: finalAnswers,
-      instrumentVersion: liveConfig.instrumentVersion,
+      instrumentVersion: instrument.version,
     };
     setSubmitting(true);
     setSubmitError('');
@@ -294,11 +325,13 @@ function SurveyFlowInner() {
         ? 'Consent and eligibility'
         : screen === 'review'
           ? 'Review and submit'
-          : step === 11
-            ? isHomeownerBranch(answers)
-              ? 'Homeowner'
-              : 'Tenant and lessee'
-            : STEP_TITLES[step];
+          : instrument.steps[step - 1]
+            ? resolveStepTitle(instrument.steps[step - 1]!, answers)
+            : '';
+  const subtitle =
+    screen === 'step' && instrument.steps[step - 1]
+      ? resolveStepSubtitle(instrument.steps[step - 1]!, answers)
+      : screenSubtitle(screen);
 
   return (
     <div
@@ -321,18 +354,18 @@ function SurveyFlowInner() {
               flexWrap: 'wrap',
             }}
           >
-            <div className="survey-eyebrow">{screen === 'review' ? t('Review') : `${t('Step')} ${step} ${t('of')} 13`}</div>
+            <div className="survey-eyebrow">{screen === 'review' ? t('Review') : `${t('Step')} ${position} ${t('of')} ${total}`}</div>
             <LeaveSurvey hasProgress />
           </div>
           <div
             role="progressbar"
             aria-label={t('Step')}
             aria-valuemin={1}
-            aria-valuemax={13}
-            aria-valuenow={screen === 'step' ? step : 13}
-            aria-valuetext={`${t('Step')} ${screen === 'step' ? step : 13} ${t('of')} 13`}
+            aria-valuemax={total}
+            aria-valuenow={screen === 'step' ? position : total}
+            aria-valuetext={`${t('Step')} ${screen === 'step' ? position : total} ${t('of')} ${total}`}
           >
-            <ProgressBar value={screen === 'step' ? step : 13} max={13} />
+            <ProgressBar value={screen === 'step' ? position : total} max={total} />
           </div>
           <p className="survey-saved">{t('Your progress is saved on this device.')}</p>
         </>
@@ -351,9 +384,7 @@ function SurveyFlowInner() {
       >
         {title ? t(title) : title}
       </h1>
-      {screenSubtitle(screen, step, isHomeownerBranch(answers)) ? (
-        <p className="survey-subtitle">{t(screenSubtitle(screen, step, isHomeownerBranch(answers)))}</p>
-      ) : null}
+      {subtitle ? <p className="survey-subtitle">{t(subtitle)}</p> : null}
 
       {screen === 'welcome' ? (
         <>
@@ -481,7 +512,15 @@ function SurveyFlowInner() {
       {screen === 'step' ? (
         <>
           <div className="survey-questions">
-            <StepView step={step} answers={answers} errors={errors} onPatch={patch} />
+            {instrument.steps[step - 1] ? (
+              <InstrumentStep
+                instrument={instrument}
+                step={instrument.steps[step - 1]!}
+                answers={answers}
+                errors={errors}
+                onPatch={patch}
+              />
+            ) : null}
           </div>
           {Object.values(errors).some(Boolean) ? (
             <p className="na-error survey-error-summary" role="alert">
@@ -506,6 +545,7 @@ function SurveyFlowInner() {
       {screen === 'review' ? (
         <>
           <ReviewSummary
+            instrument={instrument}
             answers={answers}
             onEdit={(stepNumber) => {
               setErrors({});
