@@ -17608,3 +17608,10 @@ textarea.sb-input {
   margin-top: 0;
   margin-bottom: 12px !important;
 }
+
+/* The chat widget covers the Back / Continue buttons on phones, so hide it on survey screens there */
+@media (max-width: 767px) {
+  elevenlabs-convai.survey-route {
+    display: none !important;
+  }
+}
