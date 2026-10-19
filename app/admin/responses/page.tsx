@@ -33,7 +33,8 @@ import {
 import { useSurveyResponses } from '@/lib/admin/useSurveyResponses';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { saveSummaryWidgets } from '@/lib/firebase/auth';
-import { deleteNeedsAssessment } from '@/lib/firebase/firestore';
+import { deleteNeedsAssessment, deleteNeedsAssessments } from '@/lib/firebase/firestore';
+import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
 import { useQueryParam } from '@/lib/navigation/useQueryParam';
 
 type DemoState = 'data' | 'loading' | 'empty' | 'error';
@@ -47,7 +48,7 @@ function ResponsesContent() {
   const tabParam = useQueryParam('tab');
   const responseIdParam = useQueryParam('responseId');
   const initialTab: ResponseViewTab | undefined =
-    tabParam === 'summary' || tabParam === 'question' || tabParam === 'individual'
+    tabParam === 'summary' || tabParam === 'question' || tabParam === 'individual' || tabParam === 'list'
       ? tabParam
       : responseIdParam
         ? 'individual'
@@ -75,6 +76,8 @@ function ResponsesContent() {
   const [deleteTarget, setDeleteTarget] = useState<SampleRecord | null>(null);
   const [undo, setUndo] = useState<{ record: SampleRecord; index: number } | null>(null);
   const [copyNote, setCopyNote] = useState<string | null>(null);
+  const [bulkTargets, setBulkTargets] = useState<string[] | null>(null);
+  const [bulkClearSignal, setBulkClearSignal] = useState(0);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -275,6 +278,56 @@ function ResponsesContent() {
     undoTimer.current = setTimeout(() => setUndo(null), 5000);
   }, [deleteTarget, records, setRecords, liveDelete, usingDemoSample, notify]);
 
+  const requestBulkDelete = useCallback(
+    (ids: string[]) => {
+      if (!canDelete) {
+        notify('Delete is unavailable until live Firestore responses are loaded.', 3000);
+        return;
+      }
+      if (ids.length === 0) return;
+      setDeleteError(null);
+      setBulkTargets(ids);
+    },
+    [canDelete, notify],
+  );
+
+  const confirmBulkDelete = useCallback(async () => {
+    if (!bulkTargets?.length) return;
+    const idSet = new Set(bulkTargets);
+    const count = idSet.size;
+
+    if (liveDelete) {
+      setDeleteBusy(true);
+      setDeleteError(null);
+      try {
+        await deleteNeedsAssessments(bulkTargets);
+        setRecords((prev) => prev.filter((r) => !idSet.has(r.id)));
+        setBulkTargets(null);
+        setBulkClearSignal((n) => n + 1);
+        notify(`${count} ${count === 1 ? 'response' : 'responses'} deleted from Firestore.`);
+      } catch (err) {
+        setDeleteError(
+          err instanceof Error && err.message
+            ? err.message
+            : 'Could not delete the selected responses.',
+        );
+      } finally {
+        setDeleteBusy(false);
+      }
+      return;
+    }
+
+    if (!usingDemoSample) {
+      setDeleteError('Delete is unavailable until live Firestore responses are loaded.');
+      return;
+    }
+
+    setRecords((prev) => prev.filter((r) => !idSet.has(r.id)));
+    setBulkTargets(null);
+    setBulkClearSignal((n) => n + 1);
+    notify(`${count} ${count === 1 ? 'response' : 'responses'} removed from demo data.`);
+  }, [bulkTargets, liveDelete, usingDemoSample, setRecords, notify]);
+
   const handleUndo = useCallback(() => {
     if (!undo) return;
     setRecords((prev) => {
@@ -368,6 +421,9 @@ function ResponsesContent() {
                   onCopySummary={() => void handleCopySummary()}
                   exportDisabled={filtered.length === 0}
                   onDelete={requestDelete}
+                  onBulkDelete={requestBulkDelete}
+                  bulkClearSignal={bulkClearSignal}
+                  canDelete={canDelete}
                   onResetFilters={resetFilters}
                   emptyDataset={workingRecords.length === 0}
                   summaryWidgets={summaryWidgets}
@@ -400,6 +456,25 @@ function ResponsesContent() {
           setDeleteError(null);
         }}
         onConfirm={() => void confirmDelete()}
+      />
+
+      <ConfirmDeleteModal
+        open={bulkTargets !== null}
+        title={`Delete ${bulkTargets?.length ?? 0} ${bulkTargets?.length === 1 ? 'response' : 'responses'}?`}
+        body={
+          liveDelete
+            ? 'Permanently deletes the selected responses from Firestore. Dashboard charts and exports will update. This cannot be undone.'
+            : 'Removes the selected responses from the local demo dataset only.'
+        }
+        busy={deleteBusy}
+        error={deleteError}
+        confirmLabel="Delete all"
+        onCancel={() => {
+          if (deleteBusy) return;
+          setBulkTargets(null);
+          setDeleteError(null);
+        }}
+        onConfirm={() => void confirmBulkDelete()}
       />
 
       {undo && !liveDelete ? (

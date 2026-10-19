@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/Button';
 import { StepPager } from '@/components/survey/StepPager';
 import { ReviewSummary } from '@/components/survey/ReviewSummary';
 import { LeaveSurvey } from '@/components/survey/LeaveSurvey';
+import { RichText } from '@/components/survey/RichText';
+import { COPY } from '@/survey/copy';
 import { REQUIRED_NOTE } from '@/components/survey/SurveyFields';
 import { InstrumentStep } from '@/components/survey/InstrumentStep';
 import {
@@ -411,11 +413,11 @@ function SurveyFlowInner() {
             ) : (
               <>
             {alreadySent ? (
-              <p className="na-intro">{t("A response was already sent from this device. Continue only if you are a different person. This reminder cannot block a second response.")}</p>
+              <p className="na-intro"><RichText text={t(COPY.alreadySent)} /></p>
             ) : null}
             <div className="survey-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>{t("This survey is part of a capstone study by BSIT students of the University of Batangas, Lipa Campus. The study looks at how online services could make everyday transactions easier for residents of Camella Homes Tibig, including residents who find it hard to visit the HOA office. The study team is exploring a possible collaboration with the Homeowners Association. This is a student survey and is not an official HOA survey.")}</p>
-              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>{t("The survey takes about 11 to 13 minutes. Your answers are anonymous.")}</p>
+              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}><RichText text={t(COPY.welcomeIntro)} /></p>
+              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}><RichText text={t(COPY.welcomeTime)} /></p>
               <p className="na-intro">
                 {t('Questions about the study? Use the')} <Link href="/#contact">{t('inquiry form')}</Link>.
               </p>
@@ -424,6 +426,7 @@ function SurveyFlowInner() {
             )}
           </div>
           {surveyAcceptsResponses(surveyConfig.status) ? (
+          <>
           <div className="survey-actions survey-actions--start">
             {hasDraft ? (
               <Button variant="primary" onClick={resume}>
@@ -434,6 +437,8 @@ function SurveyFlowInner() {
               {t('Start the survey')}
             </Button>
           </div>
+          {hasDraft ? <p className="survey-resume-note">{t(COPY.resume)}</p> : null}
+          </>
           ) : (
             <div className="survey-actions">
               <Button variant="secondary" href="/">
@@ -449,8 +454,8 @@ function SurveyFlowInner() {
           <div className="survey-questions">
             <p className="na-required-note">{t(REQUIRED_NOTE)}</p>
             <div className="survey-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>{t("Your answers in this survey are anonymous. We do not ask for your name, and your responses will be reported only as numbers and group totals, such as percentages and averages, and not by name. No answer will be linked to you, your household, or your unit. Written answers, if you choose to give any, will be summarized without names or identifying details.")}</p>
-              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}>{t("Some questions ask about your age, sex, civil status, and disability. You may choose \"Prefer not to say\" for any of them. Taking part is voluntary. You may skip any question you are not comfortable with or stop at any time. Your answers will be used only for this study and handled in line with the Data Privacy Act of 2012 (Republic Act 10173).")}</p>
+              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}><RichText text={t(COPY.consentPrivacy)} /></p>
+              <p className="na-intro" style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--text-body)' }}><RichText text={t(COPY.consentVoluntary)} /></p>
             </div>
             <div className={errors.E1 || errors.E2 ? 'survey-card survey-card--error' : 'survey-card'}>
               <div className="na-q" id="consent-label">
@@ -473,7 +478,7 @@ function SurveyFlowInner() {
                     {e1 === 'agree' ? '✓' : ''}
                   </span>
                   <span>
-                    {t('I have read the information above and I agree to take part in this survey.')}{' '}
+                    <RichText text={t(COPY.consentAgree)} />{' '}
                     <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
                       *
                     </span>
@@ -500,7 +505,7 @@ function SurveyFlowInner() {
                     {e2 === 'yes' ? '✓' : ''}
                   </span>
                   <span>
-                    {t('I am 18 years old or older, and I own, rent, or live in a home in Camella Homes Tibig.')}{' '}
+                    <RichText text={t(COPY.consentEligible)} />{' '}
                     <span style={{ color: 'var(--status-error)' }} aria-hidden="true">
                       *
                     </span>

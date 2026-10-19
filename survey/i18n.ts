@@ -4,6 +4,7 @@
  * reads is translated. Unknown strings fall back to the English original.
  */
 
+import { COPY_FIL } from '@/survey/copy';
 import { O1_NEW_FIL } from '@/survey/o1';
 import { O1_NOTES_FIL } from '@/survey/o1Notes';
 import { OPTION_NOTES_FIL, SCALE_NOTES_FIL } from '@/survey/optionNotes';
@@ -38,24 +39,10 @@ const FIL: Record<string, string> = {
   'Language': 'Wika',
 
   // ---- Welcome / consent ----
-  'A response was already sent from this device. Continue only if you are a different person. This reminder cannot block a second response.':
-    'May naipadala nang sagot mula sa device na ito. Magpatuloy lamang kung ibang tao ka. Hindi hinaharang ng paalalang ito ang pangalawang sagot.',
-  'This survey is part of a capstone study by BSIT students of the University of Batangas, Lipa Campus. The study looks at how online services could make everyday transactions easier for residents of Camella Homes Tibig, including residents who find it hard to visit the HOA office. The study team is exploring a possible collaboration with the Homeowners Association. This is a student survey and is not an official HOA survey.':
-    'Ang survey na ito ay bahagi ng capstone study ng mga mag-aaral ng BSIT ng University of Batangas, Lipa Campus. Tinitingnan ng pag-aaral kung paano mapapadali ng mga online na serbisyo ang pang-araw-araw na transaksyon ng mga residente ng Camella Homes Tibig, kasama ang mga residenteng nahihirapang pumunta sa opisina ng HOA. Sinusuri ng grupo ang posibleng pakikipagtulungan sa Homeowners Association. Ito ay survey ng mga mag-aaral at hindi opisyal na survey ng HOA.',
-  'The survey takes about 11 to 13 minutes. Your answers are anonymous.':
-    'Tumatagal ang survey nang humigit-kumulang 11 hanggang 13 minuto. Anonymous ang iyong mga sagot.',
   'Questions about the study? Use the': 'May tanong tungkol sa pag-aaral? Gamitin ang',
   'inquiry form': 'inquiry form',
-  'Your answers in this survey are anonymous. We do not ask for your name, and your responses will be reported only as numbers and group totals, such as percentages and averages, and not by name. No answer will be linked to you, your household, or your unit. Written answers, if you choose to give any, will be summarized without names or identifying details.':
-    'Anonymous ang iyong mga sagot sa survey na ito. Hindi namin hinihingi ang iyong pangalan, at iuulat lamang ang mga sagot bilang mga numero at kabuuan ng grupo, tulad ng porsyento at average, hindi ayon sa pangalan. Walang sagot na maiuugnay sa iyo, sa iyong sambahayan, o sa iyong unit. Ang mga nakasulat na sagot, kung magbibigay ka, ay bubuurin nang walang pangalan o anumang makakakilanlan.',
-  'Some questions ask about your age, sex, civil status, and disability. You may choose "Prefer not to say" for any of them. Taking part is voluntary. You may skip any question you are not comfortable with or stop at any time. Your answers will be used only for this study and handled in line with the Data Privacy Act of 2012 (Republic Act 10173).':
-    'May ilang tanong tungkol sa iyong edad, kasarian, civil status, at kapansanan. Maaari mong piliin ang "Mas gusto kong hindi sabihin" sa alinman sa mga ito. Kusang-loob ang pakikilahok. Maaari mong laktawan ang anumang tanong na hindi ka komportableng sagutin o huminto anumang oras. Gagamitin lamang ang iyong mga sagot sa pag-aaral na ito at hahawakan alinsunod sa Data Privacy Act of 2012 (Republic Act 10173).',
-  'I have read the information above and I agree to take part in this survey.':
-    'Nabasa ko ang impormasyon sa itaas at sumasang-ayon akong lumahok sa survey na ito.',
   'I agree': 'Sumasang-ayon ako',
   'I do not agree': 'Hindi ako sumasang-ayon',
-  'I am 18 years old or older, and I own, rent, or live in a home in Camella Homes Tibig.':
-    'Ako ay 18 taong gulang pataas, at nagmamay-ari, umuupa, o nakatira sa isang bahay sa Camella Homes Tibig.',
   'Thank you for your time. You chose not to take part, so no answers were recorded.':
     'Salamat sa iyong oras. Pinili mong hindi lumahok, kaya walang naitalang sagot.',
   'Thank you. This survey is only for adult owners, tenants, and household members of Camella Homes Tibig.':
@@ -550,7 +537,7 @@ const FIL: Record<string, string> = {
   'Any other problem with HOA services?': 'May iba pa bang problema sa mga serbisyo ng HOA?',
 };
 
-Object.assign(FIL, SUBTITLES_FIL, O1_NEW_FIL, O1_NOTES_FIL, OPTION_NOTES_FIL, SCALE_NOTES_FIL, {
+Object.assign(FIL, COPY_FIL, SUBTITLES_FIL, O1_NEW_FIL, O1_NOTES_FIL, OPTION_NOTES_FIL, SCALE_NOTES_FIL, {
   'Survey pages': 'Mga pahina ng survey',
   Page: 'Pahina',
   'Answer the earlier pages first to open this one.': 'Sagutin muna ang mga naunang pahina para mabuksan ito.',

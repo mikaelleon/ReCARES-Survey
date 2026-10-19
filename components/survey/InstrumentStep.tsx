@@ -447,7 +447,7 @@ export function InstrumentStep({
   return (
     <>
       {step.showRequiredNote ? (
-        <p className="na-required-note" style={{ color: 'var(--text-body)', fontSize: 16, lineHeight: 1.45 }}>
+        <p className="na-required-note">
           {t(REQUIRED_NOTE)}
         </p>
       ) : null}

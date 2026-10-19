@@ -1,6 +1,6 @@
 'use client';
 
-import { addDoc, collection, deleteDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
 import { getFirestoreDb } from '@/lib/firebase/config';
 import { getSurveyConfig } from '@/lib/firebase/surveyConfig';
 import { messageForFirestoreWriteError, requireDocumentId } from '@/lib/firebase/writeErrors';
@@ -39,6 +39,28 @@ export async function deleteNeedsAssessment(responseId: string): Promise<void> {
   } catch (error) {
     throw new Error(
       messageForFirestoreWriteError(error, 'Could not delete that response.', {
+        resourceHint: 'needsAssessmentResponses',
+      }),
+    );
+  }
+}
+
+/** Active-admin bulk delete. Batches of 500 (Firestore limit); throws on first failed batch. */
+export async function deleteNeedsAssessments(responseIds: string[]): Promise<void> {
+  try {
+    const db = getFirestoreDb();
+    if (!db) throw new Error('Firebase is not configured. Add the project keys to .env.local.');
+    const ids = responseIds.map((id) => requireDocumentId(id, 'response'));
+    for (let i = 0; i < ids.length; i += 500) {
+      const batch = writeBatch(db);
+      for (const id of ids.slice(i, i + 500)) {
+        batch.delete(doc(db, 'needsAssessmentResponses', id));
+      }
+      await batch.commit();
+    }
+  } catch (error) {
+    throw new Error(
+      messageForFirestoreWriteError(error, 'Could not delete the selected responses.', {
         resourceHint: 'needsAssessmentResponses',
       }),
     );

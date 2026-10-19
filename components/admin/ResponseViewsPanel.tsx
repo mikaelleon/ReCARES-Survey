@@ -37,12 +37,13 @@ import {
 } from '@/lib/admin/responseQuestions';
 import { formatSubmissionLabel } from '@/lib/admin/submissionLabel';
 
-export type ResponseViewTab = 'summary' | 'question' | 'individual';
+export type ResponseViewTab = 'summary' | 'question' | 'individual' | 'list';
 
 const TABS: { id: ResponseViewTab; label: string }[] = [
   { id: 'summary', label: 'Summary' },
   { id: 'question', label: 'Question' },
   { id: 'individual', label: 'Individual' },
+  { id: 'list', label: 'List' },
 ];
 
 const PIE_SET = new Set<string>(SUMMARY_PIE_IDS);
@@ -103,6 +104,9 @@ export function ResponseViewsPanel({
   onExport,
   exportDisabled,
   onDelete,
+  onBulkDelete,
+  bulkClearSignal = 0,
+  canDelete = false,
   onResetFilters,
   emptyDataset,
   summaryWidgets,
@@ -119,6 +123,10 @@ export function ResponseViewsPanel({
   onExport: () => void;
   exportDisabled: boolean;
   onDelete: (r: SampleRecord) => void;
+  onBulkDelete?: (ids: string[]) => void;
+  /** Increment to clear the List-tab selection (after a successful bulk delete). */
+  bulkClearSignal?: number;
+  canDelete?: boolean;
   onResetFilters: () => void;
   emptyDataset: boolean;
   summaryWidgets: string[];
@@ -150,12 +158,42 @@ export function ResponseViewsPanel({
   const [questionIndex, setQuestionIndex] = useState(0);
   const [individualIndex, setIndividualIndex] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setSelected(new Set());
+  }, [bulkClearSignal]);
+
+  /** Drop selections that filters or deletes removed from view. */
+  useEffect(() => {
+    setSelected((prev) => {
+      if (prev.size === 0) return prev;
+      const visible = new Set(filtered.map((r) => r.id));
+      const next = new Set(Array.from(prev).filter((id) => visible.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [filtered]);
+
+  const allSelected = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
+  const someSelected = selected.size > 0 && !allSelected;
+
+  const toggleOne = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const toggleAll = () =>
+    setSelected(allSelected ? new Set() : new Set(filtered.map((r) => r.id)));
 
   useEffect(() => {
     if (
       initialTab === 'summary' ||
       initialTab === 'question' ||
-      initialTab === 'individual'
+      initialTab === 'individual' ||
+      initialTab === 'list'
     ) {
       setTab(initialTab);
     }
@@ -436,6 +474,86 @@ export function ResponseViewsPanel({
                 ) : null}
               </>
             ) : null}
+          </div>
+        ) : null}
+
+        {tab === 'list' ? (
+          <div className="gf-list">
+            {filtered.length === 0 ? (
+              <ResponseEmptyState kind="filtered" onReset={onResetFilters} />
+            ) : (
+              <>
+                {selected.size > 0 ? (
+                  <div className="members-bulk" role="region" aria-label="Bulk actions">
+                    <span className="members-bulk__count">{selected.size} selected</span>
+                    <button
+                      type="button"
+                      className="members-bulk__clear"
+                      onClick={() => setSelected(new Set())}
+                    >
+                      Clear
+                    </button>
+                    {canDelete && onBulkDelete ? (
+                      <button
+                        type="button"
+                        className="members-bulk__danger"
+                        onClick={() => onBulkDelete(Array.from(selected))}
+                      >
+                        <Trash2 size={16} aria-hidden="true" />
+                        Delete selected
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+                <div className="members-table-wrap">
+                  <table className="members-table">
+                    <thead>
+                      <tr>
+                        <th className="members-table__check" scope="col">
+                          <input
+                            type="checkbox"
+                            aria-label="Select all responses"
+                            checked={allSelected}
+                            ref={(el) => {
+                              if (el) el.indeterminate = someSelected;
+                            }}
+                            onChange={toggleAll}
+                          />
+                        </th>
+                        <th scope="col">Response</th>
+                        <th scope="col">Submitted</th>
+                        <th scope="col">Resident type</th>
+                        <th scope="col">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((r) => {
+                        const label = formatSubmissionLabel(r.submissionNumber ?? 0, r.phase);
+                        return (
+                          <tr
+                            key={r.id}
+                            className={`members-table__row${selected.has(r.id) ? ' is-selected' : ''}`}
+                          >
+                            <td className="members-table__check">
+                              <input
+                                type="checkbox"
+                                aria-label={`Select ${label}`}
+                                checked={selected.has(r.id)}
+                                onChange={() => toggleOne(r.id)}
+                              />
+                            </td>
+                            <td>{label}</td>
+                            <td>{r.ts}</td>
+                            <td>{r.resident}</td>
+                            <td>{r.status === 'partial' ? 'Partial' : 'Complete'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
           </div>
         ) : null}
 

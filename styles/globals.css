@@ -17634,3 +17634,328 @@ textarea.sb-input {
   --sp-5: 24px;
   --sp-6: 32px;
 }
+
+/* ==========================================================================
+   Emphasis, resume callout, and the thank-you page.
+   ========================================================================== */
+.survey-flow strong {
+  font-weight: 800;
+  color: var(--text-headline);
+}
+
+/* Quiet reminder under the welcome buttons when a draft exists */
+.survey-resume-note {
+  margin: 14px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-caption);
+}
+
+/* Thank-you page */
+.ty-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px clamp(16px, 4vw, 32px) clamp(48px, 8vw, 96px);
+}
+
+.ty-page .ty-toolbar {
+  margin-bottom: 8px;
+}
+
+.ty-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: clamp(8px, 3vw, 24px) auto clamp(28px, 5vw, 40px);
+  max-width: 60ch;
+  text-align: center;
+}
+
+.ty-badge {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--dark-emerald) 14%, var(--card-fill-neutral));
+  color: var(--text-headline);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--dark-emerald) 8%, transparent);
+  animation: naPop 520ms var(--ease-spring, ease-out) both;
+}
+
+.ty-title {
+  margin: 0;
+  color: var(--text-headline);
+  font-family: var(--font-title);
+  font-size: clamp(30px, 6vw, 42px);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+  animation: riseIn 420ms var(--ease-out, ease-out) 80ms both;
+}
+
+.ty-lead {
+  margin: 16px 0 0;
+  font-size: clamp(16px, 2.4vw, 18px);
+  line-height: 1.6;
+  color: var(--text-body);
+  text-wrap: pretty;
+  animation: riseIn 420ms var(--ease-out, ease-out) 140ms both;
+}
+
+.ty-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 20px 0 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--dark-emerald) 12%, var(--card-fill-neutral));
+  color: var(--text-body);
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: left;
+  animation: riseIn 420ms var(--ease-out, ease-out) 200ms both;
+}
+
+.ty-notice svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--text-headline);
+}
+
+.ty-card {
+  margin-top: 20px;
+  padding: clamp(20px, 3.4vw, 28px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  background: var(--card-fill-neutral);
+  box-shadow: 0 1px 2px rgba(11, 40, 24, 0.05), 0 8px 24px -12px rgba(11, 40, 24, 0.14);
+  animation: riseIn 420ms var(--ease-out, ease-out) 220ms both;
+}
+
+.ty-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.ty-grid .ty-card {
+  margin-top: 20px;
+}
+
+.ty-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  color: var(--text-headline);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.ty-steps {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ty-steps li {
+  position: relative;
+  display: flex;
+  gap: 16px;
+  padding-bottom: 22px;
+  animation: riseIn 420ms var(--ease-out, ease-out) both;
+}
+
+.ty-steps li:last-child {
+  padding-bottom: 0;
+}
+
+/* Connector between the step icons */
+.ty-steps li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 44px;
+  bottom: 4px;
+  left: 19px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--border-subtle);
+}
+
+.ty-steps__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--dark-emerald) 14%, var(--card-fill-neutral));
+  color: var(--text-headline);
+}
+
+.ty-steps h3 {
+  margin: 0 0 4px;
+  color: var(--text-headline);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ty-steps p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-body);
+}
+
+.ty-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-body);
+}
+
+.ty-list li {
+  position: relative;
+  padding-left: 22px;
+}
+
+.ty-list li::before {
+  content: '';
+  position: absolute;
+  top: 0.62em;
+  left: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--harvest-orange);
+}
+
+.ty-body {
+  margin: 0 0 16px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-body);
+}
+
+.ty-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1.5px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-body);
+  font: 700 14px var(--font-sans);
+  cursor: pointer;
+  transition:
+    background-color 180ms var(--ease-out, ease-out),
+    border-color 180ms var(--ease-out, ease-out),
+    color 180ms var(--ease-out, ease-out),
+    transform 140ms var(--ease-out, ease-out);
+}
+
+.ty-copy[data-copied] {
+  background: var(--dark-emerald);
+  border-color: var(--dark-emerald);
+  color: var(--white);
+}
+
+.ty-copy:active {
+  transform: scale(0.97);
+}
+
+.ty-copy:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .ty-copy:not([data-copied]):hover {
+    background: var(--option-hover);
+    border-color: var(--dark-emerald);
+  }
+}
+
+.ty-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(28px, 5vw, 40px);
+}
+
+.ty-actions > a {
+  height: 48px !important;
+  min-width: 220px;
+}
+
+@media (max-width: 640px) {
+  .ty-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .ty-actions > a {
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   Page intro: full-width text, one note style, tighter rhythm.
+   ========================================================================== */
+.survey-flow .survey-title {
+  margin-top: 24px;
+}
+
+.survey-flow .survey-subtitle {
+  max-width: none;
+  margin: 10px 0 0;
+  font-size: 17px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.survey-flow .survey-questions {
+  margin-top: 24px;
+}
+
+/* Notes above the questions share one look, whichever screen they come from */
+.survey-flow .survey-questions > :is(.na-required-note, .na-intro, .na-hint) {
+  max-width: none;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-caption);
+  text-wrap: pretty;
+}
+
+.survey-flow .survey-questions > :is(.na-required-note, .na-intro, .na-hint) + :is(.na-required-note, .na-intro, .na-hint) {
+  margin-top: -8px;
+}
+
+/* The required-field note is the one most people need: slightly stronger */
+.survey-flow .survey-questions > .na-required-note {
+  color: var(--text-body);
+}
+
+@media (max-width: 760px) {
+  .survey-flow .survey-title {
+    margin-top: 18px;
+  }
+
+  .survey-flow .survey-subtitle {
+    font-size: 16px;
+  }
+}
