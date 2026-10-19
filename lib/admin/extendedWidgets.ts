@@ -9,7 +9,7 @@
 
 import type { CountBucket } from '@/lib/admin/analytics';
 import type { SampleRecord } from '@/lib/admin/sampleResponses';
-import { O1_CATEGORIES } from '@/survey/o1';
+import { O1_CATEGORIES, O1_V2_EXTRA_CATEGORIES } from '@/survey/o1';
 
 export const EXTENDED_WIDGET_IDS = [
   'top-features',
@@ -93,14 +93,18 @@ const FEATURE_DEFS: { featureId: FeatureRanking['featureId']; label: string }[] 
 ];
 
 export function rankFeatures(records: SampleRecord[]): FeatureRanking[] {
-  return FEATURE_DEFS.map(({ featureId, label }) => {
+  const ranked = FEATURE_DEFS.map(({ featureId, label }) => {
     const scores = records
       .map((r) => scaleScore(r.answers?.[featureId]))
       .filter((n): n is number => n != null);
     const { average, n } = mean(scores);
     return { featureId, label, averageLikelihood: average, responseCount: n };
   }).sort((a, b) => b.averageLikelihood - a.averageLikelihood);
+  // A feature nobody answered (F2 in draft v2 responses) drops out. With no answers at all, keep the full list.
+  const answered = ranked.filter((f) => f.responseCount > 0);
+  return answered.length ? answered : ranked;
 }
+
 
 /** Smartphone / laptop / tablet + wifi/broadband or mobile data (not “no regular internet”). */
 export function digitalFeasibility(records: SampleRecord[]): {
@@ -183,9 +187,19 @@ const C1_LABELS: Record<string, string> = {
   neither: 'Neither',
 };
 
+/** Responses that were asked the closure questions (v1 only). */
+export function closureAnswerBase(records: SampleRecord[]): number {
+  return records.filter((r) => Boolean(r.answers?.C1)).length;
+}
+
+/** Responses where the resident listed closure permits as a problem in open problem discovery (draft v2). */
+export function closureProblemCount(records: SampleRecord[]): number {
+  return records.filter((r) => (r.answers?.O1 as string[] | undefined)?.includes('street_event_closures')).length;
+}
+
 export function streetClosureC1(records: SampleRecord[]): CountBucket[] {
   const labels = ['requested', 'affected', 'both', 'neither'] as const;
-  const total = records.length;
+  const total = closureAnswerBase(records);
   return labels.map((id) => {
     const count = records.filter((r) => r.answers?.C1 === id).length;
     return { label: C1_LABELS[id], count, pct: pct(count, total) };
@@ -238,6 +252,7 @@ export function accessibilityNeeds(records: SampleRecord[]): {
 export function openProblems(records: SampleRecord[]): CountBucket[] {
   const cats = [
     ...O1_CATEGORIES.map((c) => ({ id: c.id, label: c.label })),
+    ...O1_V2_EXTRA_CATEGORIES.map((c) => ({ id: c.id, label: c.label })),
     { id: 'other', label: 'Other' },
     { id: 'none_of_these', label: 'None of these' },
   ];
@@ -247,6 +262,7 @@ export function openProblems(records: SampleRecord[]): CountBucket[] {
       const count = records.filter((r) => (r.answers?.O1 ?? []).includes(id)).length;
       return { label, count, pct: pct(count, total) };
     })
+    .filter((bucket) => bucket.count > 0 || !O1_V2_EXTRA_CATEGORIES.some((c) => c.label === bucket.label))
     .sort((a, b) => b.count - a.count);
 }
 

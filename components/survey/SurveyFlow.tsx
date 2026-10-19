@@ -21,6 +21,7 @@ import { submitNeedsAssessment } from '@/lib/firebase/firestore';
 import { loadLiveInstrument } from '@/lib/firebase/instruments';
 import { getSurveyConfig } from '@/lib/firebase/surveyConfig';
 import { DEFAULT_INSTRUMENT } from '@/survey/defaultInstrument';
+import { DRAFT_INSTRUMENT_V2 } from '@/survey/draftInstrumentV2';
 import {
   activeStepNumbers,
   firstStepNumber,
@@ -126,6 +127,13 @@ function SurveyFlowInner() {
       setHasDraft(Boolean(usable));
       setReady(true);
     };
+    // Local development only: /survey?instrument=v2 loads the bundled draft v2 without reading Firestore.
+    if (process.env.NODE_ENV !== 'production' && new URLSearchParams(window.location.search).get('instrument') === 'v2') {
+      finish(DEFAULT_SURVEY_CONFIG, structuredClone(DRAFT_INSTRUMENT_V2));
+      return () => {
+        cancelled = true;
+      };
+    }
     const fallback = window.setTimeout(() => finish(DEFAULT_SURVEY_CONFIG, DEFAULT_INSTRUMENT), 8000);
     void getSurveyConfig()
       .then(async (config) => ({ config, live: await loadLiveInstrument(config) }))

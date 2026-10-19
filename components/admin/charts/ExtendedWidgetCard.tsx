@@ -20,6 +20,8 @@ import {
   registrationRetention,
   responseHealth,
   serviceQualityGauge,
+  closureAnswerBase,
+  closureProblemCount,
   streetClosureC1,
   streetClosureSatisfaction,
   waitTimeStat,
@@ -174,16 +176,18 @@ function renderBody(
     case 'street-closure': {
       const c1 = streetClosureC1(records);
       const sat = streetClosureSatisfaction(records);
-      const n = records.length;
+      const n = closureAnswerBase(records);
+      const closureProblems = closureProblemCount(records);
       return {
         copyText: [
-          ...c1.map((b) => `${b.label}: ${b.count} (${b.pct}%)`),
+          ...(n > 0 ? c1.map((b) => `${b.label}: ${b.count} (${b.pct}%)`) : ['No responses to the closure questions (asked in v1 only)']),
+          `Listed closure permits as a problem in open problem discovery: ${closureProblems}`,
           `Notice clarity (C2) avg: ${sat.noticeAvg}`,
           `Rerouting notice (C3) avg: ${sat.rerouteAvg}`,
         ].join('\n'),
         node: (
           <div className="ext-composite">
-            <PieChart buckets={c1} />
+            {n > 0 ? <PieChart buckets={c1} /> : null}
             {sat.n > 0 ? (
               <MeanBars
                 wrapLabels
@@ -194,7 +198,10 @@ function renderBody(
               />
             ) : null}
             <p className="gf-chart-hint">
-              C1 breakdown reflects {n} response{n === 1 ? '' : 's'}.
+              {n > 0
+                ? `C1 breakdown reflects ${n} response${n === 1 ? '' : 's'} that were asked the closure questions (v1).`
+                : 'No responses were asked the closure questions. They are in survey v1 only; later versions cover closure permits in open problem discovery.'}
+              {` ${closureProblems} resident${closureProblems === 1 ? '' : 's'} listed closure permits as a problem in open problem discovery.`}
               {sat.n === 0 ? (
                 <span>
                   {' '}

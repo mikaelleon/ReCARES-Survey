@@ -17,6 +17,12 @@ function asLikert(value: unknown, fallback: LikertValue = 3): LikertValue {
   return fallback;
 }
 
+/** Like asLikert, but a missing or invalid answer stays null instead of becoming a neutral 3. */
+function asLikertOrNull(value: unknown): LikertValue | null {
+  const n = typeof value === 'number' ? value : Number(value);
+  return n === 1 || n === 2 || n === 3 || n === 4 || n === 5 ? n : null;
+}
+
 function formatTs(iso: string): string {
   // Date-only YYYY-MM-DD → local calendar day (avoid UTC midnight shift).
   const d = /^\d{4}-\d{2}-\d{2}$/.test(iso)
@@ -50,7 +56,7 @@ export function mapSurveyDocToSample(
   const a = (doc.answers || {}) as Partial<SurveyAnswers>;
   const section2: SampleSection2 = {
     s2_adequacy: asLikert(a.F1),
-    s2_frequency: asLikert(a.F2),
+    s2_frequency: asLikertOrNull(a.F2),
     s2_satisfaction: asLikert(a.F3),
     s2_effectiveness: asLikert(a.F4),
     s2_agreement: asLikert(a.F7 ?? a.F5),

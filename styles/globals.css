@@ -17615,3 +17615,22 @@ textarea.sb-input {
     display: none !important;
   }
 }
+
+/* The preview is portaled to document.body, outside .sb-page, so it needs the builder tokens itself. */
+.sb-preview {
+  --sb-ink: var(--dash-ink, var(--text-headline));
+  --sb-soft: var(--dash-ink-soft, var(--text-body));
+  --sb-muted: var(--dash-muted, var(--text-caption));
+  --sb-card: var(--dash-card-bg, var(--surface-1));
+  --sb-border: var(--dash-card-border, var(--border-subtle));
+  --sb-fill: var(--dash-fill, var(--dark-emerald));
+  --sb-accent: var(--dash-accent, var(--harvest-orange));
+  --sb-soft-bg: var(--dash-icon-bg, rgba(19, 105, 63, 0.08));
+  --sb-radius: var(--radius-md, 14px);
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+}

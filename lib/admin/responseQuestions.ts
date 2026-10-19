@@ -64,7 +64,7 @@ function likertBuckets(
   records: SampleRecord[],
   key: keyof SampleSection2,
 ): CountBucket[] {
-  const total = records.length;
+  const total = records.filter((r) => r.section2[key] != null).length;
   return LIKERT_SCALE.map((value) => {
     const n = Number(value) as 1 | 2 | 3 | 4 | 5;
     const count = records.filter((r) => r.section2[key] === n).length;
@@ -130,6 +130,9 @@ export const RESPONSE_QUESTIONS: ResponseQuestion[] = [
       id: key,
       title: `Communication quality — ${label}`,
       kind: 'hbar',
+      ...(key === 's2_frequency'
+        ? { hint: 'Built from F2 (online closure permit requests), asked in v1 only. Draft v2 responses have no F2 and are left out of this chart.' }
+        : {}),
       buckets: (records) => likertBuckets(records, key),
     }),
   ),

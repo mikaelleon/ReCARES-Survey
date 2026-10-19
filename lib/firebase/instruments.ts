@@ -13,6 +13,7 @@ import {
 import { getFirestoreDb } from '@/lib/firebase/config';
 import { messageForFirestoreWriteError } from '@/lib/firebase/writeErrors';
 import { DEFAULT_INSTRUMENT } from '@/survey/defaultInstrument';
+import { DRAFT_INSTRUMENT_V2 } from '@/survey/draftInstrumentV2';
 import { DEFAULT_INSTRUMENT_VERSION, nextInstrumentVersion, type SurveyConfig } from '@/survey/instrument';
 import type { Instrument, InstrumentStatus, QuestionDef, StepDef } from '@/survey/model';
 
@@ -159,6 +160,19 @@ export async function listInstruments(): Promise<InstrumentList> {
       bundled: true,
     });
   }
+  // The bundled working draft of v2 is listed until a saved v2 exists. Saving it in the builder writes surveyInstruments/v2.
+  if (!rows.some((row) => row.version === DRAFT_INSTRUMENT_V2.version)) {
+    rows.push({
+      version: DRAFT_INSTRUMENT_V2.version,
+      status: 'draft',
+      title: DRAFT_INSTRUMENT_V2.title,
+      questionCount: DRAFT_INSTRUMENT_V2.questions.length,
+      stepCount: DRAFT_INSTRUMENT_V2.steps.length,
+      updatedAtMs: null,
+      publishedAtMs: null,
+      bundled: true,
+    });
+  }
   rows.sort((a, b) => b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' }));
   return { rows, warning };
 }
@@ -169,9 +183,10 @@ export async function getInstrument(version: string): Promise<Instrument | null>
     const snap = await getDoc(doc(db, COLLECTION, version));
     if (snap.exists()) return fromDocument(snap.id, snap.data() as Record<string, unknown>);
   } catch (error) {
-    if (version !== DEFAULT_INSTRUMENT.version) throw error;
+    if (version !== DEFAULT_INSTRUMENT.version && version !== DRAFT_INSTRUMENT_V2.version) throw error;
   }
   if (version === DEFAULT_INSTRUMENT.version) return structuredClone(DEFAULT_INSTRUMENT);
+  if (version === DRAFT_INSTRUMENT_V2.version) return structuredClone(DRAFT_INSTRUMENT_V2);
   return null;
 }
 

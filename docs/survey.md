@@ -28,7 +28,7 @@ A superadmin can **pause** or **close** the survey from **Survey control**. Whil
 
 | Step | Title | Typical content |
 | --- | --- | --- |
-| 1 | About your household | Who they are (resident type), how many people live in the unit, **which phase** (1–6 named phases only — there is no “Not sure”), disability/mobility screening, recent outside workers |
+| 1 | About your household | Who they are (resident type), how many people live in the unit, **which phase** (1–6 named phases only; there is no “Not sure”), disability/mobility screening, recent outside workers |
 | 2 | About you and how you use HOA services | Age band, optional sex and civil status (feature-flagged), who handles HOA transactions, how they currently reach the HOA |
 | 3–4 | Digital access | Devices, internet, how often they go online |
 | 5–6 | Feature interest | Which future-system features they would want |
@@ -36,11 +36,11 @@ A superadmin can **pause** or **close** the survey from **Survey control**. Whil
 | 8 | Entrance, visitor, and worker permits | Permit experience; extra items if they had outside workers |
 | 9 | Street and event closure permits | Closure-permit experience |
 | 10 | Registration, ID verification, and data privacy | Comfort with ID photo upload and related privacy items |
-| 11 | Your household and the HOA | **Homeowner path** *or* **tenant path**, depending on step 1 |
-| 12 | Accessibility needs | Only if they indicated a disability or mobility limitation |
+| 11 | Tenant and lessee (titled “Homeowner” for homeowners) | **Homeowner path** *or* **tenant path**, depending on step 1 |
+| 12 | Accessibility needs | Shown to everyone. The follow-up about the kind of difficulty (AC1) is in step 1 and appears only after a Yes to the disability screening question |
 | 13 | Open problem discovery | Pick problems from the categories below (each opens a checklist), a free-text “anything else”, and the optional **interview invitation** |
 
-Exact question lists live in `components/survey/SurveySteps.tsx`. Branching rules live in `survey/branching.ts`.
+Exact question lists and branching rules live in `survey/defaultInstrument.ts` (the bundled v1). The model and the rule evaluator are in `survey/model.ts`.
 
 ### Open problem discovery categories (O1)
 
@@ -88,8 +88,8 @@ When you add or edit a question, add the Filipino string in the same change.
 - On the welcome, consent, and thank-you screens it goes straight back to the homepage.
 - On steps 1–13 and the review screen it opens a confirmation dialog:
   - **Stay and keep answering**
-  - **Leave and keep my progress** — the draft stays on this device
-  - **Leave and erase my answers from this device** — asks once more, then deletes the draft (for shared or public devices)
+  - **Leave and keep my progress**: the draft stays on this device
+  - **Leave and erase my answers from this device**: asks once more, then deletes the draft (for shared or public devices)
 
 ---
 
@@ -97,7 +97,7 @@ When you add or edit a question, add the Filipino string in the same change.
 
 - Each new step scrolls to the top and moves focus to the step title, so keyboard and screen-reader users start at the new content.
 - If **Continue** is pressed with required questions unanswered, the page scrolls to the first problem, focuses it, and shows a summary line above the buttons.
-- Rating questions (1–5) show the chosen label underneath, for example “Your choice: 4 — Agree”.
+- Rating questions (1–5) show the chosen label underneath, for example “Your choice: 4, Agree”.
 - On phones, Back / Continue stay pinned to the bottom of the screen, and cards and tap targets are sized for touch.
 - The progress bar is announced to assistive technology as “Step N of 13”.
 
@@ -201,6 +201,42 @@ If the resident opts in, they can give contact details and preferred days/times.
 ## Field codes for the team
 
 On Responses, small codes (A1, B3, IV1, …) match the specification. Hover hints explain the wording. Residents never need these codes.
+
+---
+
+## Draft v2 (not published)
+
+A working draft of the next question set is bundled as `survey/draftInstrumentV2.ts`. The Survey builder lists it as **v2, Draft**. Opening it and pressing **Save draft** writes `surveyInstruments/v2`; nothing is live until someone publishes it. It is built from v1, so v1 codes, wording and the O1 list are unchanged (apart from skip codes, below). English only: Tagalog strings come after the wording is approved.
+
+What v2 adds:
+
+- **Step 1:** A9 length of stay, A12 length of current tenancy (tenants), A13 "Is your unit currently rented out?" (owners). A13 drives the condition `RENTS_OUT`, which gates the owner-mirror items.
+- **Ten Likert questions in every rated category** (B, F, S, P, R, H, T, AC and the new CC, HR, TO, OM, CH): **5 shown by default and 5 optional**. An optional question appears only after an earlier answer signals a reason to ask (for example a Neutral or Disagree on a related statement, or a choice made in an earlier question). v1 items B8, B9, F6, P2 and P3 become optional in v2; P6, P7 and P9 are now shown to everyone with a Not applicable choice.
+- **Five new steps**, placed before Accessibility needs:
+
+| Prefix | Step | Who sees it |
+| --- | --- | --- |
+| CC | Community concerns: select all concerns, up to 3 most serious, then one follow-up block about the single most serious (frequency, reported, to whom, why not, response time, resolved, satisfaction), prevention, open text, and a short community conditions grid | Everyone |
+| HR | House rules awareness: familiarity, familiarity by area, violation knowledge, where learned | Everyone |
+| TO | Tenant orientation, with follow-ups for tenants who were not fully oriented, plus the shared owner and tenant statements | Tenants (A1 = 5 or 6) |
+| OM | Owner mirror: whether and how owners orient tenants, plus the same shared statements | Owners whose unit is rented out (`RENTS_OUT`) |
+| CH | HOA announcements and channels: awareness and use of the HOA Facebook account and website, missed announcements, trust, responsiveness, plus two tenant items | Everyone; two items for tenants |
+
+The shared owner and tenant statements use identical wording (TO13 to TO20 and OM3 to OM10 map one to one). Answers are anonymous, so owner and tenant results are compared as groups, never as pairs.
+
+**Street and event closure permits are not a step in v2.** The closure questions (C1 to C14 in the plan, C1 to C3 in v1), F2 (online closure permit requests) and the closure choice in F8 are removed. The topic appears only in open problem discovery, as a new O1 category, "Street or event closure permits". F2 was a core code: the v2 lint list retires it. The dashboard handles both versions: a response without F2 is left out of the F2-based averages and charts (it is no longer counted as a neutral 3), the feature ranking and the "Communication quality" Frequency chart skip F2 when nobody answered it, and the Street closure widget counts only responses that were asked the closure questions and shows how many residents listed closure permits in open problem discovery. v1 data is unchanged.
+
+Questions B12 (photo of a document) and B17 (help from someone you trust) were removed as unnecessary. B18 (checks phone or email for notices) is the new default item in B.
+
+Branching in v2: the full rules are in `docs/survey-v2-branching.md`. In short, each rated category shows 5 Likert questions by default and holds 5 optional ones that appear only after related earlier answers are not clearly favorable (Neutral, Disagree or Strongly disagree on a favorably worded statement; Neutral, Agree or Strongly agree on a negatively worded one; Likely or Very likely for the extra F features). Resident type (A1) still decides the main path, and the new A13 ("Is your unit currently rented out?") gates the owner mirror step.
+
+Question counts: 203 in the draft. A respondent with favorable answers sees about 95 to 130 questions; one who triggers many optional items sees about 120 to 165. The full list, with the trigger for every optional item, is in `docs/survey-v2-question-bank.md`.
+
+Rules the draft follows: no ranking or new question types (the "most serious" step uses the same select-up-to-N mechanism as F8, then one single-choice question picks the one concern the follow-ups are about); every question that can be hidden stores `not_shown`; sensitive items have "Prefer not to say"; no specific house rule is stated anywhere.
+
+Skip codes: v1 stored nothing for some hidden questions (AC1, AC1_other, P5, H1 to H4, T1 to T4) and stored nothing for tenants on H3. In v2 all of them store `not_shown` when hidden. Compare v1 and v2 responses with that in mind.
+
+Not built yet, waiting on inputs: **HR5** (three scenario knowledge checks, which must be written from the actual house rules document) and **CH9b** (a check against a real, recently posted announcement). The negatively worded items to reverse before combining scores are listed in `REVERSE_CODED` in the draft file.
 
 ---
 

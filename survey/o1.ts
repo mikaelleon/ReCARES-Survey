@@ -192,6 +192,29 @@ export const O1_CATEGORIES = [
   },
 ] as const;
 
+/**
+ * Added for draft v2 only. The live v1 form does not list it. Covers street and event closure
+ * permits, which draft v2 no longer asks about as a separate step.
+ */
+export const O1_V2_EXTRA_CATEGORIES = [
+  {
+    id: 'street_event_closures',
+    label: 'Street or event closure permits',
+    items: [
+      'Unclear how to apply for a street or event closure permit',
+      'Permit approval takes too long',
+      'Closure notices reach residents too late',
+      'No notice of closures that affect my street',
+      'Detours or rerouting are unclear',
+      'Streets stay closed longer than announced',
+      'Closures block access for emergency vehicles',
+      'Event organizers do not restore the street afterward',
+      'Closure rules are not applied equally',
+      'Other',
+    ],
+  },
+] as const;
+
 export type O1CategoryId = (typeof O1_CATEGORIES)[number]['id'];
 
 /** Tagalog wording for the O1 choices added in this pass. */

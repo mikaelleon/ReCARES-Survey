@@ -9,7 +9,8 @@ export type LikertValue = 1 | 2 | 3 | 4 | 5;
 
 export interface SampleSection2 {
   s2_adequacy: LikertValue;
-  s2_frequency: LikertValue;
+  /** Null for responses that did not ask F2 (draft v2 and later). */
+  s2_frequency: LikertValue | null;
   s2_satisfaction: LikertValue;
   s2_effectiveness: LikertValue;
   s2_agreement: LikertValue;

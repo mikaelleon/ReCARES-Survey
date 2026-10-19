@@ -14,6 +14,9 @@ export interface LintIssue {
   target?: string;
 }
 
+/** Core codes a specific version has chosen to retire. Draft v2 drops F2 with the closure permit topic. */
+const RETIRED_CORE_BY_VERSION: Record<string, string[]> = { v2: ['F2'] };
+
 const CODE_PATTERN = /^[A-Za-z][A-Za-z0-9_]{0,29}$/;
 
 function leaves(cond: Condition | undefined, out: Array<Exclude<Condition, { args: Condition[] }>> = []) {
@@ -137,7 +140,8 @@ export function lintInstrument(inst: Instrument): LintIssue[] {
     });
   }
 
-  for (const code of CORE_QUESTION_CODES) {
+  const retired = RETIRED_CORE_BY_VERSION[inst.version] ?? [];
+  for (const code of CORE_QUESTION_CODES.filter((c) => !retired.includes(c))) {
     if (!findQuestion(inst, code)) {
       add('error', `${code} is required by the dashboard and cannot be removed.`, code);
     }

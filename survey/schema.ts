@@ -125,6 +125,9 @@ export interface O1Details {
   facilities_amenities_other?: string;
   neighbor_disputes?: string[];
   neighbor_disputes_other?: string;
+  /** Draft v2 only. */
+  street_event_closures?: string[];
+  street_event_closures_other?: string;
 }
 
 export interface SurveyResponseDocument {

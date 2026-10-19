@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { AdminOverlayPortal } from '@/components/admin/AdminOverlayPortal';
 import { InstrumentStep } from '@/components/survey/InstrumentStep';
 import { ReviewSummary } from '@/components/survey/ReviewSummary';
 import { SurveyLanguageProvider, SurveyLanguageToggle, useSurveyLanguage } from '@/components/survey/SurveyLanguage';
@@ -144,11 +145,14 @@ export function PreviewModal({ instrument, onClose }: { instrument: Instrument; 
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  // Rendered on document.body so position: fixed covers the screen even when the builder page has a transformed ancestor.
   return (
-    <div className="sb-preview">
-      <SurveyLanguageProvider>
-        <PreviewBody instrument={instrument} onClose={onClose} />
-      </SurveyLanguageProvider>
-    </div>
+    <AdminOverlayPortal>
+      <div className="sb-preview">
+        <SurveyLanguageProvider>
+          <PreviewBody instrument={instrument} onClose={onClose} />
+        </SurveyLanguageProvider>
+      </div>
+    </AdminOverlayPortal>
   );
 }

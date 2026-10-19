@@ -123,11 +123,15 @@ export function likertMeans(records: SampleRecord[]): LikertMean[] {
   if (records.length === 0) {
     return LIKERT_LABELS.map(({ key, label }) => ({ key, label, mean: 0 }));
   }
-  return LIKERT_LABELS.map(({ key, label }) => {
-    const sum = records.reduce((acc, r) => acc + r.section2[key], 0);
-    const mean = Math.round((sum / records.length) * 10) / 10;
-    return { key, label, mean };
-  });
+  // A key nobody answered (F2 in draft v2 responses) is left out instead of being shown as 0.
+  const out: LikertMean[] = [];
+  for (const { key, label } of LIKERT_LABELS) {
+    const values = records.map((r) => r.section2[key]).filter((v): v is NonNullable<typeof v> => v != null);
+    if (values.length === 0) continue;
+    const sum = values.reduce((acc, v) => acc + v, 0);
+    out.push({ key, label, mean: Math.round((sum / values.length) * 10) / 10 });
+  }
+  return out.length ? out : LIKERT_LABELS.map(({ key, label }) => ({ key, label, mean: 0 }));
 }
 
 /** Mean communication-quality score (all Likert keys) by resident type. */
@@ -135,7 +139,8 @@ export function communicationByResident(records: SampleRecord[]): CountBucket[] 
   const groups = new Map<string, { sum: number; n: number }>();
   for (const r of records) {
     const keys = LIKERT_LABELS.map((l) => l.key);
-    const avg = keys.reduce((acc, k) => acc + r.section2[k], 0) / keys.length;
+    const answered = keys.map((k) => r.section2[k]).filter((v): v is NonNullable<typeof v> => v != null);
+    const avg = answered.length ? answered.reduce((acc, v) => acc + v, 0) / answered.length : 0;
     const cur = groups.get(r.resident) ?? { sum: 0, n: 0 };
     cur.sum += avg;
     cur.n += 1;
@@ -188,7 +193,7 @@ export function buildCsv(records: SampleRecord[]): string {
       r.deviceDependent,
       r.language,
       r.instrumentVersion ?? '',
-      ...LIKERT_LABELS.map((l) => r.section2[l.key]),
+      ...LIKERT_LABELS.map((l) => r.section2[l.key] ?? ''),
     ]
       .map((v) => `"${String(v).replace(/"/g, '""')}"`)
       .join(','),

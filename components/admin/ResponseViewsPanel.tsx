@@ -585,14 +585,14 @@ export function ResponseViewsPanel({
                       <section className="gf-individual__block" aria-labelledby="gf-ind-comm">
                         <h4 id="gf-ind-comm" className="gf-individual__sub">Communication quality</h4>
                         <ul className="gf-individual__likert">
-                          {LIKERT_LABELS.map(({ key, label }) => (
+                          {LIKERT_LABELS.filter(({ key }) => individualDetail.section2[key] != null).map(({ key, label }) => (
                             <li key={key}>
                               <span>{label}</span>
                               <meter
                                 className="gf-individual__meter"
                                 min={1}
                                 max={5}
-                                value={individualDetail.section2[key]}
+                                value={individualDetail.section2[key] ?? undefined}
                                 aria-label={`${label}: ${individualDetail.section2[key]} out of 5`}
                               />
                               <strong>{individualDetail.section2[key]} / 5</strong>
