@@ -517,59 +517,61 @@ export function QuestionList({
   return (
     <div className="qlist" ref={rootRef}>
       <div className="qlist__tools">
-        <label className="qlist__search">
-          <Search size={16} aria-hidden="true" />
-          <input type="search" placeholder="Find a question" aria-label="Find a question" value={query} onChange={(e) => setQuery(e.target.value)} />
-          {query ? (
-            <button type="button" aria-label="Clear search" onClick={() => setQuery('')}>
-              <X size={14} />
-            </button>
-          ) : null}
-        </label>
-        <label className="qlist__select">
-          <span className="visually-hidden">Filter</span>
-          <select value={filter} onChange={(e) => setFilter(e.target.value as Filter)} aria-label="Filter questions">
-            {(Object.keys(FILTER_LABEL) as Filter[]).map((key) => (
-              <option key={key} value={key}>
-                {FILTER_LABEL[key]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="qlist__select">
-          <span className="visually-hidden">Sort</span>
-          <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="Sort questions">
-            {(Object.keys(SORT_LABEL) as SortKey[]).map((key) => (
-              <option key={key} value={key}>
-                {SORT_LABEL[key]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <ViewSwitcher label="View" value={view} options={VIEW_OPTIONS} onChange={onViewChange} />
-      </div>
+        <div className="qlist__row">
+          <label className="qlist__search">
+            <Search size={16} aria-hidden="true" />
+            <input type="search" placeholder="Find a question" aria-label="Find a question" value={query} onChange={(e) => setQuery(e.target.value)} />
+            {query ? (
+              <button type="button" aria-label="Clear search" onClick={() => setQuery('')}>
+                <X size={14} />
+              </button>
+            ) : null}
+          </label>
+          <label className="qlist__select">
+            <span className="visually-hidden">Filter</span>
+            <select value={filter} onChange={(e) => setFilter(e.target.value as Filter)} aria-label="Filter questions">
+              {(Object.keys(FILTER_LABEL) as Filter[]).map((key) => (
+                <option key={key} value={key}>
+                  {FILTER_LABEL[key]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="qlist__select">
+            <span className="visually-hidden">Sort</span>
+            <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="Sort questions">
+              {(Object.keys(SORT_LABEL) as SortKey[]).map((key) => (
+                <option key={key} value={key}>
+                  {SORT_LABEL[key]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
-      <div className="qlist__meta" aria-live="polite">
-        <span>
-          {filtering ? `Showing ${shown} of ${all.length} questions` : `${all.length} questions in ${inst.steps.length} steps`}
-          {sorted && !readOnly ? ' · reordering is off while sorted' : ''}
-        </span>
-        <span className="qlist__meta-actions">
-          {filtering ? (
-            <button type="button" className="qlist__link" onClick={clearFilters}>
-              Clear filters
-            </button>
-          ) : null}
-          {view === 'table' ? null : (
-            <button
-              type="button"
-              className="qlist__link"
-              onClick={() => setCollapsed(allCollapsed ? {} : Object.fromEntries(inst.steps.map((s) => [s.id, true])))}
-            >
-              {allCollapsed ? 'Expand all' : 'Collapse all'}
-            </button>
-          )}
-        </span>
+        <div className="qlist__row qlist__row--foot">
+          <p className="qlist__count" aria-live="polite">
+            {filtering ? `Showing ${shown} of ${all.length} questions` : `${all.length} questions in ${inst.steps.length} steps`}
+            {sorted && !readOnly ? ' · reordering is off while sorted' : ''}
+          </p>
+          <div className="qlist__foot-actions">
+            {filtering ? (
+              <button type="button" className="qlist__link" onClick={clearFilters}>
+                Clear filters
+              </button>
+            ) : null}
+            {view === 'table' ? null : (
+              <button
+                type="button"
+                className="qlist__link"
+                onClick={() => setCollapsed(allCollapsed ? {} : Object.fromEntries(inst.steps.map((s) => [s.id, true])))}
+              >
+                {allCollapsed ? 'Expand all' : 'Collapse all'}
+              </button>
+            )}
+            <ViewSwitcher label="View" value={view} options={VIEW_OPTIONS} onChange={onViewChange} />
+          </div>
+        </div>
       </div>
 
       {inst.steps.length === 0 ? (

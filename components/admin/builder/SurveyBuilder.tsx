@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   Archive,
   ArrowLeft,
+  Check,
   CheckCircle2,
   Copy,
   Eye,
@@ -26,7 +27,6 @@ import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
 import { PageHeading } from '@/components/admin/PageHeading';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import { OverflowMenu } from '@/components/ui/OverflowMenu';
 import { SkelLine } from '@/components/ui/Skeleton';
 import { useSurveyResponses } from '@/lib/admin/useSurveyResponses';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -561,7 +561,7 @@ export function BuilderWorkbench({
             {inst ? (
               <button
                 type="button"
-                className={`sb-issues__toggle${errors.length ? ' has-errors' : ''}${warnings.length && !errors.length ? ' has-warnings' : ''}`}
+                className={`sb-issues__toggle${errors.length ? ' has-errors' : ''}${warnings.length && !errors.length ? ' has-warnings' : ''}${!errors.length && !warnings.length ? ' is-ready' : ''}`}
                 aria-expanded={showIssues}
                 aria-controls="sb-issues-list"
                 onClick={() => setShowIssues(!showIssues)}
@@ -583,11 +583,11 @@ export function BuilderWorkbench({
 
         <div className="sb-toolbar__actions">
           <div className="sb-toolbar__group" role="group" aria-label="Explore">
-            <button type="button" className="sb-btn" disabled={!inst || busy} onClick={() => setPreview(true)}>
+            <button type="button" className="sb-btn" title="Preview" disabled={!inst || busy} onClick={() => setPreview(true)}>
               <Eye size={16} strokeWidth={2.2} aria-hidden="true" />
               <span>Preview</span>
             </button>
-            <button type="button" className="sb-btn" disabled={!inst || busy} onClick={startCopy}>
+            <button type="button" className="sb-btn" title={readOnly ? 'Edit as draft' : 'Copy draft'} disabled={!inst || busy} onClick={startCopy}>
               <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
               <span>{readOnly ? 'Edit as draft' : 'Copy draft'}</span>
             </button>
@@ -596,13 +596,17 @@ export function BuilderWorkbench({
           <div className="sb-toolbar__group sb-toolbar__group--primary" role="group" aria-label="Save and publish">
             <button
               type="button"
-              className="sb-btn sb-btn--primary"
+              className={`sb-btn sb-btn--primary${inst && !readOnly && !dirty ? ' is-saved' : ''}`}
               disabled={!inst || busy || readOnly || !dirty}
               onClick={save}
               title={readOnly ? 'Frozen versions cannot be changed' : dirty ? 'Save (Ctrl+S)' : 'Nothing to save'}
             >
-              <Save size={16} strokeWidth={2.2} aria-hidden="true" />
-              <span>Save</span>
+              {inst && !readOnly && !dirty ? (
+                <Check size={16} strokeWidth={2.4} aria-hidden="true" />
+              ) : (
+                <Save size={16} strokeWidth={2.2} aria-hidden="true" />
+              )}
+              <span>{inst && !readOnly && !dirty ? 'Saved' : 'Save'}</span>
             </button>
             <button
               type="button"
@@ -616,21 +620,18 @@ export function BuilderWorkbench({
             </button>
           </div>
 
-          <OverflowMenu
-            label="More draft actions"
-            triggerLabel="More"
-            items={[
-              {
-                id: 'delete',
-                label: 'Delete draft…',
-                icon: <Trash2 size={14} />,
-                danger: true,
-                disabled: !inst || busy || readOnly,
-                hint: readOnly ? 'Only drafts can be deleted' : undefined,
-                onSelect: () => setDeleteOpen(true),
-              },
-            ]}
-          />
+          <div className="sb-toolbar__group sb-toolbar__group--danger" role="group" aria-label="Delete">
+            <button
+              type="button"
+              className="sb-btn sb-btn--danger sb-btn--icon"
+              aria-label="Delete draft"
+              title={readOnly ? 'Only drafts can be deleted' : 'Delete draft'}
+              disabled={!inst || busy || readOnly}
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 size={16} strokeWidth={2.2} aria-hidden="true" />
+            </button>
+          </div>
         </div>
       </div>
 

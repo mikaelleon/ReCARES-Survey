@@ -18052,3 +18052,355 @@ html[data-lang-phase='in'] .survey-body {
     transition: none;
   }
 }
+
+/* ==========================================================================
+   Survey builder toolbar: one baseline, equal heights, grouped actions.
+   ========================================================================== */
+.sb-page .sb-toolbar {
+  align-items: flex-end;
+  gap: 14px 24px;
+}
+
+/* Everything sits on the select's baseline instead of the middle of the label+select block */
+.sb-page .sb-toolbar__meta {
+  align-items: flex-end;
+  gap: 12px 16px;
+}
+
+.sb-page .sb-toolbar__pick {
+  min-width: 200px;
+}
+
+.sb-page .sb-toolbar__pills {
+  min-height: 44px;
+  gap: 8px;
+}
+
+.sb-page .sb-toolbar__actions {
+  align-items: flex-end;
+  gap: 8px 0;
+}
+
+/* Groups are separated by one hairline, with even space either side */
+.sb-page .sb-toolbar__group {
+  gap: 8px;
+}
+
+.sb-page .sb-toolbar__group + .sb-toolbar__group,
+.sb-page .sb-toolbar__actions > .overflow-menu {
+  margin-left: 14px;
+  padding-left: 14px;
+  border-left: 1px solid var(--sb-border);
+}
+
+.sb-page .sb-toolbar__group--primary {
+  padding-left: 14px;
+}
+
+/* Same height and weight for every status chip */
+.sb-page .sb-pill,
+.sb-page .sb-issues__toggle {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sb-page .sb-issues__toggle.is-ready {
+  color: var(--sb-fill);
+  border-color: color-mix(in srgb, var(--sb-fill) 40%, transparent);
+  background: color-mix(in srgb, var(--sb-fill) 10%, transparent);
+}
+
+/* Buttons: lift on hover, settle on press */
+.sb-page .sb-toolbar .sb-btn {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease;
+}
+
+@media (hover: hover) {
+  .sb-page .sb-toolbar .sb-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.sb-page .sb-toolbar .sb-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Save: a finished "Saved" state reads as done, not as a washed-out button */
+.sb-page .sb-btn--primary:disabled {
+  opacity: 0.55;
+}
+
+.sb-page .sb-btn--primary.is-saved:disabled {
+  opacity: 1;
+  background: color-mix(in srgb, var(--sb-fill) 10%, transparent);
+  border-color: color-mix(in srgb, var(--sb-fill) 35%, transparent);
+  color: var(--sb-fill);
+}
+
+/* More: a labelled pill that matches the other buttons, not a clipped circle */
+.admin-app.admin-app .sb-toolbar .overflow-menu__btn.has-label {
+  width: auto;
+  height: 44px;
+  min-width: 0;
+  padding: 0 16px;
+  gap: 8px;
+  border-radius: 999px;
+  color: var(--sb-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .sb-page .sb-toolbar__actions {
+    width: 100%;
+    gap: 10px 0;
+  }
+
+  .sb-page .sb-toolbar__group + .sb-toolbar__group,
+  .sb-page .sb-toolbar__actions > .overflow-menu {
+    margin-left: 10px;
+    padding-left: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .sb-page .sb-toolbar__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .sb-page .sb-toolbar__group,
+  .sb-page .sb-toolbar__group + .sb-toolbar__group {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .sb-page .sb-toolbar__actions > .overflow-menu {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .admin-app.admin-app .sb-toolbar .overflow-menu__btn.has-label {
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   Builder toolbar, one row: version and status on the left, actions on the
+   right, delete as an icon button. It wraps only on narrow screens.
+   ========================================================================== */
+.sb-page .sb-toolbar__group + .sb-toolbar__group,
+.sb-page .sb-toolbar__actions > .overflow-menu {
+  margin-left: 12px;
+  padding-left: 12px;
+}
+
+.sb-page .sb-btn--icon {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+  justify-content: center;
+}
+
+.sb-page .sb-btn--danger {
+  color: var(--status-error, #b3261e);
+  border-color: color-mix(in srgb, var(--status-error, #b3261e) 30%, transparent);
+}
+
+@media (min-width: 1100px) {
+  .sb-page .sb-toolbar {
+    flex-wrap: nowrap;
+    gap: 16px;
+  }
+
+  .sb-page .sb-toolbar__meta {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
+  .sb-page .sb-toolbar__pick {
+    min-width: 180px;
+    width: 200px;
+    flex: 0 0 auto;
+  }
+
+  .sb-page .sb-toolbar__pills {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .sb-page .sb-toolbar__actions {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    margin-left: auto;
+    width: auto;
+  }
+
+  .sb-page .sb-toolbar__group {
+    flex-wrap: nowrap;
+  }
+
+  .sb-page .sb-toolbar .sb-btn {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .sb-page .sb-toolbar__group--danger,
+  .sb-page .sb-toolbar__group--danger + .sb-toolbar__group {
+    justify-content: stretch;
+  }
+
+  .sb-page .sb-btn--icon {
+    width: 100%;
+  }
+}
+
+/* Mid-width desktops: Preview and Copy draft shrink to icons so the toolbar stays on one row */
+@media (min-width: 1100px) and (max-width: 1439px) {
+  .sb-page .sb-toolbar__group:not(.sb-toolbar__group--primary):not(.sb-toolbar__group--danger) .sb-btn {
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .sb-page .sb-toolbar__group:not(.sb-toolbar__group--primary):not(.sb-toolbar__group--danger) .sb-btn span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+}
+
+/* ==========================================================================
+   Question list tools: search and two filters on one row, then a quiet footer
+   with the count, list actions, and a compact view switcher.
+   ========================================================================== */
+.qlist__tools {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.qlist__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.qlist__row .qlist__search {
+  flex: 1 1 auto;
+}
+
+.qlist__row .qlist__select {
+  flex: 0 0 auto;
+}
+
+.qlist__row .qlist__select select {
+  min-width: 150px;
+  max-width: 200px;
+  padding-right: 12px;
+  cursor: pointer;
+}
+
+/* The search field keeps one flat surface: no inner box from the admin input styles */
+.qlist__search {
+  background: var(--sb-card);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.qlist__search input,
+.qlist__search input:focus {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+.qlist__search:focus-within {
+  border-color: var(--sb-fill);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sb-fill) 22%, transparent);
+}
+
+.qlist__row--foot {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--sb-border);
+}
+
+.qlist__count {
+  margin: 0;
+  color: var(--sb-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.qlist__foot-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+/* View switcher: icons only, the active view also shows its name */
+.qlist__tools .view-switcher__btn {
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0 10px;
+}
+
+.qlist__tools .view-switcher__btn:not(.is-active) .view-switcher__label {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .qlist__row:not(.qlist__row--foot) {
+    flex-wrap: wrap;
+  }
+
+  .qlist__row .qlist__search {
+    flex-basis: 100%;
+  }
+
+  .qlist__row .qlist__select {
+    flex: 1 1 140px;
+  }
+
+  .qlist__row .qlist__select select {
+    width: 100%;
+    max-width: none;
+  }
+
+  .qlist__row--foot {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
