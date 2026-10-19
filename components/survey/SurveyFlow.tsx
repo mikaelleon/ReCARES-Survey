@@ -362,6 +362,7 @@ function SurveyFlowInner() {
         <SurveyLanguageToggle />
       </div>
 
+      <div className="survey-body">
       {screen === 'step' || screen === 'review' ? (
         <div className="survey-progress">
           <div className="survey-progress__meta">
@@ -598,6 +599,7 @@ function SurveyFlowInner() {
           </div>
         </>
       ) : null}
+      </div>
     </div>
   );
 }

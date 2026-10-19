@@ -10947,7 +10947,7 @@ html.admin-fit-viewport body {
   }
 
   /* Keep Back / Continue reachable without scrolling to the bottom */
-  .survey-flow > .survey-actions {
+  .survey-flow .survey-body > .survey-actions {
     position: sticky;
     bottom: 0;
     z-index: 20;
@@ -10958,7 +10958,7 @@ html.admin-fit-viewport body {
     flex-wrap: nowrap;
   }
 
-  .survey-flow > .survey-actions > * {
+  .survey-flow .survey-body > .survey-actions > * {
     flex: 1 1 0;
     min-width: 0;
     justify-content: center;
@@ -16966,12 +16966,12 @@ textarea.sb-input {
     margin-bottom: 16px;
   }
 
-  .survey-flow > .survey-actions.survey-actions--start {
+  .survey-flow .survey-body > .survey-actions.survey-actions--start {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .survey-flow > .survey-actions.survey-actions--start > * {
+  .survey-flow .survey-body > .survey-actions.survey-actions--start > * {
     flex: 0 0 auto;
   }
 }
@@ -17957,5 +17957,98 @@ textarea.sb-input {
 
   .survey-flow .survey-subtitle {
     font-size: 16px;
+  }
+}
+
+/* ==========================================================================
+   Language switch: a sliding thumb, and a short dip of the page while the
+   words change. Reduced motion skips both (the provider swaps text at once).
+   ========================================================================== */
+.lang-switch {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--card-fill-neutral);
+}
+
+.lang-switch__thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 2);
+  border-radius: 999px;
+  background: var(--bright-amber);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.35);
+  transition: transform 420ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  will-change: transform;
+}
+
+.lang-switch[data-lang='FIL'] .lang-switch__thumb {
+  transform: translateX(100%);
+}
+
+.lang-switch button {
+  position: relative;
+  z-index: 1;
+  min-width: 84px;
+  height: 34px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent !important;
+  color: var(--text-body);
+  font: 600 14px var(--font-sans);
+  cursor: pointer;
+  transition:
+    color 240ms ease-out,
+    transform 140ms ease-out;
+}
+
+.lang-switch button[aria-pressed='true'] {
+  color: var(--text-on-accent);
+}
+
+.lang-switch button:active {
+  transform: scale(0.94);
+}
+
+.lang-switch button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .lang-switch button[aria-pressed='false']:hover {
+    color: var(--text-headline);
+  }
+}
+
+/* Content dips while the text swaps, then settles back. The toolbar stays put. */
+html[data-lang-phase='out'] .survey-body {
+  opacity: 0.3;
+  transform: translateY(4px);
+  filter: blur(1.5px);
+  transition:
+    opacity 150ms ease-in,
+    transform 150ms ease-in,
+    filter 150ms ease-in;
+}
+
+html[data-lang-phase='in'] .survey-body {
+  transition:
+    opacity 300ms ease-out,
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 300ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lang-switch__thumb,
+  .lang-switch button {
+    transition: none;
   }
 }

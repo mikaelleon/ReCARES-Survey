@@ -57,6 +57,7 @@ function ThankYou() {
         <SurveyLanguageToggle />
       </div>
 
+      <div className="survey-body">
       <section className="ty-hero" aria-labelledby="ty-title">
         <span className="ty-badge" aria-hidden="true">
           <CheckCircle2 size={44} strokeWidth={1.8} />
@@ -136,6 +137,7 @@ function ThankYou() {
         <Button variant="primary" href="/">
           {t(COPY.backHome)}
         </Button>
+      </div>
       </div>
     </div>
   );
