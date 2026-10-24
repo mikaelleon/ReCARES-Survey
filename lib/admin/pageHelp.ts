@@ -26,6 +26,44 @@ export interface PageHelp {
 }
 
 export const PAGE_HELP: Record<string, PageHelp> = {
+  'admin-analytics-title': {
+    title: 'Data Analytics',
+    tip: 'Charts that compare, rank, and track survey answers over time and across groups.',
+    purpose:
+      'Data Analytics goes deeper than the Dashboard. It shows how answers change over time, how strongly residents want each feature, and where problems cluster, so you can spot patterns to follow up on.',
+    items: [
+      {
+        name: 'Filters',
+        what: 'Narrow every chart by date range, phase, or resident type.',
+        why: 'Lets you compare groups, for example whether tenants want different features than homeowners.',
+      },
+      {
+        name: 'Rating bars',
+        what: 'Each bar splits the answers from low to high, with the average beside it.',
+        why: 'Shows whether an average hides a split opinion.',
+      },
+      {
+        name: 'Download PDF',
+        what: 'Opens the capstone documentation as a print-ready report: title page, executive summary, background, data description, methodology, numbered tables and figures with interpretation, findings, conclusions, recommendations, limitations, and references, with screenshots of the resident and superadmin sides in the methodology. Choose "Save as PDF" in the print dialog.',
+        why: 'Gives the study team and advisers a document to read, share, or attach to a findings note.',
+      },
+      {
+        name: 'Download Word (.docx)',
+        what: 'Saves the same documentation as an editable Word file, with the charts included as pictures.',
+        why: 'Lets the study team edit the text, fill in the placeholders, and format the document for submission.',
+      },
+      {
+        name: 'Problems by phase',
+        what: 'A grid of the most reported problems against each phase.',
+        why: 'Helps find problems that are concentrated in one area.',
+      },
+    ],
+    goodToKnow: [
+      'Numbers come from live responses and follow the same permission as the Dashboard.',
+      'Residents who chose "Not applicable" are left out of the averages.',
+      'With few responses, small differences between groups are not reliable.',
+    ],
+  },
   'admin-overview-title': {
     title: 'Dashboard',
     tip: 'A live summary of survey responses. Use the date range to focus on a period, and the cards to jump into detail.',

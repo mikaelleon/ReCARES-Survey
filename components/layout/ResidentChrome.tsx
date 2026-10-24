@@ -11,7 +11,7 @@ function isSurveyPath(pathname: string): boolean {
 }
 
 /**
- * Resident chrome. Survey screens keep the navbar and drop the footer.
+ * Resident chrome. Survey screens drop the navbar and the footer so the form has the whole screen.
  * RAGbot lives in the root layout as the ElevenLabs widget.
  */
 export function ResidentChrome({ children }: { children: ReactNode }) {
@@ -20,7 +20,7 @@ export function ResidentChrome({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <Navbar />
+      {survey ? null : <Navbar />}
       {survey ? <div className="survey-stage">{children}</div> : children}
       {survey ? null : <Footer />}
       <ScrollToTop />

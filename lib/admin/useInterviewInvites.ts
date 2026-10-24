@@ -82,6 +82,37 @@ export function useInterviewInvites() {
     [run],
   );
 
+  /**
+   * Delete many invites at once. Each delete is independent, so one failure never stops the
+   * rest. Resolves with the ids that could not be deleted.
+   */
+  const removeMany = useCallback(
+    async (ids: string[]): Promise<string[]> => {
+      setBusyId('__bulk__');
+      setError(null);
+      setNote(null);
+      const results = await Promise.allSettled(ids.map((id) => deleteInterviewInvite(id)));
+      const failedIds = ids.filter((_, i) => results[i]?.status === 'rejected');
+      const done = ids.length - failedIds.length;
+      try {
+        await refresh();
+      } catch {
+        setError('Could not reload invites after deleting.');
+      }
+      if (failedIds.length > 0) {
+        setError(
+          `${failedIds.length} of ${ids.length} could not be deleted. Check your connection and permissions, then try again.`,
+        );
+      }
+      if (done > 0) {
+        setNote(`Permanently deleted ${done} interview ${done === 1 ? 'invite' : 'invites'}.`);
+      }
+      setBusyId(null);
+      return failedIds;
+    },
+    [refresh],
+  );
+
   const addNote = useCallback(
     (
       id: string,
@@ -112,6 +143,7 @@ export function useInterviewInvites() {
     markContacted,
     confirm,
     remove,
+    removeMany,
     addNote,
   };
 }

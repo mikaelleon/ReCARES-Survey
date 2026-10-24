@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 /** Sidebar workspace pages (AdminAppShell) — never show a top navbar. */
 const APP_PREFIXES = [
   '/admin/dashboard',
+  '/admin/analytics',
   '/admin/responses',
   '/admin/interviews',
   '/admin/notes',

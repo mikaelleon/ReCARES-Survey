@@ -350,12 +350,8 @@ function SurveyFlowInner() {
 
   return (
     <div
-      className="survey-flow"
-      style={{
-        maxWidth: 720,
-        margin: '0 auto',
-        padding: '8px clamp(16px, 4vw, 32px) clamp(48px, 8vw, 96px)',
-      }}
+      className="survey-flow survey-flow--wide"
+      style={{ padding: '20px clamp(16px, 4vw, 48px) clamp(48px, 8vw, 96px)' }}
     >
       <div className="survey-toolbar">
         <LeaveSurvey hasProgress={screen === 'step' || screen === 'review'} />

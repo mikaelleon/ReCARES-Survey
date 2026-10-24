@@ -1,7 +1,8 @@
 'use client';
 
 import { PageHeading } from '@/components/admin/PageHeading';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { CheckSquare, Trash2, X } from 'lucide-react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
 import { Button } from '@/components/ui/Button';
@@ -28,8 +29,14 @@ function InterviewInvitesContent() {
     markContacted,
     confirm,
     remove,
+    removeMany,
     addNote,
   } = useInterviewInvites();
+  const canDelete = user?.role !== 'adviser';
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [sortBy, setSortBy] = useState('Newest first');
   const [deleteTarget, setDeleteTarget] = useState<InterviewInviteRow | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -46,6 +53,42 @@ function InterviewInvitesContent() {
     });
     return list;
   }, [rows, sortBy]);
+
+  /** Drop selections for invites that no longer exist (deleted here or elsewhere). */
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      if (prev.size === 0) return prev;
+      const live = new Set(rows.map((r) => r.id));
+      const next = new Set(Array.from(prev).filter((id) => live.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [rows]);
+
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const allSelected = sortedRows.length > 0 && selectedIds.size === sortedRows.length;
+
+  const confirmBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setBulkBusy(true);
+    const failed = await removeMany(ids);
+    setBulkBusy(false);
+    setBulkOpen(false);
+    setSelectedIds(new Set(failed));
+    if (failed.length === 0) setSelectMode(false);
+  };
 
   const handleExport = () => {
     if (rows.length === 0) return;
@@ -78,6 +121,17 @@ function InterviewInvitesContent() {
           <Button variant="secondary" onClick={handleExport} disabled={rows.length === 0}>
             Export contacts CSV
           </Button>
+          {canDelete ? (
+            <Button
+              variant="secondary"
+              aria-pressed={selectMode}
+              disabled={loading || rows.length === 0}
+              onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+            >
+              <CheckSquare size={16} aria-hidden="true" />
+              {selectMode ? 'Done selecting' : 'Select'}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -92,9 +146,48 @@ function InterviewInvitesContent() {
         </p>
       ) : null}
 
+      {selectMode && canDelete ? (
+        <div className="iv-bulk" role="toolbar" aria-label="Bulk actions">
+          <label className="iv-bulk__all">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = selectedIds.size > 0 && !allSelected;
+              }}
+              onChange={() =>
+                setSelectedIds(allSelected ? new Set() : new Set(sortedRows.map((r) => r.id)))
+              }
+            />
+            <span>Select all ({sortedRows.length})</span>
+          </label>
+          <span className="iv-bulk__count" aria-live="polite">
+            {selectedIds.size} selected
+          </span>
+          <button
+            type="button"
+            className="iv-bulk__danger"
+            disabled={selectedIds.size === 0 || busyId === '__bulk__'}
+            onClick={() => setBulkOpen(true)}
+          >
+            <Trash2 size={16} aria-hidden="true" />
+            Delete {selectedIds.size > 0 ? selectedIds.size : ''}
+          </button>
+          <button type="button" className="iv-bulk__cancel" onClick={exitSelectMode}>
+            <X size={16} aria-hidden="true" />
+            Cancel
+          </button>
+        </div>
+      ) : null}
+
       {!loading ? (
         <InterviewBoard
-          canDelete={user?.role !== 'adviser'}
+          selection={
+            selectMode && canDelete
+              ? { active: true, selected: selectedIds, onToggle: toggleSelected }
+              : undefined
+          }
+          canDelete={canDelete}
           rows={sortedRows}
           busyId={busyId}
           onMarkContacted={(id, email) => void markContacted(id, email)}
@@ -176,6 +269,17 @@ function InterviewInvitesContent() {
         </aside>
       </div>
 
+      <ConfirmDeleteModal
+        open={bulkOpen}
+        title={`Delete ${selectedIds.size} interview ${selectedIds.size === 1 ? 'invite' : 'invites'}?`}
+        body="Permanently removes these contacts from Firestore. This cannot be undone."
+        busy={bulkBusy}
+        confirmLabel={`Delete ${selectedIds.size}`}
+        onCancel={() => {
+          if (!bulkBusy) setBulkOpen(false);
+        }}
+        onConfirm={() => void confirmBulkDelete()}
+      />
       <ConfirmDeleteModal
         open={Boolean(deleteTarget)}
         title={`Delete invite for ${deleteTarget?.email || 'this person'}?`}

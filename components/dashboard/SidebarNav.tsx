@@ -15,6 +15,7 @@ import {
   BarChart3,
   Bell,
   CalendarHeart,
+  ChartNoAxesCombined,
   Check,
   ChevronLeft,
   GitBranch,
@@ -145,6 +146,12 @@ export function SidebarNav({
 
   const primaryLinks: { href: string; label: string; Icon: IconType; show: boolean }[] = [
     { href: '/admin/dashboard/', label: 'Dashboard', Icon: LayoutDashboard, show: true },
+    {
+      href: '/admin/analytics/',
+      label: 'Data Analytics',
+      Icon: ChartNoAxesCombined,
+      show: can('responsesDashboard'),
+    },
     {
       href: '/admin/responses/',
       label: 'Responses',

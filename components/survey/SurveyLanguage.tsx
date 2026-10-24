@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { useTheme } from '@/lib/theme/ThemeProvider';
 import { translate, type SurveyLang } from '@/survey/i18n';
 
 const STORAGE_KEY = 'recares-survey-lang';
@@ -118,11 +120,13 @@ export function useT(): (text: string) => string {
 /** EN / Tagalog switch shown at the top of every survey screen. */
 export function SurveyLanguageToggle() {
   const { lang, setLang } = useSurveyLanguage();
+  const { toggleTheme, themeLabel } = useTheme();
   const options: Array<{ id: SurveyLang; label: string }> = [
     { id: 'EN', label: 'English' },
     { id: 'FIL', label: 'Tagalog' },
   ];
   return (
+    <div className="survey-controls">
     <div className="survey-lang" role="group" aria-label="Language / Wika">
       <div className="lang-switch" data-lang={lang}>
         <span className="lang-switch__thumb" aria-hidden="true" />
@@ -141,6 +145,10 @@ export function SurveyLanguageToggle() {
       <span className="visually-hidden" role="status" aria-live="polite">
         {lang === 'FIL' ? 'Wika: Tagalog' : 'Language: English'}
       </span>
+    </div>
+    <span className="survey-theme">
+      <ThemeToggle aria-label={themeLabel} onClick={toggleTheme} />
+    </span>
     </div>
   );
 }

@@ -88,7 +88,9 @@ function InviteCard({
   onRequestDelete,
   onOpenNotes,
   canDelete,
+  selection,
 }: {
+  selection?: InviteSelection;
   row: InterviewInviteRow;
   canDelete: boolean;
   columnId: BoardColumnId;
@@ -99,9 +101,22 @@ function InviteCard({
   onOpenNotes: (row: InterviewInviteRow) => void;
 }) {
   const noteCount = row.notes?.length ?? 0;
+  const selecting = Boolean(selection?.active);
+  const isSelected = Boolean(selection?.selected.has(row.id));
   return (
-    <article className="admin-kanban-card">
+    <article className={`admin-kanban-card${isSelected ? ' is-selected' : ''}`}>
       <div className="admin-kanban-card__top admin-kanban-card__top--polish">
+        {selecting ? (
+          <label className="iv-select" title={`Select ${row.email}`}>
+            <input
+              type="checkbox"
+              checked={isSelected}
+              disabled={busyId === '__bulk__'}
+              aria-label={`Select ${row.email}`}
+              onChange={() => selection?.onToggle(row.id)}
+            />
+          </label>
+        ) : null}
         <span className="admin-avatar admin-kanban-card__avatar" aria-hidden="true">
           {emailInitials(row.email)}
         </span>
@@ -186,6 +201,12 @@ function InviteCard({
 /**
  * Interview Invites Kanban — three columns on desktop; tabbed single column on mobile.
  */
+export interface InviteSelection {
+  active: boolean;
+  selected: ReadonlySet<string>;
+  onToggle: (id: string) => void;
+}
+
 export function InterviewBoard({
   rows,
   busyId,
@@ -194,7 +215,9 @@ export function InterviewBoard({
   onRequestDelete,
   onAddNote,
   canDelete = true,
+  selection,
 }: {
+  selection?: InviteSelection;
   canDelete?: boolean;
   rows: InterviewInviteRow[];
   busyId: string | null;
@@ -245,6 +268,7 @@ export function InterviewBoard({
     onRequestDelete,
     onOpenNotes: setNotesRow,
     canDelete,
+    selection,
   };
 
   return (
