@@ -48,10 +48,6 @@ export const O1_ITEM_NOTES: Record<string, Pair> = {
     'Counts waiting with no word on when the supply will be restored.',
     'Kasama rito ang paghihintay nang walang balita kung kailan babalik ang tubig.',
   ],
-  'Unfair or unclear water charges': [
-    'Counts bills that look too high, charges you cannot explain, or being billed during an outage.',
-    'Kasama rito ang bayaring mukhang masyadong mataas, singil na hindi maipaliwanag, o siningil kahit walang tubig.',
-  ],
 
   // ---- Power ----
   'Frequent power interruptions': [
@@ -263,36 +259,6 @@ export const O1_ITEM_NOTES: Record<string, Pair> = {
     'Kasama rito ang mga report ng nakawan, nawalang gamit, o kaguluhan na hindi kailanman nasundan.',
   ],
 
-  // ---- Billing ----
-  'Unclear billing or charges': [
-    'Counts statements with items you cannot understand, or fees nobody explained.',
-    'Kasama rito ang mga statement na may hindi maintindihang item, o bayaring walang nagpaliwanag.',
-  ],
-  'Difficulty getting a receipt or statement': [
-    'Counts paying but waiting a long time for proof, or having to ask several times.',
-    'Kasama rito ang nagbayad ngunit matagal na naghihintay ng patunay, o ilang beses nang humingi.',
-  ],
-  'Disputes not resolved': [
-    'Counts billing errors or objections you raised that are still unsettled.',
-    'Kasama rito ang mali sa singil o pagtutol na ipinaabot mo na hindi pa rin naaayos.',
-  ],
-  'Dues increase without a clear explanation': [
-    'Counts higher monthly dues with no announcement or reason given.',
-    'Kasama rito ang pagtaas ng buwanang dues na walang anunsyo o dahilan.',
-  ],
-  'Payment channels are limited or inconvenient': [
-    'Counts having to pay only in cash at the office, or having no GCash or bank option.',
-    'Kasama rito ang kailangang magbayad nang cash lang sa opisina, o walang GCash o bank na opsyon.',
-  ],
-  'Payments are not recorded correctly': [
-    'Counts paid dues that still show as unpaid, or wrong amounts on the record.',
-    'Kasama rito ang bayad na dues na nakatala pa ring hindi bayad, o maling halaga sa talaan.',
-  ],
-  'Late fees or penalties are unclear': [
-    'Counts surcharges or penalties whose rate and due dates you were never told.',
-    'Kasama rito ang dagdag na singil o multa na hindi sinabi sa iyo ang halaga at petsa ng bayaran.',
-  ],
-
   // ---- Renovation permits ----
   'Requirements are unclear': [
     'Counts not knowing which papers, plans, or deposits are needed before work can begin.',
@@ -305,10 +271,6 @@ export const O1_ITEM_NOTES: Record<string, Pair> = {
   'Difficulty reaching the engineer or office in charge': [
     'Counts unanswered calls or visits when you try to reach the person who approves permits.',
     'Kasama rito ang mga tawag o pagbisitang walang sagot kapag sinusubukan mong abutin ang nag-aapruba ng permit.',
-  ],
-  'Fees are unclear or unexpectedly high': [
-    'Counts deposits or charges that were not explained, or that changed along the way.',
-    'Kasama rito ang mga deposito o singil na hindi ipinaliwanag, o nagbago habang nasa proseso.',
   ],
   'Neighbors are not informed about the work': [
     'Counts construction starting next door with no notice about the schedule or noise.',
@@ -367,8 +329,8 @@ export const O1_ITEM_NOTES: Record<string, Pair> = {
     'Kasama rito ang mataas na damo, o mga sangang nakalaylay sa kalsada, daanan, o kable.',
   ],
   'Facility reservation is difficult or unclear': [
-    'Counts hard-to-follow steps, fees, or schedules when booking the clubhouse or court.',
-    'Kasama rito ang mahirap sundang hakbang, bayarin, o iskedyul sa pagpapareserba ng clubhouse o court.',
+    'Counts hard-to-follow steps or schedules when booking the clubhouse or court.',
+    'Kasama rito ang mahirap sundang hakbang o iskedyul sa pagpapareserba ng clubhouse o court.',
   ],
   'Facilities are closed or hard to access': [
     'Counts locked amenities, limited hours, or no one around who holds the key.',
@@ -448,13 +410,9 @@ export const O1_CATEGORY_NOTES: Record<string, Pair> = {
     'Covers guards, gate procedures, and how safety concerns are handled.',
     'Sakop nito ang mga guwardiya, proseso sa gate, at kung paano hinaharap ang mga alalahanin sa seguridad.',
   ],
-  billing_dues: [
-    'Covers unclear charges, receipts, payment options, and disputes over dues.',
-    'Sakop nito ang hindi malinaw na singil, resibo, paraan ng pagbabayad, at alitan tungkol sa dues.',
-  ],
   renovation_permits: [
-    'Covers permit requirements, approval time, fees, and the effects of nearby construction.',
-    'Sakop nito ang requirement sa permit, tagal ng pag-apruba, bayarin, at epekto ng kalapit na konstruksyon.',
+    'Covers permit requirements, approval time, and the effects of nearby construction.',
+    'Sakop nito ang requirement sa permit, tagal ng pag-apruba, at epekto ng kalapit na konstruksyon.',
   ],
   pet_animal: [
     'Covers stray animals, noise, waste, and pets that are not kept under control.',

@@ -156,7 +156,6 @@ const AC1_OPTIONS = [
 ];
 
 const F10_TEXT = [
-  'Online payment of monthly dues with an official receipt sent by email.',
   'A way to book the clubhouse or court without going to the office.',
   'Reminders about water interruptions and garbage pickup schedule.',
   'Option to report a broken street light with a photo.',
@@ -171,7 +170,6 @@ const H4_TEXT = [
   'Renovation permit for the carport took almost three weeks because of back and forth on the requirements.',
   'Vehicle sticker renewal, the office was closed on the day I could go and I had to return.',
   'Clearance for selling the lot. Needed several signatures from different people.',
-  'Paying the arrears, the receipt was not available the same day.',
   'Tenant registration. They asked for documents twice.',
   'Fence repair approval. Nobody could tell me who to follow up with.',
   'Getting the gate pass for the movers on the day we moved in.',
@@ -190,7 +188,6 @@ const O2_TEXT = [
   'Announcements are posted at the gate only. Many residents never see them.',
   'The guard house phone is always busy during the evening.',
   'Office hours do not match when working people are free.',
-  'We were never told how the dues are used.',
   'I would like a clear schedule of the HOA meetings.',
   'Complaints are noted but no update afterwards.',
   'Some staff are very helpful, but the process itself is confusing.',
@@ -301,7 +298,7 @@ function buildAnswers(phase, role) {
   const likely = (offset) => clamp(Math.round(1 + 4 * clamp(interest + offset + gauss() * 0.13, 0, 1)), 1, 5);
   a.F1 = likely(0.1);
   a.F2 = likely(0);
-  a.F3 = likely(tenant ? 0.08 : 0.02);
+  if ([1, 2, 3].includes(a.A1)) a.F3 = likely(0.02);
   a.F4 = likely(-0.14);
   a.F5 = likely(0.06);
   a.F6 = likely(a.A4 === 'yes' ? 0.15 : -0.12);
@@ -342,7 +339,9 @@ function buildAnswers(phase, role) {
     a.P2 = chance(0.04) ? 'not_applicable' : agreeFrom(3.3);
     a.P3 = chance(0.04) ? 'not_applicable' : agreeFrom(3.1);
   }
-  a.P4 = clamp(Math.round(7 + Math.abs(gauss()) * 9 + (chance(0.15) ? between(10, 25) : 0)), 0, 60);
+  const waitMinutes = clamp(Math.round(7 + Math.abs(gauss()) * 9 + (chance(0.15) ? between(10, 25) : 0)), 0, 90);
+  a.P4 =
+    waitMinutes < 5 ? 'under_5' : waitMinutes <= 10 ? '5_10' : waitMinutes <= 15 ? '11_15' : waitMinutes <= 30 ? '16_30' : waitMinutes <= 60 ? '31_60' : 'over_60';
   if (a.A5 === 'yes') a.P5 = agreeFrom(3.4);
 
   // Street and event closures
@@ -362,7 +361,6 @@ function buildAnswers(phase, role) {
     if (chance(0.42)) h1.push('clearance');
     if (chance(a.A5 === 'yes' ? 0.7 : 0.15)) h1.push('renovation_permit');
     if (chance(0.38)) h1.push('vehicle_sticker');
-    if (chance(0.55)) h1.push('billing_dues');
     if (chance(0.16)) h1.push('tenant_registration');
     if (chance(0.03)) h1.push('other');
     a.H1 = h1.length ? h1 : ['none'];

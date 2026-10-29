@@ -40,6 +40,8 @@ A superadmin can **pause** or **close** the survey from **Survey control**. Whil
 | 12 | Accessibility needs | Shown to everyone. The follow-up about the kind of difficulty (AC1) is in step 1 and appears only after a Yes to the disability screening question |
 | 13 | Open problem discovery | Pick problems from the categories below (each opens a checklist), a free-text “anything else”, and the optional **interview invitation** |
 
+Two rules shape who sees what. (1) **No HOA transaction yet:** a resident who chooses “I have not done any HOA transaction” in the channel question (A11) does not see Current HOA service access (step 7), Registration, ID verification, and data privacy (step 10), or the Homeowner / Tenant step (step 11). (2) **Tenant registration is for homeowners only:** the question about using online forms to register or authorize a tenant (F3), the matching choice in F8, and the tenant-registration choice in H1 are shown to homeowner types 1 to 3 only, not to family or household members or to tenants. The survey does not ask about paying dues or other financial transactions.
+
 Exact question lists and branching rules live in `survey/defaultInstrument.ts` (the bundled v1). The model and the rule evaluator are in `survey/model.ts`.
 
 ### Open problem discovery categories (O1)
@@ -48,7 +50,7 @@ Step 13 asks which HOA-related problems the resident has experienced. Each categ
 
 | Category | Example choices |
 | --- | --- |
-| **Water supply or interruptions** | Frequent interruptions or no supply; interruptions without advance notice; scheduled interruptions announced too late; out for hours or days; low pressure; dirty or foul-smelling water; leaks not repaired quickly; no tanker/refill during outages; unclear who to contact; no updates on when water returns; unclear or unfair charges |
+| **Water supply or interruptions** | Frequent interruptions or no supply; interruptions without advance notice; scheduled interruptions announced too late; out for hours or days; low pressure; dirty or foul-smelling water; leaks not repaired quickly; no tanker/refill during outages; unclear who to contact; no updates on when water returns |
 | Power interruptions or electrical hazards | Frequent interruptions; outages with no announcement; unsafe or exposed wires; slow follow-up |
 | Garbage collection | Missed days; unclear schedule; left uncollected; segregation not enforced; odor or pests |
 | Street lights | Not working; too dark; slow repairs |
@@ -56,7 +58,6 @@ Step 13 asks which HOA-related problems the resident has experienced. Each categ
 | Noise or curfew concerns | Parties; construction noise; unclear curfew |
 | Parking | Not enough visitor parking; blocked driveways; unclear rules |
 | Security patrol | Guards not visible; slow response; unclear procedures; long gate queues |
-| Billing or dues | Unclear charges; no receipt; unresolved disputes |
 | Renovation permits | Unclear requirements; slow approval; hard to reach the office |
 | Pet or animal concerns | Strays; uncontained pets; animal noise |
 | Common areas or facilities | Poor upkeep; damaged gate/fence; overgrown areas; reservation difficulty |

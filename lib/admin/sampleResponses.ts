@@ -11,7 +11,8 @@ export interface SampleSection2 {
   s2_adequacy: LikertValue;
   /** Null for responses that did not ask F2 (draft v2 and later). */
   s2_frequency: LikertValue | null;
-  s2_satisfaction: LikertValue;
+  /** Null for residents who were not asked F3 (homeowners only). */
+  s2_satisfaction: LikertValue | null;
   s2_effectiveness: LikertValue;
   s2_agreement: LikertValue;
 }

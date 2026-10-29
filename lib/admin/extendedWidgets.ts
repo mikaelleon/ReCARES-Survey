@@ -83,7 +83,7 @@ const FEATURE_DEFS: { featureId: FeatureRanking['featureId']; label: string }[] 
     label: 'Online pre-registration for visitors and workers, with a temporary pass',
   },
   { featureId: 'F2', label: 'Online request for street or event closure permits' },
-  { featureId: 'F3', label: 'Online tenant and owner forms' },
+  { featureId: 'F3', label: 'Online tenant registration forms (homeowners)' },
   { featureId: 'F4', label: 'Online registration with a photo of a valid ID' },
   { featureId: 'F5', label: 'Online channel to send requests and track status' },
   {
@@ -161,14 +161,34 @@ export function serviceQualityGauge(records: SampleRecord[]): {
   };
 }
 
+/**
+ * P4 is now answered from ranges. Each range counts at its midpoint (the top range at its
+ * lower bound), so the average is an estimate. Older responses stored a number of minutes and
+ * are still read as-is. "Not sure" is left out.
+ */
+export const WAIT_RANGE_MINUTES: Record<string, number> = {
+  under_5: 2.5,
+  '5_10': 7.5,
+  '11_15': 13,
+  '16_30': 23,
+  '31_60': 45,
+  over_60: 60,
+};
+
+function waitMinutes(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) && value >= 0 ? value : null;
+  if (typeof value === 'string') return WAIT_RANGE_MINUTES[value] ?? null;
+  return null;
+}
+
 export function waitTimeStat(records: SampleRecord[]): {
   averageMinutes: number | null;
   answered: number;
   total: number;
 } {
   const values = records
-    .map((r) => r.answers?.P4)
-    .filter((v): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0);
+    .map((r) => waitMinutes(r.answers?.P4))
+    .filter((v): v is number => v !== null);
   if (values.length === 0) {
     return { averageMinutes: null, answered: 0, total: records.length };
   }

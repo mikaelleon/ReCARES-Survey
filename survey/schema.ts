@@ -115,8 +115,6 @@ export interface O1Details {
   parking_other?: string;
   security_patrol?: string[];
   security_patrol_other?: string;
-  billing_dues?: string[];
-  billing_dues_other?: string;
   renovation_permits?: string[];
   renovation_permits_other?: string;
   pet_animal?: string[];

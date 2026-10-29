@@ -169,8 +169,9 @@ const FIL: Record<string, string> = {
   'A few times a week': 'Ilang beses sa isang linggo',
   'About once a week or less': 'Mga isang beses sa isang linggo o mas madalang',
   'Rarely or never': 'Bihira o hindi kailanman',
-  'How often do you do transactions online, such as paying bills, submitting forms, or ordering?':
-    'Gaano ka kadalas gumagawa ng transaksyon online, tulad ng pagbabayad ng bills, pagsusumite ng porma, o pag-oorder?',
+  'How often do you do transactions online, such as submitting forms, booking, or ordering?':
+    'Gaano ka kadalas gumagawa ng transaksyon online, tulad ng pagsusumite ng porma, pag-book, o pag-oorder?',
+  'Online forms to register or authorize a tenant': 'Mga online na form para irehistro o pahintulutan ang nangungupahan',
   'Weekly or more': 'Lingguhan o mas madalas',
   'A few times a month': 'Ilang beses sa isang buwan',
   'A few times a year': 'Ilang beses sa isang taon',
@@ -246,6 +247,13 @@ const FIL: Record<string, string> = {
     'Abala sa aking sambahayan o mga bisita ang pag-iwan ng ID sa gate.',
   'About how many minutes does a typical wait at the gate take?':
     'Mga ilang minuto karaniwang tumatagal ang paghihintay sa gate?',
+  'Less than 5 minutes': 'Wala pang 5 minuto',
+  '5 to 10 minutes': '5 hanggang 10 minuto',
+  '11 to 15 minutes': '11 hanggang 15 minuto',
+  '16 to 30 minutes': '16 hanggang 30 minuto',
+  '31 to 60 minutes': '31 hanggang 60 minuto',
+  'More than 1 hour': 'Higit sa 1 oras',
+  'I am not sure': 'Hindi ako sigurado',
   'Getting my construction or repair workers approved to enter takes too many steps.':
     'Masyadong maraming hakbang ang pagpapa-aprubang makapasok ang aking mga manggagawa sa konstruksyon o pagkukumpuni.',
   'In the past 12 months, which describes you?': 'Sa nakalipas na 12 buwan, alin ang naglalarawan sa iyo?',
@@ -276,7 +284,6 @@ const FIL: Record<string, string> = {
   Clearance: 'Clearance',
   'Renovation permit': 'Permit sa renovation',
   'Vehicle sticker': 'Sticker ng sasakyan',
-  'Billing or dues': 'Billing o bayarin',
   'Tenant registration or authorization': 'Rehistrasyon o awtorisasyon ng nangungupahan',
   'Completing HOA clearances, forms, and permits needs more office visits than it should.':
     'Mas maraming beses kailangang pumunta sa opisina kaysa dapat para makumpleto ang mga clearance, porma, at permit ng HOA.',
@@ -340,7 +347,6 @@ const FIL: Record<string, string> = {
   'Unclear who to contact or how to report a water problem':
     'Hindi malinaw kung sino ang kokontakin o paano iuulat ang problema sa tubig',
   'No updates on when the water will return': 'Walang update kung kailan babalik ang tubig',
-  'Unfair or unclear water charges': 'Hindi patas o hindi malinaw na singil sa tubig',
   'Power interruptions or electrical hazards': 'Pagkaputol ng kuryente o panganib sa kuryente',
   'Frequent power interruptions': 'Madalas na pagkaputol ng kuryente',
   'Power outages with no announcement': 'Brownout nang walang abiso',
@@ -373,9 +379,6 @@ const FIL: Record<string, string> = {
   'Slow response to concerns': 'Mabagal na tugon sa mga hinaing',
   'Procedures are unclear': 'Hindi malinaw ang mga pamamaraan',
   'Long queues or delays at the gate': 'Mahahabang pila o pagkaantala sa gate',
-  'Unclear billing or charges': 'Hindi malinaw na billing o singil',
-  'Difficulty getting a receipt or statement': 'Hirap makakuha ng resibo o statement',
-  'Disputes not resolved': 'Hindi nareresolba ang mga alitan',
   'Renovation permits': 'Permit sa renovation',
   'Requirements are unclear': 'Hindi malinaw ang mga requirement',
   'Approval takes too long': 'Matagal ang pag-apruba',

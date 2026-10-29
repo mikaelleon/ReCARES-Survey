@@ -99,11 +99,10 @@ Default (5): B7, B14, B15, B16, B18. Optional (5): B10, B8, B11, B13, B9.
 
 ### Feature interest (F)
 
-Default (5): F1, F3, F4, F5, F7. Optional (5): F11, F12, F13, F14, F6.
+Default (5): F1, F3, F4, F5, F7. Optional (4): F12, F13, F14, F6.
 
 | Optional code | Statement | Shown when | Resident types that can see it |
 | --- | --- | --- | --- |
-| F11 | How likely are you to use a website to view your HOA dues and pay them? | any of F1, F3, F4, F5 is Likely or Very likely | All six types, if the condition holds |
 | F12 | How likely are you to use a website to read HOA announcements and notices? | any of F1, F5 is Likely or Very likely | All six types, if the condition holds |
 | F13 | How likely are you to use phone reminders about HOA rules and notices? | any of F1, F5 is Likely or Very likely | All six types, if the condition holds |
 | F14 | How likely are you to use a website to apply for a clearance, renovation permit, or vehicle sticker? | any of F1, F3, F4, F5 is Likely or Very likely | All six types, if the condition holds |
@@ -147,7 +146,7 @@ Default (5): R1, R2, R4, R5, R6. Optional (5): R7, R8, R9, R12, R13.
 
 ### Homeowner set (H)
 
-Default (5): H2, H6, H7, H10, H11. Optional (5): H3, H8, H9, H13, H14.
+Default (5): H2, H6, H7, H8, H9. Optional (2): H3, H13.
 
 | Optional code | Statement | Shown when | Resident types that can see it |
 | --- | --- | --- | --- |
@@ -155,7 +154,6 @@ Default (5): H2, H6, H7, H10, H11. Optional (5): H3, H8, H9, H13, H14.
 | H8 | The requirements for a renovation permit are clear. | resident is a homeowner type (A1 = 1 to 4) and (any of H6, H7 is Neutral, Disagree or Strongly disagree) | Homeowner types (1 to 4) |
 | H9 | Applying for a vehicle sticker is simple. | resident is a homeowner type (A1 = 1 to 4) and H1 includes “Vehicle sticker” | Homeowner types (1 to 4) |
 | H13 | I know how long a clearance or permit will take before I apply. | resident is a homeowner type (A1 = 1 to 4) and (H2 is Neutral, Agree or Strongly agree or H6 is Neutral, Disagree or Strongly disagree) | Homeowner types (1 to 4) |
-| H14 | I can easily get a receipt or proof of payment from the HOA. | resident is a homeowner type (A1 = 1 to 4) and (any of H10, H11 is Neutral, Disagree or Strongly disagree) | Homeowner types (1 to 4) |
 
 ### Tenant set (T)
 

@@ -1,4 +1,5 @@
 import { DEFAULT_INSTRUMENT } from '@/survey/defaultInstrument';
+import { gateByTransaction } from '@/survey/gating';
 import { O1_V2_EXTRA_CATEGORIES } from '@/survey/o1';
 import {
   conditionRefs,
@@ -182,7 +183,6 @@ const CONCERNS: Array<[string, string]> = [
   ['home_business', 'Home business activity'],
   ['visitors', 'Visitors or loitering'],
   ['upkeep', 'Property upkeep'],
-  ['unpaid_dues', 'Unpaid dues or fees'],
 ];
 
 const concernOptionsFrom = (source: string): OptionDef[] => [
@@ -254,7 +254,6 @@ const additions: Record<string, QuestionDef[]> = {
 
   // ---- step 5: more feature interest --------------------------------------------------------
   s5: [
-    likert('F11', 's5', 'How likely are you to use a website to view your HOA dues and pay them?', {}, 'likelihood'),
     likert('F12', 's5', 'How likely are you to use a website to read HOA announcements and notices?', {}, 'likelihood'),
     likert('F13', 's5', 'How likely are you to use phone reminders about HOA rules and notices?', {}, 'likelihood'),
     likert(
@@ -340,22 +339,7 @@ const additions: Record<string, QuestionDef[]> = {
       showWhen: HOMEOWNER,
       review: { code: 'H', title: 'Homeowner' },
     }),
-    likert('H10', 's11', 'I understand my billing or dues statement.', {
-      allowNA: true,
-      showWhen: HOMEOWNER,
-      review: { code: 'H', title: 'Homeowner' },
-    }),
-    likert('H11', 's11', 'Paying HOA dues is convenient for me.', {
-      allowNA: true,
-      showWhen: HOMEOWNER,
-      review: { code: 'H', title: 'Homeowner' },
-    }),
     likert('H13', 's11', 'I know how long a clearance or permit will take before I apply.', {
-      allowNA: true,
-      showWhen: HOMEOWNER,
-      review: { code: 'H', title: 'Homeowner' },
-    }),
-    likert('H14', 's11', 'I can easily get a receipt or proof of payment from the HOA.', {
       allowNA: true,
       showWhen: HOMEOWNER,
       review: { code: 'H', title: 'Homeowner' },
@@ -719,7 +703,6 @@ const additions: Record<string, QuestionDef[]> = {
       opts(
         ['schedule_or_closure', 'A schedule or closure notice'],
         ['rule_change', 'A rule change'],
-        ['payment_or_fee', 'A payment or fee notice'],
         ['meeting', 'A meeting'],
         ['event', 'An event'],
         ['other', 'Other'],
@@ -852,7 +835,7 @@ export const DEFAULT_LIKERT: Readonly<Record<string, readonly string[]>> = {
   S: ['S1', 'S2', 'S3', 'S4', 'S5'],
   P: ['P6', 'P7', 'P9', 'P10', 'P11'],
   R: ['R1', 'R2', 'R4', 'R5', 'R6'],
-  H: ['H2', 'H6', 'H7', 'H10', 'H11'],
+  H: ['H2', 'H6', 'H7', 'H8', 'H9'],
   T: ['T2', 'T3', 'T6', 'T11', 'T13'],
   CC: ['CC12', 'CC13', 'CC14', 'CC15', 'CC16'],
   HR: ['HR1', 'HR3a', 'HR3b', 'HR3c', 'HR6'],
@@ -875,7 +858,6 @@ const OPTIONAL_TRIGGERS: Record<string, Condition> = {
   B13: allOf(HAS_DEVICE, anyWeak('B14', 'B18')),
   // F feature interest: extra features are asked of residents interested in at least one core feature
   F6: anyOf({ op: 'eq', q: 'A4', value: 'yes' }, anyStrong(...F_CORE)),
-  F11: anyStrong(...F_CORE),
   F12: anyStrong('F1', 'F5'),
   F13: anyStrong('F1', 'F5'),
   F14: anyStrong(...F_CORE),
@@ -900,10 +882,7 @@ const OPTIONAL_TRIGGERS: Record<string, Condition> = {
   R12: anyWeak('R2', 'R6'),
   R13: anyStrong('R1', 'R5'),
   // H homeowner set
-  H8: allOf(HOMEOWNER, anyWeak('H6', 'H7')),
-  H9: allOf(HOMEOWNER, picked('H1', 'vehicle_sticker')),
   H13: allOf(HOMEOWNER, anyWeak('H2', 'H6')),
-  H14: allOf(HOMEOWNER, anyWeak('H10', 'H11')),
   // T tenant set
   T10: allOf(TENANT, anyWeak('T6', 'T13')),
   T12: allOf(TENANT, picked('T1', 'move_in_clearance')),
@@ -1044,7 +1023,9 @@ function build(): Instrument {
     status: 'draft',
     title: 'Resident Needs Assessment (draft v2)',
     steps,
-    questions: applyDefaultAndOptional(questions),
+    // Same rule as v1: nothing about HOA service access, ID registration, or the homeowner and
+    // tenant experience is asked of someone who has never done an HOA transaction.
+    questions: applyDefaultAndOptional(questions).map((q) => gateByTransaction(q, NS)),
     baseVersion: base.version,
   };
   return sortQuestionsByStep(instrument);

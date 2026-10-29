@@ -170,7 +170,6 @@ const stampMs = (iso, { hour, minute, second = 0 }) =>
 const TEXT = {
   AC1_other: ['Chronic back pain', 'Uses a cane after surgery', 'Low vision in one eye', 'Gets tired quickly walking uphill'],
   F10: [
-    'Online payment of monthly dues with an official receipt sent by email.',
     'A way to book the clubhouse or court without going to the office.',
     'Reminders about water interruptions and garbage pickup schedule.',
     'Option to report a broken street light with a photo.',
@@ -185,7 +184,6 @@ const TEXT = {
     'Renovation permit for the carport took almost three weeks because of back and forth on the requirements.',
     'Vehicle sticker renewal, the office was closed on the day I could go and I had to return.',
     'Clearance for selling the lot. Needed several signatures from different people.',
-    'Paying the arrears, the receipt was not available the same day.',
     'Registering our tenant. They asked for documents twice.',
     'Fence repair approval. Nobody could tell me who to follow up with.',
     'Getting the gate pass for the movers on the day we moved in.',
@@ -212,7 +210,6 @@ const TEXT = {
     'Announcements are posted at the gate only. Many residents never see them.',
     'The guard house phone is always busy during the evening.',
     'Office hours do not match when working people are free.',
-    'We were never told how the dues are used.',
     'I would like a clear schedule of the HOA meetings.',
     'Complaints are noted but no update afterwards.',
     'Some staff are very helpful, but the process itself is confusing.',
@@ -324,9 +321,9 @@ const MULTI_P = {
     no_device: (r) => clamp(0.4 - r.digital * 0.4, 0.02, 0.9),
     other: () => 0.04,
   },
-  H1: { clearance: () => 0.42, renovation_permit: (r, a) => (a.A5 === 'yes' ? 0.7 : 0.15), vehicle_sticker: () => 0.38, billing_dues: () => 0.55, tenant_registration: () => 0.16, other: () => 0.03 },
+  H1: { clearance: () => 0.42, renovation_permit: (r, a) => (a.A5 === 'yes' ? 0.7 : 0.15), vehicle_sticker: () => 0.38, tenant_registration: () => 0.16, other: () => 0.03 },
   T1: { tenant_registration: () => 0.72, move_in_clearance: () => 0.55, visitor_worker_passes: () => 0.4, vehicle_sticker: () => 0.3, owner_docs_needed: () => 0.4, other: () => 0.03 },
-  CC1: { noise: () => 0.22, parking: (r) => (r.phase === 'Phase 3' ? 0.72 : 0.22), garbage: () => 0.4, pets: () => 0.34, speeding: () => 0.28, construction: () => 0.18, home_business: () => 0.08, visitors: () => 0.12, upkeep: () => 0.2, unpaid_dues: () => 0.07, other: () => 0.04 },
+  CC1: { noise: () => 0.22, parking: (r) => (r.phase === 'Phase 3' ? 0.72 : 0.22), garbage: () => 0.4, pets: () => 0.34, speeding: () => 0.28, construction: () => 0.18, home_business: () => 0.08, visitors: () => 0.12, upkeep: () => 0.2, other: () => 0.04 },
 };
 const NONE_IDS = new Set(['none', 'none_of_these', 'nothing_would_stop_me']);
 
@@ -435,7 +432,7 @@ function chooseMulti(q, r, a) {
 
 const O1_BASE = {
   water_supply: 0.38, electricity_power: 0.2, garbage_collection: 0.42, street_lights: 0.2, roads_drainage: 0.22,
-  noise_curfew: 0.2, parking: 0.2, security_patrol: 0.04, billing_dues: 0.13, renovation_permits: 0.12,
+  noise_curfew: 0.2, parking: 0.2, security_patrol: 0.04, renovation_permits: 0.12,
   pet_animal: 0.36, facilities_amenities: 0.14, neighbor_disputes: 0.42, street_event_closures: 0.11,
 };
 const O1_PHASE3 = { water_supply: 0.96, parking: 0.64, garbage_collection: 0.44, pet_animal: 0.34, neighbor_disputes: 0.33 };

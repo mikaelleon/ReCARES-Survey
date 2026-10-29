@@ -1,5 +1,6 @@
 import { INCLUDE_SEX_AND_CIVIL_STATUS } from '@/survey/flags';
 import type { Condition, Instrument, OptionDef, QuestionDef, StepDef } from '@/survey/model';
+import { gateByTransaction } from '@/survey/gating';
 import { O1_CATEGORIES } from '@/survey/o1';
 
 /**
@@ -9,6 +10,8 @@ import { O1_CATEGORIES } from '@/survey/o1';
 
 const HOMEOWNER: Condition = { op: 'in', q: 'A1', value: [1, 2, 3, 4] };
 const TENANT: Condition = { op: 'in', q: 'A1', value: [5, 6] };
+/** Homeowner types only (not a family or household member of the owner). */
+const OWNER_ONLY: Condition = { op: 'in', q: 'A1', value: [1, 2, 3] };
 const OWNER_ELSEWHERE: Condition = { op: 'in', q: 'A1', value: [2, 3] };
 const NO_DEVICE: Condition = { op: 'includes', q: 'B1', value: 'none' };
 const HAS_DEVICE: Condition = { op: 'notIncludes', q: 'B1', value: 'none' };
@@ -155,7 +158,7 @@ const steps: StepDef[] = [
   },
 ];
 
-const questions: QuestionDef[] = [
+const bundledQuestions: QuestionDef[] = [
   // ---- Step 1 ----
   {
     code: 'A1',
@@ -395,7 +398,7 @@ const questions: QuestionDef[] = [
     code: 'B5',
     stepId: 's3',
     type: 'single',
-    text: 'How often do you do transactions online, such as paying bills, submitting forms, or ordering?',
+    text: 'How often do you do transactions online, such as submitting forms, booking, or ordering?',
     options: opts(
       ['weekly_or_more', 'Weekly or more'],
       ['few_times_a_month', 'A few times a month'],
@@ -440,13 +443,8 @@ const questions: QuestionDef[] = [
     'How likely are you to use an online request for street or event closure permits, with notices sent to residents of the affected phase?',
     'likelihood',
   ),
-  likert('F3', 's5', 'How likely are you to use online tenant and lessee forms that you can submit from home?', 'likelihood', {
-    textVariants: [
-      {
-        when: HOMEOWNER,
-        text: 'How likely are you to use online forms to register or authorize your tenant with the HOA?',
-      },
-    ],
+  likert('F3', 's5', 'How likely are you to use online forms to register or authorize your tenant with the HOA?', 'likelihood', {
+    showWhen: OWNER_ONLY,
   }),
   likert(
     'F4',
@@ -476,15 +474,15 @@ const questions: QuestionDef[] = [
     text: 'Which of these would you want available first? Select up to 3.',
     exclusiveId: 'none_of_these',
     maxSelect: 3,
-    options: opts(
-      ['pre_registration', 'Pre-registration of visitors and workers'],
-      ['closure', 'Online closure permits and notices'],
-      ['forms', 'Online forms for owners and tenants'],
-      ['registration', 'Online registration with ID verification'],
-      ['requests', 'Online requests with status tracking'],
-      ['accessible', 'Accessible version of the website'],
-      ['none_of_these', 'None of these'],
-    ),
+    options: [
+      { id: 'pre_registration', label: 'Pre-registration of visitors and workers' },
+      { id: 'closure', label: 'Online closure permits and notices' },
+      { id: 'forms', label: 'Online forms to register or authorize a tenant', showWhen: OWNER_ONLY },
+      { id: 'registration', label: 'Online registration with ID verification' },
+      { id: 'requests', label: 'Online requests with status tracking' },
+      { id: 'accessible', label: 'Accessible version of the website' },
+      { id: 'none_of_these', label: 'None of these' },
+    ],
   },
   {
     code: 'F9',
@@ -542,10 +540,18 @@ const questions: QuestionDef[] = [
   {
     code: 'P4',
     stepId: 's8',
-    type: 'number',
+    type: 'single',
+    required: false,
     text: 'About how many minutes does a typical wait at the gate take?',
-    min: 0,
-    max: 180,
+    options: opts(
+      ['under_5', 'Less than 5 minutes'],
+      ['5_10', '5 to 10 minutes'],
+      ['11_15', '11 to 15 minutes'],
+      ['16_30', '16 to 30 minutes'],
+      ['31_60', '31 to 60 minutes'],
+      ['over_60', 'More than 1 hour'],
+      ['not_sure', 'I am not sure'],
+    ),
   },
   likert('P5', 's8', 'Getting my construction or repair workers approved to enter takes too many steps.', 'agreement', {
     showWhen: { op: 'eq', q: 'A5', value: 'yes' },
@@ -592,15 +598,14 @@ const questions: QuestionDef[] = [
     showWhen: HOMEOWNER,
     review: { code: 'H', title: 'Homeowner' },
     exclusiveId: 'none',
-    options: opts(
-      ['clearance', 'Clearance'],
-      ['renovation_permit', 'Renovation permit'],
-      ['vehicle_sticker', 'Vehicle sticker'],
-      ['billing_dues', 'Billing or dues'],
-      ['tenant_registration', 'Tenant registration or authorization'],
-      ['none', 'None'],
-      ['other', 'Other'],
-    ),
+    options: [
+      { id: 'clearance', label: 'Clearance' },
+      { id: 'renovation_permit', label: 'Renovation permit' },
+      { id: 'vehicle_sticker', label: 'Vehicle sticker' },
+      { id: 'tenant_registration', label: 'Tenant registration or authorization', showWhen: OWNER_ONLY },
+      { id: 'none', label: 'None' },
+      { id: 'other', label: 'Other' },
+    ],
   },
   likert('H2', 's11', 'Completing HOA clearances, forms, and permits needs more office visits than it should.', 'agreement', {
     allowNA: true,
@@ -608,7 +613,7 @@ const questions: QuestionDef[] = [
     review: { code: 'H', title: 'Homeowner' },
   }),
   likert('H3', 's11', 'Registering or authorizing a tenant with the HOA is easy.', 'agreement', {
-    showWhen: { op: 'and', args: [HOMEOWNER, { op: 'includes', q: 'H1', value: 'tenant_registration' }] },
+    showWhen: { op: 'and', args: [OWNER_ONLY, { op: 'includes', q: 'H1', value: 'tenant_registration' }] },
     skipCode: 'not_shown',
     skipCodeWhen: HOMEOWNER,
     review: { code: 'H', title: 'Homeowner' },
@@ -718,6 +723,9 @@ const questions: QuestionDef[] = [
     attachForm: { when: { op: 'eq', q: 'IV1', value: 'yes' } },
   },
 ];
+
+/** Sections that only make sense for someone who has dealt with the HOA are hidden for everyone else. */
+const questions = bundledQuestions.map((q) => gateByTransaction(q));
 
 export const DEFAULT_INSTRUMENT: Instrument = {
   version: 'v1',

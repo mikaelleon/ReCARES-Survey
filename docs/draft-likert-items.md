@@ -24,7 +24,6 @@ Counts after adding: every category reaches 10.
 
 | Code | Item | Scale | Gate |
 | --- | --- | --- | --- |
-| F11 | How likely are you to use online payment or viewing of HOA dues through this website? | likelihood | Always |
 | F12 | How likely are you to use this website to receive HOA announcements and notices? | likelihood | Always |
 | F13 | How likely are you to recommend this website to a neighbor? | likelihood | Always |
 
@@ -88,8 +87,6 @@ Counts after adding: every category reaches 10.
 | H7 | Renovation permits are processed in a reasonable time. | agreement | Homeowner |
 | H8 | The requirements for renovation permits are clear. | agreement | Homeowner |
 | H9 | Vehicle sticker applications are simple. | agreement | Homeowner |
-| H10 | I understand my billing or dues statement. | agreement | Homeowner |
-| H11 | Paying HOA dues is convenient for me. | agreement | Homeowner |
 | H12 | Concerns I raised about my property were resolved properly. | agreement | Homeowner |
 
 ## T. Tenant and lessee set (existing T2, T3) + 8 new
@@ -120,7 +117,7 @@ Counts after adding: every category reaches 10.
 
 ## Open points for the adviser
 
-1. The F category uses likelihood, not agreement. F11 to F13 follow that, and F13 is a likelihood-to-recommend item.
+1. The F category uses likelihood, not agreement. F12 to F14 follow that, and F13 is a likelihood-to-recommend item.
 2. H and T are shown to separate groups, so each respondent sees only one set. Confirm 10 items each is intended.
 3. Several items are negatively worded (P7, C5, C8, R5, T12). Decide whether to reverse-code in analysis.
 4. R numbering: existing R3 is single-choice, so new Likert items run R4 to R11.

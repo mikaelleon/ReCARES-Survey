@@ -165,7 +165,7 @@ function renderBody(
             <div className="ext-stat__value">
               {w.averageMinutes == null ? '—' : `${w.averageMinutes} min`}
             </div>
-            <p className="ext-stat__label">Average reported wait time</p>
+            <p className="ext-stat__label">Average reported wait time (estimated from ranges)</p>
             <p className="ext-stat__note">
               Based on {w.answered} of {w.total} respondents who answered P4 (optional).
             </p>

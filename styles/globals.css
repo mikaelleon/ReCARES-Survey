@@ -20098,3 +20098,182 @@ i.an-grp {
   border-color: var(--dark-emerald, #13693f);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--dark-emerald, #13693f) 35%, transparent);
 }
+
+/* ==========================================================================
+   Survey interactions — one calm, predictable system.
+   Why the old behaviour felt wrong:
+   - Controls moved on hover (translateY / card lift). A target that slides away
+     from the pointer flickers at its edges and makes the next click feel unreliable.
+   - Spring "pop" animations replayed whenever a saved answer remounted.
+   - Rows shrank on press, shifting text under the finger.
+   Rules now: hover = colour/border only (never movement); press = brief 0.97 scale on
+   compact controls only; selected = a stable filled state; one 150ms timing; one focus ring.
+   ========================================================================== */
+.survey-flow {
+  --sv-ease: cubic-bezier(0.2, 0, 0, 1);
+  --sv-fast: 150ms;
+}
+
+.survey-flow :is(.na-likert-btn, .na-likert-na, .na-radio, .na-check, .survey-pager__item, .survey-actions > button, .survey-actions > a, .survey-lang button, .survey-leave) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+/* Cards are not buttons: hovering keeps the resting border and shadow */
+@media (hover: hover) {
+  .survey-flow .survey-card:not(.survey-card--error):not(:focus-within):hover {
+    border-color: var(--border-subtle);
+    box-shadow: 0 1px 2px rgba(11, 40, 24, 0.05), 0 8px 24px -12px rgba(11, 40, 24, 0.14);
+  }
+
+  [data-theme="dark"] .survey-flow .survey-card:not(.survey-card--error):not(:focus-within):hover {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -14px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* Scale buttons: no movement, stable selected state */
+.survey-flow .na-likert-btn,
+.survey-flow .na-likert-na {
+  transition:
+    background-color var(--sv-fast) var(--sv-ease),
+    border-color var(--sv-fast) var(--sv-ease),
+    color var(--sv-fast) var(--sv-ease),
+    transform 90ms var(--sv-ease);
+}
+
+@media (hover: hover) {
+  .survey-flow .na-likert-btn:hover {
+    transform: none;
+  }
+
+  .survey-flow .na-likert-btn[aria-pressed='true']:hover,
+  .survey-flow .na-likert-na[aria-pressed='true']:hover {
+    filter: brightness(1.1);
+  }
+}
+
+.survey-flow .na-likert-btn:active,
+.survey-flow .na-likert-na:active {
+  transform: scale(0.97);
+}
+
+.survey-flow .na-likert-btn[aria-pressed='true'],
+.survey-flow .na-likert-na[aria-pressed='true'] {
+  animation: none;
+  box-shadow: none;
+}
+
+.survey-flow .na-likert-btn:focus-visible,
+.survey-flow .na-likert-na:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Option rows: tint on hover and press, never scale, no icon bounce, no replayed pop */
+.survey-flow .na-radio,
+.survey-flow .na-check {
+  transition: background-color var(--sv-fast) var(--sv-ease);
+}
+
+.survey-flow .na-radio:active,
+.survey-flow .na-check:not(:has(input:disabled)):active {
+  transform: none;
+  background: color-mix(in srgb, var(--dark-emerald) 12%, transparent);
+}
+
+.survey-flow .na-radio input:checked + .na-dot,
+.survey-flow .na-check input:checked + .na-box {
+  animation: none;
+}
+
+@media (hover: hover) {
+  .survey-flow .na-radio:hover .na-opticon,
+  .survey-flow .na-check:hover .na-opticon {
+    transform: none;
+  }
+}
+
+.survey-flow .na-radio:has(input:focus-visible),
+.survey-flow .na-check:has(input:focus-visible) {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Back / Next / Review: colour feedback only; the arrow nudges 2px to signal direction */
+@media (hover: hover) {
+  .survey-flow .survey-actions > :is(button, a):not(:disabled):hover {
+    transform: none;
+    box-shadow: none;
+    filter: brightness(1.08);
+  }
+
+  .survey-flow .survey-actions > :is(button, a):hover .survey-arrow--next {
+    transform: translateX(2px);
+  }
+
+  .survey-flow .survey-actions > :is(button, a):hover .survey-arrow--prev {
+    transform: translateX(-2px);
+  }
+}
+
+.survey-flow .survey-actions > :is(button, a):not(:disabled):active {
+  transform: scale(0.98);
+  filter: brightness(0.95);
+}
+
+.survey-flow .survey-actions > :is(button, a):disabled {
+  cursor: not-allowed;
+}
+
+/* Step pager: no lift; the current step keeps its ring, the rest change colour */
+@media (hover: hover) {
+  .survey-flow .survey-pager__item[data-state='open']:hover,
+  .survey-flow .survey-pager__item[data-state='done']:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .survey-flow .survey-pager__item[data-state='done']:hover {
+    filter: brightness(1.1);
+  }
+}
+
+.survey-flow .survey-pager__item:not([data-state='locked']):not([data-state='current']):active {
+  transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .survey-flow :is(.na-likert-btn, .na-likert-na, .survey-actions > button, .survey-actions > a, .survey-pager__item):active {
+    transform: none;
+  }
+
+  .survey-flow .survey-actions > :is(button, a):hover .survey-arrow {
+    transform: none;
+  }
+}
+
+/* Step guide: plain helper text under the subtitle. No box, no icon, no dividers. */
+.survey-flow .survey-guide {
+  max-width: 85ch;
+  margin: 0 0 8px;
+}
+
+.survey-flow .survey-guide__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-caption);
+  text-wrap: pretty;
+}
+
+.survey-flow .survey-guide__star {
+  color: var(--status-error);
+  font-weight: 700;
+}

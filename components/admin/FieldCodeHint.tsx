@@ -146,6 +146,6 @@ export const FIELD_CODE_HELP = {
   r2: '“I trust that only authorized HOA personnel would see my ID.”',
   iv1: '“Would you be open to being contacted for a possible follow-up interview?”',
   a4: 'Screening question: “Do you or another member of your household have a disability or mobility limitation?” This count is Yes answers only — not the same as the Accessibility Needs path.',
-  p4: 'Optional: “Typical wait at the gate, in minutes.”',
+  p4: 'Optional: “Typical wait at the gate”, picked from time ranges. The average is estimated from the middle of each range.',
   ac1: 'Accessibility needs checklist shown only after A4 = Yes (disability or mobility limitation in the household).',
 } as const;

@@ -92,6 +92,11 @@ export const BRANCH_SCREENING = [
     question: 'Devices used regularly? (unlocks B2 / B8 / B9)',
   },
   {
+    code: 'A11',
+    plainLabel: 'How do you mainly deal with the HOA?',
+    question: 'Main channel for HOA transactions? (“I have not done any HOA transaction” hides Current HOA service access, Registration and ID verification, and the Homeowner / Tenant step)',
+  },
+  {
     code: 'P1',
     plainLabel: 'Who do you bring through the gate?',
     question: 'Who through the gate? (unlocks P2 / P3 when not “none”)',
@@ -189,7 +194,7 @@ export const BRANCH_SECTIONS: BranchSection[] = [
     questions: [
       { code: 'F1', question: 'Online pre-registration for visitors and workers, with a temporary pass' },
       { code: 'F2', question: 'Online request for street or event closure permits' },
-      { code: 'F3', question: 'Online tenant and owner forms' },
+      { code: 'F3', question: 'Online forms to register or authorize a tenant (homeowners only)' },
       { code: 'F4', question: 'Online registration with a photo of a valid ID' },
       { code: 'F5', question: 'Online channel to send requests and track status' },
       {
@@ -233,7 +238,7 @@ export const BRANCH_SECTIONS: BranchSection[] = [
         question: 'Leaving an ID at the gate is inconvenient.',
         gateNote: 'Only when P1 is not “none of these” (chip P+)',
       },
-      { code: 'P4', question: 'Typical wait at the gate, in minutes (optional)' },
+      { code: 'P4', question: 'Typical wait at the gate, picked from ranges (optional)' },
       {
         code: 'P5',
         question: 'Getting construction or repair workers approved takes too many steps.',

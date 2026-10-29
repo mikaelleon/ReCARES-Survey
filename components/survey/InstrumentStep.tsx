@@ -52,6 +52,42 @@ function Note({ text, kind }: { text: string; kind: 'intro' | 'hint' }) {
   );
 }
 
+/** Red asterisk inside the required-field sentence, so it matches the one on each question. */
+function WithStar({ text }: { text: string }) {
+  const parts = text.split('*');
+  return (
+    <>
+      {parts.map((part, index) => (
+        <Fragment key={index}>
+          {index > 0 ? (
+            <span className="survey-guide__star" aria-hidden="true">
+              *
+            </span>
+          ) : null}
+          {part}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+/**
+ * The "how this step works" lines, grouped into one panel instead of several loose
+ * paragraphs. Each sentence is its own list item, so it can be scanned.
+ */
+function StepGuide({ items }: { items: ReactNode[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="survey-guide" role="note">
+      <ul className="survey-guide__list">
+        {items.map((item, index) => (
+          <li key={index}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function QuestionField({
   q,
   answers,
@@ -416,6 +452,17 @@ export function InstrumentStep({
   const { roots, children } = groupFollowUps(questions);
   const notes = (step.notes ?? []).filter((n) => evalCondition(n.when, answers));
   const top = notes.filter((n) => !n.after);
+  const guideNotes = top.filter((n) => (n.kind ?? 'intro') === 'intro');
+  const otherTop = top.filter((n) => (n.kind ?? 'intro') !== 'intro');
+  const guideItems: ReactNode[] = [
+    ...(step.showRequiredNote ? [<WithStar key="required" text={t(REQUIRED_NOTE)} />] : []),
+    ...guideNotes.flatMap((n, noteIndex) =>
+      n.text
+        .split('\n')
+        .filter((line) => line.trim())
+        .map((line, lineIndex) => <Fragment key={`${noteIndex}-${lineIndex}`}>{t(line)}</Fragment>),
+    ),
+  ];
 
   // Everything an answer opens (follow-up questions, hints, the interview form)
   // renders inside the card of the question that opened it.
@@ -446,12 +493,8 @@ export function InstrumentStep({
 
   return (
     <>
-      {step.showRequiredNote ? (
-        <p className="na-required-note">
-          {t(REQUIRED_NOTE)}
-        </p>
-      ) : null}
-      {top.map((n, index) => (
+      <StepGuide items={guideItems} />
+      {otherTop.map((n, index) => (
         <Note key={`top-${index}`} text={n.text} kind={n.kind ?? 'intro'} />
       ))}
       {wrap(items, 0)}

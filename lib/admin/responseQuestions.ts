@@ -132,7 +132,9 @@ export const RESPONSE_QUESTIONS: ResponseQuestion[] = [
       kind: 'hbar',
       ...(key === 's2_frequency'
         ? { hint: 'Built from F2 (online closure permit requests), asked in v1 only. Draft v2 responses have no F2 and are left out of this chart.' }
-        : {}),
+        : key === 's2_satisfaction'
+          ? { hint: 'Built from F3 (online forms to register or authorize a tenant). Only homeowners (A1 = 1 to 3) are asked; everyone else is left out of this chart.' }
+          : {}),
       buckets: (records) => likertBuckets(records, key),
     }),
   ),

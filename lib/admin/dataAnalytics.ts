@@ -85,7 +85,7 @@ export interface ScaleRow {
 export const FEATURE_ITEMS: ScaleDef[] = [
   { code: 'F1', label: 'Visitor and worker pre-registration' },
   { code: 'F2', label: 'Street and event closure permits' },
-  { code: 'F3', label: 'Tenant and owner forms' },
+  { code: 'F3', label: 'Tenant registration forms (homeowners)' },
   { code: 'F4', label: 'Online registration with ID' },
   { code: 'F5', label: 'Requests with status tracking' },
   { code: 'F6', label: 'Accessible version of the website' },

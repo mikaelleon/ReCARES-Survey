@@ -47,7 +47,7 @@ If a word is unfamiliar, open the [glossary](docs/glossary.md).
 - Plain-language homepage: purpose, goals, FAQ, contact form, RAGbot chat.
 - A **branching 13-step survey** (about 11 to 13 minutes) with a two-checkbox consent and eligibility gate, a review screen, and a thank-you page. Details: [The survey](docs/survey.md).
 - **English / Tagalog toggle** on every survey screen. Only the displayed text changes; stored answers stay in English so analysis is consistent.
-- **Open problem discovery** that covers water supply or interruptions, power, garbage, lights, roads and drainage, noise, parking, security, billing, permits, pets, common areas, and neighbor disputes.
+- **Open problem discovery** that covers water supply or interruptions, power, garbage, lights, roads and drainage, noise, parking, security, permits, pets, common areas, and neighbor disputes.
 - **Drafts stay on the resident’s device.** Answers go online only on **submit**. A “Leave the survey” dialog lets residents keep or erase their local draft.
 - Mobile-first layout, dark mode, keyboard and screen-reader friendly focus and error handling.
 - Optional follow-up interview invitation, stored separately from the anonymous answers.

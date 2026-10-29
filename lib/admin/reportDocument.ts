@@ -749,7 +749,7 @@ export function buildReportDocument(records: SampleRecord[], meta: ReportMeta): 
   results.push({
     kind: 'p',
     text: sentences(
-      'Table 9 lists the thirteen problem groups in the open problem discovery question, with the number and percentage of respondents who selected each one.',
+      'Table 9 lists the twelve problem groups in the open problem discovery question, with the number and percentage of respondents who selected each one.',
       'Figure 8 shows the same ranking as bars, and Figure 9 shows the share of residents in each phase who selected the most reported groups.',
       'The question allowed more than one selection, so the percentages in Table 9 do not add up to 100.',
       'These results answer the fifth analysis question.',

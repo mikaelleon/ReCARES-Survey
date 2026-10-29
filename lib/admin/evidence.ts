@@ -53,7 +53,7 @@ export interface EvidenceSummary {
 const FEATURE_PURPOSE: Record<string, string> = {
   F1: 'cuts the wait at the gate by letting a resident register visitors and workers ahead of time and issue a temporary pass',
   F2: 'replaces word-of-mouth street closures with a permit request and a notice, with rerouting, to the phase affected',
-  F3: 'lets homeowners and tenants submit forms from home instead of printing, filling in, and delivering them',
+  F3: 'lets homeowners register or authorize a tenant from home instead of printing, filling in, and delivering forms',
   F4: 'moves registration and ID checking online, with the Board still making the final verification',
   F5: 'gives residents one channel to send a request or concern and see where it stands, instead of waiting on a private Facebook inbox',
   F6: 'makes the same services usable with larger text, stronger contrast, and a screen reader',

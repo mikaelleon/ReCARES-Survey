@@ -57,7 +57,7 @@ export function mapSurveyDocToSample(
   const section2: SampleSection2 = {
     s2_adequacy: asLikert(a.F1),
     s2_frequency: asLikertOrNull(a.F2),
-    s2_satisfaction: asLikert(a.F3),
+    s2_satisfaction: asLikertOrNull(a.F3),
     s2_effectiveness: asLikert(a.F4),
     s2_agreement: asLikert(a.F7 ?? a.F5),
   };

@@ -142,7 +142,7 @@ Owner-elsewhere hint as in step 7. Review group: P.
 | P1 | multi | In the past 3 months, who did you or your household need to bring through the gate? Select all that apply. Options: Visitors; Ride-hailing or special-trip drivers; Deliveries; None of these (exclusive). | Always. Core |
 | P2 | Likert, agreement, N/A | Waiting at the gate to get a permit or pass takes too long for my visitors, workers, or drivers. | P1 does not include None of these. Skip `not_shown` |
 | P3 | Likert, agreement, N/A | Leaving an ID at the gate is inconvenient for my household or guests. | Same gate and skip |
-| P4 | number (0 to 180) | About how many minutes does a typical wait at the gate take? | Always |
+| P4 | single choice (time ranges, optional) | About how many minutes does a typical wait at the gate take? | Always |
 | P5 | Likert, agreement | Getting my construction or repair workers approved to enter takes too many steps. | A5 = Yes |
 
 #### Step 9. Street and event closure permits
@@ -170,7 +170,7 @@ Homeowner set (HOMEOWNER). Review group: H.
 
 | Code | Type | Question | Notes |
 | --- | --- | --- | --- |
-| H1 | multi | Which HOA transactions did your household do in the past 12 months? | Clearance; Renovation permit; Vehicle sticker; Billing or dues; Tenant registration or authorization; None (exclusive); Other |
+| H1 | multi | Which HOA transactions did your household do in the past 12 months? | Clearance; Renovation permit; Vehicle sticker; Tenant registration or authorization; None (exclusive); Other |
 | H2 | Likert, agreement, N/A | Completing HOA clearances, forms, and permits needs more office visits than it should. | |
 | H3 | Likert, agreement | Registering or authorizing a tenant with the HOA is easy. | Shown only to homeowners whose H1 includes tenant registration. Skip `not_shown` |
 | H4 | text (300) | Describe one HOA transaction that took the longest, and why. | |
@@ -196,7 +196,7 @@ Intro: voluntary; Prefer not to say allowed. Review group: AC. **No gate** on A4
 #### Step 13. Open problem discovery
 | Code | Type | Question | Notes |
 | --- | --- | --- | --- |
-| O1 | nested multi | Besides what was asked, which of these HOA-related problems have you experienced? Select all that apply. | 13 categories (see 2.5); "None of these" exclusive; "Other" |
+| O1 | nested multi | Besides what was asked, which of these HOA-related problems have you experienced? Select all that apply. | 12 categories (see 2.5); "None of these" exclusive; "Other" |
 | O2 | text (500) | Is there any other problem with HOA services that you would like us to know about? | Hint: do not write names |
 | O3 | text (500) | What other problems do you and your household face in the community, even if they have nothing to do with the HOA? | Hint: do not write names |
 | IV1 | single | Would you be open to being contacted for a possible follow-up interview? | Yes opens the interview contact form (attachForm) |
@@ -215,8 +215,7 @@ Each category the resident ticks opens a checklist (7 to 11 choices, "Other" las
 | Noise or curfew concerns (7) | Loud parties; construction noise outside hours; unclear curfew; videoke at night; loud vehicles at night; complaints not acted on; noise from home businesses |
 | Parking (7) | Not enough visitor parking; blocked driveways; unclear rules; parking in front of other homes; illegal parking near gate or corners; violators not penalized; large vehicles parked long |
 | Security patrol (7) | Guards not visible; slow response; unclear procedures; gate queues; guards not alert; strangers enter easily; incidents not followed up |
-| Billing or dues (7) | Unclear charges; hard to get receipt; disputes not resolved; increases unexplained; limited payment channels; payments not recorded; unclear late fees |
-| Renovation permits (7) | Unclear requirements; slow approval; hard to reach engineer or office; unclear or high fees; neighbors not informed; workers block road; no inspection after approval |
+| Renovation permits (7) | Unclear requirements; slow approval; hard to reach engineer or office; neighbors not informed; workers block road; no inspection after approval |
 | Pet or animal concerns (7) | Strays; pets not contained; animal noise; pet waste; aggressive animals; strays scatter garbage; unclear pet rules |
 | Common areas or facilities (7) | Poor upkeep of clubhouse, court, playground; damaged gate or fence; overgrown areas; reservation unclear; hard to access; dirty or no supplies; unsafe equipment |
 | Disputes between neighbors (7) | Boundary or fence disagreements; complaints not mediated; unclear complaint process; obstructed walkways; harassment or rude behavior; shared drainage or tree branches; unclear who handles disputes |
@@ -293,7 +292,6 @@ Goal: at least 10 Likert items per category. Scale is agreement unless marked li
 #### F. Feature interest (7 existing + 3 new, likelihood)
 | Code | Item | Gate |
 | --- | --- | --- |
-| F11 | How likely are you to use online payment or viewing of HOA dues through this website? | Always |
 | F12 | How likely are you to use this website to receive HOA announcements and notices? | Always |
 | F13 | How likely are you to recommend this website to a neighbor? | Always |
 
@@ -353,8 +351,6 @@ Existing R3 is single choice, so new Likert items run R4 to R11.
 | H7 | Renovation permits are processed in a reasonable time. | Homeowner |
 | H8 | The requirements for renovation permits are clear. | Homeowner |
 | H9 | Vehicle sticker applications are simple. | Homeowner |
-| H10 | I understand my billing or dues statement. | Homeowner |
-| H11 | Paying HOA dues is convenient for me. | Homeowner |
 | H12 | Concerns I raised about my property were resolved properly. | Homeowner |
 
 #### T. Tenant and lessee set (2 existing + 8 new)
