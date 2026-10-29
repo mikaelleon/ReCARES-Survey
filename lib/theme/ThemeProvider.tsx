@@ -18,43 +18,65 @@ interface ThemeContextValue {
   themeLabel: string;
 }
 
-const STORAGE_KEY = 'recares-theme';
+/**
+ * Only an explicit choice (the moon button) is stored. With nothing stored, the screens follow the
+ * device's light or dark setting, live. The old `recares-theme` key is ignored on purpose: it was
+ * written on every first visit, so it cannot tell a real choice from a default.
+ */
+const STORAGE_KEY = 'recares-theme-choice';
+const DARK_QUERY = '(prefers-color-scheme: dark)';
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function readStoredTheme(): Theme {
-  if (typeof window === 'undefined') return 'light';
+function readChoice(): Theme | null {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored === 'dark' || stored === 'light') return stored;
   } catch {
-    // ignore
+    // storage unavailable: behave as if nothing was chosen
   }
-  return 'light';
+  return null;
+}
+
+function systemTheme(): Theme {
+  try {
+    return window.matchMedia?.(DARK_QUERY).matches ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const initial = readStoredTheme();
+    const initial = readChoice() ?? systemTheme();
     setTheme(initial);
     document.documentElement.setAttribute('data-theme', initial);
-    setReady(true);
+
+    // Follow the device while the visitor has not picked a mode themselves.
+    const media = window.matchMedia?.(DARK_QUERY);
+    if (!media) return;
+    const onChange = () => {
+      if (readChoice() !== null) return;
+      const next: Theme = media.matches ? 'dark' : 'light';
+      setTheme(next);
+      document.documentElement.setAttribute('data-theme', next);
+    };
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
   }, []);
 
-  useEffect(() => {
-    if (!ready) return;
-    document.documentElement.setAttribute('data-theme', theme);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, theme);
-    } catch {
-      // ignore
-    }
-  }, [theme, ready]);
-
   const toggleTheme = useCallback(() => {
-    setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+    setTheme((current) => {
+      const next: Theme = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try {
+        window.localStorage.setItem(STORAGE_KEY, next);
+      } catch {
+        // the choice still applies for this visit
+      }
+      return next;
+    });
   }, []);
 
   const value = useMemo(

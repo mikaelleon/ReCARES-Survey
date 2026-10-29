@@ -41,7 +41,7 @@ Charts reuse emerald and orange in a fixed order so a printout of the dashboard 
 
 ## Light and dark
 
-The moon button switches theme. The choice is remembered in that browser (`recares-theme`). Dark mode is not a different product; it is the same pages with safer contrast on a dark canvas (headlines go to a light mint so emerald-on-black does not fail).
+The moon button switches theme. Without a choice, the site follows the device’s light or dark setting. A choice made with the button is remembered in that browser (`recares-theme-choice`). Dark mode is not a different product; it is the same pages with safer contrast on a dark canvas (headlines go to a light mint so emerald-on-black does not fail).
 
 ---
 

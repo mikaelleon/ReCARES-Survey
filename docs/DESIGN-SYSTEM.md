@@ -18,7 +18,7 @@ Primary readers include older homeowners and residents with limited digital lite
 1. Load the same fonts (section 4).
 2. Paste the CSS custom properties (section 3) onto `:root` and `[data-theme="dark"]`.
 3. Apply the **shell accent override** on `body` (section 3.4). Buttons, links, and the progress bar read those overridden values.
-4. Set `data-theme="light"` on `<html>` by default. Persist the choice in `localStorage` under `recares-theme` (`"light"` or `"dark"`) and set the attribute before paint so the page does not flash the wrong theme.
+4. Set `data-theme` on `<html>` from the device’s light or dark setting by default. Persist only an explicit choice in `localStorage` under `recares-theme-choice` (`"light"` or `"dark"`) and set the attribute before paint so the page does not flash the wrong theme.
 5. Build pages from the layout widths, type roles, and component recipes below. Match radii, uppercase rules, and the emerald chrome even when the page content changes.
 
 Theme transition on `body`: `background-color` and `color` over `200ms ease-in-out`.

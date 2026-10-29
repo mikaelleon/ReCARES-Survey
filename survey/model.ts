@@ -292,6 +292,19 @@ export function previousStepNumber(inst: Instrument, a: Answers, current: number
 }
 
 /**
+ * True when a question's rule reads an answer that is given at or after the respondent's current
+ * step but before the question's own step. Only then can a hidden step still appear. A rule that
+ * reads a question inside the same step (or any step already passed) cannot unlock the step, so
+ * it must not leave a placeholder in the pager or inflate the step count.
+ */
+function decidedLater(q: QuestionDef, stepOf: Map<string, number>, current: number, own: number): boolean {
+  return Array.from(conditionRefs(q.showWhen)).some((ref) => {
+    const at = stepOf.get(ref) ?? 0;
+    return at >= current && at < own;
+  });
+}
+
+/**
  * Where the respondent is in the survey, for the progress bar. Later steps count when they
  * are shown already, or when what decides them has not been answered yet, so the total
  * does not jump around while the respondent moves through the early steps.
@@ -309,11 +322,7 @@ export function stepProgress(
     const n = index + 1;
     const own = questionsOfStep(inst, step.id);
     const shown = own.some((q) => questionVisible(q, a));
-    const undecided =
-      n > current &&
-      own.some((q) =>
-        Array.from(conditionRefs(q.showWhen)).some((ref) => (stepOf.get(ref) ?? 0) >= current),
-      );
+    const undecided = n > current && own.some((q) => decidedLater(q, stepOf, current, n));
     if (shown || undecided) total += 1;
     if (n <= current && shown) position += 1;
   });
@@ -333,11 +342,7 @@ export function stepRoster(
     const n = index + 1;
     const own = questionsOfStep(inst, step.id);
     const shown = own.some((q) => questionVisible(q, a));
-    const undecided =
-      n > current &&
-      own.some((q) =>
-        Array.from(conditionRefs(q.showWhen)).some((ref) => (stepOf.get(ref) ?? 0) >= current),
-      );
+    const undecided = n > current && own.some((q) => decidedLater(q, stepOf, current, n));
     if (shown || undecided) out.push({ number: n, shown });
   });
   return out;
