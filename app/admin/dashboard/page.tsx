@@ -149,7 +149,13 @@ function DashboardContent() {
             </p>
           ) : null}
 
-          <div key={viewMode} className="admin-view-transition">
+          <div
+            key={viewMode}
+            id="dash-view-panel"
+            role="tabpanel"
+            aria-labelledby={`dash-view-tab-${viewMode}`}
+            className="admin-view-transition"
+          >
             {viewMode === 'simple' ? (
               <DashboardSimpleView
                 snapshot={simpleSnapshot}

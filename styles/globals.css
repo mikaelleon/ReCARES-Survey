@@ -20502,3 +20502,142 @@ html[data-theme-switching] .survey-stage *::after {
     transition: none;
   }
 }
+
+/* ==========================================================================
+   Admin dashboard — interaction pass
+   Press scales to 0.96, hover only where a pointer hovers, nothing at rest
+   plays an entrance, and switching views is a short fade (no slide).
+   ========================================================================== */
+@keyframes dashViewFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Chrome is already at rest when the page paints: no entrance */
+.dash-page .dash-page__tools,
+.dash-page .dash-page__filter-open,
+.dash-page .dash-page__title {
+  animation: none;
+}
+
+/* View switch: fade only, 150ms, ease-out. Route changes keep the page slide. */
+.dash-page .admin-view-transition {
+  animation: dashViewFade 150ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* View toggle: one indicator slides between the two options. Sits on the shared
+   segmented-pill style in workspace-ui.css (3px padding, 2px gap, full radius),
+   so selectors match its specificity. */
+.admin-app.admin-app .dash-view-toggle {
+  position: relative;
+  isolation: isolate;
+}
+
+.admin-app.admin-app .dash-view-toggle::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 8px) / 2);
+  border-radius: 999px;
+  background: var(--ws-fill);
+  transform: translateX(0);
+  transition: transform 200ms cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.admin-app.admin-app .dash-view-toggle[data-mode='simple']::before {
+  transform: translateX(calc(100% + 2px));
+}
+
+.admin-app.admin-app .dash-view-toggle__btn {
+  flex: 1 1 0;
+  transition:
+    color 150ms ease,
+    transform 150ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.admin-app.admin-app .dash-view-toggle__btn.is-active,
+.admin-app.admin-app .dash-view-toggle__btn.is-active:hover {
+  background: transparent;
+}
+
+.admin-app.admin-app .dash-view-toggle__btn:active,
+.dash-page__filter-open .date-range__preset:active {
+  transform: scale(0.96);
+}
+
+/* Presets: no lift (it moves the target out from under the pointer) */
+.dash-page__filter-open .date-range__preset {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    transform 150ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.dash-page__filter-open .date-range__preset:hover {
+  transform: none;
+}
+
+.dash-page__filter-open .date-range__preset:active {
+  transform: scale(0.96);
+}
+
+@media (hover: none) {
+  .dash-page .date-range__preset:hover {
+    background: rgba(19, 105, 63, 0.05);
+    border-color: rgba(19, 105, 63, 0.14);
+  }
+
+  .dash-page .date-range__preset.is-active:hover {
+    background: var(--dark-emerald);
+    border-color: var(--dark-emerald);
+  }
+}
+
+/* Tile links: readable hover (orange on white fails 4.5:1) and a roomier target */
+.dash-page .dash-insight__link {
+  position: relative;
+  transition: color 150ms ease;
+}
+
+.dash-page .dash-insight__link::after {
+  content: '';
+  position: absolute;
+  inset: -10px -8px;
+}
+
+@media (hover: hover) {
+  .dash-page .dash-insight__link:hover {
+    color: var(--dark-emerald);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  [data-theme='dark'] .dash-page .dash-insight__link:hover {
+    color: var(--text-headline);
+  }
+}
+
+/* Info buttons: 18px visual, 36px target */
+.dash-page .field-code-hint__btn {
+  position: relative;
+}
+
+.dash-page .field-code-hint__btn::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-view-toggle::before {
+    transition: none;
+  }
+}
