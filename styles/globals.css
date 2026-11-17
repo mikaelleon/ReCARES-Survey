@@ -936,7 +936,7 @@ html.admin-fit-viewport body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
-  padding: 2px 8px 14px;
+  padding: 2px 8px 20px;
   flex-shrink: 0;
 }
 
@@ -958,15 +958,9 @@ html.admin-fit-viewport body {
 }
 
 .admin-sidebar__logo-sub {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(229, 235, 232, 0.68);
-}
-
-.admin-sidebar__logo:hover .admin-sidebar__logo-name {
-  color: var(--bright-amber);
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(229, 235, 232, 0.6);
 }
 
 .admin-sidebar__collapse {
@@ -976,10 +970,10 @@ html.admin-fit-viewport body {
   flex-shrink: 0;
   place-items: center;
   margin-top: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: none;
   border-radius: 8px;
   background: transparent;
-  color: var(--white);
+  color: rgba(229, 235, 232, 0.72);
   cursor: pointer;
   transition: background-color 160ms ease-in-out;
 }
@@ -997,8 +991,8 @@ html.admin-fit-viewport body {
   width: 40px;
   height: 40px;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 10px;
+  border: none;
+  border-radius: 8px;
   background: transparent;
   color: var(--white);
   cursor: pointer;
@@ -1006,6 +1000,19 @@ html.admin-fit-viewport body {
 
 .admin-sidebar__close:hover {
   background: rgba(255, 255, 255, 0.12);
+}
+
+/* Rail width eases in step with the content padding, so no canvas gap opens. */
+@media (min-width: 901px) {
+  .admin-sidebar {
+    transition: width 220ms ease-in-out;
+  }
+}
+
+.admin-sidebar a:focus-visible,
+.admin-sidebar button:focus-visible {
+  outline: 2px solid rgba(229, 235, 232, 0.85);
+  outline-offset: -2px;
 }
 
 /* Desktop icon-only collapsed rail */
@@ -1047,12 +1054,11 @@ html.admin-fit-viewport body {
   padding-right: 0;
 }
 
-.admin-sidebar.is-collapsed .admin-sidebar__link.is-active::before {
-  display: none;
-}
-
 .admin-sidebar.is-collapsed .admin-sidebar__tools {
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 4px;
 }
 
 .admin-sidebar.is-collapsed .admin-sidebar__user {
@@ -1062,9 +1068,11 @@ html.admin-fit-viewport body {
 
 .admin-sidebar.is-collapsed .admin-sidebar__logout {
   width: 36px;
-  height: 36px;
+  height: 32px;
   padding: 0;
-  border-radius: 9px;
+  border-radius: 8px;
+  align-self: center;
+  justify-content: center;
 }
 
 .admin-sidebar.is-collapsed .admin-sidebar__resident {
@@ -1096,37 +1104,39 @@ html.admin-fit-viewport body {
   overscroll-behavior: contain;
   padding: 0 2px 8px;
   scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.admin-sidebar__nav:hover {
   scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
 }
 
 .admin-sidebar__group-label {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   padding: 0 12px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(229, 235, 232, 0.5);
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(229, 235, 232, 0.6);
 }
 
 .admin-sidebar__group-label--spaced {
-  margin-top: 20px;
+  margin-top: 24px;
 }
 
 .admin-sidebar__link {
   position: relative;
   display: flex;
   align-items: center;
+  box-sizing: border-box;
   gap: 12px;
-  min-height: 42px;
+  min-height: 40px;
   min-width: 0;
   padding: 8px 12px;
-  border-radius: 10px;
-  color: rgba(229, 235, 232, 0.88);
+  border-radius: 8px;
+  color: rgba(229, 235, 232, 0.82);
   text-decoration: none;
   font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-weight: 500;
   transition:
     background-color 160ms ease-in-out,
     color 160ms ease-in-out;
@@ -1134,7 +1144,8 @@ html.admin-fit-viewport body {
 
 .admin-sidebar__icon {
   flex-shrink: 0;
-  opacity: 0.9;
+  color: rgba(229, 235, 232, 0.6);
+  transition: color 160ms ease-in-out;
 }
 
 .admin-sidebar__link-label {
@@ -1150,29 +1161,18 @@ html.admin-fit-viewport body {
 }
 
 .admin-sidebar__link.is-active {
-  background: rgba(254, 202, 9, 0.14);
-  color: var(--bright-amber);
-}
-
-.admin-sidebar__link.is-active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 999px;
-  background: var(--bright-amber);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--white);
 }
 
 .admin-sidebar__link.is-active .admin-sidebar__icon {
-  opacity: 1;
+  color: var(--bright-amber);
 }
 
 .admin-sidebar__footer {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   flex-shrink: 0;
   margin-top: auto;
   padding: 12px 4px 0;
@@ -1208,9 +1208,9 @@ html.admin-fit-viewport body {
   display: grid;
   place-items: center;
   border: none;
-  border-radius: 9px;
+  border-radius: 8px;
   background: transparent;
-  color: rgba(229, 235, 232, 0.88);
+  color: rgba(229, 235, 232, 0.82);
   cursor: pointer;
   transition: background-color 160ms ease-in-out, color 160ms ease-in-out;
 }
@@ -1224,7 +1224,7 @@ html.admin-fit-viewport body {
 .admin-sidebar__account {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -1249,8 +1249,8 @@ html.admin-fit-viewport body {
 }
 
 .admin-sidebar__user-name {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--white);
   white-space: nowrap;
   overflow: hidden;
@@ -1258,37 +1258,13 @@ html.admin-fit-viewport body {
 }
 
 .admin-sidebar__user-meta {
-  display: flex;
-  align-items: center;
-  gap: 5px;
   min-width: 0;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: rgba(229, 235, 232, 0.68);
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(229, 235, 232, 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.admin-sidebar__user-dot {
-  opacity: 0.7;
-}
-
-.admin-sidebar__status {
-  text-transform: capitalize;
-}
-
-.admin-sidebar__status--active {
-  color: #9fe3b8;
-}
-
-.admin-sidebar__status--pending {
-  color: var(--bright-amber);
-}
-
-.admin-sidebar__status--removed {
-  color: #f3a3a3;
 }
 
 .admin-sidebar__account-email {
@@ -1333,17 +1309,17 @@ html.admin-fit-viewport body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 36px;
+  min-height: 32px;
   padding: 0 4px;
   color: rgba(229, 235, 232, 0.72);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   text-decoration: none;
   transition: color 160ms ease-in-out;
 }
 
 .admin-sidebar__resident:hover {
-  color: var(--bright-amber);
+  color: var(--white);
 }
 
 .admin-sidebar__name {
@@ -1382,24 +1358,22 @@ html.admin-fit-viewport body {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  height: 38px;
-  padding: 0 12px;
-  border-radius: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--white);
+  height: 32px;
+  padding: 0 4px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: rgba(229, 235, 232, 0.72);
   cursor: pointer;
   font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  transition: background-color 160ms ease-in-out, border-color 160ms ease-in-out;
+  font-size: 13px;
+  font-weight: 500;
+  justify-content: flex-start;
+  transition: color 160ms ease-in-out;
 }
 
 .admin-sidebar__logout:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.5);
+  color: var(--white);
 }
 
 .admin-sidebar__backdrop {
@@ -2519,6 +2493,10 @@ html.admin-fit-viewport body {
     display: inline;
   }
 
+  .admin-sidebar.is-collapsed .admin-sidebar__user-text {
+    display: flex;
+  }
+
   .admin-sidebar.is-collapsed .admin-sidebar__brand {
     flex-direction: row;
     align-items: flex-start;
@@ -2544,7 +2522,10 @@ html.admin-fit-viewport body {
   }
 
   .admin-sidebar.is-collapsed .admin-sidebar__tools {
+    flex-direction: row;
+    align-items: center;
     justify-content: flex-start;
+    gap: 6px;
   }
 
   .admin-sidebar.is-collapsed .admin-sidebar__user,
@@ -2554,9 +2535,11 @@ html.admin-fit-viewport body {
 
   .admin-sidebar.is-collapsed .admin-sidebar__logout {
     width: 100%;
-    height: 38px;
-    padding: 0 12px;
-    border-radius: 9px;
+    height: 40px;
+    padding: 0 4px;
+    border-radius: 8px;
+    align-self: stretch;
+    justify-content: flex-start;
   }
 
   .admin-sidebar__collapse {
@@ -2725,9 +2708,9 @@ html.admin-fit-viewport body {
 }
 
 .admin-avatar--on-dark {
-  background: rgba(254, 202, 9, 0.22);
-  color: var(--bright-amber);
-  border: 1px solid rgba(254, 202, 9, 0.45);
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(229, 235, 232, 0.88);
+  font-weight: 500;
 }
 
 .admin-fil-banner {
@@ -9662,18 +9645,21 @@ html.admin-fit-viewport body {
 
 .admin-sidebar__bell-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 1px;
+  right: 1px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
   border-radius: 999px;
   background: var(--harvest-orange);
+  box-shadow: 0 0 0 2px var(--dark-emerald);
   color: var(--black);
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 16px;
   text-align: center;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 
 /* Notification list styles live with the Notifications block below. */
@@ -16136,42 +16122,11 @@ textarea.sb-input {
    Survey UX pass 3 — ambient grid + gradient backdrop, question subtitles.
    ========================================================================== */
 .survey-stage {
-  --stage-grid: rgba(19, 105, 63, 0.075);
-  --stage-glow-warm: rgba(247, 128, 33, 0.14);
-  --stage-glow-cool: rgba(19, 105, 63, 0.18);
-  --stage-glow-gold: rgba(254, 202, 9, 0.10);
   position: relative;
   isolation: isolate;
   min-height: 100vh;
   overflow: clip;
-  background:
-    radial-gradient(ellipse 60% 45% at 6% 0%, var(--stage-glow-warm), transparent 60%),
-    radial-gradient(ellipse 55% 50% at 100% 100%, var(--stage-glow-cool), transparent 60%),
-    radial-gradient(ellipse 40% 35% at 96% 8%, var(--stage-glow-gold), transparent 65%),
-    var(--page-bg);
-}
-
-[data-theme='dark'] .survey-stage {
-  --stage-grid: rgba(255, 255, 255, 0.055);
-  --stage-glow-warm: rgba(247, 128, 33, 0.12);
-  --stage-glow-cool: rgba(61, 181, 121, 0.14);
-  --stage-glow-gold: rgba(254, 202, 9, 0.06);
-}
-
-/* Grid lines, strongest at the edges where the white space is, soft behind the cards */
-.survey-stage::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    linear-gradient(var(--stage-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--stage-grid) 1px, transparent 1px);
-  background-size: 44px 44px;
-  background-position: center top;
-  -webkit-mask-image: radial-gradient(ellipse 55% 85% at 50% 35%, rgba(0, 0, 0, 0.25) 0%, #000 100%);
-  mask-image: radial-gradient(ellipse 55% 85% at 50% 35%, rgba(0, 0, 0, 0.25) 0%, #000 100%);
+  background: var(--page-bg);
 }
 
 .survey-flow .survey-card {
@@ -16207,9 +16162,6 @@ textarea.sb-input {
     min-height: 100vh;
   }
 
-  .survey-stage::before {
-    background-size: 32px 32px;
-  }
 }
 
 /* Paired questions get a full-width card each, not a two-up bento row */
@@ -16447,11 +16399,11 @@ textarea.sb-input {
 
 /* Leave: an outlined pill so it reads as a control and matches the language switch */
 .survey-flow .survey-leave {
-  min-height: 42px;
+  min-height: 44px;
   margin: 0;
   padding: 0 16px 0 12px;
   border: 1px solid var(--border-subtle);
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--card-fill-neutral);
   color: var(--text-body);
   font-weight: 600;
@@ -16472,12 +16424,13 @@ textarea.sb-input {
   gap: 2px !important;
   padding: 3px;
   border: 1px solid var(--border-subtle);
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--card-fill-neutral);
 }
 
 .survey-flow .survey-lang button {
-  height: 34px !important;
+  border-radius: 5px !important;
+  height: 38px !important;
   padding: 0 16px !important;
   font-size: 14px !important;
 }
@@ -16591,17 +16544,20 @@ textarea.sb-input {
   100% {
     transform: translateX(0);
   }
-  20% {
+  16% {
+    transform: translateX(-10px);
+  }
+  33% {
+    transform: translateX(10px);
+  }
+  50% {
     transform: translateX(-6px);
   }
-  40% {
-    transform: translateX(5px);
+  66% {
+    transform: translateX(6px);
   }
-  60% {
+  83% {
     transform: translateX(-3px);
-  }
-  80% {
-    transform: translateX(2px);
   }
 }
 
@@ -16614,22 +16570,13 @@ textarea.sb-input {
   }
 }
 
-@keyframes stageDrift {
-  from {
-    transform: translate3d(-3%, -2%, 0) scale(1);
-  }
-  to {
-    transform: translate3d(3%, 3%, 0) scale(1.08);
-  }
-}
-
 /* --- Screen entrance: heading, then cards in a short stagger --------------- */
 .survey-flow .survey-title {
-  animation: riseIn 420ms var(--ease-out) both;
+  animation: riseIn 300ms var(--ease-out) both;
 }
 
 .survey-flow .survey-subtitle {
-  animation: riseIn 420ms var(--ease-out) 70ms both;
+  animation: riseIn 300ms var(--ease-out) 60ms both;
 }
 
 .survey-flow .survey-questions .survey-card:nth-of-type(2) {
@@ -16655,17 +16602,6 @@ textarea.sb-input {
     box-shadow 220ms var(--ease-out);
 }
 
-@media (hover: hover) {
-  .survey-flow .survey-card:hover {
-    border-color: var(--border-default);
-    box-shadow: 0 1px 2px rgba(11, 40, 24, 0.06), 0 14px 30px -14px rgba(11, 40, 24, 0.24);
-  }
-
-  [data-theme='dark'] .survey-flow .survey-card:hover {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 34px -14px rgba(0, 0, 0, 0.7);
-  }
-}
-
 .survey-flow .survey-card:focus-within:not(.survey-card--error) {
   border-color: color-mix(in srgb, var(--accent-selected) 70%, transparent);
 }
@@ -16677,7 +16613,7 @@ textarea.sb-input {
 
 /* A card that fails validation shakes once, and its message eases in */
 .survey-flow .survey-card--error {
-  animation: naShake 420ms var(--ease-out) both;
+  animation: naShake 360ms var(--ease-out) both;
 }
 
 .survey-flow .na-error {
@@ -16861,35 +16797,11 @@ textarea.sb-input {
   border-radius: 8px;
 }
 
-@media (hover: hover) {
-  .survey-flow .survey-review-row:hover {
-    background: var(--option-hover);
-  }
-}
-
-/* --- Ambient backdrop: slow drifting glow on both stages --------------------- */
-.survey-stage::after {
-  content: '';
-  position: absolute;
-  top: -10%;
-  right: -12%;
-  z-index: -1;
-  width: min(60vw, 720px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(circle, var(--stage-glow-cool), transparent 65%);
-  filter: blur(40px);
-  opacity: 0.75;
-  animation: stageDrift 24s ease-in-out infinite alternate;
-}
-
 /* --- Reduced motion ------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
   .survey-flow *,
   .survey-flow *::before,
-  .survey-flow *::after,
-  .survey-stage::after {
+  .survey-flow *::after {
     animation: none !important;
     transition-duration: 0.01ms !important;
   }
@@ -17136,13 +17048,6 @@ textarea.sb-input {
 .survey-flow .na-qsub + .na-hint {
   margin-top: 0;
   margin-bottom: 12px !important;
-}
-
-/* The chat widget covers the Back / Continue buttons on phones, so hide it on survey screens there */
-@media (max-width: 767px) {
-  elevenlabs-convai.survey-route {
-    display: none !important;
-  }
 }
 
 /* The preview is portaled to document.body, outside .sb-page, so it needs the builder tokens itself. */
@@ -19412,41 +19317,28 @@ i.an-grp {
   background: #13693f;
 }
 
-/* Desktop: use the screen. Wide container, readable text measure, even two-column bento. */
+/* One reading column. The survey is read by older residents on any screen, so questions stack in a
+   single 880px column instead of a wall of two-up cards with dead space between the options and
+   uneven card heights. The page, the pager and the questions share one left edge. */
 .survey-flow--wide {
   box-sizing: border-box;
   width: 100%;
-  max-width: min(1360px, 100%);
+  max-width: min(880px, 100%);
   margin: 0 auto;
 }
 
 .survey-flow--wide .survey-subtitle,
 .survey-flow--wide .survey-questions > :is(.na-required-note, .na-intro, .na-hint) {
-  max-width: 85ch;
+  max-width: 70ch;
 }
 
 @media (min-width: 1024px) {
-  .survey-flow--wide .survey-bento {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 20px;
-  }
-
-  .survey-flow--wide .bento-col {
-    gap: 20px;
-  }
-
   .survey-flow--wide .survey-questions {
-    gap: 24px;
+    gap: 20px;
   }
 
   .survey-flow--wide .survey-card {
     padding: 26px 28px 24px;
-  }
-}
-
-@media (min-width: 1600px) {
-  .survey-flow--wide {
-    max-width: min(1520px, 100%);
   }
 }
 
@@ -19658,18 +19550,6 @@ i.an-grp {
   user-select: none;
 }
 
-/* Cards are not buttons: hovering keeps the resting border and shadow */
-@media (hover: hover) {
-  .survey-flow .survey-card:not(.survey-card--error):not(:focus-within):hover {
-    border-color: var(--border-subtle);
-    box-shadow: 0 1px 2px rgba(11, 40, 24, 0.05), 0 8px 24px -12px rgba(11, 40, 24, 0.14);
-  }
-
-  [data-theme="dark"] .survey-flow .survey-card:not(.survey-card--error):not(:focus-within):hover {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -14px rgba(0, 0, 0, 0.6);
-  }
-}
-
 /* Scale buttons: no movement, stable selected state */
 .survey-flow .na-likert-btn,
 .survey-flow .na-likert-na {
@@ -19837,4 +19717,222 @@ i.an-grp {
   grid-template-rows: 1fr;
   visibility: visible;
   transition-delay: 0s;
+}
+
+/* Text in a card never runs wider than a comfortable line, whatever the screen. */
+.survey-flow--wide .survey-card > p,
+.survey-flow--wide .survey-card .na-intro {
+  max-width: 75ch;
+}
+
+/* One column: the two-up bento is a stack, in the same order the phone already shows it. */
+.survey-flow--wide .survey-bento {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+
+.survey-flow--wide .bento-col {
+  gap: 20px;
+}
+
+/* The page numbers fit one row inside the column. */
+.survey-flow--wide .survey-pager ol {
+  gap: 6px;
+}
+
+.survey-flow--wide .survey-pager__item {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 6px;
+  font-size: 13px;
+}
+
+.survey-flow--wide .survey-pager__item--review {
+  padding: 0 12px;
+}
+
+/* Survey screens have no chat bar, so the scroll-top button drops to the corner. On phones it would sit
+   over Continue, and the page is short steps, so it is left out there. */
+.survey-stage ~ .scroll-top {
+  --scroll-top-widget-clearance: 0px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+@media (max-width: 767px) {
+  .survey-stage ~ .scroll-top {
+    display: none;
+  }
+}
+
+/* Survey polish: pager targets reach 40px without growing the circle, locked steps are quiet solid
+   circles (dashed lines read as generated), hover changes color only, and step titles are sentence case. */
+.survey-flow .survey-pager__item {
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.survey-flow .survey-pager__item::after {
+  content: '';
+  position: absolute;
+  inset: -3px -2px;
+}
+
+.survey-flow .survey-pager__item[data-state='locked'] {
+  border-style: solid;
+  border-color: var(--border-subtle);
+  opacity: 0.55;
+}
+
+@media (hover: hover) {
+  .survey-flow .survey-pager__item[data-state='open']:hover,
+  .survey-flow .survey-pager__item[data-state='done']:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .survey-flow .survey-pager__item[data-state='done']:hover {
+    background: color-mix(in srgb, var(--dark-emerald) 88%, var(--black));
+  }
+}
+
+.survey-flow .survey-pager__item:not([data-state='locked']):not([data-state='current']):active {
+  transform: scale(0.96);
+}
+
+.survey-flow .survey-title--section {
+  text-transform: none;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.survey-flow .survey-subtitle {
+  text-wrap: pretty;
+}
+
+/* Theme swap: all survey colours change on one frame. Without this the card, the pager and the
+   options each fade at their own speed (150 to 220ms) and the screen passes through mixed colours. */
+html[data-theme-switching] .survey-stage,
+html[data-theme-switching] .survey-stage *,
+html[data-theme-switching] .survey-stage *::before,
+html[data-theme-switching] .survey-stage *::after {
+  transition: none !important;
+}
+
+/* Pager plan: while a screening question is open, each later page says whether the answers so far
+   will ask it. Color is never the only signal: skipped pages show a dash instead of a number. */
+.survey-flow .survey-pager__item[data-plan='shown']:not([data-state='current']):not([data-state='done']) {
+  background: color-mix(in srgb, var(--dark-emerald) 14%, transparent);
+  border-color: color-mix(in srgb, var(--dark-emerald) 55%, transparent);
+  color: var(--dark-emerald);
+  opacity: 1;
+}
+
+.survey-flow .survey-pager__item[data-plan='pending']:not([data-state='current']):not([data-state='done']) {
+  background: transparent;
+  border-color: var(--border-default);
+  color: var(--text-caption);
+  opacity: 1;
+}
+
+.survey-flow .survey-pager__item[data-plan='hidden'] {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-caption);
+  opacity: 0.6;
+}
+
+[data-theme='dark'] .survey-flow .survey-pager__item[data-plan='shown']:not([data-state='current']):not([data-state='done']) {
+  background: color-mix(in srgb, var(--accent-selected) 20%, transparent);
+  border-color: color-mix(in srgb, var(--accent-selected) 60%, transparent);
+  color: var(--accent-selected);
+}
+
+.survey-pager__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-caption);
+}
+
+.survey-pager__legend > span::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-default);
+  vertical-align: -1px;
+}
+
+.survey-pager__legend > [data-plan='shown']::before {
+  background: color-mix(in srgb, var(--dark-emerald) 30%, transparent);
+  border-color: var(--dark-emerald);
+}
+
+.survey-pager__legend > [data-plan='hidden']::before {
+  border-color: transparent;
+  background: linear-gradient(var(--text-caption), var(--text-caption)) center / 100% 1.5px no-repeat;
+}
+
+[data-theme='dark'] .survey-pager__legend > [data-plan='shown']::before {
+  background: color-mix(in srgb, var(--accent-selected) 35%, transparent);
+  border-color: var(--accent-selected);
+}
+
+/* Legend appears with a short fade, not from nothing. */
+.survey-pager__legend {
+  animation: naReveal 200ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .survey-pager__legend {
+    animation: none;
+  }
+}
+
+/* Sticky step bar: stays under the top edge while the page scrolls. It carries the page color so cards
+   slide under it, and a hairline appears once it has left its resting place. */
+.survey-progress__sentinel {
+  height: 1px;
+  margin-bottom: -1px;
+  pointer-events: none;
+}
+
+.survey-flow .survey-progress {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin-bottom: 0;
+  padding: 10px 0 10px;
+  background: var(--page-bg);
+  box-shadow: 0 1px 0 transparent;
+  transition: box-shadow 150ms ease;
+}
+
+.survey-flow .survey-progress[data-stuck='true'] {
+  box-shadow: 0 1px 0 var(--border-subtle);
+}
+
+/* Phones: one row that scrolls sideways, so the sticky bar stays short. */
+@media (max-width: 760px) {
+  .survey-flow .survey-pager ol {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .survey-flow .survey-pager ol::-webkit-scrollbar {
+    display: none;
+  }
+
+  .survey-flow .survey-pager li {
+    flex: none;
+  }
 }

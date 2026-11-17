@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PageLoader } from '@/components/ui/PageLoader';
 import { Button } from '@/components/ui/Button';
 import { StepPager } from '@/components/survey/StepPager';
+import { StickyProgress } from '@/components/survey/StickyProgress';
 import { ReviewSummary } from '@/components/survey/ReviewSummary';
 import { LeaveSurvey } from '@/components/survey/LeaveSurvey';
 import { RichText } from '@/components/survey/RichText';
@@ -360,7 +361,7 @@ function SurveyFlowInner() {
 
       <div className="survey-body">
       {screen === 'step' || screen === 'review' ? (
-        <div className="survey-progress">
+        <StickyProgress>
           <div className="survey-progress__meta">
             <div className="survey-eyebrow">
               {screen === 'review' ? t('Review') : `${t('Step')} ${position} ${t('of')} ${total}`}
@@ -385,7 +386,7 @@ function SurveyFlowInner() {
               setScreen('review');
             }}
           />
-        </div>
+        </StickyProgress>
       ) : null}
 
       <h1

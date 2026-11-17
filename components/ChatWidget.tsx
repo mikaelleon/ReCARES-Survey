@@ -33,13 +33,12 @@ export function openChatWidget(): void {
  */
 export function ChatWidget() {
   const pathname = usePathname();
-  if (isAdminPath(pathname)) return null;
-  // On survey screens the widget is hidden on phones (see globals.css).
-  const className = isSurveyPath(pathname) ? 'survey-route' : undefined;
+  // Survey screens have no chatbot: it sat over Back / Continue and pulled people out of the form.
+  if (isAdminPath(pathname) || isSurveyPath(pathname)) return null;
 
   return (
     <>
-      <elevenlabs-convai agent-id={AGENT_ID} class={className} />
+      <elevenlabs-convai agent-id={AGENT_ID} />
       <Script
         src="https://unpkg.com/@elevenlabs/convai-widget-embed"
         strategy="lazyOnload"

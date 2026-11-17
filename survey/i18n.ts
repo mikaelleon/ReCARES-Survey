@@ -544,6 +544,11 @@ Object.assign(FIL, COPY_FIL, SUBTITLES_FIL, O1_NEW_FIL, O1_NOTES_FIL, OPTION_NOT
   'Survey pages': 'Mga pahina ng survey',
   Page: 'Pahina',
   'Answer the earlier pages first to open this one.': 'Sagutin muna ang mga naunang pahina para mabuksan ito.',
+  'Will be asked': 'Itatanong',
+  'Waiting for your answer': 'Naghihintay ng sagot mo',
+  'Skipped for your answers': 'Lalaktawan batay sa mga sagot mo',
+  'Waiting for an answer that decides it.': 'Naghihintay ng sagot na magpapasya rito.',
+  'Skipped': 'Lalaktawan',
   'Preferred interview date': 'Gustong petsa ng panayam',
   'Pick the exact date you can be interviewed. We will email you to confirm before anything is scheduled.':
     'Piliin ang eksaktong petsa na maaari kang makapanayam. Mag-eemail kami para kumpirmahin bago magtakda ng anuman.',

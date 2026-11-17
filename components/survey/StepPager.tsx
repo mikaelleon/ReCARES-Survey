@@ -1,6 +1,8 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Check, Minus } from 'lucide-react';
+import type { StepPlan } from '@/survey/model';
 import { useT } from '@/components/survey/SurveyLanguage';
 
 /**
@@ -18,7 +20,7 @@ export function StepPager({
   onGo,
   onReview,
 }: {
-  roster: Array<{ number: number; shown: boolean }>;
+  roster: Array<{ number: number; shown: boolean; plan: StepPlan }>;
   current: number | 'review';
   reachable: Set<number>;
   done: Set<number>;
@@ -28,35 +30,65 @@ export function StepPager({
   onReview: () => void;
 }) {
   const t = useT();
+  const listRef = useRef<HTMLOListElement | null>(null);
+
+  /* On a phone the row scrolls sideways: keep the current page in view. */
+  useEffect(() => {
+    const el = listRef.current?.querySelector<HTMLElement>('[aria-current="step"]');
+    el?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'auto' });
+  }, [current]);
   const lockedHint = t('Answer the earlier pages first to open this one.');
+
+  /* Pages the answers rule out keep a place in the row (a dash, no number), so the numbers of the
+     pages that will be asked never shift under the person while they answer. */
+  let counted = 0;
+  const numbered = roster.map((item) => ({
+    ...item,
+    label: item.plan === 'hidden' ? 0 : ++counted,
+  }));
+  const showLegend =
+    typeof current === 'number' && numbered.some((item) => item.number > current && item.plan !== 'shown');
 
   return (
     <nav className="survey-pager" aria-label={t('Survey pages')}>
-      <ol>
-        {roster.map((item, index) => {
+      <ol ref={listRef}>
+        {numbered.map((item) => {
           const isCurrent = current === item.number;
           const open = item.shown && reachable.has(item.number);
           const finished = done.has(item.number) && !isCurrent;
           const title = titleOf(item.number);
           const state = isCurrent ? 'current' : finished ? 'done' : open ? 'open' : 'locked';
+          const planHint =
+            item.plan === 'hidden'
+              ? t('Skipped for your answers')
+              : item.plan === 'pending'
+                ? t('Waiting for an answer that decides it.')
+                : lockedHint;
           const label = open
-            ? `${t('Page')} ${index + 1}: ${title}`
-            : `${t('Page')} ${index + 1}. ${lockedHint}`;
+            ? `${t('Page')} ${item.label}: ${title}`
+            : `${t('Page')} ${item.label || ''}${item.label ? '. ' : ''}${planHint}`.trim();
           return (
             <li key={item.number}>
               <button
                 type="button"
                 className="survey-pager__item"
                 data-state={state}
+                data-plan={isCurrent || finished ? undefined : item.plan}
                 aria-current={isCurrent ? 'step' : undefined}
                 aria-disabled={!open || undefined}
                 aria-label={label}
-                title={open ? title : lockedHint}
+                title={open ? title : planHint}
                 onClick={() => {
                   if (open && !isCurrent) onGo(item.number);
                 }}
               >
-                {finished ? <Check size={16} strokeWidth={3} aria-hidden="true" /> : index + 1}
+                {finished ? (
+                  <Check size={16} strokeWidth={3} aria-hidden="true" />
+                ) : item.plan === 'hidden' && !isCurrent ? (
+                  <Minus size={14} strokeWidth={3} aria-hidden="true" />
+                ) : (
+                  item.label
+                )}
               </button>
             </li>
           );
@@ -77,6 +109,13 @@ export function StepPager({
           </button>
         </li>
       </ol>
+      {showLegend ? (
+        <p className="survey-pager__legend">
+          <span data-plan="shown">{t('Will be asked')}</span>
+          <span data-plan="pending">{t('Waiting for your answer')}</span>
+          <span data-plan="hidden">{t('Skipped')}</span>
+        </p>
+      ) : null}
     </nav>
   );
 }

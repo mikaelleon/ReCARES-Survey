@@ -182,7 +182,6 @@ export function SidebarNav({
 
   const displayName = user.name || user.email.split('@')[0] || user.email;
   const roleText = roleLabel(user.role);
-  const statusText = (user.status || 'active').toLowerCase();
 
   const handleLogout = () => {
     void logout().then(() => goToAdminLogin());
@@ -225,7 +224,7 @@ export function SidebarNav({
             >
               <ChevronLeft
                 size={18}
-                strokeWidth={2.2}
+                strokeWidth={1.5}
                 aria-hidden="true"
                 className={collapsed ? 'is-flipped' : undefined}
               />
@@ -237,7 +236,7 @@ export function SidebarNav({
             onClick={() => onOpenChange(false)}
             aria-label="Close menu"
           >
-            <X size={22} strokeWidth={2.2} aria-hidden="true" />
+            <X size={22} strokeWidth={1.5} aria-hidden="true" />
           </button>
         </div>
 
@@ -262,7 +261,7 @@ export function SidebarNav({
                   title={collapsed ? label : undefined}
                   onNavigate={() => onOpenChange(false)}
                 >
-                  <Icon className="admin-sidebar__icon" size={18} strokeWidth={2.2} aria-hidden="true" />
+                  <Icon className="admin-sidebar__icon" size={18} strokeWidth={1.5} aria-hidden="true" />
                   <span className="admin-sidebar__link-label">{label}</span>
                 </AdminNavLink>
               );
@@ -284,7 +283,7 @@ export function SidebarNav({
                 title={collapsed ? label : undefined}
                 onNavigate={() => onOpenChange(false)}
               >
-                <Icon className="admin-sidebar__icon" size={18} strokeWidth={2.2} aria-hidden="true" />
+                <Icon className="admin-sidebar__icon" size={18} strokeWidth={1.5} aria-hidden="true" />
                 <span className="admin-sidebar__link-label">{label}</span>
               </AdminNavLink>
             );
@@ -304,7 +303,7 @@ export function SidebarNav({
                 aria-controls={bellId}
                 onClick={() => setBellOpen((v) => !v)}
               >
-                <Bell size={18} strokeWidth={2.2} aria-hidden="true" />
+                <Bell size={18} strokeWidth={1.5} aria-hidden="true" />
                 {unreadCount > 0 ? (
                   <span className="admin-sidebar__bell-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
                 ) : null}
@@ -382,9 +381,9 @@ export function SidebarNav({
                               onClick={() => (item.read ? markUnread(item.id) : markRead(item.id))}
                             >
                               {item.read ? (
-                                <RotateCcw size={15} strokeWidth={2.2} aria-hidden="true" />
+                                <RotateCcw size={15} strokeWidth={1.5} aria-hidden="true" />
                               ) : (
-                                <Check size={15} strokeWidth={2.4} aria-hidden="true" />
+                                <Check size={15} strokeWidth={1.5} aria-hidden="true" />
                               )}
                             </button>
                           </li>
@@ -408,15 +407,7 @@ export function SidebarNav({
               </span>
               <span className="admin-sidebar__user-text">
                 <span className="admin-sidebar__user-name">{displayName}</span>
-                <span className="admin-sidebar__user-meta">
-                  {roleText}
-                  <span className="admin-sidebar__user-dot" aria-hidden="true">
-                    ·
-                  </span>
-                  <span className={`admin-sidebar__status admin-sidebar__status--${statusText}`}>
-                    {statusText}
-                  </span>
-                </span>
+                <span className="admin-sidebar__user-meta">{roleText}</span>
               </span>
             </div>
             <button
@@ -425,7 +416,7 @@ export function SidebarNav({
               onClick={handleLogout}
               title={collapsed ? 'Log out' : undefined}
             >
-              <LogOut size={16} strokeWidth={2.2} aria-hidden="true" />
+              <LogOut size={16} strokeWidth={1.5} aria-hidden="true" />
               <span className="admin-sidebar__logout-label">Log out</span>
             </button>
           </div>
@@ -436,7 +427,7 @@ export function SidebarNav({
             title={collapsed ? 'Back to resident site' : undefined}
             onClick={() => onOpenChange(false)}
           >
-            <ArrowLeft size={16} strokeWidth={2.2} aria-hidden="true" />
+            <ArrowLeft size={16} strokeWidth={1.5} aria-hidden="true" />
             <span className="admin-sidebar__resident-label">Back to resident site</span>
           </Link>
         </div>

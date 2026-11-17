@@ -64,7 +64,7 @@ export function ThemeToggle({
         width: 36,
         height: 36,
         flex: '0 0 36px',
-        borderRadius: 9,
+        borderRadius: 8,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -91,9 +91,9 @@ export function ThemeToggle({
           'background 150ms ease, border-color 150ms ease, transform 120ms ease-out',
       }
     : {
-        width: 40,
-        height: 40,
-        borderRadius: 999,
+        width: 44,
+        height: 44,
+        borderRadius: 8,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

@@ -82,8 +82,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     /* Tell the landing stage first, so it can start its dusk or dawn crossfade before the
        theme attribute flips under it (see FenceStage). */
     window.dispatchEvent(new CustomEvent<Theme>(THEME_SHIFT, { detail: next }));
+    /* Every colour flips on the same frame: transitions are off for the swap, so no part of the page
+       fades at its own speed (see globals.css). Two frames later they are back. */
+    const root = document.documentElement;
+    root.setAttribute('data-theme-switching', '');
     setTheme(next);
-    document.documentElement.setAttribute('data-theme', next);
+    root.setAttribute('data-theme', next);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => root.removeAttribute('data-theme-switching')),
+    );
   }, []);
 
   const value = useMemo(

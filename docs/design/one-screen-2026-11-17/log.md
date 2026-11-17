@@ -108,3 +108,48 @@ The two 450ms fades ran one after the other, so the picture stopped at dusk or d
 - The icon used to swap instantly with a 200ms spin of the new icon. Now both icons share one cell and swap at once: the one leaving shrinks to 0.3 with a turn and a 3px blur, the one arriving grows in (200 to 250ms, ease-out, CSS transitions, so a second tap turns around from where it is). The icon shows the mode you will get. Reduced motion: instant.
 - Kept: press scale 0.96, hover 150ms, 44px target. The photo's 1.25s time-of-day change is the main motion; the icon only confirms the tap.
 - Checked by script: end states right both ways, quick double toggle settles right, reduced motion, no console errors. Removed the old spin keyframes.
+
+## Unslop pass: survey screens (light touch)
+
+Chosen scope: fix the tells only. Audited the intro and consent screens.
+- Removed the grid lines, the peach and green color washes and the drifting glow behind the survey; the page is its flat color.
+- Text in a card is held to 75 characters on wide screens (it ran 150+).
+- Leave, language switch and theme button share one shape: 8px radius, language buttons 5px inside (outer minus padding); 44px targets.
+- Kept: the wide two-column layout of the question screens, the white cards, the orange buttons.
+- Not changed: the intro and consent screens both mention anonymity; consent wording is study-ethics text. The question and thank-you screens were not rendered or reviewed.
+
+## Unslop pass: survey screen layouts
+
+Audit: a 1500px-wide container held a two-up bento (cards of different heights, dead space under the short one, option text wrapped into 330px columns), text ran far past a readable line, and the pager wrapped "17" and "Review" onto a second row.
+- One 880px reading column on every screen size. The page, pager and cards share one left edge.
+- The two-up bento is now a stack in the same order phones already showed. Admin dashboards keep their own bento.
+- Pager circles 34px with 6px gaps: all 16 or 17 steps and Review fit one row. Steps stay clickable and locked ones stay locked.
+- Intro text 70ch, card text 75ch. Card padding and gaps set to 20px rhythm.
+- Checked at 1440 and 390 on consent, step 1 and step 3. `tsc` clean.
+- Not changed: the inner card inside "What kind of phone" (a conditional follow-up, has its own shadow); review and thank-you screens were not re-rendered.
+
+## Polish pass: survey screens
+
+- Chatbot widget removed from `/survey` routes (`ChatWidget` renders nothing there; the phone-only hide rule is gone). It covered Back and Continue and pulled people out of the form. Landing and the contact choices keep it.
+- Scroll-to-top no longer reserves room for the chat bar on survey screens: sits in the corner, 8px radius, no shadow. Hidden on phones, where it sat over Continue.
+- Pager: circles stay 34px but the touch target reaches 40px (pseudo-element). Locked steps are solid quiet circles, not dashed. Hover changes color only (no lift or shadow). Press is 0.96.
+- Step titles sentence case with -0.01em tracking and balanced wrap, matching the consent title; subtitles wrap `pretty`.
+- Checked at 1440; tsc clean. Not re-checked: dark mode, phone width after these edits, review and thank-you screens.
+
+## Unslop pass: survey container hover
+
+Containers are not buttons, so they do nothing on hover. Removed the card hover (border and shadow lift), the later override that pinned it, and the review-row hover tint. The old rule also gave the flat follow-up cards inside a card a shadow on hover (visible in dark mode as a ghost box around the follow-up question); that is gone with it. Answer hovers (radios, checks, scale buttons, inputs) are unchanged. Checked in Chrome, light and dark: card shadow and border identical before and during hover, answer rows still tint.
+
+## UX and animation pass: survey screens
+
+**Theme switch.** The card, pager and options each faded at their own speed (150 to 220ms), so the screen passed through mixed colors. `toggleTheme` now sets `data-theme-switching` on the root for two frames and the survey stage runs with `transition: none` for them. Checked in Chrome: attribute set and transitions `none` during the swap, back to normal after. Scoped to the survey, because the landing page's dusk/dawn photo fade is an inline transition that must keep running.
+
+**Pager plan (screening questions).** While a question that decides later pages is open, each later page shows what the answers so far do to it:
+- Will be asked: emerald tint, emerald number (yellow tint in dark mode, the dark accent).
+- Waiting for your answer: plain outline, grey number.
+- Skipped: no ring, a dash instead of a number.
+Color is not the only signal (dash, legend, tooltip and aria-label say the same). The legend under the pager shows only when some later page is not simply "will be asked". Numbers count only pages that are or may be asked, so they do not shift while answering; "Step 1 of N" now drops skipped pages from N live (it used to keep them until the next step). The colors change with the existing 200ms transitions, so picking an answer visibly turns pages on and off. Tagalog strings added. Checked: unanswered shows pages 10, 13 and 14 pending; Tenant turns 10 on and skips one page; Homeowner swaps which; dark mode renders; no console errors.
+
+**Form.** Error shake now 360ms through 10, 6, 3px (was 420ms at 6px), matching the exaggeration spec. Heading and subtitle entrance 300ms (was 420ms), since it plays on every step. Kept: 0.96 press, tinted option rows, no card hover, follow-up reveal, language-swap dip, reduced-motion off switch.
+
+Not changed: skipped pages vanish from the pager when you leave the step (they are dropped, not animated out); the page numbers after them reflow at that moment.

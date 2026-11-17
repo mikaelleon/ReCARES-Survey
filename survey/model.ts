@@ -323,27 +323,44 @@ export function stepProgress(
     const own = questionsOfStep(inst, step.id);
     const shown = own.some((q) => questionVisible(q, a));
     const undecided = n > current && own.some((q) => decidedLater(q, stepOf, current, n));
-    if (shown || undecided) total += 1;
+    if (shown || (undecided && awaitingAnswer(own, a))) total += 1;
     if (n <= current && shown) position += 1;
   });
   return { position: Math.max(1, position), total: Math.max(1, total, position) };
 }
 
-/** One entry per step in the pager. Steps still undecided by earlier answers are listed but not shown yet. */
+function hasAnswer(v: unknown): boolean {
+  if (v === undefined || v === null || v === '') return false;
+  return !(Array.isArray(v) && v.length === 0);
+}
+
+/** True while a question that decides one of these steps has not been answered yet. */
+function awaitingAnswer(own: QuestionDef[], a: Answers): boolean {
+  return own.some((q) => Array.from(conditionRefs(q.showWhen)).some((ref) => !hasAnswer(a[ref])));
+}
+
+/**
+ * What the pager says about a step: it will be shown for the answers so far, it is waiting on an
+ * answer that has not been given, or the answers given rule it out.
+ */
+export type StepPlan = 'shown' | 'pending' | 'hidden';
+
+/** One entry per step in the pager. Steps still undecided by earlier answers are listed with their plan. */
 export function stepRoster(
   inst: Instrument,
   a: Answers,
   current: number,
-): Array<{ number: number; shown: boolean }> {
+): Array<{ number: number; shown: boolean; plan: StepPlan }> {
   const stepOf = new Map<string, number>();
   inst.questions.forEach((q) => stepOf.set(q.code, inst.steps.findIndex((st) => st.id === q.stepId) + 1));
-  const out: Array<{ number: number; shown: boolean }> = [];
+  const out: Array<{ number: number; shown: boolean; plan: StepPlan }> = [];
   inst.steps.forEach((step, index) => {
     const n = index + 1;
     const own = questionsOfStep(inst, step.id);
     const shown = own.some((q) => questionVisible(q, a));
     const undecided = n > current && own.some((q) => decidedLater(q, stepOf, current, n));
-    if (shown || undecided) out.push({ number: n, shown });
+    const plan: StepPlan = shown ? 'shown' : awaitingAnswer(own, a) ? 'pending' : 'hidden';
+    if (shown || undecided) out.push({ number: n, shown, plan });
   });
   return out;
 }
