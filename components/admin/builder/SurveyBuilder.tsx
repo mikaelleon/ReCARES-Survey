@@ -9,6 +9,7 @@ import {
   Copy,
   Eye,
   FilePen,
+  FilePlus2,
   Lock,
   Radio,
   RefreshCw,
@@ -65,6 +66,7 @@ export const firestoreBackend: BuilderBackend = {
   remove: deleteDraft,
 };
 import { DEFAULT_INSTRUMENT } from '@/survey/defaultInstrument';
+import { DRAFT_INSTRUMENT_V2 } from '@/survey/draftInstrumentV2';
 import { lintInstrument, blankQuestion, isCoreCode, nextQuestionCode, nextStepId } from '@/survey/lint';
 import {
   cloneInstrument,
@@ -200,6 +202,8 @@ export function BuilderWorkbench({
   const [showIssues, setShowIssues] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
   const [copyVersion, setCopyVersion] = useState('');
+  const [builtinOpen, setBuiltinOpen] = useState(false);
+  const [builtinBase, setBuiltinBase] = useState<'v1' | 'v2'>('v2');
   const [publishOpen, setPublishOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [pendingDeleteQuestion, setPendingDeleteQuestion] = useState<string | null>(null);
@@ -464,6 +468,26 @@ export function BuilderWorkbench({
       flash('ok', `Draft ${draft.version} created from ${inst.version}.`);
     }, 'Could not create the draft.');
 
+  /**
+   * A saved version is frozen and carries the questions it was published with. The built-in
+   * question sets ship with the app and are the ones that get updated, so this starts a draft
+   * straight from them.
+   */
+  const startBuiltin = async () => {
+    setCopyVersion(await backend.suggestVersion().catch(() => ''));
+    setBuiltinOpen(true);
+  };
+
+  const confirmBuiltin = () =>
+    run(async () => {
+      const base = builtinBase === 'v1' ? DEFAULT_INSTRUMENT : DRAFT_INSTRUMENT_V2;
+      const draft = await backend.create(structuredClone(base), copyVersion, by);
+      setBuiltinOpen(false);
+      await refresh();
+      await open(draft.version);
+      flash('ok', `Draft ${draft.version} created from the built-in ${base.version}.`);
+    }, 'Could not create the draft.');
+
   const confirmPublish = () =>
     inst &&
     run(async () => {
@@ -590,6 +614,10 @@ export function BuilderWorkbench({
             <button type="button" className="sb-btn" title={readOnly ? 'Edit as draft' : 'Copy draft'} disabled={!inst || busy} onClick={startCopy}>
               <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
               <span>{readOnly ? 'Edit as draft' : 'Copy draft'}</span>
+            </button>
+            <button type="button" className="sb-btn" title="Start a draft from the questions built into the app" disabled={busy} onClick={startBuiltin}>
+              <FilePlus2 size={16} strokeWidth={2.2} aria-hidden="true" />
+              <span>From built-in</span>
             </button>
           </div>
 
@@ -785,6 +813,39 @@ export function BuilderWorkbench({
               Cancel
             </Button>
             <Button variant="primary" onClick={confirmCopy} disabled={busy || !copyVersion.trim()}>
+              {busy ? 'Creating…' : 'Create draft'}
+            </Button>
+          </div>
+        </Modal>
+      ) : null}
+
+      {builtinOpen ? (
+        <Modal open onClose={() => (busy ? undefined : setBuiltinOpen(false))}>
+          <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 700 }}>New draft from built-in</h2>
+          <p style={{ margin: '0 0 14px', fontSize: 14, lineHeight: 1.5, color: 'var(--text-caption)' }}>
+            Starts from the question set that ships with the app, not from a saved version. Residents keep seeing the live version until you publish.
+          </p>
+          <fieldset className="sb-field" style={{ border: 0, padding: 0, margin: '0 0 14px' }}>
+            <legend className="sb-field__label">Start from</legend>
+            {([
+              ['v2', 'Built-in v2: 17 steps, English only'],
+              ['v1', 'Built-in v1: 13 steps, English and Tagalog'],
+            ] as const).map(([value, label]) => (
+              <label key={value} style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 44, cursor: 'pointer' }}>
+                <input type="radio" name="builtin-base" checked={builtinBase === value} onChange={() => setBuiltinBase(value)} />
+                <span>{label}</span>
+              </label>
+            ))}
+          </fieldset>
+          <label className="sb-field">
+            <span className="sb-field__label">Version label</span>
+            <input className="sb-input" value={copyVersion} maxLength={40} onChange={(e) => setCopyVersion(e.target.value)} />
+          </label>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16 }}>
+            <Button variant="secondary" onClick={() => setBuiltinOpen(false)} disabled={busy}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={confirmBuiltin} disabled={busy || !copyVersion.trim()}>
               {busy ? 'Creating…' : 'Create draft'}
             </Button>
           </div>

@@ -1,0 +1,725 @@
+/* ==========================================================================
+   Stage: the landing page as one locked screen. You walk along a fence.
+   Markup and behavior: components/home/FenceStage.tsx.
+   Concept, decisions and storyboard: docs/design/one-screen-2026-11-17/log.md
+
+   Layers, back to front:
+     photo (drifts slowly) -> vignette -> rail -> notices (hang from the rail) -> end posts -> controls
+   The track is a native scroll-snap scroller, so touch, trackpad and assistive tech work.
+   ========================================================================== */
+
+html.is-stage,
+html.is-stage body,
+html:has(.stage),
+html:has(.stage) body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.stage {
+  --nav-h: 56px;
+  --peek: clamp(24px, 8vw, 120px); /* how much of the next notice shows at the edge */
+  --gutter: clamp(12px, 4vw, 56px);
+  --bar-h: 56px;
+  --widget-clear: 0px; /* room kept for the floating assistant on small screens */
+  /* The most height a notice may take: below the rail, above the controls. A notice
+     that needs more scrolls its paper inside itself; the page never scrolls. */
+  --foot: calc(var(--bar-h) + 32px); /* the controls' strip at the foot */
+  --content-h: calc(100vh - var(--nav-h) - 22px - var(--foot) - var(--widget-clear));
+  --content-h: calc(100dvh - var(--nav-h) - 22px - var(--foot) - var(--widget-clear));
+  position: relative;
+  isolation: isolate;
+  height: calc(100vh - var(--nav-h));
+  height: calc(100dvh - var(--nav-h));
+  overflow: hidden;
+  background: var(--emerald-900); /* holds the space while the photo decodes */
+}
+
+@media (max-width: 699px) {
+  .stage {
+    --widget-clear: 76px; /* the assistant's pill is 54px tall and 16px off the bottom */
+    --foot: 12px; /* the controls are in the navbar on a phone */
+  }
+}
+
+/* --- Photo: wider than the screen, so there is somewhere to drift ---------------- */
+.stage__photo {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -2;
+  aspect-ratio: 4 / 3;
+  min-width: 125%;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.stage__photo picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.stage__photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 100%;
+}
+
+/* Four shots of one court, stacked: day, dusk, night, dawn. At rest the theme shows one.
+   Changing theme plays two crossfades through the shot in between (FenceStage). */
+.stage__shot {
+  position: absolute;
+  inset: 0;
+  display: block;
+  opacity: 0;
+}
+
+[data-theme='light'] .stage__shot--day,
+[data-theme='dark'] .stage__shot--night {
+  opacity: 1;
+}
+
+.stage::after {
+  /* Settles the bright sky, and gives the nav and the controls something to sit on. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 62% 40%, transparent 55%, rgba(4, 18, 10, 0.22) 100%),
+    linear-gradient(0deg, rgba(4, 18, 10, 0.4), transparent 20%);
+}
+
+/* --- Track ------------------------------------------------------------------------ */
+.stage__track {
+  position: absolute;
+  inset: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  cursor: grab;
+}
+
+.stage__track::-webkit-scrollbar {
+  display: none;
+}
+
+.stage__wrap {
+  position: relative;
+  display: flex;
+  height: 100%;
+  width: max-content;
+  min-width: 100%;
+  padding-inline-end: var(--peek); /* so the last stop can sit flush left */
+}
+
+/* The rail runs the whole length of the track, and is the pipe in the photo. */
+.stage__rail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 22px;
+  z-index: 1;
+  pointer-events: none;
+  background: var(--emerald-600);
+}
+
+/* A post at each end: the fence starts and stops, so the walk has a beginning and an end. */
+.stage__post {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 22px;
+  z-index: 4;
+  pointer-events: none;
+  background: var(--emerald-600);
+}
+
+.stage__post--start {
+  left: 0;
+}
+
+.stage__post--end {
+  right: 0;
+}
+
+/* --- Panels and cells: wide screens, two notices to a stop ------------------------- */
+.stage__panel {
+  flex: 0 0 calc(100vw - var(--peek));
+  box-sizing: border-box;
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(20px, 2.6vw, 40px);
+  padding: 0 var(--gutter);
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.stage__panel[data-align='end'] {
+  justify-content: flex-end;
+  /* The first notice hangs on the right, away from the controls, so it may use the foot too. */
+  --content-h: calc(100vh - var(--nav-h) - 22px - 24px - var(--widget-clear));
+  --content-h: calc(100dvh - var(--nav-h) - 22px - 24px - var(--widget-clear));
+}
+
+.stage__cell {
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 100%;
+  flex: var(--grow, 1) 1 0;
+  max-width: var(--w);
+  padding-top: 26px; /* the ties start 14px above each notice and wrap the rail's centre line */
+}
+
+.stage__cell[data-fixed] {
+  flex: 0 1 var(--w);
+}
+
+.stage__hang {
+  position: relative;
+  width: 100%;
+  transform-origin: 50% 0; /* swings from the ties; see FenceStage */
+}
+
+.stage__hang > .notice,
+.stage__hang > form > .notice {
+  --notice-w: 100%;
+  --notice-pad-top: 62px; /* clears the ties and their holes */
+  max-height: var(--content-h);
+  cursor: auto;
+}
+
+/* Only a notice that is taller than the room it has scrolls, and only its paper:
+   the rail, the ties and the stub stay put. */
+.stage .notice__paper {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-hairline) transparent;
+}
+
+.stage .notice__stub {
+  flex: none;
+}
+
+.stage .notice__title {
+  font-size: clamp(26px, 2.1vw, 30px);
+}
+
+.stage__hang .notice__tie--l {
+  left: 24px;
+}
+
+.stage__hang .notice__tie--r {
+  right: 24px;
+}
+
+/* --- Narrower than 1280px: every notice is its own stop ------------------------------ */
+@media (max-width: 1279px) {
+  .stage__panel {
+    display: contents;
+  }
+
+  .stage__cell {
+    flex: 0 0 calc(100vw - var(--peek));
+    max-width: none;
+    display: flex;
+    justify-content: center;
+    padding-inline: var(--gutter);
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .stage__cell[data-fixed] {
+    flex: 0 0 calc(100vw - var(--peek));
+  }
+
+  .stage__hang {
+    flex: none;
+    width: min(560px, 100%);
+  }
+}
+
+/* --- Controls: always visible, always labelled ----------------------------------------- */
+.stage__bar {
+  position: absolute;
+  left: var(--gutter);
+  bottom: 16px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stage__btn {
+  height: var(--bar-h);
+  min-width: var(--bar-h);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 8px;
+  background-color: var(--paper);
+  background-image: var(--paper-fibre);
+  background-blend-mode: multiply;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow:
+    0 1px 1px rgba(4, 18, 10, 0.4),
+    4px 6px 14px rgba(4, 18, 10, 0.4);
+  transition:
+    background-color 150ms ease,
+    transform 120ms ease-out,
+    opacity 150ms ease;
+}
+
+.stage__btn--icon {
+  padding: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .stage__btn:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--paper) 88%, var(--black));
+  }
+}
+
+.stage__btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.stage__btn:focus-visible {
+  outline: 2px solid var(--bright-amber);
+  outline-offset: 3px;
+}
+
+.stage__btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.stage__ticks {
+  display: flex;
+  gap: 6px;
+  margin-left: 6px;
+}
+
+.stage__ticks i {
+  width: 22px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  transition: background-color 200ms ease;
+}
+
+.stage__ticks i[data-on='true'] {
+  background: var(--bright-amber);
+}
+
+@media (max-width: 699px) {
+  /* A phone has the least room: tighter type and padding on the paper, same sizes of target. */
+  .stage .notice__body {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .stage .notice__title {
+    font-size: 26px;
+    margin-bottom: 10px;
+  }
+
+  .stage__hang > .notice,
+  .stage__hang > form > .notice {
+    --notice-pad-top: 58px;
+    --pad-x: 20px;
+  }
+
+  .stage .notice__paper {
+    padding-bottom: 20px;
+  }
+
+  .goal__body,
+  .fact__body,
+  .contact-list,
+  .faq__detail p {
+    font-size: 15.5px;
+    line-height: 1.5;
+  }
+
+  .stage__bar {
+    display: none; /* Back and Next are in the navbar on a phone (see Navbar) */
+  }
+
+  .stage__post {
+    width: 12px;
+  }
+}
+
+/* --- What is printed on the notices below the hero ---------------------------------------- */
+.goal__title {
+  margin: 0 0 4px;
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--dark-emerald);
+}
+
+.goal__body {
+  margin: 0;
+  max-width: 56ch;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+/* FAQ: questions on the left, the answer beside them. Narrow: a list, then an answer. */
+.faq {
+  display: grid;
+  gap: 8px 32px;
+}
+
+.faq__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.faq__q {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 12px;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--ink-hairline);
+  border-radius: 0;
+  background: transparent;
+  color: var(--dark-emerald);
+  font-family: var(--font-title);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.28;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.faq__list li:first-child .faq__q {
+  border-top: 0;
+}
+
+.faq__q svg {
+  flex: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .faq__q:hover {
+    background: color-mix(in srgb, var(--dark-emerald) 7%, transparent);
+  }
+}
+
+.faq__q[aria-current='true'] {
+  background: color-mix(in srgb, var(--dark-emerald) 11%, transparent);
+}
+
+.faq__q:focus-visible,
+.faq__back:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: -2px;
+}
+
+/* The answer arrives rather than appearing from nothing: one short ease-out, not a slide. */
+.faq__detail > div {
+  animation: faqIn 160ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes faqIn {
+  from {
+    opacity: 0;
+  }
+}
+
+.faq__detail h3 {
+  margin: 0 0 12px;
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--dark-emerald);
+  text-wrap: balance;
+}
+
+.faq__detail p {
+  margin: 0;
+  max-width: 54ch;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.faq__back {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin: 0 0 8px -4px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--dark-emerald);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+@media (min-width: 1280px) {
+  .faq {
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .faq__detail {
+    padding: 8px 4px 0 0;
+  }
+}
+
+@media (max-width: 1279px) {
+  .faq[data-view='detail'] .faq__list,
+  .faq[data-view='list'] .faq__detail {
+    display: none;
+  }
+
+  .faq__back {
+    display: inline-flex;
+  }
+}
+
+/* The facts beside the FAQ: three printed lines, then the stub. */
+.fact + .fact {
+  margin-top: 18px;
+}
+
+.fact__title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dark-emerald);
+}
+
+.fact__body {
+  margin: 2px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+/* Contact: the reply slip, and the quiet links under the choices. */
+.slip-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.slip-sent {
+  margin: 16px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--dark-emerald);
+}
+
+.contact-list {
+  margin: 14px 0 0;
+  padding: 0 0 0 1.15em;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.contact-list li {
+  text-wrap: pretty;
+}
+
+.notice__quiet {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .notice__quiet:hover {
+    color: var(--ink);
+  }
+}
+
+.notice__quiet:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* --- Reduced motion: the same walk, with nothing between the stops ---------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .stage__track {
+    scroll-behavior: auto;
+  }
+
+  .stage__btn,
+  .stage__ticks i,
+  .faq__q {
+    transition: none;
+  }
+
+  .faq__detail > div {
+    animation: none;
+  }
+
+  .stage__photo {
+    transform: none !important;
+  }
+}
+
+/* A short phone (a browser with its toolbars showing is about 660px tall): one more notch. */
+@media (max-width: 699px) and (max-height: 700px) {
+  .stage .notice__body,
+  .goal__body,
+  .contact-list,
+  .faq__detail p {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .stage .notice__title {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .stage__hang > .notice,
+  .stage__hang > form > .notice {
+    --notice-pad-top: 54px;
+  }
+
+  .notice__row {
+    padding: 12px 0;
+  }
+
+  .hero-notice .notice__title {
+    font-size: 25px;
+  }
+
+  .hero-notice .notice__body {
+    font-size: 15px;
+  }
+
+  .hero-mast img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .hero-mast__word {
+    font-size: 26px;
+  }
+
+  .hero-notice .notice__rule {
+    margin: 8px 0 12px;
+  }
+
+  .hero-notice .notice__link {
+    min-height: 40px;
+    margin-top: 2px;
+  }
+}
+
+/* The shortest phones (about 640px tall with its toolbars): the first notice still fits whole. */
+@media (max-width: 699px) and (max-height: 680px) {
+  .hero-notice .notice__title {
+    font-size: 24px;
+    line-height: 1.1;
+    margin: 6px 0 10px;
+  }
+
+  .hero-notice .notice__body {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .hero-notice .notice__rule {
+    margin: 6px 0 10px;
+  }
+
+  .hero-notice .notice__link {
+    min-height: 44px;
+    margin-top: 0;
+  }
+
+  .hero-mast img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .hero-mast__word {
+    font-size: 24px;
+  }
+
+  .hero-notice {
+    --notice-pad-top: 50px !important;
+    --stub-h: 64px;
+  }
+}
+
+/* Big screens: the same notices, larger, so the fence is not mostly empty photo. */
+@media (min-width: 1700px) and (min-height: 900px) {
+  .stage__hang {
+    zoom: 1.2;
+  }
+}
+
+@media (min-width: 2200px) and (min-height: 1200px) {
+  .stage__hang {
+    zoom: 1.45;
+  }
+}

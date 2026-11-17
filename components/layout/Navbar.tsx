@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  useCallback,
   useEffect,
   useId,
   useRef,
@@ -11,23 +10,108 @@ import {
 } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Menu, RotateCcw, X } from 'lucide-react';
 import { RecaresLogo } from '@/components/brand/RecaresLogo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useSurveyWindow } from '@/lib/admin/useSurveyWindow';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+import {
+  stageGo,
+  stageStep,
+  STAGE_SECTION,
+  STAGE_STATE,
+  type StageSection,
+  type StageState,
+} from '@/lib/ui/stage';
 
-type SectionKey = 'home' | 'about' | 'faq';
+type SectionKey = 'home' | 'about' | 'faq' | 'contact';
+
+const STAGE_OF: Record<SectionKey, StageSection> = {
+  home: 'survey',
+  about: 'about',
+  faq: 'faq',
+  contact: 'contact',
+};
 
 const links: { href: string; label: string; section: SectionKey }[] = [
   { href: '/', label: 'Home', section: 'home' },
   { href: '/#about', label: 'About', section: 'about' },
   { href: '/#faq', label: 'FAQ', section: 'faq' },
+  { href: '/#contact', label: 'Contact', section: 'contact' },
 ];
 
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/**
+ * On a phone the stage's Back and Next live here, so the whole screen below the nav
+ * stays for the notices. The label says where you are.
+ */
+function StageSteps() {
+  const [state, setState] = useState<StageState | undefined>(undefined);
+  useEffect(() => {
+    setState(window.__stageState);
+    const onState = (e: Event) => setState((e as CustomEvent<StageState>).detail);
+    window.addEventListener(STAGE_STATE, onState);
+    return () => window.removeEventListener(STAGE_STATE, onState);
+  }, []);
+
+  const atStart = !state || state.index === 0;
+  const atEnd = !!state && state.index >= state.count - 1;
+  const box = {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    border: '1px solid rgba(255,255,255,.55)',
+    background: 'transparent',
+    color: 'var(--white)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    padding: 0,
+  } as const;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <button
+        type="button"
+        aria-label="Back"
+        disabled={atStart}
+        onClick={() => stageStep(-1)}
+        style={{ ...box, opacity: atStart ? 0.4 : 1, cursor: atStart ? 'default' : 'pointer' }}
+      >
+        <ChevronLeft size={22} strokeWidth={2.4} aria-hidden="true" />
+      </button>
+      <span
+        style={{
+          minWidth: 64,
+          maxWidth: 96,
+          textAlign: 'center',
+          fontFamily: 'var(--font-sans)',
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: '.08em',
+          textTransform: 'uppercase',
+          color: 'var(--bright-amber)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {state?.label ?? 'Survey'}
+      </span>
+      <button
+        type="button"
+        aria-label={atEnd ? 'Back to start' : 'Next'}
+        onClick={() => stageStep(1)}
+        style={box}
+      >
+        {atEnd ? (
+          <RotateCcw size={20} strokeWidth={2.4} aria-hidden="true" />
+        ) : (
+          <ChevronRight size={22} strokeWidth={2.4} aria-hidden="true" />
+        )}
+      </button>
+    </div>
+  );
 }
 
 /**
@@ -39,7 +123,6 @@ export function Navbar() {
   const { acceptsResponses, config } = useSurveyWindow();
   const surveyCta =
     acceptsResponses ? 'Start the survey' : config.status === 'paused' ? 'Survey paused' : 'Survey closed';
-  const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState<SectionKey>('home');
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -47,24 +130,19 @@ export function Navbar() {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
 
-  const updateFromScroll = useCallback(() => {
-    setScrolled(window.scrollY > 8);
-
+  /* The landing page never scrolls: it is one locked screen (FenceStage) that reports
+     which section it is showing. Other pages do not highlight anything. */
+  useEffect(() => {
     if (pathname !== '/') {
       setActive('home');
       return;
     }
-
-    const marker = window.scrollY + 88;
-    const about = document.getElementById('about');
-    const faq = document.getElementById('faq');
-    const contact = document.getElementById('contact');
-
-    let next: SectionKey = 'home';
-    if (about && marker >= about.offsetTop) next = 'about';
-    if (faq && marker >= faq.offsetTop) next = 'faq';
-    if (contact && marker >= contact.offsetTop) next = 'faq';
-    setActive(next);
+    const fromStage = (section: StageSection | undefined) =>
+      setActive(section === 'about' || section === 'faq' || section === 'contact' ? section : 'home');
+    fromStage(window.__stageSection);
+    const onSection = (e: Event) => fromStage((e as CustomEvent<StageSection>).detail);
+    window.addEventListener(STAGE_SECTION, onSection);
+    return () => window.removeEventListener(STAGE_SECTION, onSection);
   }, [pathname]);
 
   useEffect(() => {
@@ -77,16 +155,6 @@ export function Navbar() {
     mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
   }, []);
-
-  useEffect(() => {
-    updateFromScroll();
-    window.addEventListener('scroll', updateFromScroll, { passive: true });
-    window.addEventListener('resize', updateFromScroll);
-    return () => {
-      window.removeEventListener('scroll', updateFromScroll);
-      window.removeEventListener('resize', updateFromScroll);
-    };
-  }, [updateFromScroll]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -138,29 +206,12 @@ export function Navbar() {
     };
   }, [menuOpen]);
 
-  const scrollToHash = (hash: string | null) => {
-    const behavior: ScrollBehavior = prefersReducedMotion() ? 'auto' : 'smooth';
-    if (!hash) {
-      window.scrollTo({ top: 0, behavior });
-      return;
-    }
-    const el = document.getElementById(hash);
-    if (el) el.scrollIntoView({ behavior, block: 'start' });
-  };
-
-  const onNavClick = (e: MouseEvent<HTMLAnchorElement>, href: string) => {
+  const onNavClick = (e: MouseEvent<HTMLAnchorElement>, href: string, section: SectionKey) => {
     setMenuOpen(false);
     if (pathname !== '/') return;
-
-    if (href === '/') {
+    if (href === '/' || href.startsWith('/#')) {
       e.preventDefault();
-      scrollToHash(null);
-      return;
-    }
-
-    if (href.startsWith('/#')) {
-      e.preventDefault();
-      scrollToHash(href.slice(2));
+      stageGo(STAGE_OF[section]);
     }
   };
 
@@ -188,7 +239,7 @@ export function Navbar() {
             key={l.label}
             href={l.href}
             className="nav-link"
-            onClick={(e) => onNavClick(e, l.href)}
+            onClick={(e) => onNavClick(e, l.href, l.section)}
             style={linkStyle(isActive)}
           >
             {l.label}
@@ -236,14 +287,12 @@ export function Navbar() {
           padding: '0 clamp(12px, 3vw, 28px)',
           minHeight: 56,
           boxSizing: 'border-box',
-          boxShadow: scrolled ? '0 4px 18px rgba(0, 0, 0, 0.28)' : 'none',
-          transition: 'box-shadow 220ms ease-in-out',
         }}
       >
         <Link
           href="/"
           aria-label="ReCARES Survey home"
-          onClick={(e) => onNavClick(e, '/')}
+          onClick={(e) => onNavClick(e, '/', 'home')}
           className="recares-logo-link"
           style={{
             display: 'flex',
@@ -266,6 +315,8 @@ export function Navbar() {
           }}
         >
           {!isMobile && desktopLinks}
+
+          {isMobile && pathname === '/' && <StageSteps />}
 
           {isMobile && (
             <button
@@ -364,7 +415,7 @@ export function Navbar() {
                   key={l.label}
                   href={l.href}
                   className="nav-link"
-                  onClick={(e) => onNavClick(e, l.href)}
+                  onClick={(e) => onNavClick(e, l.href, l.section)}
                   style={{
                     ...linkStyle(isActive),
                     minHeight: 48,

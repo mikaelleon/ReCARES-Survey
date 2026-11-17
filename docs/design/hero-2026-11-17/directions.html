@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hero directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Poppins:wght@700&family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0b0b0b; --white: #e5ebe8; --dark-emerald: #13693f; --harvest-orange: #f78021;
+    --bright-amber: #feca09; --emerald-400: #3db579; --emerald-900: #0f5a35;
+    --photo: url('../../../public/images/hero/day-2048.webp');
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #1a1a18; color: #e5ebe8; font-family: Lato, sans-serif; padding: 24px; }
+  h1 { font: 700 14px Lato; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 16px; opacity: .7; }
+  .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .cell h2 { font: 700 13px Lato; margin: 0 0 8px; letter-spacing: .04em; }
+  .cell p { font-size: 12px; margin: 8px 0 0; opacity: .75; line-height: 1.5; }
+  .scale { zoom: .3; }
+  .frame { position: relative; width: 1280px; height: 720px; overflow: hidden; border-radius: 16px; background: #000; }
+  .frame > .bg { position: absolute; inset: 0; background: var(--photo) 62% 58% / cover no-repeat; }
+
+  /* ---------- 1 · Notice on the fence ---------- */
+  .d1 .bg { background-position: 70% 62%; }
+  .d1 .sun { position: absolute; inset: 0; background: linear-gradient(100deg, rgba(0,0,0,.35), rgba(0,0,0,0) 55%); }
+  .notice {
+    position: absolute; left: 700px; top: 44px; width: 408px; height: 632px; color: #14281d;
+    background: #f1f4f0;
+    box-shadow: 0 1px 1px rgba(0,0,0,.25), 6px 10px 18px rgba(0,0,0,.28), 18px 30px 50px rgba(0,0,0,.28);
+    transform: perspective(1600px) rotateY(-7deg) rotateZ(.6deg); transform-origin: 50% 0;
+    display: flex; flex-direction: column;
+  }
+  .notice::before { content: ''; position: absolute; inset: 0; opacity: .5; mix-blend-mode: multiply; pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .5  0 0 0 0 .45  0 0 0 .22 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+  .tie { position: absolute; width: 26px; height: 8px; border-radius: 4px; background: #0b0b0b; box-shadow: 1px 2px 2px rgba(0,0,0,.5); }
+  .tie.a { left: 28px; top: 14px; transform: rotate(-8deg); } .tie.b { right: 28px; top: 14px; transform: rotate(8deg); }
+  .notice .body { padding: 44px 36px 20px; flex: 1; display: flex; flex-direction: column; }
+  .mast { display: flex; align-items: center; gap: 12px; }
+  .mast img { width: 44px; height: 44px; }
+  .mast b { font: 700 34px/1 Poppins; color: var(--dark-emerald); }
+  .rule { display: flex; height: 4px; width: 72px; margin: 14px 0 22px; } .rule i { flex: 1; }
+  .eyebrow { font: 700 12px Lato; letter-spacing: .12em; text-transform: uppercase; color: #3a4f43; }
+  .notice h3 { font: 700 33px/1.12 'Open Sans'; margin: 10px 0 16px; color: #0f3d27; text-wrap: balance; }
+  .notice p { font: 400 15px/1.5 Lato; margin: 0 0 10px; color: #26382e; }
+  .notice a.why { margin-top: auto; font: 700 14px Lato; color: var(--dark-emerald); text-decoration: underline; text-underline-offset: 4px; }
+  .stub { position: relative; margin: 0; height: 84px; background: var(--bright-amber); color: #0b0b0b; display: flex; align-items: center; justify-content: space-between; padding: 0 36px; font: 700 15px Lato; letter-spacing: .06em; text-transform: uppercase; }
+  .stub::before { content: ''; position: absolute; left: 0; right: 0; top: -1px; border-top: 2px dashed rgba(11,11,11,.55); }
+  .stub small { display: block; font: 400 12px Lato; letter-spacing: 0; text-transform: none; margin-top: 3px; opacity: .8; }
+
+  /* ---------- 2 · Ask first (type) ---------- */
+  .d2 .bg { background-position: 60% 60%; }
+  .d2 .shade { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(8,24,16,.96) 0%, rgba(8,24,16,.88) 38%, rgba(8,24,16,.1) 78%); }
+  .d2 .copy { position: absolute; left: 72px; bottom: 64px; width: 880px; }
+  .d2 .brand { position: absolute; left: 72px; top: 48px; font: 700 26px Poppins; color: var(--white); }
+  .d2 h3 { margin: 0; font: 700 88px/1.02 Poppins; color: var(--white); letter-spacing: -.02em; text-wrap: balance; }
+  .d2 h3 em { font-style: normal; color: var(--bright-amber); }
+  .d2 p { font: 400 20px/1.5 Lato; max-width: 640px; margin: 22px 0 28px; color: var(--white); }
+  .btn { display: inline-flex; align-items: center; height: 44px; padding: 0 20px; border-radius: 8px; font: 700 14px Lato; letter-spacing: .06em; text-transform: uppercase; }
+  .btn.p { background: var(--bright-amber); color: #0b0b0b; } .btn.s { border: 1px solid rgba(255,255,255,.7); color: var(--white); margin-left: 12px; }
+
+  /* ---------- 3 · Wordmark through the photo ---------- */
+  .d3 { background: #0a1a12; }
+  .d3 .word { position: absolute; left: 0; right: 0; top: 40px; text-align: center; font: 700 352px/1 Poppins; letter-spacing: -.03em;
+    background: var(--photo) 55% 62% / cover; -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .d3 .ruleL { position: absolute; left: 50%; transform: translateX(-50%); top: 430px; display: flex; width: 360px; height: 8px; } .d3 .ruleL i { flex: 1; }
+  .d3 .copy { position: absolute; left: 0; right: 0; bottom: 56px; text-align: center; color: var(--white); }
+  .d3 .copy b { display: block; font: 700 30px 'Open Sans'; color: var(--bright-amber); }
+  .d3 .copy p { font: 400 18px/1.5 Lato; margin: 12px auto 24px; max-width: 560px; }
+  .grad { height: 100%; }
+</style>
+</head>
+<body>
+<h1>Hero directions · side by side at 30% (full-size frames render separately)</h1>
+<div class="row">
+
+  <div class="cell">
+    <h2>1 · Notice on the fence</h2>
+    <div class="scale"><div class="frame d1" id="d1">
+      <div class="bg"></div><div class="sun"></div>
+      <article class="notice">
+        <i class="tie a"></i><i class="tie b"></i>
+        <div class="body">
+          <div class="mast"><img src="../../../public/images/ReCARES-LOGO_SVG/logo-favicon.svg" alt=""><b>ReCARES</b></div>
+          <div class="rule"><i style="background:#13693f"></i><i style="background:#3db579"></i><i style="background:#f78021"></i><i style="background:#feca09"></i></div>
+          <div class="eyebrow">Notice to residents · Camella Homes Tibig</div>
+          <h3>Which safety and service problems should come first?</h3>
+          <p>A short survey from fourth-year IT students at the University of Batangas, Lipa Campus.</p>
+          <p>About 11 to 13 minutes. We never ask for your name.</p>
+          <a class="why">Why we're asking</a>
+        </div>
+        <div class="stub"><span>Start the survey</span><span>→</span></div>
+      </article>
+    </div></div>
+    <p>A flyer cable-tied to the real court fence. The paper carries the type, so the photo stays clean. The tear-off stub is the primary button.</p>
+  </div>
+
+  <div class="cell">
+    <h2>2 · Ask first</h2>
+    <div class="scale"><div class="frame d2" id="d2">
+      <div class="bg"></div><div class="shade"></div>
+      <div class="brand">ReCARES</div>
+      <div class="copy">
+        <h3>Before we build anything, we're <em>asking.</em></h3>
+        <p>Camella Homes Tibig residents: tell us which safety and service problems should come first.</p>
+        <span class="btn p">Start the survey</span><span class="btn s">Why we're asking</span>
+      </div>
+    </div></div>
+    <p>One sentence is the whole screen. Photo is a quiet floor under it. Most legible, least ownable.</p>
+  </div>
+
+  <div class="cell">
+    <h2>3 · Wordmark through the photo</h2>
+    <div class="scale"><div class="frame d3" id="d3">
+      <div class="word">ReCARES</div>
+      <div class="ruleL"><i style="background:#13693f"></i><i style="background:#3db579"></i><i style="background:#f78021"></i><i style="background:#feca09"></i></div>
+      <div class="copy"><b>Community needs assessment survey</b><p>For residents of Camella Homes Tibig, Lipa City. Tell us what should come first, before anything is built.</p><span class="btn p">Start the survey</span></div>
+    </div></div>
+    <p>The obvious agency move: photo clipped into the wordmark. Names the product, says nothing about the place.</p>
+  </div>
+
+</div>
+</body>
+</html>

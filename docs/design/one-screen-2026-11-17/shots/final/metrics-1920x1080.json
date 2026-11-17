@@ -1,0 +1,93 @@
+{
+ "stops": 4,
+ "metrics": [
+  {
+   "label": "Survey",
+   "section": "survey",
+   "scrollLeft": 0,
+   "stageH": 1024,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 589,
+     "left": 1264,
+     "right": 1744
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    1080,
+    1080
+   ]
+  },
+  {
+   "label": "Survey",
+   "scrollLeft": 1800,
+   "stageH": 1024,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 589,
+     "left": -536,
+     "right": -56
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    1080,
+    1080
+   ]
+  },
+  {
+   "label": "FAQ",
+   "section": "faq",
+   "scrollLeft": 3600,
+   "stageH": 1024,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 581,
+     "left": 56,
+     "right": 936
+    },
+    {
+     "top": 22,
+     "bottom": 444,
+     "left": 976,
+     "right": 1296
+    }
+   ],
+   "cellOverflow": "0|0",
+   "pageScroll": [
+    1080,
+    1080
+   ]
+  },
+  {
+   "label": "Contact",
+   "section": "contact",
+   "scrollLeft": 5400,
+   "stageH": 1024,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 557,
+     "left": 56,
+     "right": 596
+    },
+    {
+     "top": 22,
+     "bottom": 571,
+     "left": 636,
+     "right": 1156
+    }
+   ],
+   "cellOverflow": "0|0",
+   "pageScroll": [
+    1080,
+    1080
+   ]
+  }
+ ],
+ "log": []
+}

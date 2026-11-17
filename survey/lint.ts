@@ -140,7 +140,11 @@ export function lintInstrument(inst: Instrument): LintIssue[] {
     });
   }
 
-  const retired = RETIRED_CORE_BY_VERSION[inst.version] ?? [];
+  // A copy of a version inherits what that version retired (v3 made from v2 stays without F2).
+  const retired =
+    RETIRED_CORE_BY_VERSION[inst.version] ??
+    (inst.baseVersion ? RETIRED_CORE_BY_VERSION[inst.baseVersion] : undefined) ??
+    [];
   for (const code of CORE_QUESTION_CODES.filter((c) => !retired.includes(c))) {
     if (!findQuestion(inst, code)) {
       add('error', `${code} is required by the dashboard and cannot be removed.`, code);

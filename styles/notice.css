@@ -1,0 +1,460 @@
+/* ==========================================================================
+   Notice: one paper sheet, tied to the fence. The hero and every panel below it.
+   Concept, decisions and storyboards: docs/design/hero-2026-11-17/log.md
+   Markup: components/ui/Notice.tsx. Tear state: lib/ui/useTear.ts.
+
+   Layers, back to front:
+     shadow -> paper (fibre, light) -> stub (the button) -> cable ties
+   The paper and ink stay the same in light and dark theme, the way the emerald
+   cards do, so everything printed on a notice is re-themed to ink below.
+   ========================================================================== */
+
+.notice {
+  --stub-h: 76px;
+  --pad-x: clamp(22px, 8%, 40px);
+  --notice-pad-top: 40px;
+  --gust-delay: 450ms;
+  --gust-ms: 2600ms;
+  --tear-ms: 560ms;
+  --ease-pull: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-fall: cubic-bezier(0.5, 0, 1, 0.6);
+
+  /* Everything on paper reads as ink, whatever the page theme is. */
+  --text-body: var(--ink);
+  --text-headline: var(--dark-emerald);
+  --text-section-heading: var(--dark-emerald);
+  --text-on-card-neutral: var(--ink);
+  --text-caption: var(--ink-soft);
+  --border-default: color-mix(in srgb, var(--ink) 34%, transparent);
+  --border-subtle: var(--ink-hairline);
+  --surface-2: color-mix(in srgb, var(--ink) 7%, transparent);
+  --field-bg: #fff;
+  --field-text: var(--black);
+  --field-placeholder: rgba(11, 11, 11, 0.52);
+  --field-border: rgba(11, 11, 11, 0.34);
+  --field-caret: var(--black);
+  --error-red: #b3261e;
+  --status-error: #b3261e;
+
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  width: min(var(--notice-w, 100%), 100%);
+  display: flex;
+  flex-direction: column;
+  transform-origin: 50% 0;
+  color: var(--ink);
+}
+
+/* --- Gust ------------------------------------------------------------------- */
+/* One-sided: paper hung flat on a fence can swing out and slap back,
+   never through it. Each 0deg is contact. Last frame is `none` so text rests crisp. */
+@keyframes noticeGust {
+  0%   { transform: perspective(1500px) rotateX(0deg); }
+  13%  { transform: perspective(1500px) rotateX(3.6deg) rotate(0.9deg); }
+  27%  { transform: perspective(1500px) rotateX(0deg) rotate(0deg); }
+  41%  { transform: perspective(1500px) rotateX(2deg) rotate(-0.6deg); }
+  55%  { transform: perspective(1500px) rotateX(0deg) rotate(0deg); }
+  68%  { transform: perspective(1500px) rotateX(1deg) rotate(0.3deg); }
+  80%  { transform: perspective(1500px) rotateX(0deg); }
+  90%  { transform: perspective(1500px) rotateX(0.5deg); }
+  100% { transform: none; }
+}
+
+@keyframes shadowGust {
+  0%, 27%, 55%, 80%, 100% { transform: translate(0, 0); }
+  13%  { transform: translate(8px, 14px); }
+  41%  { transform: translate(4px, 7px); }
+  68%  { transform: translate(2px, 3px); }
+  90%  { transform: translate(1px, 1px); }
+}
+
+/* Only the hero swings, once, on load. The boards below hold still: the one
+   moment stays one moment. */
+.notice--gust {
+  animation: noticeGust var(--gust-ms) var(--gust-delay) both;
+}
+
+.notice--gust .notice__shadow {
+  animation: shadowGust var(--gust-ms) var(--gust-delay) both;
+}
+
+/* --- Shadow ------------------------------------------------------------------ */
+/* Light comes from the upper left, as in the photo. It moves with the swing
+   (secondary action), and shrinks when the stub is gone. */
+.notice__shadow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  box-shadow: 0 0 12px rgba(4, 18, 10, 0.35); /* contact on every side, not only the lit-away ones */
+  transition: bottom 90ms linear;
+}
+
+.notice__shadow::before,
+.notice__shadow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #04120a;
+}
+
+.notice__shadow::before {
+  opacity: 0.5;
+  filter: blur(20px);
+  transform: translate(22px, 32px);
+}
+
+.notice__shadow::after {
+  opacity: 0.5;
+  filter: blur(4px);
+  transform: translate(4px, 7px);
+}
+
+/* --- Paper ------------------------------------------------------------------- */
+.notice__paper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--notice-pad-top) var(--pad-x) 24px;
+  background: var(--paper);
+  color: var(--ink);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 96.67% 100%, 93.33% 100%, 90% 100%, 86.67% 100%, 83.33% 100%, 80% 100%, 76.67% 100%, 73.33% 100%, 70% 100%, 66.67% 100%, 63.33% 100%, 60% 100%, 56.67% 100%, 53.33% 100%, 50% 100%, 46.67% 100%, 43.33% 100%, 40% 100%, 36.67% 100%, 33.33% 100%, 30% 100%, 26.67% 100%, 23.33% 100%, 20% 100%, 16.67% 100%, 13.33% 100%, 10% 100%, 6.67% 100%, 3.33% 100%, 0 100%);
+  transition: clip-path 90ms linear;
+}
+
+/* Fibre: fine grain, multiplied so it only darkens. */
+.notice__paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.34;
+  mix-blend-mode: multiply;
+  background-image: var(--paper-fibre);
+}
+
+/* Light from the upper left, a faint bow between the two ties, and the soft shade
+   of a fence rail crossing the corner nearest the sun. Under 9% everywhere so the
+   type never loses contrast. */
+.notice__paper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 42%, rgba(4, 40, 20, 0.05) 100%),
+    linear-gradient(90deg, rgba(60, 40, 10, 0.03) 0%, transparent 16%, transparent 84%, rgba(60, 40, 10, 0.035) 100%),
+    linear-gradient(64deg, transparent 56%, rgba(60, 40, 10, 0.035) 66%, rgba(60, 40, 10, 0.035) 71%, transparent 80%);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.95),
+    inset -1px -1px 0 rgba(4, 40, 20, 0.14);
+}
+
+/* Fibre and light sit under the type, never over it. */
+.notice__paper > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* No stub: the paper ends the notice, with a little more air at the foot. */
+.notice--plain .notice__paper {
+  padding-bottom: 36px;
+}
+
+/* --- Tear (the paper's half) ------------------------------------------------- */
+.notice[data-tear='tearing'] .notice__paper,
+.notice[data-tear='torn'] .notice__paper {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 2.5px), 96.67% calc(100% - 2.8px), 93.33% calc(100% - 0.6px), 90% calc(100% - 1.2px), 86.67% calc(100% - 2.2px), 83.33% calc(100% - 2.5px), 80% calc(100% - 0.4px), 76.67% calc(100% - 4.4px), 73.33% calc(100% - 2.9px), 70% calc(100% - 2.1px), 66.67% calc(100% - 1.4px), 63.33% calc(100% - 3.9px), 60% calc(100% - 3.3px), 56.67% calc(100% - 0.4px), 53.33% calc(100% - 2.5px), 50% calc(100% - 1.2px), 46.67% calc(100% - 3.4px), 43.33% calc(100% - 0.8px), 40% calc(100% - 2.8px), 36.67% calc(100% - 2.4px), 33.33% calc(100% - 0.9px), 30% calc(100% - 0.3px), 26.67% calc(100% - 4.7px), 23.33% calc(100% - 4.8px), 20% calc(100% - 0.6px), 16.67% calc(100% - 2.2px), 13.33% calc(100% - 4.8px), 10% calc(100% - 0.9px), 6.67% calc(100% - 2.1px), 3.33% calc(100% - 2.8px), 0 calc(100% - 3.4px));
+}
+
+.notice[data-tear='tearing'] .notice__paper {
+  animation: paperRecoil var(--tear-ms) ease-out both;
+}
+
+.notice[data-tear='tearing'] .notice__shadow,
+.notice[data-tear='torn'] .notice__shadow {
+  bottom: var(--stub-h);
+}
+
+/* Follow-through: the paper kicks back a little when the stub lets go. */
+@keyframes paperRecoil {
+  0%   { transform: perspective(1500px) rotateX(0deg); }
+  20%  { transform: perspective(1500px) rotateX(3.2deg) rotate(-0.5deg); }
+  100% { transform: perspective(1500px) rotateX(0deg); }
+}
+
+/* --- Printed furniture --------------------------------------------------------- */
+.notice__rule {
+  display: flex;
+  width: 72px;
+  height: 4px;
+  margin: 16px 0 24px;
+}
+
+.notice__rule i {
+  flex: 1;
+}
+
+.notice__eyebrow {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: clamp(11px, 3.1vw, 13px);
+  white-space: nowrap;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.notice__title {
+  margin: 0 0 14px;
+  font-family: var(--font-title);
+  font-size: clamp(26px, 5.4vw, 32px);
+  font-weight: 700;
+  line-height: 1.16;
+  color: var(--dark-emerald);
+  text-wrap: balance;
+}
+
+.notice__body {
+  margin: 0;
+  max-width: 62ch;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.notice__body + .notice__body {
+  margin-top: 12px;
+}
+
+.notice__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dark-emerald);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1.5px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .notice__link:hover {
+    color: var(--emerald-900);
+    text-decoration-thickness: 2.5px;
+  }
+}
+
+.notice__link:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Ruled rows: printed lines, not boxes. */
+.notice__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notice__row {
+  padding: 18px 0;
+  border-top: 1px solid var(--ink-hairline);
+}
+
+.notice__row:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+/* --- Stub: the button --------------------------------------------------------- */
+.notice__stub {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--stub-h);
+  padding: 0 var(--pad-x);
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  background-color: var(--accent-selected);
+  background-image: var(--paper-fibre);
+  background-blend-mode: multiply;
+  color: var(--black);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transform-origin: 100% 0; /* it tears from the right-hand end of the perforation */
+  transition:
+    background-color 150ms ease,
+    transform 90ms var(--ease-pull);
+}
+
+/* Perforation: the one place a dashed line is real. */
+.notice__stub::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  border-top: 2px dashed color-mix(in srgb, var(--black) 52%, transparent);
+  pointer-events: none;
+}
+
+.notice__stub svg {
+  flex: none;
+  margin-right: -3px; /* arrow glyph ends on the same inset as the text starts */
+  transition: transform 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .notice__stub:hover:not(:disabled) {
+    background-color: var(--accent-hover);
+    color: var(--black); /* the global a:hover would paint the label the same orange */
+  }
+
+  .notice__stub:hover:not(:disabled) svg {
+    transform: translateX(4px);
+  }
+}
+
+/* Anticipation: the left end pulls down before it lets go. */
+.notice__stub:active:not(:disabled) {
+  transform: rotate(-1.6deg);
+}
+
+.notice__stub:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: -7px;
+}
+
+.notice__stub:disabled {
+  cursor: progress;
+  background-color: color-mix(in srgb, var(--accent-selected) 62%, var(--paper));
+}
+
+/* Survey paused or closed: the stub stays, but is plainly not a go button. */
+.notice__stub[data-survey='paused'],
+.notice__stub[data-survey='closed'] {
+  background-color: color-mix(in srgb, var(--paper) 80%, var(--black));
+  color: var(--ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .notice__stub[data-survey='paused']:hover,
+  .notice__stub[data-survey='closed']:hover {
+    color: var(--ink);
+    background-color: color-mix(in srgb, var(--paper) 74%, var(--black));
+  }
+}
+
+/* The tear: pull (ease-out), then fall on an arc (ease-in), fading last. */
+.notice[data-tear='tearing'] .notice__stub {
+  pointer-events: none;
+  animation: stubTear var(--tear-ms) linear both;
+}
+
+@keyframes stubTear {
+  0%   { transform: none; opacity: 1; animation-timing-function: var(--ease-pull); }
+  15%  { transform: rotate(-5deg); opacity: 1; animation-timing-function: var(--ease-fall); }
+  60%  { transform: translate(-40px, 110px) rotate(-16deg); opacity: 1; animation-timing-function: var(--ease-fall); }
+  100% { transform: translate(-110px, 380px) rotate(-30deg); opacity: 0; }
+}
+
+/* A sent form leaves a torn edge and no stub. */
+.notice[data-tear='torn'] .notice__stub {
+  display: none;
+}
+
+/* If the survey never opens (slow network, back button), the stub comes back
+   instead of leaving a page with no way in. */
+.notice[data-tear='restored'] .notice__stub {
+  animation: stubReturn 240ms var(--ease-pull) both;
+}
+
+@keyframes stubReturn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* --- Cable ties ----------------------------------------------------------------- */
+.notice__tie {
+  position: absolute;
+  top: -14px;
+  z-index: 3;
+  width: 9px;
+  height: 60px;
+  border-radius: 1px 1px 3px 3px;
+  background: linear-gradient(90deg, #000, #232323 52%, #000);
+  box-shadow: 1px 3px 3px rgba(0, 0, 0, 0.42);
+  pointer-events: none;
+}
+
+.notice__tie::before { /* the head */
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 20px;
+  width: 17px;
+  height: 22px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #000, #2a2a2a 50%, #000);
+  box-shadow: 1px 2px 2px rgba(0, 0, 0, 0.4);
+}
+
+.notice__tie::after { /* the punched hole it runs through */
+  content: '';
+  position: absolute;
+  left: -4px;
+  bottom: -7px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #050505 54%, rgba(255, 255, 255, 0.55) 60%, transparent 66%);
+  z-index: -1;
+}
+
+.notice__tie--l { left: clamp(20px, 11%, 48px); }
+.notice__tie--r { right: clamp(20px, 11%, 48px); }
+
+/* --- Reduced motion: same page, nothing swings or tears -------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .notice,
+  .notice__shadow,
+  .notice__paper {
+    animation: none !important;
+  }
+
+  .notice__stub,
+  .notice__stub svg,
+  .notice__paper {
+    transition: none;
+  }
+
+  .notice__stub:active {
+    transform: none;
+  }
+}

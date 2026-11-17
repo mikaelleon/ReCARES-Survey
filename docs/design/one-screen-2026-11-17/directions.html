@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One-screen directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Poppins:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/open-sauce-one@5.2.5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/open-sauce-one@5.2.5/700.css">
+<link rel="stylesheet" href="../../../styles/tokens.css">
+<link rel="stylesheet" href="../../../styles/notice.css">
+<style>
+  :root { --font-sans: Lato, sans-serif; --font-title: 'Open Sauce One', Lato, sans-serif; --font-poppins: Poppins;
+          --photo: url('../../../public/images/hero/day-2048.webp'); }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #1a1a18; color: #e5ebe8; font-family: Lato, sans-serif; padding: 24px; }
+  h1 { font: 700 14px Lato; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 16px; opacity: .7; }
+  .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .cell h2 { font: 700 13px Lato; margin: 0 0 8px; letter-spacing: .04em; }
+  .cell p { font-size: 12px; margin: 8px 0 0; opacity: .75; line-height: 1.5; }
+  .scale { zoom: .3; }
+  .frame { position: relative; width: 1440px; height: 900px; overflow: hidden; background: #0b0b0b; font-family: Lato, sans-serif; }
+  .nav { position: absolute; inset: 0 0 auto 0; height: 56px; background: var(--dark-emerald); display: flex; align-items: center; justify-content: flex-end; gap: 22px; padding: 0 28px; z-index: 20; color: var(--white); font: 700 13px Lato; letter-spacing: .08em; text-transform: uppercase; }
+  .nav b { color: var(--bright-amber); font-weight: 700; }
+  .nav .pill { background: var(--white); color: var(--dark-emerald); padding: 10px 18px; border-radius: 999px; font-size: 12px; }
+  .stage { position: absolute; inset: 56px 0 0 0; overflow: hidden; }
+  .photo { position: absolute; top: 0; bottom: 0; background: var(--photo) center / cover no-repeat; filter: saturate(.94) brightness(.92); }
+  .vig { position: absolute; inset: 0; background: radial-gradient(120% 90% at 62% 40%, transparent 45%, rgba(4,18,10,.34) 100%); pointer-events: none; }
+  .rail { position: absolute; left: 0; right: 0; top: 14px; height: 16px; border-radius: 8px; z-index: 4; background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0) 38%, rgba(0,0,0,.28)), var(--emerald-600); box-shadow: 0 8px 12px -2px rgba(4,18,10,.4), 0 1px 2px rgba(4,18,10,.5); }
+  .hang { position: absolute; top: 22px; }
+  .hang .notice { --notice-w: 480px; --notice-pad-top: 66px; }
+  .hang .notice__tie--l { left: 24px; } .hang .notice__tie--r { right: 24px; }
+  .t { margin: 0 0 14px; font: 700 32px/1.16 var(--font-title); color: var(--dark-emerald); }
+  .b { margin: 0; font: 400 17px/1.6 Lato; color: var(--ink); }
+  .eb { margin: 0; font: 700 13px Lato; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+  .mast { display: flex; align-items: center; gap: 12px; } .mast img { width: 44px; height: 44px; margin-left: -3px; } .mast b { font: 700 32px/1 Poppins; color: var(--dark-emerald); }
+  /* bottom bars */
+  .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 84px; z-index: 15; display: flex; align-items: center; justify-content: center; gap: 28px; background: linear-gradient(0deg, rgba(4,18,10,.86), rgba(4,18,10,0)); }
+  .arrow { width: 56px; height: 56px; border-radius: 50%; border: 2px solid rgba(255,255,255,.8); color: #fff; display: grid; place-items: center; font: 700 26px Lato; }
+  .arrow.off { opacity: .3; }
+  .tabs { display: flex; gap: 6px; }
+  .tabs span { padding: 12px 20px; font: 700 14px Lato; letter-spacing: .08em; text-transform: uppercase; color: var(--white); border-radius: 8px; }
+  .tabs span.on { background: var(--bright-amber); color: #0b0b0b; }
+  .hint { position: absolute; right: 28px; bottom: 98px; z-index: 15; color: #fff; font: 700 13px Lato; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+
+  /* D1: fence walk */
+  .d1 .photo { left: -80px; width: 1900px; }
+  .d1 .dots { position: absolute; left: 0; right: 0; top: 36px; }
+
+  /* D2: pad */
+  .d2 .photo { left: 0; right: 0; }
+  .pad { position: absolute; top: 22px; left: 780px; width: 520px; }
+  .sheet { position: absolute; left: 0; top: 0; width: 520px; height: 700px; background: var(--paper); box-shadow: 0 1px 1px rgba(0,0,0,.3), 8px 12px 20px rgba(0,0,0,.3); }
+  .sheet.s3 { transform: translate(14px, 18px) rotate(1.4deg); background: color-mix(in srgb, var(--paper) 88%, #000); }
+  .sheet.s2 { transform: translate(7px, 9px) rotate(-.8deg); background: color-mix(in srgb, var(--paper) 94%, #000); }
+  .padbind { position: absolute; left: 0; right: 0; top: -8px; height: 26px; background: #1b1b1b; border-radius: 4px; z-index: 5; box-shadow: 0 6px 8px rgba(0,0,0,.4); }
+  .d2 .hang { left: 0; top: 0; }
+
+  /* D3: index tabs */
+  .d3 .photo { left: 0; right: 0; }
+  .d3 .hang { left: 360px; }
+  .idx { position: absolute; left: 860px; top: 140px; z-index: 6; display: flex; flex-direction: column; gap: 10px; }
+  .idx span { width: 150px; padding: 18px 18px; font: 700 15px Lato; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: color-mix(in srgb, var(--paper) 88%, #000); border-radius: 0 10px 10px 0; box-shadow: 4px 6px 10px rgba(0,0,0,.35); }
+  .idx span.on { background: var(--bright-amber); width: 170px; }
+</style>
+</head>
+<body>
+<h1>One-screen directions · side by side at 30% (full-size frames render separately)</h1>
+<div class="row">
+
+  <div class="cell">
+    <h2>1 · Fence walk</h2>
+    <div class="scale"><div class="frame d1" id="d1">
+      <div class="nav"><span>Home</span><b>About</b><span>FAQ</span><span class="pill">Start the survey</span></div>
+      <div class="stage">
+        <div class="photo"></div><div class="vig"></div>
+        <div class="rail"></div>
+        <div class="hang" style="left: 800px">
+          <div class="notice">
+            <div class="notice__shadow"></div>
+            <div class="notice__paper">
+              <div class="mast"><img src="../../../public/images/ReCARES-LOGO_SVG/logo-favicon.svg" alt=""><b>ReCARES</b></div>
+              <div class="notice__rule"><i style="background:#13693f"></i><i style="background:#3db579"></i><i style="background:#f78021"></i><i style="background:#feca09"></i></div>
+              <p class="eb">Camella Homes Tibig, Lipa City</p>
+              <h3 class="t" style="margin-top:10px">Which safety and service problems should come first?</h3>
+              <p class="b">Your answers decide what gets built first. It takes about 11 to 13 minutes, and your name is never asked.</p>
+            </div>
+            <a class="notice__stub"><span>Start the survey</span><span>→</span></a>
+            <i class="notice__tie notice__tie--l"></i><i class="notice__tie notice__tie--r"></i>
+          </div>
+        </div>
+        <!-- next notice peeks in from the right: more fence along the way -->
+        <div class="hang" style="left: 1384px">
+          <div class="notice">
+            <div class="notice__shadow"></div>
+            <div class="notice__paper"><h3 class="t">Why we're asking</h3><p class="b">ReCARES (Resident Centered Assistance for Reporting and Emergency System) is a capstone project by fourth-year IT students…</p></div>
+            <i class="notice__tie notice__tie--l"></i><i class="notice__tie notice__tie--r"></i>
+          </div>
+        </div>
+        <div class="bar"><div class="arrow off">‹</div><div class="tabs"><span class="on">Survey</span><span>About</span><span>FAQ</span><span>Contact</span></div><div class="arrow">›</div></div>
+      </div>
+    </div></div>
+    <p>One long rail. Swipe or press › and the rail slides; the photo behind drifts slower, so you walk along the fence. The next notice peeks in at the edge, so there is always a hint that more is there.</p>
+  </div>
+
+  <div class="cell">
+    <h2>2 · Tear-off pad</h2>
+    <div class="scale"><div class="frame d2" id="d2">
+      <div class="nav"><span>Home</span><b>About</b><span>FAQ</span><span class="pill">Start the survey</span></div>
+      <div class="stage">
+        <div class="photo"></div><div class="vig"></div>
+        <div class="pad">
+          <div class="padbind"></div>
+          <div class="sheet s3"></div><div class="sheet s2"></div>
+          <div class="hang" style="left:0">
+            <div class="notice" style="--notice-w:520px">
+              <div class="notice__shadow" style="display:none"></div>
+              <div class="notice__paper">
+                <div class="mast"><img src="../../../public/images/ReCARES-LOGO_SVG/logo-favicon.svg" alt=""><b>ReCARES</b></div>
+                <div class="notice__rule"><i style="background:#13693f"></i><i style="background:#3db579"></i><i style="background:#f78021"></i><i style="background:#feca09"></i></div>
+                <p class="eb">Camella Homes Tibig, Lipa City</p>
+                <h3 class="t" style="margin-top:10px">Which safety and service problems should come first?</h3>
+                <p class="b">Your answers decide what gets built first. It takes about 11 to 13 minutes, and your name is never asked.</p>
+              </div>
+              <a class="notice__stub"><span>Start the survey</span><span>→</span></a>
+            </div>
+          </div>
+        </div>
+        <div class="hint">Tear this sheet off for the next ↑</div>
+        <div class="bar"><div class="tabs"><span class="on">1 of 4</span></div></div>
+      </div>
+    </div></div>
+    <p>Sections are sheets of one pad. Swipe up to tear the top sheet and see the next. Tearing is also what the Start button does, and you cannot tear back.</p>
+  </div>
+
+  <div class="cell">
+    <h2>3 · Index tabs</h2>
+    <div class="scale"><div class="frame d3" id="d3">
+      <div class="nav"><span>Home</span><b>About</b><span>FAQ</span><span class="pill">Start the survey</span></div>
+      <div class="stage">
+        <div class="photo"></div><div class="vig"></div>
+        <div class="rail"></div>
+        <div class="hang">
+          <div class="notice">
+            <div class="notice__shadow"></div>
+            <div class="notice__paper">
+              <div class="mast"><img src="../../../public/images/ReCARES-LOGO_SVG/logo-favicon.svg" alt=""><b>ReCARES</b></div>
+              <div class="notice__rule"><i style="background:#13693f"></i><i style="background:#3db579"></i><i style="background:#f78021"></i><i style="background:#feca09"></i></div>
+              <p class="eb">Camella Homes Tibig, Lipa City</p>
+              <h3 class="t" style="margin-top:10px">Which safety and service problems should come first?</h3>
+              <p class="b">Your answers decide what gets built first. It takes about 11 to 13 minutes, and your name is never asked.</p>
+            </div>
+            <a class="notice__stub"><span>Start the survey</span><span>→</span></a>
+            <i class="notice__tie notice__tie--l"></i><i class="notice__tie notice__tie--r"></i>
+          </div>
+        </div>
+        <div class="idx"><span class="on">Survey</span><span>About</span><span>FAQ</span><span>Contact</span></div>
+      </div>
+    </div></div>
+    <p>One notice at a time, centred on the photo, with divider tabs on its edge. Tap a tab, the sheet swaps. The conventional tabs answer: it works, and nothing about it is this place.</p>
+  </div>
+
+</div>
+</body>
+</html>

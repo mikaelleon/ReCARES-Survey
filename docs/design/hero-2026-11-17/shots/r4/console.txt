@@ -1,0 +1,1 @@
+[390] warning: Image with src "/images/ReCARES-LOGO_SVG/logo-darkmode.svg" was detected as the Largest Contentful Paint (LCP). Please add the "priority" property if this image is above the fold.

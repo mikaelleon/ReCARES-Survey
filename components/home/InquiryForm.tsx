@@ -1,10 +1,12 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
-import { Button } from '@/components/ui/Button';
+import { ArrowRight } from 'lucide-react';
+import { FormEvent, useState, type CSSProperties } from 'react';
+import { Notice } from '@/components/ui/Notice';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { submitInquiry } from '@/lib/firebase/firestore';
+import { TEAR_MS, useTear } from '@/lib/ui/useTear';
 
 const REQUIRED = 'This field is required.';
 
@@ -13,7 +15,8 @@ function isValidEmail(value: string): boolean {
 }
 
 /**
- * Homepage inquiry form with brand-fill styling and Firestore submit stub.
+ * Homepage inquiry form, printed as a reply slip. Sending tears the stub off and
+ * leaves the torn edge; typing again puts a fresh stub back.
  */
 export function InquiryForm() {
   const [name, setName] = useState('');
@@ -23,6 +26,14 @@ export function InquiryForm() {
   const [messageError, setMessageError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { state, tear, restore } = useTear();
+
+  const afterEdit = () => {
+    if (sent) {
+      setSent(false);
+      restore();
+    }
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -35,8 +46,12 @@ export function InquiryForm() {
     const nextMessageError = !message.trim() ? REQUIRED : null;
     setEmailError(nextEmailError);
     setMessageError(nextMessageError);
-    if (nextEmailError || nextMessageError) return;
+    if (nextEmailError || nextMessageError) {
+      document.getElementById(nextEmailError ? 'inquiry-email' : 'inquiry-message')?.focus();
+      return;
+    }
 
+    setSent(false);
     setSubmitting(true);
     try {
       await submitInquiry({
@@ -47,6 +62,7 @@ export function InquiryForm() {
       setSent(true);
       setMessage('');
       setMessageError(null);
+      tear(() => {}, { keepTorn: true });
     } catch {
       setMessageError('The message could not be sent. Please try again in a moment.');
     } finally {
@@ -55,59 +71,75 @@ export function InquiryForm() {
   };
 
   return (
-    <form data-inq className="home-inquiry lift" onSubmit={handleSubmit} noValidate>
-      <Input
-        id="inquiry-name"
-        name="name"
-        label="Name (optional)"
-        autoComplete="name"
-        placeholder="Your name"
-        value={name}
-        disabled={submitting}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <Input
-        id="inquiry-email"
-        name="email"
-        label="Email"
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        placeholder="you@example.com"
-        value={email}
-        disabled={submitting}
-        onChange={(e) => {
-          setEmail(e.target.value);
-          if (emailError) setEmailError(null);
-        }}
-        required
-        error={emailError}
-      />
-      <Textarea
-        id="inquiry-message"
-        name="message"
-        label="Message"
-        placeholder="How can we help?"
-        value={message}
-        disabled={submitting}
-        rows={5}
-        onChange={(e) => {
-          setMessage(e.target.value);
-          if (messageError) setMessageError(null);
-        }}
-        required
-        error={messageError}
-      />
-      <div className="home-inquiry__foot">
-        <Button variant="primary" onDark type="submit" loading={submitting} disabled={submitting}>
-          {submitting ? 'Sending…' : 'Send message'}
-        </Button>
+    <form data-inq onSubmit={handleSubmit} noValidate>
+      <Notice
+        tear={state}
+        style={{ '--tear-ms': `${TEAR_MS}ms` } as CSSProperties}
+        stub={
+          <button type="submit" className="notice__stub" disabled={submitting}>
+            <span>{submitting ? 'Sending…' : 'Send message'}</span>
+            <ArrowRight size={22} strokeWidth={2.4} aria-hidden="true" />
+          </button>
+        }
+      >
+        <h3 className="notice__title" style={{ fontSize: 'clamp(22px, 4.6vw, 26px)' }}>
+          Send a message
+        </h3>
+        <div className="slip-fields">
+          <Input
+            id="inquiry-name"
+            name="name"
+            label="Name (optional)"
+            autoComplete="name"
+            placeholder="Your name"
+            value={name}
+            disabled={submitting}
+            onChange={(e) => {
+              setName(e.target.value);
+              afterEdit();
+            }}
+          />
+          <Input
+            id="inquiry-email"
+            name="email"
+            label="Email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            disabled={submitting}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (emailError) setEmailError(null);
+              afterEdit();
+            }}
+            required
+            error={emailError}
+          />
+          <Textarea
+            id="inquiry-message"
+            name="message"
+            label="Message"
+            placeholder="How can we help?"
+            value={message}
+            disabled={submitting}
+            rows={5}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              if (messageError) setMessageError(null);
+              afterEdit();
+            }}
+            required
+            error={messageError}
+          />
+        </div>
         {sent ? (
-          <span className="home-inquiry__sent" role="status">
+          <p className="slip-sent" role="status">
             Message sent. We will reply to the email you gave.
-          </span>
+          </p>
         ) : null}
-      </div>
+      </Notice>
     </form>
   );
 }

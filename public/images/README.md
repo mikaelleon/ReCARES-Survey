@@ -14,7 +14,9 @@ is available in the app as:
 
 | File | Used for | Notes |
 | --- | --- | --- |
-| `h1.png` | Homepage hero background | Community court / grounds photo. Served behind the dark hero overlay. |
+| `hero/day-*`, `hero/dusk-*`, `hero/night-*`, `hero/dawn-*` (`.avif`, `.webp`) | Landing page backdrop | Four shots of the same court at 640, 1024, 1536 and 2048 px wide, from `h3.png` (day), `h4.png` (dusk), `h2.png` (night) and `h5.png` (dawn). Light theme shows day, dark shows night; a theme change plays dusk or dawn between them. Loaded through `<picture>` in `components/home/HomePage.tsx`. |
+| `hero/board.avif`, `hero/board.webp` | Backdrop of the board under the hero | The lower part of the same photo, blurred and darkened (sharp `blur(16)`, brightness 0.6), 900 px wide, 3 to 5 KB. The CSS scales it to cover. |
+| `h1.png` | Not used | An earlier day photo. Kept as a source file; not referenced from code. |
 
 ## Optional
 
@@ -25,7 +27,7 @@ is available in the app as:
 
 ## Not image assets
 
-- **ReCARES wordmark** — rendered in type (multi-color letters), not a logo file.
+- **ReCARES wordmark** — rendered in type (Poppins 700, one color) on the hero notice, not a logo file.
 - **Icons** — Lucide React in code; no icon PNGs needed.
 
 ## Naming

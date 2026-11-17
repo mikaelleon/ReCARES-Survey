@@ -6,11 +6,15 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 
 type Theme = 'light' | 'dark';
+
+/** Fired just before the theme changes by a toggle. detail: the new Theme. */
+export const THEME_SHIFT = 'theme:shift';
 
 interface ThemeContextValue {
   theme: Theme;
@@ -47,6 +51,8 @@ function systemTheme(): Theme {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
+  const themeRef = useRef<Theme>('light');
+  themeRef.current = theme;
 
   useEffect(() => {
     const initial = readChoice() ?? systemTheme();
@@ -67,16 +73,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setTheme((current) => {
-      const next: Theme = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      try {
-        window.localStorage.setItem(STORAGE_KEY, next);
-      } catch {
-        // the choice still applies for this visit
-      }
-      return next;
-    });
+    const next: Theme = themeRef.current === 'dark' ? 'light' : 'dark';
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      // the choice still applies for this visit
+    }
+    /* Tell the landing stage first, so it can start its dusk or dawn crossfade before the
+       theme attribute flips under it (see FenceStage). */
+    window.dispatchEvent(new CustomEvent<Theme>(THEME_SHIFT, { detail: next }));
+    setTheme(next);
+    document.documentElement.setAttribute('data-theme', next);
   }, []);
 
   const value = useMemo(

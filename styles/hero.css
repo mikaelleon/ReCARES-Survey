@@ -1,0 +1,61 @@
+/* ==========================================================================
+   The first notice on the fence: what is printed on it.
+   The paper, ties, stub and gust are styles/notice.css; where it hangs, and the
+   photo behind it, are styles/stage.css.
+   Concept and decisions: docs/design/hero-2026-11-17/log.md
+   ========================================================================== */
+
+.hero-mast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-mast img {
+  width: 44px;
+  height: 44px;
+  display: block;
+  margin-left: -3px; /* the mark has 3px of air inside its box; the glyph meets the text edge */
+}
+
+.hero-mast__word {
+  font-family: var(--font-poppins), Poppins, sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--dark-emerald);
+}
+
+.hero-notice .notice__title {
+  margin: 10px 0 16px;
+  font-size: clamp(30px, 7vw, 40px);
+  line-height: 1.14;
+}
+
+.hero-notice .notice__body {
+  max-width: 32ch;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.hero-notice .notice__link {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+@media (max-width: 767px) {
+  .hero-notice .notice__rule {
+    margin: 12px 0 18px;
+  }
+}
+
+@media (max-width: 699px) {
+  .hero-notice .notice__title {
+    font-size: 28px;
+  }
+
+  .hero-notice .notice__body {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+}

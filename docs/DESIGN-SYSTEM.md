@@ -123,7 +123,9 @@ Anything that reads `--accent-primary` (default buttons, text links, progress fi
 ### 3.5 Backgrounds and imagery
 
 - Page background is a flat token color. No page-wide gradients, grain, or patterns.
-- The homepage hero is the one photograph: full-bleed inside a 16px-radius frame, covered by `--overlay-hero`, with a 22px four-color stripe along the bottom edge. Stripe segments, left to right: `--dark-emerald`, `--emerald-400`, `--harvest-orange`, `--bright-amber`. The stripe sits above the overlay so the colors stay true.
+- The homepage is one locked screen (section 10) and the court photo is its backdrop: full-bleed under the navbar, wider than the screen (at least 140% of it) so it can drift while you move along the fence. All type sits on paper notices, never on the photo. The theme grades the photo: light is the court by day (`h3.png`), dark is the same court at night (`h2.png`), with dusk (`h4.png`) and dawn (`h5.png`) played between them when the theme changes, so the toggle visibly works here. Served as `hero/day-*`, `dusk-*`, `night-*`, `dawn-*`. The paper stays paper in both. The rail and end posts are flat pipes with one highlight and no drop shadow, and the navbar casts none either; there is no scrim. The four brand colors appear once, as a 72px rule under the first notice's wordmark: `--dark-emerald`, `--emerald-400`, `--harvest-orange`, `--bright-amber`. The photo ships as AVIF and WebP in `public/images/hero/` at 640, 1024, 1536 and 2048px wide (the 6.6 MB original stays in `public/images/h1.png` as the source).
+- Paper is a token set in `styles/tokens.css`: `--paper` (`color-mix(--white 38%, #fffdf5)`), `--ink` (`color-mix(--black 90%, --dark-emerald)`), `--ink-soft`, `--ink-hairline` and `--paper-fibre` (a fine grain, multiplied). It is the same in light and dark theme, the way emerald cards stay emerald. Headlines, the wordmark and links on paper use `--dark-emerald`.
+- The fence the notices hang from is CSS, not a photograph: a rail in `--emerald-600` across the top of the stage and a post at each end (`styles/stage.css`), echoing the pipe in the photo. The page background is hidden behind the photo on the landing page.
 - Admin skeleton loaders use a shimmer between `--surface-1` and `--surface-2`.
 - Summary bar tracks add a 25% repeating grid line (`rgba(0,0,0,0.06)` light, `rgba(255,255,255,0.08)` dark).
 
@@ -155,9 +157,9 @@ Families:
 --font-title: 'Open Sauce One', 'Lato', sans-serif;
 ```
 
-Load Lato 400 and 700, Poppins 700 (hero wordmark only), and Open Sauce One 400 and 700. Headings `h1–h3` use `--font-title`. UI controls, body, and nav use `--font-sans`.
+Load Lato 400 and 700, Poppins 700 (the ReCARES wordmark on the hero notice only), and Open Sauce One 400 and 700. Headings `h1–h3` use `--font-title`. UI controls, body, and nav use `--font-sans`.
 
-Hero wordmark letter colors, in order: white, white, `--emerald-400`, `--harvest-orange`, `--harvest-orange`, `--bright-amber`, white. Each letter rises in with a 60ms stagger (section 7).
+The notice wordmark is one solid `--dark-emerald` (the old per-letter colors were retired with the photo scrim). The notice headline is the page `h1`: Open Sauce One 700, `clamp(28px, 6.6vw, 36px)`, line height 1.14, `text-wrap: balance`. The notice eyebrow follows the eyebrow role above.
 
 The logo image is separate from this wordmark. Use the SVG that matches the surface behind it (section 9).
 
@@ -187,7 +189,7 @@ Page padding is fluid: horizontal `clamp(16px, 4vw, 32px)`, vertical section pad
 
 | Context | Max width | Alignment |
 | --- | --- | --- |
-| Homepage sections, footer, admin dashboard | 1120px | Centered, `margin: 0 auto` |
+| Admin dashboard | 1120px | Centered, `margin: 0 auto` |
 | Survey, thank-you, consent | 720px | Centered |
 | Hero copy block | 820px, paragraph 620px | Centered in the photo |
 | Auth card (login / signup) | 440px | Centered, page min-height about 80vh |
@@ -280,11 +282,11 @@ Mouse focus does not show that ring (`:focus:not(:focus-visible) { outline: none
 
 - Primary button resting fill is `--accent-primary` (orange on the shell). Hover fill is `--accent-hover`. Text becomes `--text-on-accent` (black) on hover.
 - `onDark` primary rests on `--accent-selected` (amber) with black text, and hovers to `--accent-hover`.
-- Hero primary (the amber one) also lifts `translateY(-1px)` and gains an amber glow: `0 0 0 1px rgba(254,202,9,0.35), 0 8px 22px rgba(254,202,9,0.35)`. Press scales to `0.98`.
-- Hero secondary brightens (`filter: brightness(1.15)`) and its border and label shift to amber.
+- The hero stub (the tear-off strip at the foot of the notice, section 10) is the hero primary. It rests on `--accent-selected` (amber) with black text and hovers to `--accent-hover` with black text, only where a real pointer hovers. Press tilts it 1.6 degrees about its right end (the pull before it tears). Focus is a 2px black ring inside the stub, because the amber ring is invisible on amber. No glow.
+- The hero secondary is a text link on the paper: `--dark-emerald`, underlined, 44px tall hit area, thicker underline on hover.
 - Secondary buttons elsewhere keep a transparent fill and a 1px border. On emerald, border and text are white at about 70% (`rgba(255,255,255,0.7)`).
 - Ghost buttons have no border, amber text, horizontal padding 8px. Hover fills `--surface-2`.
-- `.lift` cards move `translateY(-4px)` on hover. Goal cards also pick up `--shadow-card`. In dark mode the goal-card title shifts to amber on hover.
+- `.lift` cards move `translateY(-4px)` on hover wherever it is still used. The homepage no longer uses it: nothing that people type into or aim at moves.
 - Nav and footer links turn amber on hover. They have no underline in the nav. Footer links that are sentences stay underlined with `text-underline-offset: 3px` or `4px`.
 - Disabled controls use `opacity: 0.5` (buttons) or `0.45` (admin actions, chat send) and `cursor: not-allowed`.
 - Pressed admin actions and the chat FAB scale to `0.98` or `0.96`.
@@ -297,20 +299,23 @@ Checked checkbox, selected Likert point, active language pill, and active nav li
 
 ## 7. Motion
 
-Default timing token: `--motion-duration: 220ms` and `--motion-ease: ease-in-out`. Stay inside 160–280ms for UI, up to 460ms only for the hero wordmark. No bounce, spring, or overshoot.
+Default timing token: `--motion-duration: 220ms` and `--motion-ease: ease-in-out`. Stay inside 160–280ms for UI. No bounce, spring, or overshoot, with one exception: the hero notice is a physical object, so it swings and tears (rows below). Those two motions live only in `styles/hero.css` and `components/home/HeroNotice.tsx`.
 
 | Motion | Spec |
 | --- | --- |
 | `riseIn` | Opacity 0→1 and `translateY(14px)`→0. Hero letters 460ms, staggered 60ms. Cards and drawers often 240–360ms. |
 | `.reveal` | Same 14px rise, 260ms, triggered when the block enters the viewport. |
-| Hero stripe | Each segment `scaleX(0)`→`1` from the left, 280ms, delays 0/60/120/180ms. |
-| FAQ panel | `max-height` 280ms, opacity 220ms. Chevron rotates 180° in 240ms. |
-| FAQ CTA pulse | Amber ring pulses twice over 1.1s when the FAQ scrolls into view (threshold 0.2), once per page view. |
+| Notice gust | Once, 450ms after load, 2.6s. The notice swings out from its ties (`rotateX` 5.5, 3, 1.4, 0.5 degrees) and slaps back to the fence between swings: one-sided, because paper hung flat cannot swing through the fence. Its cast shadow moves with it. Ends on `transform: none` so the type rests crisp. |
+| Stub tear | On press of the hero or FAQ stub, or on a sent inquiry (the paper then stays torn): 560ms. The left end pulls down (first 15%, ease-out), the stub falls on an arc and fades (ease-in), the paper kicks back 3.2 degrees, then the survey opens. Modifier clicks and reduced motion skip it and follow the link. |
+| Stage move | Native scroll-snap, smooth, about 0.5 to 0.8s between stops. The photo drifts behind at about 14% of the rail's speed (depth); every hanging notice lags and swings back, at most 4 degrees, resting on `transform: none` in about 0.7s. Reduced motion: instant moves, still photo, no swing. |
+| Theme switch | The landing photo drifts through the time of day: light to dark plays day, dusk, night; dark to light plays night, dawn, day. Two overlapping crossfades of the full photo, 800ms each, the second starting 450ms after the first (about 1.25s in all), on a sine curve `cubic-bezier(0.45, 0, 0.55, 1)`. Slower than a UI move on purpose: it is ambient light, not a response. `FenceStage.tsx`, triggered by `theme:shift` from `ThemeProvider`. Toggling again mid-way jumps the running fades to their end and starts the new sequence. Reduced motion: the photo just changes. |
+| Reply slip sent | The stub tears off when the message is accepted, the paper keeps a torn edge and prints “Message sent. We will reply to the email you gave.” with a “Write another” link that fades a new stub in. |
+| FAQ answer | The answer swaps in place (no height animation); on narrow screens the list and the answer swap with focus moved. |
 | Theme icon | 200ms rotate to 180° with a brief 1.08 scale at the midpoint. |
 | Chart fills | Width transition 560ms. |
 | Accordion / button color | 220ms ease-in-out. |
 
-`prefers-reduced-motion: reduce` collapses animation and transition durations to 1ms, disables reveal offsets, hero glow, FAQ pulse, stripe scale, theme spin, chat pulse, and smooth scrolling (`scroll-behavior` returns to `auto`). Smooth scroll is otherwise on for `html` and for in-page nav.
+`prefers-reduced-motion: reduce` collapses animation and transition durations to 1ms, disables reveal offsets, the notice gust and tear, FAQ panel transitions, theme spin, chat pulse, and smooth scrolling (`scroll-behavior` returns to `auto`). Smooth scroll is otherwise on for `html` and for in-page nav.
 
 ---
 
@@ -375,22 +380,43 @@ Track height 8px, radius 999px, fill `--surface-1`. Fill is `--accent-primary` (
 
 | Kind | Fill | Title | Body | Notes |
 | --- | --- | --- | --- | --- |
-| Info card | `--card-fill-neutral` | Uppercase section heading, 24px, `--text-section-heading`, 16px below | 16px `--text-on-card-neutral`, line-height 1.55 | Padding 32px. Icon slot 220px, transparent background, vertically centered. `iconSide` left or right. |
-| Goal card | `--card-fill-brand` | Uppercase 15px white, tracking `0.06em` | 16px white, line-height 1.55 | Lucide icon 28px, stroke 2, white, 14px below the icon. Hover lifts and, in dark mode, title turns amber. |
+| Notice | `--paper` | `--font-title` 700, `clamp(26px, 5.6vw, 34px)`, `--dark-emerald` | 18px (17px on phones) `--ink`, line-height 1.6 | Replaces the old info card, goal card and contact choice card. See “Notice” below. |
 | Generic `Card` | `--surface-1` | — | body color | Radius 16px, shadow card, padding defaults to 24px. |
 | Survey / consent cards | `--card-fill-neutral` or `--surface-1` | 16px/700 headline color | 15px / 1.55 | Radius 16px. Consent cards also get a subtle border. |
-| Contact choice card | `--card-fill-neutral` | — | — | Radius 16px, padding `clamp(20px, 3vw, 32px)`, column gap 14px. |
 | Admin panel / stat / chart | `--card-fill-neutral` | See admin type | caption meta | Radius 16px, subtle border, card shadow. |
 
 Pending survey copy uses a dashed `--border-structural` box, radius 8px, caption text, padding `clamp(16px, 3vw, 24px)`.
 
-### FAQ accordion
+### Notice
 
-Single panel open at a time (the first item starts open). Row radius 12px, resting fill `--card-fill-neutral`, hover fill `--card-fill-accordion-open` when closed. Header button min-height 48px, padding `14px 18px`, uppercase 14px/700, tracking `0.05em`, color `--text-section-heading`. Chevron 20px, stroke 2.4. Answer padding `0 18px 16px`, 15px, line-height 1.55, sentence case, `--text-on-card-neutral`.
+One paper sheet cable-tied to the fence. Used by the hero and by every panel on the board. Component `components/ui/Notice.tsx`, styles `styles/notice.css`, tear logic `lib/ui/useTear.ts`.
 
-Keyboard: Arrow Up/Down move focus between headers, Home/End jump to the ends. `aria-expanded` and `aria-controls` are set. The sidebar beside the list is sticky and holds three fact rows plus a full-width “Start the survey” button.
+- **Anatomy, back to front:** cast shadow, paper (fibre, light from the upper left, a faint bow and rail shade, all under 9%), stub, two black cable ties. Paper has square corners, no radius, and no resting tilt (a tilt would blur the type).
+- **Printed header:** the four-color rule (72px by 4px, `NoticeRule`), then an optional eyebrow (13px/700, 0.1em, uppercase) and the title.
+- **Everything inside is on paper.** `.notice` re-maps the page text, caption, border and field tokens to ink, so buttons and fields keep working in dark theme. Focus on paper is a 2px black outline (the global amber ring stays as the outer ring); inside the stub it is a black ring inset 7px.
+- **Stub:** 76px tall (72px on phones), full width, amber with fibre, uppercase 17px/700, tracking `0.06em`, dashed perforation on its top edge. Hover: `--accent-hover` with black text, pointer devices only. Press tilts it 1.6 degrees. Disabled: amber mixed toward paper. Paused or closed: paper-grey, no arrow.
+- **State** is `data-tear` on `.notice`: `idle`, `tearing`, `torn`, `restored`. `tearing` plays the 560ms tear and shows the torn edge; `torn` keeps the torn edge (a form that was sent); `restored` fades the stub back in. Reduced motion skips the motion and keeps the outcome.
+- **Where tears are used:** the hero stub and the facts notice stub open the survey; the reply slip stub is “handed in” when a message is sent.
+- **Gust:** only the first notice swings on load (2.6s). While you move along the fence every hanging notice also lags the rail and swings back (see Fence stage); neither plays with reduced motion.
 
-Sidebar fact rows use a 4px colored bar (orange, amber, emerald) as a marker next to a short title and a 15px sentence. That bar is the one place a color stripe marks a list item.
+### FAQ
+
+The FAQ lives on one notice (`components/home/FaqNotices.tsx`, styles in `styles/stage.css`). Wide (1280px and up): the nine questions on the left as full-width buttons (min-height 42px, Open Sauce One 15.5px/700, `--dark-emerald`, a 1px `--ink-hairline` rule between rows) and the selected answer beside them (Open Sauce One 20px question, 17px/1.6 answer, 54ch). The first question is selected, so nothing changes height and nothing needs scrolling. Narrower: the list alone; choosing a question swaps it for the answer with an “All questions” button (44px) to go back, and focus moves with the swap.
+
+Keyboard: Arrow Up/Down, Home and End move between questions. The selected question has `aria-current`, and the answer pane is `aria-live="polite"`. Beside it is a facts notice with three rows (Estimated time, Voluntary, Confidential), each an Open Sauce One 16px title over a 15px sentence, then the “Start the survey” stub.
+
+### Fence stage (the landing page)
+
+`components/home/FenceStage.tsx`, styles `styles/stage.css`, events `lib/ui/stage.ts`. The landing page is one locked screen: `100dvh` minus the 56px navbar, no page scroll (`html.is-stage` and `html:has(.stage)` set `overflow: hidden`). A horizontal scroll-snap track holds the notices; a rail across its top, and a post at each end, are the fence.
+
+- **Stops.** 1280px and up: four stops, each a panel of one or two notices (Survey; About with Goals; FAQ with facts; Contact with the message slip). Below 1280px panels dissolve and every notice is its own stop (seven), centered, 560px at most.
+- **Peek.** The next notice's left edge shows at the screen edge (`--peek`, `clamp(24px, 8vw, 120px)`): a standing cue that more is along the fence. The last stop shows the end post instead. Tapping the peek moves on.
+- **Ways to move.** Always visible and labelled: Back and “Next: <name>” buttons (56px, paper, 14px/700 uppercase) with four short ticks, bottom-left from 700px wide, so the floating assistant keeps the bottom-right; on phones they are arrows beside the section name in the navbar, so the whole screen below stays for the notices. Also the navbar links (Home, About, FAQ, Contact, which are the tabs), swipe, trackpad, mouse drag on the photo or rail (never on a notice, so text stays selectable), a vertical mouse wheel (one stop per flick), Left/Right, Page Up/Down, Home and End. At the last stop Next becomes “Back to start”.
+- **Height.** A notice may take `--content-h`: the screen below the rail, above the controls and the assistant. If it needs more, only its paper scrolls (thin scrollbar); the rail, ties and stub stay. Checked: nothing scrolls at 1366×768 and up, or at 390×844; the shortest phones scroll a few of the longer notices inside themselves, and the first notice always fits.
+- **Depth.** The photo travels at about 14% of the rail's speed (drift = photo width minus screen width, spread over the whole walk). Under reduced motion it stays still.
+- **Follow-through.** Each hanging notice lags the moving rail and swings back, a damped spring on the real scroll velocity (time-based, capped at 4 degrees, about 0.7s to rest). It rests on `transform: none`, so type is crisp whenever it can be read.
+- **URL and navbar.** The section is kept in the hash (`#about`, `#faq`, `#contact`; none for the survey) with `replaceState`, so Back from the survey returns to the same stop and a link to `/#faq` opens it. The navbar highlights the current section through `stage:section` events.
+- **Accessibility.** Carousel and slide roles with labels, a polite live region (“About, 2 of 4”), offscreen notices `inert`, native scroll-snap so keyboard, touch and assistive tech all work, and no vertical scrolling to find anything.
 
 ### Modal
 
@@ -480,13 +506,14 @@ Icons should name the subject (shield, accessibility, map pin, menu, close, chev
 
 ### Resident homepage
 
-1. **Hero** inside the 1120px column, top padding `clamp(16px, 3vw, 32px)`. Photo frame min-height `clamp(420px, 62vh, 560px)`, radius 16px, overlay, stripe, centered wordmark, amber subtitle (“Community needs assessment survey”), white eyebrow, white 16px paragraph, then amber primary and white-outline secondary CTAs (`onDark`).
-2. **About** after `clamp(48px, 8vw, 96px)` of space. Two full-width info cards (survey purpose with the Camella mark on the right, About us with the favicon mark on the left).
-3. **Goals** — uppercase section heading, then three goal cards.
-4. **FAQ** — accordion plus sticky sidebar.
-5. **Contact band** — `--surface-1` background, top border `--border-subtle`, padding `clamp(48px, 8vw, 96px)` top. Two-column wrap: choices card (`flex 1 1 260px`) and emerald inquiry form (`flex 1.4 1 380px`).
+One locked screen, no scroll (see Fence stage). Everything is a paper notice (Notice) hung from one rail across the court photo, in this order:
 
-Blocks below the hero reveal on scroll, with optional 80ms or 160ms delay so a row staggers.
+1. **Survey** — a 480px notice on the right, the court behind it on the left: logo mark and Poppins wordmark, four-color rule, eyebrow (“Camella Homes Tibig, Lipa City”), `h1` (“Which safety and service problems should come first?”), one body paragraph (11 to 13 minutes, name never asked), “Why we’re asking” link (goes to the About stop), then the amber stub “Start the survey” behind a dashed perforation. When the survey is paused or closed the stub turns paper-grey, shows “Survey paused” or “Survey closed”, and loses the arrow. Copy addresses the resident (“your answers”), per section 2. Source: `components/home/HeroNotice.tsx`, `styles/hero.css`.
+2. **About** — “Why we’re asking” (two paragraphs, including the line that nothing here represents an established partnership) beside “Goals of this study” (three ruled rows, title over one sentence; no cards, no icons).
+3. **FAQ** — the FAQ notice and the facts notice with a second “Start the survey” stub.
+4. **Contact** — a text notice (the choices, “Chat with RAGbot” as a text link, and a quiet “Proponent access” link, which is where the old footer's admin link went) and the inquiry form printed as a reply slip: fields on paper, “Send message” as the amber stub. Sending tears the stub off and leaves a torn edge and “Message sent.”; typing again puts a fresh stub back.
+
+There is no footer on the landing page: its collaboration disclaimer moved into “Why we’re asking”, its admin link into the contact notice, and its repeats of the capstone line and the contact pointer were dropped. All text on a notice is ink: `Notice` re-themes `--text-*`, `--field-*` and borders to ink and paper, so the same markup reads the same in light and dark theme. Notices have no `.lift`, no hover movement, and no reveal on scroll. Source: `components/home/HomePage.tsx`, `FaqNotices.tsx`, `InquiryForm.tsx`.
 
 ### Survey
 
@@ -651,3 +678,6 @@ These are already shipped. Matching them keeps the next site consistent with thi
 - Resident chrome (nav and footer) stays emerald in both themes. The page behind them is what flips.
 - Goal cards and the inquiry form stay emerald in both themes.
 - Admin copy is English even when the language pill is present.
+- **Open decision:** this document says section headings and card titles are uppercase. The homepage was moved to sentence case on 2026-11-17 (Why we’re asking, Goals, FAQ and its sidebar), at the owner’s request. Either update sections 2 and 4 or restore uppercase; the two should agree.
+- The homepage used to state the survey length twice with different numbers (FAQ answer: “about 11 to 13 minutes”, FAQ sidebar: “around 10 to 15 minutes”). The facts notice now says 11 to 13 to match the FAQ and the hero. If 10 to 15 was the intended range, change all three.
+- The ElevenLabs call pill is third-party and sits bottom-right over the stage. The stage keeps its own controls clear of it: bottom-left from 700px wide, in the navbar below that, and it reserves room for the pill on phones so a notice's last lines never sit under it. Scroll-to-top never appears on the landing page (it cannot scroll).

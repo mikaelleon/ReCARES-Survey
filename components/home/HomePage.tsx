@@ -1,184 +1,160 @@
-import Image from 'next/image';
-import { RecaresLogoForPage } from '@/components/brand/RecaresLogo';
-import { FaqAccordion } from '@/components/home/FaqAccordion';
-import { HeroCtas } from '@/components/home/HeroCtas';
+import { FactsNotice, FaqNotice } from '@/components/home/FaqNotices';
+import { FenceStage, StageCell, StagePanel } from '@/components/home/FenceStage';
+import { HeroNotice } from '@/components/home/HeroNotice';
 import { InquiryContactChoices } from '@/components/home/InquiryContactChoices';
 import { InquiryForm } from '@/components/home/InquiryForm';
-import { RevealOnScroll } from '@/components/home/RevealOnScroll';
-import { GoalCard } from '@/components/ui/GoalCard';
-import { InfoCard } from '@/components/ui/InfoCard';
-import { Accessibility, MapPin, Shield } from 'lucide-react';
+import { Notice } from '@/components/ui/Notice';
+import '@/styles/notice.css';
+import '@/styles/stage.css';
+import '@/styles/hero.css';
 
-function CamellaLogoMark() {
-  return (
-    <Image
-      src="/images/Camella-LOGO.svg"
-      alt="Camella Homes"
-      width={160}
-      height={160}
-      unoptimized
-      className="home-logo-mark"
-    />
-  );
-}
+const PHOTO_SIZES = '(min-width: 1280px) 140vw, 800px';
 
-const heroLetters = [
-  { char: 'R', color: 'var(--white)', delay: '0ms' },
-  { char: 'e', color: 'var(--white)', delay: '60ms' },
-  { char: 'C', color: 'var(--emerald-400)', delay: '120ms' },
-  { char: 'A', color: 'var(--harvest-orange)', delay: '180ms' },
-  { char: 'R', color: 'var(--harvest-orange)', delay: '240ms' },
-  { char: 'E', color: 'var(--bright-amber)', delay: '300ms' },
-  { char: 'S', color: 'var(--white)', delay: '360ms' },
+const goals = [
+  {
+    title: 'Private reporting',
+    body: 'Residents can reach out about personal safety concerns without public posts or waiting for the office to open.',
+  },
+  {
+    title: 'Services without a trip to the office',
+    body: 'Residents with disabilities or mobility challenges can request documents, raise concerns and get help without going in person.',
+  },
+  {
+    title: 'Faster security response',
+    body: 'Guards and HOA staff get your real-time location pin, so they can respond sooner to suspicious behavior, break-ins and other safety concerns.',
+  },
 ];
 
 /**
- * Resident homepage — hero, about, goals, FAQ, and inquiry form.
+ * Resident homepage: one locked screen. You walk along the court fence and read the
+ * notices hung on it: the survey, why we are asking, the goals, the FAQ, and the contact slip.
+ * See components/home/FenceStage.tsx.
  */
 export function HomePage() {
   return (
-    <div className="home-stage">
-      <section className="home-wrap home-wrap--hero" aria-label="Welcome">
-        <RevealOnScroll>
-          <div className="home-hero">
-            <Image
-              src="/images/h1.png"
-              alt="Camella Homes Tibig outdoor basketball court and community grounds"
-              fill
-              priority
-              sizes="(max-width: 640px) 100vw, (max-width: 1120px) 100vw, 1120px"
-              style={{ objectFit: 'cover', objectPosition: 'center' }}
+    <FenceStage
+      photo={
+        <>
+          <picture className="stage__shot stage__shot--day" data-shot="day">
+            <source type="image/avif" srcSet="/images/hero/day-640.avif 640w, /images/hero/day-1024.avif 1024w, /images/hero/day-1536.avif 1536w, /images/hero/day-2048.avif 2048w" sizes={PHOTO_SIZES} />
+            <source type="image/webp" srcSet="/images/hero/day-640.webp 640w, /images/hero/day-1024.webp 1024w, /images/hero/day-1536.webp 1536w, /images/hero/day-2048.webp 2048w" sizes={PHOTO_SIZES} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/hero/day-1536.webp"
+              alt="The outdoor basketball court at Camella Homes Tibig by day, seen through its green mesh fence"
+              width={2390}
+              height={1792}
+              decoding="async"
+              fetchPriority="high"
             />
-            <div className="home-hero__overlay" />
-            <div className="hero-stripe" aria-hidden="true">
-              <div className="hero-stripe__seg" style={{ background: 'var(--dark-emerald)' }} />
-              <div className="hero-stripe__seg" style={{ background: 'var(--emerald-400)' }} />
-              <div className="hero-stripe__seg" style={{ background: 'var(--harvest-orange)' }} />
-              <div className="hero-stripe__seg" style={{ background: 'var(--bright-amber)' }} />
-            </div>
-            <div className="home-hero__copy">
-              <h1 className="home-hero__title">
-                {heroLetters.map(({ char, color, delay }) => (
-                  <span
-                    key={char + delay}
-                    style={{
-                      color,
-                      display: 'inline-block',
-                      animation: `riseIn 460ms ease-in-out ${delay} both`,
-                    }}
-                  >
-                    {char}
-                  </span>
-                ))}
-              </h1>
-              <p className="home-hero__kicker">Community needs assessment survey</p>
-              <p className="home-hero__place">For residents of Camella Homes Tibig, Lipa City</p>
-              <p className="home-hero__lead">
-                Help us understand what safety and service improvements Camella Homes Tibig residents
-                need most, before we build anything.
-              </p>
-              <HeroCtas />
-            </div>
-          </div>
-        </RevealOnScroll>
-      </section>
+          </picture>
+          <picture className="stage__shot stage__shot--dusk" data-shot="dusk">
+            <source type="image/avif" srcSet="/images/hero/dusk-640.avif 640w, /images/hero/dusk-1024.avif 1024w, /images/hero/dusk-1536.avif 1536w, /images/hero/dusk-2048.avif 2048w" sizes={PHOTO_SIZES} />
+            <source type="image/webp" srcSet="/images/hero/dusk-640.webp 640w, /images/hero/dusk-1024.webp 1024w, /images/hero/dusk-1536.webp 1536w, /images/hero/dusk-2048.webp 2048w" sizes={PHOTO_SIZES} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/hero/dusk-1536.webp"
+              alt="The same court at dusk, the sky turning orange behind the fence"
+              width={2390}
+              height={1792}
+              decoding="async"
+              fetchPriority="low"
+            />
+          </picture>
+          <picture className="stage__shot stage__shot--dawn" data-shot="dawn">
+            <source type="image/avif" srcSet="/images/hero/dawn-640.avif 640w, /images/hero/dawn-1024.avif 1024w, /images/hero/dawn-1536.avif 1536w, /images/hero/dawn-2048.avif 2048w" sizes={PHOTO_SIZES} />
+            <source type="image/webp" srcSet="/images/hero/dawn-640.webp 640w, /images/hero/dawn-1024.webp 1024w, /images/hero/dawn-1536.webp 1536w, /images/hero/dawn-2048.webp 2048w" sizes={PHOTO_SIZES} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/hero/dawn-1536.webp"
+              alt="The same court at first light, the sky turning pale blue behind the fence"
+              width={2390}
+              height={1792}
+              decoding="async"
+              fetchPriority="low"
+            />
+          </picture>
+          <picture className="stage__shot stage__shot--night" data-shot="night">
+            <source type="image/avif" srcSet="/images/hero/night-640.avif 640w, /images/hero/night-1024.avif 1024w, /images/hero/night-1536.avif 1536w, /images/hero/night-2048.avif 2048w" sizes={PHOTO_SIZES} />
+            <source type="image/webp" srcSet="/images/hero/night-640.webp 640w, /images/hero/night-1024.webp 1024w, /images/hero/night-1536.webp 1536w, /images/hero/night-2048.webp 2048w" sizes={PHOTO_SIZES} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/hero/night-1536.webp"
+              alt="The same court at night, lit by floodlights behind its green mesh fence"
+              width={2390}
+              height={1792}
+              decoding="async"
+              fetchPriority="low"
+            />
+          </picture>
+        </>
+      }
+    >
+      <StagePanel section="survey" label="Survey" align="end">
+        <StageCell label="Survey" width={480} grow={0}>
+          <HeroNotice />
+        </StageCell>
+      </StagePanel>
 
-      <section id="about" className="home-wrap" aria-labelledby="about-heading">
-        <h2 id="about-heading" className="visually-hidden">
-          About this survey
-        </h2>
-        <div className="home-stack">
-          <RevealOnScroll className="lift home-info">
-            <div data-ic="">
-              <InfoCard heading="What is this survey for?" iconSide="right" icon={<CamellaLogoMark />}>
-                This survey is part of a research project by fourth-year Information Technology
-                students at the University of Batangas, Lipa Campus, working with the Camella Homes
-                Tibig Homeowners Association. It asks about your experience with the current HOA
-                office hours, security setup, and reporting channels, so the proposed system reflects
-                what residents actually deal with day to day, not just what looks good on paper. Your
-                answers will shape which features get built first and which problems the system is
-                designed to solve.
-              </InfoCard>
-            </div>
-          </RevealOnScroll>
+      <StagePanel section="about" label="About">
+        <StageCell label="About" width={560}>
+          <Notice aria-labelledby="about-heading">
+            <h2 id="about-heading" className="notice__title">
+              Why we&rsquo;re asking
+            </h2>
+            <p className="notice__body">
+              ReCARES (Resident Centered Assistance for Reporting and Emergency System) is a
+              capstone project by fourth-year Information Technology students at the University of
+              Batangas, Lipa Campus, supervised by our academic adviser.
+            </p>
+            <p className="notice__body">
+              We are exploring a collaboration with the Camella Homes Tibig Homeowners Association.
+              Nothing here represents an established partnership. This survey tells us whether a
+              system like this would be useful before we design or build anything. It asks about
+              HOA office hours, security and reporting channels. Your answers decide which features
+              come first.
+            </p>
+          </Notice>
+        </StageCell>
+        <StageCell label="Goals" width={520}>
+          <Notice aria-labelledby="goals-heading">
+            <h2 id="goals-heading" className="notice__title">
+              Goals of this study
+            </h2>
+            <ol className="notice__rows">
+              {goals.map((g) => (
+                <li key={g.title} className="notice__row">
+                  <h3 className="goal__title">{g.title}</h3>
+                  <p className="goal__body">{g.body}</p>
+                </li>
+              ))}
+            </ol>
+          </Notice>
+        </StageCell>
+      </StagePanel>
 
-          <RevealOnScroll delayMs={80} className="lift home-info">
-            <div data-ic="">
-              <InfoCard
-                heading="About us"
-                iconSide="left"
-                icon={<RecaresLogoForPage size={140} lightSurface="favicon" className="home-logo-mark" />}
-              >
-                ReCARES stands for Resident Centered Assistance for Reporting and Emergency System. We
-                are a team of fourth-year Information Technology students from the University of
-                Batangas, Lipa Campus, working on this as our capstone research project. We are
-                currently exploring a possible collaboration with the Camella Homes Tibig Homeowners
-                Association, and this survey is part of how we are assessing whether a system like
-                this would actually be useful to the community before we design or build anything. Our
-                work is supervised by our academic adviser. If you live in Camella Homes Tibig, your
-                answers directly shape what we recommend next.
-              </InfoCard>
-            </div>
-          </RevealOnScroll>
+      <StagePanel section="faq" label="FAQ">
+        <StageCell label="FAQ" width={880} grow={2.9}>
+          <FaqNotice />
+        </StageCell>
+        <StageCell label="Facts" width={320}>
+          <FactsNotice />
+        </StageCell>
+      </StagePanel>
 
-          <RevealOnScroll>
-            <h2 className="home-section-title">Goals of this study</h2>
-          </RevealOnScroll>
-
-          <div className="home-goals">
-            <RevealOnScroll delayMs={0} className="lift">
-              <GoalCard
-                title="Safer, more private reporting"
-                icon={<Shield size={28} strokeWidth={2} />}
-              >
-                Give residents a way to reach out about sensitive personal safety concerns privately,
-                without relying on public posts or waiting for the office to open.
-              </GoalCard>
-            </RevealOnScroll>
-            <RevealOnScroll delayMs={80} className="lift">
-              <GoalCard
-                title="Accessible services for every resident"
-                icon={<Accessibility size={28} strokeWidth={2} />}
-              >
-                Make it possible for residents with disabilities or mobility challenges to request
-                documents, raise concerns, and get help without needing to travel to the office in
-                person.
-              </GoalCard>
-            </RevealOnScroll>
-            <RevealOnScroll delayMs={160} className="lift">
-              <GoalCard
-                title="Faster response to security concerns"
-                icon={<MapPin size={28} strokeWidth={2} />}
-              >
-                Help guards and HOA staff respond more quickly to suspicious behavior, break-ins, and
-                other safety concerns by sending your real-time location pin.
-              </GoalCard>
-            </RevealOnScroll>
-          </div>
-
-          <RevealOnScroll>
-            <FaqAccordion />
-          </RevealOnScroll>
-        </div>
-      </section>
-
-      <div className="contact-band">
-        <section id="contact" className="home-wrap home-wrap--flush" aria-labelledby="contact-heading">
-          <RevealOnScroll>
-            <h2 id="contact-heading" className="home-section-title home-section-title--flush">
+      <StagePanel section="contact" label="Contact">
+        <StageCell label="Contact" width={540}>
+          <Notice aria-labelledby="contact-heading">
+            <h2 id="contact-heading" className="notice__title">
               For further inquiries or concerns
             </h2>
-          </RevealOnScroll>
-          <div className="home-contact">
-            <RevealOnScroll className="lift home-contact__copy">
-              <InquiryContactChoices />
-            </RevealOnScroll>
-            <RevealOnScroll delayMs={80} className="home-contact__form">
-              <InquiryForm />
-            </RevealOnScroll>
-          </div>
-        </section>
-      </div>
-    </div>
+            <InquiryContactChoices />
+          </Notice>
+        </StageCell>
+        <StageCell label="Message" width={520}>
+          <InquiryForm />
+        </StageCell>
+      </StagePanel>
+    </FenceStage>
   );
 }

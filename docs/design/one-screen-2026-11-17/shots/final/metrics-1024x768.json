@@ -1,0 +1,139 @@
+{
+ "stops": 7,
+ "metrics": [
+  {
+   "label": "Survey",
+   "section": "survey",
+   "scrollLeft": 0,
+   "stageH": 712,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 589,
+     "left": 191,
+     "right": 751
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    768,
+    768
+   ]
+  },
+  {
+   "label": "About",
+   "section": "about",
+   "scrollLeft": 942,
+   "stageH": 712,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 448,
+     "left": 191,
+     "right": 751
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    768,
+    768
+   ]
+  },
+  {
+   "label": "Goals",
+   "section": "about",
+   "scrollLeft": 1884,
+   "stageH": 712,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 516,
+     "left": 191,
+     "right": 751
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    768,
+    768
+   ]
+  },
+  {
+   "label": "FAQ",
+   "section": "faq",
+   "scrollLeft": 2826,
+   "stageH": 712,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 559,
+     "left": 191,
+     "right": 751
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    768,
+    768
+   ]
+  },
+  {
+   "label": "Facts",
+   "section": "faq",
+   "scrollLeft": 3768,
+   "stageH": 712,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 376,
+     "left": 191,
+     "right": 751
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    768,
+    768
+   ]
+  },
+  {
+   "label": "Contact",
+   "section": "contact",
+   "scrollLeft": 4710,
+   "stageH": 712,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 517,
+     "left": 191,
+     "right": 751
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    768,
+    768
+   ]
+  },
+  {
+   "label": "Message",
+   "section": "contact",
+   "scrollLeft": 5652,
+   "stageH": 712,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 571,
+     "left": 192,
+     "right": 752
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    768,
+    768
+   ]
+  }
+ ],
+ "log": []
+}

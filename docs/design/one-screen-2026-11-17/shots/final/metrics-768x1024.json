@@ -1,0 +1,139 @@
+{
+ "stops": 7,
+ "metrics": [
+  {
+   "label": "Survey",
+   "section": "survey",
+   "scrollLeft": 0,
+   "stageH": 968,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 589,
+     "left": 73,
+     "right": 633
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    1024,
+    1024
+   ]
+  },
+  {
+   "label": "About",
+   "section": "about",
+   "scrollLeft": 707,
+   "stageH": 968,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 448,
+     "left": 73,
+     "right": 633
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    1024,
+    1024
+   ]
+  },
+  {
+   "label": "Goals",
+   "section": "about",
+   "scrollLeft": 1413,
+   "stageH": 968,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 516,
+     "left": 73,
+     "right": 633
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    1024,
+    1024
+   ]
+  },
+  {
+   "label": "FAQ",
+   "section": "faq",
+   "scrollLeft": 2120,
+   "stageH": 968,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 559,
+     "left": 73,
+     "right": 633
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    1024,
+    1024
+   ]
+  },
+  {
+   "label": "Facts",
+   "section": "faq",
+   "scrollLeft": 2826,
+   "stageH": 968,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 376,
+     "left": 73,
+     "right": 633
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    1024,
+    1024
+   ]
+  },
+  {
+   "label": "Contact",
+   "section": "contact",
+   "scrollLeft": 3533,
+   "stageH": 968,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 517,
+     "left": 73,
+     "right": 633
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    1024,
+    1024
+   ]
+  },
+  {
+   "label": "Message",
+   "section": "contact",
+   "scrollLeft": 4239,
+   "stageH": 968,
+   "notices": [
+    {
+     "top": 22,
+     "bottom": 571,
+     "left": 74,
+     "right": 634
+    }
+   ],
+   "cellOverflow": "0",
+   "pageScroll": [
+    1024,
+    1024
+   ]
+  }
+ ],
+ "log": []
+}

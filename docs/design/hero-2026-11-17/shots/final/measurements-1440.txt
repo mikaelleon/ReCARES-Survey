@@ -1,0 +1,14 @@
+rows 50-82 pt (background 235): ink left 624, right 1030
+  [624 → 661.5, w 37.5]  gap 17  [678.5 → 822, w 143.5]  gap 202  [1024 → 1030, w 6]
+rows 135-148 pt (background 233): ink left 624, right 1030
+  [624 → 692, w 68]  gap 8  [700 → 751.5, w 51.5]  gap 7  [758.5 → 802.5, w 44]  gap 8.5  [811 → 841.5, w 30.5]  gap 7.5  [849 → 881, w 32]  gap 143  [1024 → 1030, w 6]
+rows 165-280 pt (background 230): ink left 624, right 1030
+  [624 → 955, w 331]  gap 69  [1024 → 1030, w 6]
+rows 302-370 pt (background 237): ink left 624, right 1030
+  [624 → 914, w 290]  gap 109  [1023 → 1030, w 7]
+rows 397-412 pt (background 236): ink left 624, right 1030
+  [624 → 739, w 115]  gap 284  [1023 → 1030, w 7]
+rows 447-460 pt (background 235): ink left 624, right 1030
+  [624 → 934.5, w 310.5]  gap 88.5  [1023 → 1030, w 7]
+rows 512-528 pt (background 202): ink left 624, right 1030
+  [624 → 702.5, w 78.5]  gap 6  [708.5 → 764.5, w 56]  gap 204  [968.5 → 983.5, w 15]  gap 40.5  [1024 → 1030, w 6]
