@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { DashboardAnalyticsSections } from '@/components/admin/DashboardAnalyticsSections';
-import { DashboardExtendedStats } from '@/components/admin/DashboardExtendedStats';
-import { DashboardStatGrid } from '@/components/admin/DashboardStatGrid';
+import { DashboardLedger } from '@/components/admin/DashboardLedger';
 import { RecentSubmissionsTable } from '@/components/admin/RecentSubmissionsTable';
 import { DashboardHeaderTools } from '@/components/admin/DashboardHeaderTools';
 import { PageTitle } from '@/components/admin/PageTitle';
@@ -44,23 +43,20 @@ function phaseBuckets(records: { phase: string }[]) {
   });
 }
 
-function firstName(name?: string, email?: string): string {
-  const base = (name || '').trim();
-  if (base) return base.split(/\s+/)[0] ?? base;
-  const local = (email || '').split('@')[0] || 'there';
-  return local;
-}
-
 function DashboardContent() {
-  const { can, user } = useAuth();
+  const { can } = useAuth();
   const { records, status, source, usingDemoSample } = useSurveyResponses();
   const { config: surveyWindow, acceptsResponses } = useSurveyWindow();
   const [dateRange, setDateRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
   const [viewMode, setViewMode] = useState<DashboardViewMode>('detailed');
+  // Stored range and view are read after mount; hold the skeleton until then so
+  // the page never paints the default and then jumps to the saved choice.
+  const [restored, setRestored] = useState(false);
 
   useEffect(() => {
     setDateRange(loadStoredDateRange());
     setViewMode(loadDashboardViewMode());
+    setRestored(true);
   }, []);
 
   const ranged = useMemo(
@@ -75,10 +71,10 @@ function DashboardContent() {
   );
   const canResponses = can('responsesDashboard');
 
-  const loading = status === 'loading';
+  const loading = status === 'loading' || !restored;
+  const failed = status === 'error' && !usingDemoSample;
   const empty = !loading && status !== 'error' && ranged.length === 0;
   const allTimeCount = records.length;
-  const greetName = firstName(user?.name, user?.email);
 
   const periodTrend = useMemo(() => {
     if (source !== 'firestore' || usingDemoSample) return null;
@@ -107,9 +103,7 @@ function DashboardContent() {
         <>
           <div className="dash-page__header">
             <div>
-              <PageTitle pageId="admin-overview-title">
-                Dashboard <span className="dash-page__greet">· Hi, {greetName}!</span>
-              </PageTitle>
+              <PageTitle pageId="admin-overview-title">Dashboard</PageTitle>
               <p className="visually-hidden">A live summary of survey responses. Use the date range to focus on a period, and the cards to jump into detail.</p>
               <p
                 className={`survey-window-chip survey-window-chip--${surveyWindow.status}`}
@@ -167,13 +161,13 @@ function DashboardContent() {
               <div className="dash-bento">
                 <div className="dash-bento__main">
                   <div className="dash-bento__kpis">
-                    <DashboardStatGrid
+                    <DashboardLedger
                       kpis={kpis}
+                      records={ranged}
                       loading={loading}
-                      empty={empty}
+                      empty={empty || failed}
                       periodTrend={periodTrend}
                     />
-                    <DashboardExtendedStats records={ranged} loading={loading} empty={empty} />
                   </div>
 
                   <DashboardAnalyticsSections

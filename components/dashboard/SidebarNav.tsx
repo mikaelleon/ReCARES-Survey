@@ -86,7 +86,18 @@ export function SidebarNav({
   const titleId = useId();
   const bellId = useId();
   const [bellOpen, setBellOpen] = useState(false);
+  // Keep the popover mounted for its exit animation.
+  const [bellMounted, setBellMounted] = useState(false);
   const bellRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (bellOpen) {
+      setBellMounted(true);
+      return;
+    }
+    const timer = window.setTimeout(() => setBellMounted(false), 140);
+    return () => window.clearTimeout(timer);
+  }, [bellOpen]);
 
   useEffect(() => {
     onOpenChange(false);
@@ -189,14 +200,14 @@ export function SidebarNav({
 
   return (
     <>
-      {open ? (
-        <button
-          type="button"
-          className="admin-sidebar__backdrop"
-          aria-label="Close menu"
-          onClick={() => onOpenChange(false)}
-        />
-      ) : null}
+      <button
+        type="button"
+        className={`admin-sidebar__backdrop${open ? ' is-open' : ''}`}
+        aria-label="Close menu"
+        tabIndex={open ? 0 : -1}
+        aria-hidden={!open}
+        onClick={() => onOpenChange(false)}
+      />
 
       <aside
         id="admin-sidebar-panel"
@@ -308,8 +319,14 @@ export function SidebarNav({
                   <span className="admin-sidebar__bell-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
                 ) : null}
               </button>
-              {bellOpen ? (
-                <div id={bellId} className="admin-sidebar__popover" role="region" aria-label="Notifications">
+              {bellMounted ? (
+                <div
+                  id={bellId}
+                  className={`admin-sidebar__popover${bellOpen ? '' : ' is-closing'}`}
+                  role="region"
+                  aria-label="Notifications"
+                  inert={!bellOpen}
+                >
                   <div className="admin-sidebar__popover-head">
                     <p className="admin-sidebar__popover-title">
                       Notifications

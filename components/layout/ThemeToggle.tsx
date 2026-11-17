@@ -61,9 +61,9 @@ export function ThemeToggle({
 
   const style: CSSProperties = quiet
     ? {
-        width: 36,
-        height: 36,
-        flex: '0 0 36px',
+        width: 40,
+        height: 40,
+        flex: '0 0 40px',
         borderRadius: 8,
         display: 'flex',
         alignItems: 'center',

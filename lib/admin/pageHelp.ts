@@ -66,7 +66,7 @@ export const PAGE_HELP: Record<string, PageHelp> = {
   },
   'admin-overview-title': {
     title: 'Dashboard',
-    tip: 'A live summary of survey responses. Use the date range to focus on a period, and the cards to jump into detail.',
+    tip: 'A live summary of survey responses. Use the date range to focus on a period, and the numbers and chart links to jump into detail.',
     purpose:
       'The Dashboard is your at-a-glance picture of how the survey is going. It turns submitted answers into totals and charts, so you can see progress and patterns without opening every response.',
     items: [
@@ -77,12 +77,12 @@ export const PAGE_HELP: Record<string, PageHelp> = {
       },
       {
         name: 'Detailed and Simple views',
-        what: 'Detailed shows every card and chart. Simple shows only the key numbers.',
+        what: 'Detailed shows every number and chart. Simple shows the respondent count, what it means for the system plan, and the top features and problems.',
         why: 'Pick the amount of information you need right now, for example Simple for a quick check-in with your adviser.',
       },
       {
-        name: 'Summary cards and charts',
-        what: 'Show totals, such as how many residents responded, and how people answered key questions. Selecting one takes you to the matching chart in Responses.',
+        name: 'Numbers and charts',
+        what: 'Show totals, such as how many residents responded, and how people answered key questions. Selecting a label or the Responses link on a chart takes you to the matching view.',
         why: 'Helps you spot something interesting and then dig into the details in one click.',
       },
       {

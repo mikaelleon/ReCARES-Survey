@@ -978,8 +978,10 @@ html.admin-fit-viewport body {
   transition: background-color 160ms ease-in-out;
 }
 
-.admin-sidebar__collapse:hover {
-  background: rgba(255, 255, 255, 0.12);
+@media (hover: hover) and (pointer: fine) {
+  .admin-sidebar__collapse:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
 }
 
 .admin-sidebar__collapse .is-flipped {
@@ -998,8 +1000,10 @@ html.admin-fit-viewport body {
   cursor: pointer;
 }
 
-.admin-sidebar__close:hover {
-  background: rgba(255, 255, 255, 0.12);
+@media (hover: hover) and (pointer: fine) {
+  .admin-sidebar__close:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
 }
 
 /* Rail width eases in step with the content padding, so no canvas gap opens. */
@@ -1067,8 +1071,8 @@ html.admin-fit-viewport body {
 }
 
 .admin-sidebar.is-collapsed .admin-sidebar__logout {
-  width: 36px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   border-radius: 8px;
   align-self: center;
@@ -1155,9 +1159,11 @@ html.admin-fit-viewport body {
   white-space: nowrap;
 }
 
-.admin-sidebar__link:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--white);
+@media (hover: hover) and (pointer: fine) {
+  .admin-sidebar__link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--white);
+  }
 }
 
 .admin-sidebar__link.is-active {
@@ -1203,8 +1209,8 @@ html.admin-fit-viewport body {
 }
 
 .admin-sidebar__icon-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
   border: none;
@@ -1309,7 +1315,7 @@ html.admin-fit-viewport body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 32px;
+  min-height: 40px;
   padding: 0 4px;
   color: rgba(229, 235, 232, 0.72);
   font-size: 13px;
@@ -1318,8 +1324,10 @@ html.admin-fit-viewport body {
   transition: color 160ms ease-in-out;
 }
 
-.admin-sidebar__resident:hover {
-  color: var(--white);
+@media (hover: hover) and (pointer: fine) {
+  .admin-sidebar__resident:hover {
+    color: var(--white);
+  }
 }
 
 .admin-sidebar__name {
@@ -1358,7 +1366,7 @@ html.admin-fit-viewport body {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  height: 32px;
+  height: 40px;
   padding: 0 4px;
   border-radius: 8px;
   border: none;
@@ -1372,8 +1380,10 @@ html.admin-fit-viewport body {
   transition: color 160ms ease-in-out;
 }
 
-.admin-sidebar__logout:hover {
-  color: var(--white);
+@media (hover: hover) and (pointer: fine) {
+  .admin-sidebar__logout:hover {
+    color: var(--white);
+  }
 }
 
 .admin-sidebar__backdrop {
@@ -2779,7 +2789,7 @@ html.admin-fit-viewport body {
   /* Color hierarchy: ink for values, emerald for brand labels, muted for meta */
   --dash-ink: #10281c;
   --dash-ink-soft: #3a5748;
-  --dash-muted: rgba(16, 40, 28, 0.58);
+  --dash-muted: rgba(16, 40, 28, 0.68);
   --dash-card-bg: #ffffff;
   --dash-card-border: rgba(19, 105, 63, 0.11);
   --dash-card-shadow: 0 8px 22px rgba(19, 105, 63, 0.07);
@@ -15917,11 +15927,10 @@ textarea.sb-input {
   position: fixed;
   z-index: 250;
   box-sizing: border-box;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   background: var(--card-fill-neutral);
-  box-shadow: var(--shadow-modal);
   color: var(--text-body);
   font-family: var(--font-sans);
   font-size: 14px;
@@ -15929,16 +15938,9 @@ textarea.sb-input {
   letter-spacing: 0;
   line-height: 1.5;
   text-transform: none;
+  text-wrap: pretty;
   white-space: normal;
   pointer-events: none;
-}
-
-.page-title__tip-hint {
-  display: block;
-  margin-top: 4px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-headline);
 }
 
 .page-help__backdrop {
@@ -15953,14 +15955,14 @@ textarea.sb-input {
   animation: fadeIn 180ms var(--motion-ease) both;
 }
 
+/* A ruled sheet: what the page is for, then one row per control. */
 .page-help {
   display: flex;
   flex-direction: column;
-  width: min(720px, 100%);
+  width: min(680px, 100%);
   max-height: min(860px, 100%);
   overflow: hidden;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: 8px;
   background: var(--card-fill-neutral);
   box-shadow: var(--shadow-modal);
   color: var(--text-body);
@@ -15969,26 +15971,18 @@ textarea.sb-input {
 
 .page-help__head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 24px 24px 16px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.page-help__eyebrow {
-  margin: 0 0 4px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-caption);
+  padding: 16px 12px 0 24px;
 }
 
 .page-help__title {
   margin: 0;
   font-size: 24px;
+  line-height: 1.25;
   color: var(--text-headline);
+  text-wrap: balance;
 }
 
 .page-help__close {
@@ -15998,40 +15992,44 @@ textarea.sb-input {
   flex: none;
   width: var(--touch-target-min);
   height: var(--touch-target-min);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
+  border: 0;
+  border-radius: 8px;
   background: transparent;
-  color: var(--text-body);
+  color: var(--text-caption);
   cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
 }
 
-.page-help__close:hover {
-  background: var(--surface-2);
+@media (hover: hover) {
+  .page-help__close:hover {
+    background: var(--surface-2);
+    color: var(--text-body);
+  }
 }
 
 .page-help__body {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 24px;
+  padding: 12px 24px 28px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 .page-help__h {
-  margin: 0 0 8px;
+  margin: 0 0 4px;
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-section-heading);
 }
 
 .page-help__text {
   margin: 0;
-  font-size: 16px;
-  line-height: 1.6;
+  max-width: 62ch;
+  font-size: 17px;
+  line-height: 1.55;
+  text-wrap: pretty;
 }
 
 .page-help__items,
@@ -16041,23 +16039,17 @@ textarea.sb-input {
   list-style: none;
 }
 
-.page-help__items {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 .page-help__item {
-  padding: 16px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-1);
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(0, 2.6fr);
+  gap: 4px 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .page-help__item strong {
-  display: block;
-  margin-bottom: 4px;
   font-size: 15px;
+  line-height: 1.45;
   color: var(--text-headline);
 }
 
@@ -16065,16 +16057,12 @@ textarea.sb-input {
   margin: 0;
   font-size: 14px;
   line-height: 1.55;
+  text-wrap: pretty;
 }
 
 .page-help__item .page-help__why {
-  margin-top: 8px;
+  margin-top: 4px;
   color: var(--text-caption);
-}
-
-.page-help__why span {
-  font-weight: 700;
-  color: var(--text-body);
 }
 
 .page-help__know {
@@ -16085,27 +16073,27 @@ textarea.sb-input {
 
 .page-help__know li {
   position: relative;
-  padding-left: 20px;
+  padding-left: 16px;
   font-size: 14px;
   line-height: 1.55;
+  text-wrap: pretty;
 }
 
 .page-help__know li::before {
   content: '';
   position: absolute;
-  top: 8px;
-  left: 4px;
-  width: 6px;
-  height: 6px;
+  top: 9px;
+  left: 2px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
-  background: var(--dark-emerald);
+  background: var(--text-caption);
 }
 
-.page-help__foot {
-  display: flex;
-  justify-content: flex-end;
-  padding: 16px 24px;
-  border-top: 1px solid var(--border-subtle);
+@media (max-width: 560px) {
+  .page-help__item {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -19934,5 +19922,583 @@ html[data-theme-switching] .survey-stage *::after {
 
   .survey-flow .survey-pager li {
     flex: none;
+  }
+}
+
+
+/* ==========================================================================
+   Admin sidebar motion
+   Occasional interactions only (collapse, drawer, notifications). Nav links,
+   keyboard focus and active-state changes stay instant.
+   ========================================================================== */
+.admin-app {
+  --sb-ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+  --sb-ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --sb-ease-io: cubic-bezier(0.77, 0, 0.175, 1);
+  --sb-collapse: 240ms;
+}
+
+/* Hit areas: visual stays 32px, target is 40px. */
+.admin-sidebar__collapse {
+  position: relative;
+}
+
+.admin-sidebar__collapse::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  translate: -50% -50%;
+}
+
+/* Press: small controls scale, wide rows change surface. */
+.admin-sidebar__collapse,
+.admin-sidebar__icon-btn,
+.admin-sidebar__close {
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms var(--sb-ease-out);
+}
+
+.admin-sidebar__collapse:active,
+.admin-sidebar__icon-btn:active,
+.admin-sidebar__close:active {
+  transform: scale(0.96);
+}
+
+.admin-sidebar__link:active {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.admin-sidebar__collapse svg {
+  transition: transform var(--sb-collapse) var(--sb-ease-io);
+}
+
+/* Notifications: grow from the bell, leave faster and quieter. */
+@keyframes sbPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sbPopOut {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+.admin-sidebar__popover {
+  transform-origin: bottom left;
+  animation: sbPopIn 180ms var(--sb-ease-out) both;
+}
+
+.admin-sidebar__popover.is-closing {
+  animation: sbPopOut 130ms var(--sb-ease-in) both;
+  pointer-events: none;
+}
+
+@media (min-width: 901px) {
+  /* Rail width and content padding share one clock and one curve. */
+  .admin-app {
+    transition: padding-left var(--sb-collapse) var(--sb-ease-io);
+  }
+
+  .admin-sidebar {
+    transition: width var(--sb-collapse) var(--sb-ease-io);
+  }
+
+  /* Labels fade while the rail narrows instead of vanishing on the first frame. */
+  .admin-sidebar__logo-sub,
+  .admin-sidebar__group-label,
+  .admin-sidebar__link-label,
+  .admin-sidebar__user-text,
+  .admin-sidebar__resident-label,
+  .admin-sidebar__logout-label {
+    transition:
+      opacity 140ms ease,
+      display 140ms allow-discrete;
+  }
+
+  .admin-sidebar.is-collapsed .admin-sidebar__logo-sub,
+  .admin-sidebar.is-collapsed .admin-sidebar__group-label,
+  .admin-sidebar.is-collapsed .admin-sidebar__link-label,
+  .admin-sidebar.is-collapsed .admin-sidebar__user-text,
+  .admin-sidebar.is-collapsed .admin-sidebar__resident-label,
+  .admin-sidebar.is-collapsed .admin-sidebar__logout-label {
+    opacity: 0;
+  }
+
+  @starting-style {
+    .admin-sidebar__logo-sub,
+    .admin-sidebar__group-label,
+    .admin-sidebar__link-label,
+    .admin-sidebar__user-text,
+    .admin-sidebar__resident-label,
+    .admin-sidebar__logout-label {
+      opacity: 0;
+    }
+  }
+}
+
+/* Drawer: enters with ease-out, leaves faster with ease-in; backdrop fades both ways. */
+@media (max-width: 900px) {
+  .admin-sidebar,
+  .admin-sidebar.is-collapsed {
+    transition:
+      transform 180ms var(--sb-ease-in),
+      visibility 0s linear 180ms;
+  }
+
+  .admin-sidebar.is-open {
+    transition:
+      transform 280ms var(--sb-ease-out),
+      visibility 0s;
+  }
+
+  .admin-sidebar__backdrop {
+    animation: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+
+  .admin-sidebar__backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-app,
+  .admin-sidebar,
+  .admin-sidebar.is-open,
+  .admin-sidebar.is-collapsed,
+  .admin-sidebar__backdrop,
+  .admin-sidebar__collapse,
+  .admin-sidebar__collapse svg,
+  .admin-sidebar__icon-btn,
+  .admin-sidebar__close,
+  .admin-sidebar__logo-sub,
+  .admin-sidebar__group-label,
+  .admin-sidebar__link-label,
+  .admin-sidebar__user-text,
+  .admin-sidebar__resident-label,
+  .admin-sidebar__logout-label {
+    transition: none;
+  }
+
+  .admin-sidebar__popover,
+  .admin-sidebar__popover.is-closing {
+    animation: none;
+  }
+
+  .admin-sidebar__collapse:active,
+  .admin-sidebar__icon-btn:active,
+  .admin-sidebar__close:active {
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   Admin dashboard — ledger (Detailed + Simple)
+   The respondent count is the figure; every other headline number is a ruled
+   row. Surfaces are flat: one border, no shadow, no lift, no gradient.
+   ========================================================================== */
+.dash-page .ledger {
+  display: grid;
+  grid-template-columns: minmax(200px, 0.8fr) minmax(0, 2fr);
+  gap: 8px 32px;
+  align-items: start;
+  width: 100%;
+  padding: 4px 0 8px;
+}
+
+.dash-page .ledger__count {
+  position: relative;
+  min-width: 0;
+  padding-top: 14px;
+}
+
+/* Signature: the four brand colours, once, as a tally rule over the count. */
+.dash-page .ledger__count::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 72px;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--dark-emerald) 0 25%,
+    var(--emerald-400) 25% 50%,
+    var(--harvest-orange) 50% 75%,
+    var(--bright-amber) 75% 100%
+  );
+}
+
+.dash-page .ledger__eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-headline);
+}
+
+.dash-page .ledger__figure {
+  margin: 2px 0 8px;
+  font-family: var(--font-title);
+  font-size: clamp(44px, 5vw, 64px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--dash-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-page .ledger__figure span {
+  margin-left: 6px;
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--dash-muted);
+}
+
+.dash-page .ledger__track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--dash-track);
+  overflow: hidden;
+}
+
+.dash-page .ledger__track-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--dash-fill);
+  transform-origin: left center;
+  transition: transform 420ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.dash-page .ledger__trend {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--dash-muted);
+}
+
+.dash-page .ledger__none {
+  opacity: 0.45;
+}
+
+.dash-page .ledger__rows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(4, auto);
+  grid-auto-flow: column;
+  column-gap: 32px;
+  margin: 0;
+  min-width: 0;
+}
+
+.dash-page .ledger__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  position: relative;
+  min-height: 40px;
+  padding: 0;
+  align-items: center;
+  border-bottom: 1px solid var(--dash-card-border);
+}
+
+.dash-page .ledger__row dt {
+  margin: 0;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--dash-ink-soft);
+}
+
+.dash-page .ledger__row dd {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dash-page .ledger__value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--dash-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-page .ledger__note {
+  font-size: 12px;
+  color: var(--dash-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-page .ledger__link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+/* Whole row is the target, not just the label */
+.dash-page .ledger__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.dash-page .ledger__row:has(.ledger__link:focus-visible) {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+}
+
+.dash-page .ledger__link:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+@media (hover: hover) {
+  .dash-page .ledger__link:hover {
+    color: var(--text-headline);
+  }
+}
+
+/* Info buttons sit above the row target so they stay clickable */
+.dash-page .ledger__row .field-code-hint__btn {
+  position: relative;
+  z-index: 1;
+}
+
+/* Tiles and rail: flat, one border, nothing moves */
+.dash-page .dash-insight,
+.dash-page .dash-activity,
+.dash-page .dash-recent-panel {
+  border-radius: 8px;
+  box-shadow: none;
+  animation: none;
+  transform: none;
+}
+
+.dash-page .dash-insight:hover,
+.dash-page .dash-activity:hover,
+.dash-page .dash-recent-panel:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.dash-page .dash-insight__head {
+  align-items: baseline;
+}
+
+.dash-page .dash-insight__title,
+.dash-page .dash-activity__title {
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.dash-page .dash-activity__item:hover {
+  transform: none;
+}
+
+.dash-page .dash-activity__item:hover .dash-activity__icon {
+  transform: none;
+}
+
+.dash-page .dash-recent-panel {
+  background: var(--dash-card-bg);
+  border: 1px solid var(--dash-card-border);
+  color: var(--dash-ink);
+}
+
+.dash-page .dash-recent-panel__title {
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-headline);
+}
+
+.dash-page .dash-recent-panel__link,
+.dash-page .dash-recent-panel__sub,
+.dash-page .dash-recent-panel__empty {
+  color: var(--dash-muted);
+}
+
+.dash-page .dash-recent-panel__link:hover {
+  color: var(--text-headline);
+}
+
+.dash-page .dash-recent-panel__item {
+  padding: 8px 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--dash-ink);
+  border-bottom: 1px solid var(--dash-card-border);
+}
+
+.dash-page .dash-recent-panel__item:last-child {
+  border-bottom: 0;
+}
+
+.dash-page .dash-recent-panel__item:hover {
+  background: transparent;
+  transform: none;
+}
+
+.dash-page .dash-recent-panel__item:hover .dash-recent-panel__dot {
+  transform: none;
+  box-shadow: none;
+}
+
+.dash-page .dash-recent-panel__dot {
+  background: var(--dash-fill);
+}
+
+.dash-page .date-range__preset.is-active {
+  box-shadow: none;
+}
+
+/* Simple view */
+.dash-page .dash-simple {
+  gap: 20px;
+}
+
+.dash-page .dash-simple__count {
+  max-width: 420px;
+}
+
+.dash-page .dash-simple__section-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-headline);
+}
+
+.dash-page .dash-simple__plan {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dash-page .dash-simple__plan li {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(0, 1.2fr) minmax(0, 2.6fr);
+  gap: 4px 20px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--dash-card-border);
+}
+
+.dash-page .dash-simple__plan p {
+  margin: 0;
+}
+
+.dash-page .dash-simple__plan-title {
+  font-size: 13px;
+  color: var(--dash-muted);
+}
+
+.dash-page .dash-simple__plan-value {
+  text-wrap: balance;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--dash-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-page .dash-simple__plan-text {
+  text-wrap: pretty;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--dash-ink-soft);
+}
+
+.dash-page .dash-simple__plan-text strong {
+  display: block;
+  margin-top: 2px;
+  font-weight: 700;
+  color: var(--text-headline);
+}
+
+.dash-page .dash-simple__lists {
+  gap: 32px;
+}
+
+.dash-page .dash-simple__rank {
+  gap: 0;
+}
+
+.dash-page .dash-simple__rank li {
+  align-items: baseline;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--dash-card-border);
+}
+
+.dash-page .dash-simple__rank-num {
+  width: auto;
+  height: auto;
+  min-width: 14px;
+  border-radius: 0;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--dash-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-page .dash-simple__rank-label {
+  font-size: 14px;
+}
+
+.dash-page .dash-simple__rank-score {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-page .dash-simple__footer {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .dash-page .ledger {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-page .ledger__rows {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-auto-flow: row;
+  }
+
+  .dash-page .dash-simple__plan li {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-page .ledger__track-fill {
+    transition: none;
   }
 }

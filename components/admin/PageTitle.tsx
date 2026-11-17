@@ -61,22 +61,16 @@ function HelpDialog({ pageId, onClose }: { pageId: string; onClose: () => void }
           onClick={(event) => event.stopPropagation()}
         >
           <header className="page-help__head">
-            <div>
-              <p className="page-help__eyebrow">About this page</p>
-              <h2 id={titleId} className="page-help__title">
-                {help.title}
-              </h2>
-            </div>
+            <h2 id={titleId} className="page-help__title">
+              {help.title}
+            </h2>
             <button type="button" className="page-help__close" aria-label="Close" onClick={onClose}>
-              <X size={18} strokeWidth={2.4} aria-hidden="true" />
+              <X size={18} strokeWidth={2} aria-hidden="true" />
             </button>
           </header>
 
           <div className="page-help__body">
-            <section>
-              <h3 className="page-help__h">What this page is for</h3>
-              <p className="page-help__text">{help.purpose}</p>
-            </section>
+            <p className="page-help__text">{help.purpose}</p>
 
             <section>
               <h3 className="page-help__h">What you can do here</h3>
@@ -84,10 +78,10 @@ function HelpDialog({ pageId, onClose }: { pageId: string; onClose: () => void }
                 {help.items.map((item) => (
                   <li key={item.name} className="page-help__item">
                     <strong>{item.name}</strong>
-                    <p>{item.what}</p>
-                    <p className="page-help__why">
-                      <span>Why it helps:</span> {item.why}
-                    </p>
+                    <div>
+                      <p>{item.what}</p>
+                      <p className="page-help__why">{item.why}</p>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -105,11 +99,6 @@ function HelpDialog({ pageId, onClose }: { pageId: string; onClose: () => void }
             ) : null}
           </div>
 
-          <footer className="page-help__foot">
-            <button type="button" className="rr-btn rr-btn--primary" onClick={onClose}>
-              Got it
-            </button>
-          </footer>
         </div>
       </div>
     </AdminOverlayPortal>
@@ -151,7 +140,6 @@ function TitleTip({ anchor, id, tip }: { anchor: HTMLElement; id: string; tip: s
         style={pos ? { top: pos.top, left: pos.left, width: pos.width } : { visibility: 'hidden', width: Math.min(TIP_WIDTH, window.innerWidth - EDGE * 2) }}
       >
         {tip}
-        <span className="page-title__tip-hint">Select the title for a full guide.</span>
       </div>, document.body);
 }
 

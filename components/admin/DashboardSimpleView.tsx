@@ -33,18 +33,16 @@ export function DashboardSimpleView({
 
   return (
     <div className="dash-simple">
-      <section className="dash-simple__hero" aria-labelledby="dash-simple-progress">
-        <div className="dash-simple__hero-top">
-          <h2 id="dash-simple-progress" className="dash-simple__hero-title">
-            Response progress
-          </h2>
-          <p className="dash-simple__hero-value">
-            {empty ? '—' : snapshot.total}
-            <span> / {snapshot.respondentTarget}</span>
-          </p>
-        </div>
+      <section className="ledger__count dash-simple__count" aria-labelledby="dash-simple-progress">
+        <p id="dash-simple-progress" className="ledger__eyebrow">
+          Respondents
+        </p>
+        <p className="ledger__figure">
+          {empty ? <span className="ledger__none">—</span> : snapshot.total}
+          <span> of {snapshot.respondentTarget}</span>
+        </p>
         <div
-          className="dash-simple__bar"
+          className="ledger__track"
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={snapshot.respondentTarget}
@@ -52,95 +50,95 @@ export function DashboardSimpleView({
           aria-label="Progress toward respondent target"
         >
           <div
-            className="dash-simple__bar-fill"
-            style={{ width: empty ? '0%' : `${snapshot.progressPct}%` }}
+            className="ledger__track-fill"
+            style={{ transform: `scaleX(${empty ? 0 : snapshot.progressPct / 100})` }}
           />
         </div>
-        <p className="dash-simple__hero-note">
+        <p className="ledger__trend">
           {empty
-            ? 'No responses in this date range yet.'
-            : `${snapshot.progressPct}% of the research target. Homeowners ${snapshot.homeownerPct}% · Tenants ${snapshot.tenantPct}% · Accessibility screening ${snapshot.pwdPct}%.`}
+            ? 'No responses in this date range yet. Widen the range or wait for submissions.'
+            : `Homeowners ${snapshot.homeownerPct}% · Tenants ${snapshot.tenantPct}% · Accessibility screening ${snapshot.pwdPct}%`}
         </p>
       </section>
 
-      {empty ? (
-        <p className="dash-tile__empty">Widen the date range or wait for more submissions.</p>
-      ) : (
+      {empty ? null : (
         <>
-          <section className="dash-simple__takeaways" aria-label="What this means for the system">
-            <h2 className="dash-simple__section-title">What this means for the system plan</h2>
-            <ul className="dash-simple__cards">
+          <section aria-labelledby="dash-simple-plan">
+            <h2 id="dash-simple-plan" className="dash-simple__section-title">
+              What this means for the system plan
+            </h2>
+            <ul className="dash-simple__plan">
               {snapshot.takeaways.map((item) => (
-                <li key={item.id} className="dash-simple__card">
-                  <p className="dash-simple__card-kicker">{item.title}</p>
-                  <p className="dash-simple__card-value">{item.value}</p>
-                  <p className="dash-simple__card-meaning">{item.meaning}</p>
-                  <p className="dash-simple__card-plan">{item.forPlan}</p>
+                <li key={item.id}>
+                  <p className="dash-simple__plan-title">{item.title}</p>
+                  <p className="dash-simple__plan-value">{item.value}</p>
+                  <p className="dash-simple__plan-text">
+                    {item.meaning} <strong>{item.forPlan}</strong>
+                  </p>
                 </li>
               ))}
             </ul>
           </section>
 
           <div className="dash-simple__lists">
-            <section className="dash-simple__list-card" aria-labelledby="dash-simple-features">
-              <h2 id="dash-simple-features" className="dash-simple__section-title">
-                Top features residents want
-              </h2>
-              {snapshot.topFeatures.length === 0 ? (
-                <p className="dash-tile__empty">No feature scores yet.</p>
-              ) : (
-                <ol className="dash-simple__rank">
-                  {snapshot.topFeatures.map((f, i) => (
-                    <li key={f.label}>
-                      <span className="dash-simple__rank-num">{i + 1}</span>
-                      <span className="dash-simple__rank-label">{f.label}</span>
-                      <span className="dash-simple__rank-score">{f.score}</span>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </section>
-
-            <section className="dash-simple__list-card" aria-labelledby="dash-simple-problems">
-              <h2 id="dash-simple-problems" className="dash-simple__section-title">
-                Top problems residents report
-              </h2>
-              {snapshot.topProblems.length === 0 ? (
-                <p className="dash-tile__empty">No open-problem answers yet.</p>
-              ) : (
-                <ol className="dash-simple__rank">
-                  {snapshot.topProblems.map((p, i) => (
-                    <li key={p.label}>
-                      <span className="dash-simple__rank-num">{i + 1}</span>
-                      <span className="dash-simple__rank-label">{p.label}</span>
-                      <span className="dash-simple__rank-score">
-                        {p.count} ({p.pct}%)
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </section>
+            <RankList
+              id="dash-simple-features"
+              title="Features residents want"
+              empty="No feature scores yet."
+              rows={snapshot.topFeatures.map((f) => ({ label: f.label, score: f.score }))}
+            />
+            <RankList
+              id="dash-simple-problems"
+              title="Problems residents report"
+              empty="No open-problem answers yet."
+              rows={snapshot.topProblems.map((p) => ({
+                label: p.label,
+                score: `${p.count} (${p.pct}%)`,
+              }))}
+            />
           </div>
         </>
       )}
 
       <div className="dash-simple__footer">
-        <RecentSubmissionsTable
-          records={records}
-          limit={3}
-          loading={loading}
-          variant="panel"
-        />
-        <div className="dash-simple__cta">
-          <p className="dash-simple__cta-text">
-            Need charts, filters, and full breakdowns? Open Responses.
-          </p>
-          <AdminNavLink href="/admin/responses/" className="dash-quick__btn dash-quick__btn--primary">
-            View Responses →
-          </AdminNavLink>
-        </div>
+        <RecentSubmissionsTable records={records} limit={3} loading={loading} variant="panel" />
+        <AdminNavLink href="/admin/responses/" className="dash-insight__link">
+          Charts and filters in Responses →
+        </AdminNavLink>
       </div>
     </div>
+  );
+}
+
+function RankList({
+  id,
+  title,
+  empty,
+  rows,
+}: {
+  id: string;
+  title: string;
+  empty: string;
+  rows: { label: string; score: string }[];
+}) {
+  return (
+    <section aria-labelledby={id}>
+      <h2 id={id} className="dash-simple__section-title">
+        {title}
+      </h2>
+      {rows.length === 0 ? (
+        <p className="dash-tile__empty">{empty}</p>
+      ) : (
+        <ol className="dash-simple__rank">
+          {rows.map((r, i) => (
+            <li key={r.label}>
+              <span className="dash-simple__rank-num">{i + 1}</span>
+              <span className="dash-simple__rank-label">{r.label}</span>
+              <span className="dash-simple__rank-score">{r.score}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
   );
 }

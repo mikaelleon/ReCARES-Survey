@@ -18,14 +18,14 @@ import type { SampleRecord } from '@/lib/admin/sampleResponses';
 
 function InsightTile({
   title,
-  hint,
+  info,
   className = '',
   loading,
   responsesFocus,
   children,
 }: {
   title: string;
-  hint?: ReactNode;
+  info?: string;
   className?: string;
   loading?: boolean;
   responsesFocus?: string;
@@ -34,23 +34,20 @@ function InsightTile({
   return (
     <article className={`dash-insight ${className}`.trim()} aria-label={title}>
       <header className="dash-insight__head">
-        <h2 className="dash-insight__title">{title}</h2>
-        {hint ? <div className="dash-insight__hint">{hint}</div> : null}
+        <h2 className="dash-insight__title">
+          {info ? <FieldCodeHint content={info}>{title}</FieldCodeHint> : title}
+        </h2>
+        {responsesFocus ? <ResponsesDrilldownLink focus={responsesFocus} /> : null}
       </header>
       <div className="dash-insight__body">
         {loading ? <ChartSkeleton height={100} /> : children}
       </div>
-      {responsesFocus ? (
-        <div className="dash-insight__foot">
-          <ResponsesDrilldownLink focus={responsesFocus} />
-        </div>
-      ) : null}
     </article>
   );
 }
 
 /**
- * Charts under the KPI grid: Phase · Features, then Problems · Accessibility.
+ * Charts under the ledger: Phase · Features, then Problems · Accessibility.
  * Right-rail Quick Actions live in the page shell, not here.
  */
 export function DashboardAnalyticsSections({
@@ -75,19 +72,13 @@ export function DashboardAnalyticsSections({
     <div className="dash-bento__analytics">
       <div className="dash-bento__charts">
         <InsightTile
-          title="Analytics by Phase"
-          hint={
-            <FieldCodeHint
-              content={
-                empty
-                  ? allTimeCount === 0
-                    ? 'No live submissions in Firestore yet.'
-                    : 'No responses in this date range. Try All time or widen the range.'
-                  : `${responseCount} response${responseCount === 1 ? '' : 's'} in the selected range. Hover a bar for count and share.`
-              }
-            >
-              By phase
-            </FieldCodeHint>
+          title="Responses by phase"
+          info={
+            empty
+              ? allTimeCount === 0
+                ? 'No live submissions in Firestore yet.'
+                : 'No responses in this date range. Try All time or widen the range.'
+              : `${responseCount} response${responseCount === 1 ? '' : 's'} in the selected range. Hover a bar for count and share.`
           }
           loading={loading}
           responsesFocus="phase"
@@ -107,12 +98,8 @@ export function DashboardAnalyticsSections({
         </InsightTile>
 
         <InsightTile
-          title="Top Requested Features"
-          hint={
-            <FieldCodeHint content={`${FIELD_CODE_HELP.f1f6} Hover a feature for average and sample size.`}>
-              Proposed website features
-            </FieldCodeHint>
-          }
+          title="Most requested features"
+          info={`${FIELD_CODE_HELP.f1f6} Hover a feature for average and sample size.`}
           loading={loading}
           responsesFocus="top-features"
         >
@@ -135,12 +122,8 @@ export function DashboardAnalyticsSections({
 
       <div className="dash-bento__detail">
         <InsightTile
-          title="Open Problem Discovery"
-          hint={
-            <FieldCodeHint content="Problems residents raised beyond the named survey topics. Hover a row for count and share.">
-              Open topics
-            </FieldCodeHint>
-          }
+          title="Open problems"
+          info="Problems residents raised beyond the named survey topics. Hover a row for count and share."
           loading={loading}
           responsesFocus="open-problems"
         >
@@ -152,17 +135,11 @@ export function DashboardAnalyticsSections({
         </InsightTile>
 
         <InsightTile
-          title="Accessibility Needs"
-          hint={
-            <FieldCodeHint
-              content={
-                ac.baseN > 0
-                  ? `${FIELD_CODE_HELP.ac1} Path base: ${ac.baseN} respondent${ac.baseN === 1 ? '' : 's'}. Hover a row for count and share.`
-                  : FIELD_CODE_HELP.ac1
-              }
-            >
-              Accessibility checklist
-            </FieldCodeHint>
+          title="Accessibility needs"
+          info={
+            ac.baseN > 0
+              ? `${FIELD_CODE_HELP.ac1} Path base: ${ac.baseN} respondent${ac.baseN === 1 ? '' : 's'}. Hover a row for count and share.`
+              : FIELD_CODE_HELP.ac1
           }
           loading={loading}
           responsesFocus="accessibility-needs"

@@ -462,8 +462,9 @@ Inner padding `clamp(20px, 3vw, 32px)` horizontal `clamp(16px, 4vw, 32px)`, bott
 
 - Section title: Open Sauce One, `clamp(24px, 3vw, 32px)` / 700, `--text-headline`. Secondary titles `clamp(20px, 2.4vw, 24px)`.
 - Lead: 15px caption, max-width 62ch, 8px above, 20px below.
-- Stat value: 32px/700, line-height 1.1, headline color. Label above it: 13px/700 uppercase, tracking `0.06em`, caption color.
-- Chart title: 15px/700 uppercase, tracking `0.04em`, `--text-section-heading`.
+- Ledger (`DashboardLedger`): the respondent count is the figure (title font, `clamp(44px, 5vw, 64px)`/700, tabular numerals) under a 72×4px four-colour rule, the only place that rule appears on the dashboards. Every other headline number is one ruled row: 14px label, 15px/700 value, 12px note. Row labels link to the matching Responses view. No icon tiles, share bars or stat cards.
+- Dashboard surfaces are flat: one 1px border, 8px radius, no shadow, no hover lift, no gradient, no entrance animation.
+- Dashboard labels, tile titles and section titles are sentence case (14px/700). The Simple view lists takeaways as ruled rows, not cards.
 - Tracks are 8px, pill shaped. Emerald fill for distribution bars, orange for gate strips, amber for Likert means.
 - Table: min-width 860px, 14px cells, 12px uppercase headers, caption color, tracking `0.06em`. Row flash uses `rgba(254,202,9,0.22)`. Below 768px the table is replaced by 12px-radius cards on `--surface-1`.
 - Chips: height 24px, padding `0 8px`, radius 6px, 12px/700. Sensitive chips use an orange border and `rgba(247,128,33,0.12)` fill.

@@ -28,16 +28,15 @@ export function AdminAppShell({
   const { firestoreError } = useAuth();
   const { ready, user, allowRender } = useAdminRouteGate('active');
   const [navOpen, setNavOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
-  const onOpenChange = useCallback((open: boolean) => setNavOpen(open), []);
-
-  useEffect(() => {
+  // Read before first paint so a saved collapsed rail never flashes open.
+  const [collapsed, setCollapsed] = useState(() => {
     try {
-      setCollapsed(sessionStorage.getItem(COLLAPSE_KEY) === '1');
+      return sessionStorage.getItem(COLLAPSE_KEY) === '1';
     } catch {
-      /* ignore */
+      return false;
     }
-  }, []);
+  });
+  const onOpenChange = useCallback((open: boolean) => setNavOpen(open), []);
 
   useEffect(() => {
     if (!fitViewport) return;
