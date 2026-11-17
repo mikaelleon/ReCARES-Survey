@@ -86,3 +86,25 @@ Requested: no masking. Light to dark plays `h3.png` (day), `h4.png` (dusk), `h2.
 ## Theme change, more natural
 
 The two 450ms fades ran one after the other, so the picture stopped at dusk or dawn and then started again. Now they overlap: 800ms fades, the second starting 450ms after the first (about 1.25s), on a sine curve, so the light drifts through the middle shot instead of passing it. Ambient light, so slower than a UI move (the 500ms per move guide is for responses). Checked by sampling opacities each frame.
+
+## Unslop pass: top navbar
+
+- Links and the phone section label: sentence case, 15px (14px on the label), no tracking. Uppercase tracked labels were the stock navbar look.
+- "Start the survey": was a filled white pill that competed with the amber stub. Now an outlined 8px-radius link, so the stubs stay the only loud actions. 8px matches the other nav buttons (one radius family).
+- Theme toggle: the icon now shows the mode you will get (moon in light, sun in dark; it was always a moon), 40px with 8px radius like the phone menu button.
+- Kept: the logo mark, the emerald bar, the phone Back/Next. No shadow (removed earlier).
+
+## UX and animation pass: top navbar
+
+- Mobile drawer appeared from nothing. It now slides in from the right (250ms ease-out) with the backdrop fading, and leaves the way it came (180ms ease-in) before unmounting. Reduced motion: no animation.
+- Press feedback (scale 0.96, 120ms ease-out) on the menu, theme, and phone Back/Next buttons.
+- Link color moved to 150ms ease (was 220ms ease-in-out).
+- Touch targets: menu and theme buttons 44px (were 40).
+- Checked in Chrome at 390px: drawer animates in and out, a link closes it and moves the stage, reduced motion is instant, no console errors.
+- Kept: nav link and stage changes stay instant to the keys (high frequency).
+
+## UX and animation pass: theme button
+
+- The icon used to swap instantly with a 200ms spin of the new icon. Now both icons share one cell and swap at once: the one leaving shrinks to 0.3 with a turn and a 3px blur, the one arriving grows in (200 to 250ms, ease-out, CSS transitions, so a second tap turns around from where it is). The icon shows the mode you will get. Reduced motion: instant.
+- Kept: press scale 0.96, hover 150ms, 44px target. The photo's 1.25s time-of-day change is the main motion; the icon only confirms the tap.
+- Checked by script: end states right both ways, quick double toggle settles right, reduced motion, no console errors. Removed the old spin keyframes.

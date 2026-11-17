@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  useCallback,
   useEffect,
   useId,
   useRef,
@@ -67,12 +68,14 @@ function StageSteps() {
     justifyContent: 'center',
     cursor: 'pointer',
     padding: 0,
+    transition: 'transform 120ms ease-out, opacity 150ms ease',
   } as const;
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       <button
         type="button"
+        className="nav-btn"
         aria-label="Back"
         disabled={atStart}
         onClick={() => stageStep(-1)}
@@ -86,10 +89,8 @@ function StageSteps() {
           maxWidth: 96,
           textAlign: 'center',
           fontFamily: 'var(--font-sans)',
-          fontSize: 12,
+          fontSize: 14,
           fontWeight: 700,
-          letterSpacing: '.08em',
-          textTransform: 'uppercase',
           color: 'var(--bright-amber)',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
@@ -100,6 +101,7 @@ function StageSteps() {
       </span>
       <button
         type="button"
+        className="nav-btn"
         aria-label={atEnd ? 'Back to start' : 'Next'}
         onClick={() => stageStep(1)}
         style={box}
@@ -125,6 +127,7 @@ export function Navbar() {
     acceptsResponses ? 'Start the survey' : config.status === 'paused' ? 'Survey paused' : 'Survey closed';
   const [active, setActive] = useState<SectionKey>('home');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -144,6 +147,20 @@ export function Navbar() {
     window.addEventListener(STAGE_SECTION, onSection);
     return () => window.removeEventListener(STAGE_SECTION, onSection);
   }, [pathname]);
+
+  /* The drawer leaves the way it came (180ms, shorter than its 250ms entrance), then unmounts. */
+  const closeMenu = useCallback(() => {
+    if (menuClosing) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setMenuOpen(false);
+      return;
+    }
+    setMenuClosing(true);
+    window.setTimeout(() => {
+      setMenuOpen(false);
+      setMenuClosing(false);
+    }, 180);
+  }, [menuClosing]);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -177,7 +194,7 @@ export function Navbar() {
     const onKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        setMenuOpen(false);
+        closeMenu();
         return;
       }
       if (e.key !== 'Tab' || !drawer) return;
@@ -204,10 +221,10 @@ export function Navbar() {
       previouslyFocused?.focus?.();
       menuButton?.focus();
     };
-  }, [menuOpen]);
+  }, [menuOpen, closeMenu]);
 
   const onNavClick = (e: MouseEvent<HTMLAnchorElement>, href: string, section: SectionKey) => {
-    setMenuOpen(false);
+    if (menuOpen) closeMenu();
     if (pathname !== '/') return;
     if (href === '/' || href.startsWith('/#')) {
       e.preventDefault();
@@ -219,15 +236,13 @@ export function Navbar() {
     fontFamily: 'var(--font-sans)',
     minHeight: 40,
     padding: '0 10px',
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: 700,
-    letterSpacing: '.08em',
-    textTransform: 'uppercase' as const,
     color: isActive ? 'var(--bright-amber)' : 'var(--white)',
     textDecoration: 'none',
     display: 'inline-flex',
     alignItems: 'center',
-    transition: 'color 220ms ease-in-out',
+    transition: 'color 150ms ease',
   });
 
   const desktopLinks = (
@@ -248,18 +263,16 @@ export function Navbar() {
       })}
       <Link
         href="/survey"
+        className="nav-start"
         style={{
           fontFamily: 'var(--font-sans)',
-          minHeight: 36,
-          padding: '0 18px',
-          borderRadius: 999,
-          border: 'none',
-          background: 'var(--white)',
-          color: 'var(--dark-emerald)',
-          fontSize: 12,
+          minHeight: 40,
+          padding: '0 16px',
+          borderRadius: 8,
+          border: '1.5px solid rgba(255,255,255,.7)',
+          color: 'var(--white)',
+          fontSize: 15,
           fontWeight: 700,
-          letterSpacing: '.08em',
-          textTransform: 'uppercase',
           textDecoration: 'none',
           display: 'inline-flex',
           alignItems: 'center',
@@ -326,9 +339,10 @@ export function Navbar() {
               aria-expanded={menuOpen}
               aria-controls={titleId}
               onClick={() => setMenuOpen((o) => !o)}
+              className="nav-btn"
               style={{
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 borderRadius: 8,
                 border: '1px solid rgba(255,255,255,.55)',
                 background: 'transparent',
@@ -350,7 +364,9 @@ export function Navbar() {
       {isMobile && menuOpen && (
         <div
           role="presentation"
-          onClick={() => setMenuOpen(false)}
+          className="nav-backdrop"
+          data-closing={menuClosing}
+          onClick={closeMenu}
           style={{
             position: 'fixed',
             inset: 0,
@@ -361,6 +377,8 @@ export function Navbar() {
           <div
             ref={drawerRef}
             id={titleId}
+            className="nav-drawer"
+            data-closing={menuClosing}
             role="dialog"
             aria-modal="true"
             aria-label="Site menu"
@@ -390,7 +408,7 @@ export function Navbar() {
               <button
                 type="button"
                 aria-label="Close menu"
-                onClick={() => setMenuOpen(false)}
+                onClick={closeMenu}
                 style={{
                   width: 40,
                   height: 40,
@@ -431,20 +449,18 @@ export function Navbar() {
 
             <Link
               href="/survey"
-              onClick={() => setMenuOpen(false)}
+              onClick={closeMenu}
+              className="nav-start"
               style={{
                 marginTop: 16,
                 fontFamily: 'var(--font-sans)',
                 minHeight: 44,
                 padding: '0 18px',
-                borderRadius: 999,
-                border: 'none',
-                background: 'var(--white)',
-                color: 'var(--dark-emerald)',
-                fontSize: 13,
+                borderRadius: 8,
+                border: '1.5px solid rgba(255,255,255,.7)',
+                color: 'var(--white)',
+                fontSize: 15,
                 fontWeight: 700,
-                letterSpacing: '.08em',
-                textTransform: 'uppercase',
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',

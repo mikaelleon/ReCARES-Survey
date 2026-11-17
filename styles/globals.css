@@ -182,14 +182,7 @@ textarea:focus-visible,
 
   .faq-panel {
     transition: none !important;
-  }
-
-  .theme-toggle-icon--spin {
-    animation: none !important;
-  }
-
-
-  .page-loader__spinner,
+  }.page-loader__spinner,
   .btn-spinner,
   .skel,
   .skel-bar,
@@ -203,6 +196,92 @@ textarea:focus-visible,
 
 
 
+
+/* Press confirms the tap: 0.96 and back (named properties, set inline on each button). */
+/* Theme button icon swap: deep scale (0.3 to 1), a turn, and a 3px blur, ease-out 250ms, both at once.
+   A CSS transition, so toggling again mid-swap turns around from where it is. */
+.theme-icons {
+  display: grid;
+  place-items: center;
+}
+
+.theme-icons > span {
+  grid-area: 1 / 1;
+  display: flex;
+  transition:
+    opacity 200ms cubic-bezier(0.32, 0.72, 0, 1),
+    transform 250ms cubic-bezier(0.32, 0.72, 0, 1),
+    filter 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.theme-icons[data-now='light'] .theme-icons__sun,
+.theme-icons[data-now='dark'] .theme-icons__moon {
+  opacity: 0;
+  transform: scale(0.3) rotate(-70deg);
+  filter: blur(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-icons > span {
+    transition: none;
+  }
+}
+
+.nav-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+/* The mobile drawer comes in from the right, ease-out, 250ms, and leaves the way it came,
+   ease-in, 180ms. The backdrop fades with it. */
+.nav-drawer {
+  animation: navDrawerIn 250ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.nav-drawer[data-closing='true'] {
+  animation: navDrawerOut 180ms cubic-bezier(0.55, 0, 1, 0.45) both;
+}
+
+.nav-backdrop {
+  animation: navFadeIn 250ms ease both;
+}
+
+.nav-backdrop[data-closing='true'] {
+  animation: navFadeOut 180ms ease both;
+}
+
+@keyframes navDrawerIn {
+  from { transform: translateX(100%); }
+}
+
+@keyframes navDrawerOut {
+  to { transform: translateX(100%); }
+}
+
+@keyframes navFadeIn {
+  from { opacity: 0; }
+}
+
+@keyframes navFadeOut {
+  to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-drawer,
+  .nav-backdrop {
+    animation: none !important;
+  }
+}
+
+.nav-start {
+  transition: background-color 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .nav-start:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--white);
+  }
+}
 
 .nav-link:hover {
   color: var(--bright-amber) !important;
@@ -229,36 +308,10 @@ textarea:focus-visible,
 
 
 
-@keyframes themeToggleSpin {
-  from {
-    transform: rotate(0deg) scale(1);
-  }
-  50% {
-    transform: rotate(180deg) scale(1.08);
-  }
-  to {
-    transform: rotate(180deg) scale(1);
-  }
-}
-
 .theme-toggle-icon {
   display: block;
   transition: transform 200ms ease-in-out;
-}
-
-.theme-toggle-icon--spin {
-  animation: themeToggleSpin 200ms ease-in-out;
-}
-
-
-
-
-
-
-
-
-
-.visually-hidden {
+}.visually-hidden {
   position: absolute;
   width: 1px;
   height: 1px;
