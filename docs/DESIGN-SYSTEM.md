@@ -462,7 +462,7 @@ Inner padding `clamp(20px, 3vw, 32px)` horizontal `clamp(16px, 4vw, 32px)`, bott
 
 - Section title: Open Sauce One, `clamp(24px, 3vw, 32px)` / 700, `--text-headline`. Secondary titles `clamp(20px, 2.4vw, 24px)`.
 - Lead: 15px caption, max-width 62ch, 8px above, 20px below.
-- Ledger (`DashboardLedger`): the respondent count is the figure (title font, `clamp(44px, 5vw, 64px)`/700, tabular numerals) under a 72×4px four-colour rule, the only place that rule appears on the dashboards. Every other headline number is one ruled row: 14px label, 15px/700 value, 12px note. Row labels link to the matching Responses view. No icon tiles, share bars or stat cards.
+- Ledger (`DashboardLedger`): the respondent count is the figure (title font, `clamp(44px, 5vw, 64px)`/700, tabular numerals) under a 72×4px four-colour rule, the only place that rule appears (Dashboard and Data Analytics share the same ledger markup). Every other headline number is one ruled row: 14px label, 15px/700 value, 12px note. Row labels link to the matching Responses view. No icon tiles, share bars or stat cards.
 - Dashboard surfaces are flat: one 1px border, 8px radius, no shadow, no hover lift, no gradient, no entrance animation.
 - Dashboard labels, tile titles and section titles are sentence case (14px/700). The Simple view lists takeaways as ruled rows, not cards.
 - Tracks are 8px, pill shaped. Emerald fill for distribution bars, orange for gate strips, amber for Likert means.

@@ -8193,7 +8193,8 @@ html.admin-fit-viewport body {
   border-color: rgba(142, 228, 181, 0.14);
 }
 
-/* Interview Invites — streamlined shell */
+/* Interview invites: ledger on top, three ruled stages, then availability.
+   Flat, no cards, no avatars, no pills. Row actions are text. */
 .iv-page {
   margin-bottom: clamp(20px, 3vw, 36px);
 }
@@ -8201,393 +8202,280 @@ html.admin-fit-viewport body {
 .iv-page__header {
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 16px;
+  gap: 8px 16px;
 }
 
-.iv-summary {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
+/* Sort keeps its label for screen readers; the value says what it is. Select, Export and
+   Select-mode are all 40px, so they sit on one line. */
+.iv-page__tools {
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 6px;
-  flex: 1 1 auto;
-  min-width: 0;
+  gap: 8px;
 }
 
-.iv-summary__item {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  min-height: 36px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: var(--dash-card-bg, var(--card-fill-neutral));
-  border: 1px solid var(--dash-card-border, var(--border-subtle));
-  box-shadow: 0 1px 0 rgba(19, 105, 63, 0.04);
-}
-
-.iv-summary__label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--dash-muted, var(--text-caption));
-}
-
-.iv-summary__value {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--text-headline);
+.iv-page__tools label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
   white-space: nowrap;
 }
 
+/* "Select" and "Done" share a width so the toolbar does not shift when mode flips */
+.iv-page__tools > button:last-child {
+  min-width: 88px;
+}
+
 .iv-page .interview-board {
-  margin: 0 0 var(--dash-gap, 12px);
+  margin: 24px 0 32px;
 }
 
-.iv-page .admin-kanban {
-  margin-top: 0;
-}
-
-.iv-page .admin-kanban__scroller {
+.iv-stages {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  overflow: visible;
-  padding-bottom: 0;
-  scroll-snap-type: none;
+  gap: 24px 32px;
+  align-items: start;
 }
 
-.iv-page .admin-kanban-col {
-  flex: none;
-  width: auto;
+.iv-stage {
   min-width: 0;
-  min-height: min(48vh, 420px);
-  max-height: min(56vh, 520px);
-  background: var(--dash-card-bg, var(--card-fill-neutral));
-  border-color: var(--dash-card-border, var(--border-subtle));
-  box-shadow: var(--dash-card-shadow, 0 8px 22px rgba(19, 105, 63, 0.07));
 }
 
-.iv-page .admin-kanban-col__body {
-  flex: 1 1 auto;
-  min-height: 0;
-  gap: 10px;
-  padding: 12px;
-  overflow-y: auto;
-}
-
-.iv-page .admin-kanban-card {
-  gap: 10px;
-  padding: 14px;
-  border-radius: 12px;
-  background: var(--dash-card-bg, #fff);
-  border-color: var(--dash-card-border, var(--border-subtle));
-  box-shadow: 0 2px 8px rgba(19, 105, 63, 0.06);
-}
-
-.iv-page .admin-kanban-card__name {
-  font-size: 13px;
-  word-break: break-all;
-}
-
-.iv-page .interview-board__details dd {
-  font-size: 13px;
-}
-
-.iv-page .admin-kanban-empty {
-  min-height: 120px;
-}
-
-.interview-board__mobile {
-  display: none;
-}
-
-.interview-board__tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-  margin-bottom: 10px;
-  padding: 4px;
-  border-radius: 12px;
-  background: rgba(19, 105, 63, 0.08);
-  border: 1px solid rgba(19, 105, 63, 0.12);
-}
-
-.interview-board__tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-height: 48px;
+.iv-stage__title {
   margin: 0;
-  padding: 8px 6px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--dash-muted, var(--text-caption));
-  font-family: var(--font-sans);
-  cursor: pointer;
-  transition:
-    background 160ms ease,
-    color 160ms ease;
-}
-
-.interview-board__tab.is-active {
-  background: var(--dark-emerald);
-  color: var(--white);
-}
-
-.interview-board__tab-label {
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.2;
-  text-align: center;
-}
-
-.interview-board__tab-count {
+  padding-bottom: 8px;
   font-size: 14px;
-  font-weight: 800;
-  line-height: 1;
+  font-weight: 700;
+  color: var(--text-headline);
+  border-bottom: 1px solid var(--dash-ink-soft, var(--border-default));
 }
 
-.interview-board__mobile-body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 200px;
-}
-
-.iv-page__main {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.95fr);
-  gap: var(--dash-gap, 12px);
-  margin-bottom: var(--dash-gap, 12px);
-  align-items: stretch;
-}
-
-.iv-page__aside {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 0;
-}
-
-.iv-prefs-card {
-  flex: 1 1 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 0;
-  padding: 16px;
-}
-
-.iv-prefs-card__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.iv-prefs-card__head .dash-insight__title {
+.iv-stage__empty {
   margin: 0;
-}
-
-.iv-prefs-card__badge {
-  flex-shrink: 0;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
-}
-
-.iv-prefs-card--days {
-  border-color: rgba(19, 105, 63, 0.18);
-  background:
-    linear-gradient(180deg, rgba(19, 105, 63, 0.07) 0%, transparent 42%),
-    var(--dash-card-bg, var(--card-fill-neutral));
-  box-shadow: var(--dash-card-shadow, 0 8px 22px rgba(19, 105, 63, 0.07));
-}
-
-.iv-prefs-card--days .iv-prefs-card__badge {
-  background: rgba(19, 105, 63, 0.14);
-  color: var(--dark-emerald);
-}
-
-.iv-prefs-card--days .iv-day-bars__fill {
-  background: rgba(19, 105, 63, 0.45);
-}
-
-.iv-prefs-card--days .iv-day-bars__row.is-top .iv-day-bars__fill {
-  background: var(--dark-emerald);
-}
-
-.iv-prefs-card--times {
-  border-color: rgba(247, 128, 33, 0.28);
-  background:
-    linear-gradient(180deg, rgba(247, 128, 33, 0.1) 0%, transparent 42%),
-    var(--dash-card-bg, var(--card-fill-neutral));
-  box-shadow: 0 8px 22px rgba(247, 128, 33, 0.08);
-}
-
-.iv-prefs-card--times .iv-prefs-card__badge {
-  background: rgba(247, 128, 33, 0.16);
-  color: #c45e0c;
-}
-
-.iv-prefs-card--times .iv-day-bars__fill {
-  background: rgba(247, 128, 33, 0.45);
-}
-
-.iv-prefs-card--times .iv-day-bars__row.is-top .iv-day-bars__fill {
-  background: var(--harvest-orange);
-}
-
-.iv-prefs-card--times .iv-day-bars__row.is-top .iv-day-bars__label,
-.iv-prefs-card--times .iv-day-bars__row.is-top .iv-day-bars__value {
-  color: #c45e0c;
-}
-
-.iv-day-bars--roomy {
-  flex: 1 1 auto;
-  justify-content: space-evenly;
-  gap: 10px;
-  min-height: 0;
-}
-
-.iv-day-bars--roomy .iv-day-bars__row {
-  grid-template-columns: 4.5ch minmax(0, 1fr) 2.4ch;
-  gap: 10px;
-}
-
-.iv-day-bars--roomy .iv-day-bars__label {
-  font-size: 12px;
-}
-
-.iv-day-bars--roomy .iv-day-bars__track {
-  height: 12px;
-}
-
-.iv-day-bars--roomy .iv-day-bars__value {
-  font-size: 13px;
-}
-
-.iv-cal__peak {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0;
-  text-transform: none;
+  padding: 12px 0;
+  font-size: 14px;
   color: var(--dash-muted, var(--text-caption));
 }
 
-.iv-day-bars {
+.iv-list {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+.iv-row {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.iv-day-bars__row {
-  display: grid;
-  grid-template-columns: 3.2ch minmax(0, 1fr) 2ch;
+  align-items: flex-start;
   gap: 8px;
-  align-items: center;
+  /* Side padding is always there, so the selected tint never shifts the text */
+  margin: 0 -8px;
+  padding: 12px 8px 4px;
+  border-bottom: 1px solid var(--dash-card-border, var(--border-subtle));
+  transition: background-color 150ms ease-in-out;
 }
 
-.iv-day-bars__label {
-  font-size: 11px;
+.iv-row.is-selected {
+  background: var(--card-fill-accordion-open);
+}
+
+.iv-row.is-busy .iv-row__main {
+  opacity: 0.55;
+}
+
+.iv-row.is-entering {
+  animation: ivRowIn 220ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes ivRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.iv-row__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.iv-row__main {
+  transition: opacity 150ms ease-in-out;
+}
+
+.iv-row__main p {
+  margin: 0;
+}
+
+.iv-row__email {
+  font-size: 14px;
   font-weight: 700;
+  line-height: 20px;
+  color: var(--dash-ink, var(--text-headline));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iv-row__when {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 20px;
   color: var(--dash-ink-soft, var(--text-body));
 }
 
-.iv-day-bars__track {
-  height: 8px;
-  border-radius: 999px;
-  background: var(--dash-track, rgba(19, 105, 63, 0.1));
-  overflow: hidden;
-}
-
-.iv-day-bars__fill {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--dash-fill-secondary, #5f7a6a);
-}
-
-.iv-day-bars__row.is-top .iv-day-bars__label,
-.iv-day-bars__row.is-top .iv-day-bars__value {
-  color: var(--text-headline);
-  font-weight: 700;
-}
-
-.iv-day-bars__row.is-top .iv-day-bars__fill {
-  background: var(--dash-fill, var(--dark-emerald));
-}
-
-.iv-day-bars__row.is-zero .iv-day-bars__label,
-.iv-day-bars__row.is-zero .iv-day-bars__value {
+.iv-row__meta {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 16px;
   color: var(--dash-muted, var(--text-caption));
-  opacity: 0.72;
+  font-variant-numeric: tabular-nums;
 }
 
-.iv-day-bars__value {
-  font-size: 11px;
+/* Next step on the left, the destructive one alone on the right edge */
+.iv-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 0 16px;
+  margin-top: 4px;
+}
+
+.iv-row__actions .iv-act--danger {
+  margin-left: auto;
+}
+
+.iv-act {
+  min-height: 40px;
+  margin: 0;
+  padding: 0;
+  font-variant-numeric: tabular-nums;
+  touch-action: manipulation;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 14px;
   font-weight: 700;
-  text-align: right;
+  color: var(--dash-muted, var(--text-caption));
+  cursor: pointer;
+  transition: color 160ms ease-in-out;
+}
+
+.iv-act--primary {
+  color: var(--text-headline);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.iv-act:not(:disabled):active {
+  transform: scale(0.96);
+}
+
+.iv-act:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Fingers: 44px tall, and no two targets closer than 16px */
+@media (pointer: coarse) {
+  .iv-act {
+    min-height: 44px;
+  }
+}
+
+@media (hover: hover) {
+  .iv-act:hover:not(:disabled) {
+    color: var(--text-headline);
+  }
+
+  .iv-act--danger:hover:not(:disabled) {
+    color: var(--status-error);
+  }
+}
+
+/* Availability: the most common slot is the lead, the month is the proof */
+.iv-avail {
+  display: grid;
+  grid-template-columns: minmax(200px, 0.8fr) minmax(0, 2fr);
+  gap: 24px 32px;
+  align-items: start;
+}
+
+.iv-avail__eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-headline);
+}
+
+.iv-avail__slot {
+  margin: 4px 0 8px;
+  font-family: var(--font-title);
+  font-size: clamp(28px, 3.2vw, 40px);
+  font-weight: 700;
+  line-height: 1.1;
   color: var(--dash-ink, var(--text-headline));
+}
+
+.iv-avail__slot--none {
+  opacity: 0.45;
+}
+
+.iv-avail__note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--dash-muted, var(--text-caption));
 }
 
 .iv-cal {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 0;
+  min-width: 0;
 }
 
 .iv-cal__head {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px 16px;
+  gap: 8px 16px;
+}
+
+.iv-cal__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-headline);
 }
 
 .iv-cal__nav {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .iv-cal__nav-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--dash-card-border, var(--border-subtle));
-  border-radius: 10px;
-  background: var(--dash-icon-bg, rgba(19, 105, 63, 0.1));
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
   color: var(--text-headline);
   cursor: pointer;
-  transition: background 160ms ease, transform 160ms ease;
 }
 
-.iv-cal__nav-btn:hover {
-  background: rgba(19, 105, 63, 0.16);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .iv-cal__nav-btn:hover {
+    background: var(--surface-2);
+  }
 }
 
 .iv-cal__month {
   margin: 0;
-  min-width: 10ch;
+  min-width: 12ch;
   text-align: center;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-headline);
 }
@@ -8595,39 +8483,39 @@ html.admin-fit-viewport body {
 .iv-cal__grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
+  gap: 4px;
 }
 
 .iv-cal__dow {
   text-align: center;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--dash-muted, var(--text-caption));
-  padding-bottom: 2px;
+  padding-bottom: 4px;
 }
 
 .iv-cal__day {
-  position: relative;
   min-height: 52px;
-  padding: 6px;
+  padding: 4px 8px;
   border: 1px solid transparent;
-  border-radius: 10px;
-  background: rgba(19, 105, 63, 0.04);
+  border-radius: 4px;
+  background: transparent;
   color: var(--dash-ink, var(--text-headline));
+  font-family: var(--font-sans);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 4px;
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  transition: background 160ms ease-in-out;
 }
 
 .iv-cal__day.is-outside {
-  opacity: 0.35;
+  opacity: 0.3;
   cursor: default;
+}
+
+.iv-cal__day.is-past {
+  opacity: 0.55;
 }
 
 .iv-cal__day.is-low {
@@ -8635,45 +8523,44 @@ html.admin-fit-viewport body {
 }
 
 .iv-cal__day.is-mid {
-  background: rgba(19, 105, 63, 0.2);
+  background: rgba(19, 105, 63, 0.22);
 }
 
-.iv-cal__day.is-high {
-  background: rgba(19, 105, 63, 0.34);
-  color: var(--emerald-900, #0f5a35);
-}
-
-.iv-cal__day.is-peak,
-.iv-cal__day.is-peak-day {
+.iv-cal__day.is-peak {
   background: var(--dark-emerald);
   color: var(--white);
-  box-shadow: 0 8px 18px rgba(19, 105, 63, 0.28);
+}
+
+.iv-cal__day.is-today .iv-cal__date {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .iv-cal__day.is-selected {
-  border-color: var(--harvest-orange);
-  box-shadow: 0 0 0 2px rgba(247, 128, 33, 0.35);
-  transform: translateY(-1px);
+  border-color: var(--text-headline);
 }
 
-.iv-cal__day:not(:disabled):hover {
-  transform: translateY(-1px);
+.iv-cal__day:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.iv-cal__nav-btn:active {
+  transform: scale(0.96);
 }
 
 .iv-cal__date {
   font-size: 12px;
-  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .iv-cal__count {
   align-self: flex-end;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  opacity: 0.9;
+  font-variant-numeric: tabular-nums;
 }
 
 .iv-cal__detail {
-  margin-top: 4px;
   padding-top: 12px;
   border-top: 1px solid var(--dash-card-border, var(--border-subtle));
   min-height: 96px;
@@ -8681,24 +8568,25 @@ html.admin-fit-viewport body {
 
 .iv-cal__detail-title {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-family: var(--font-sans);
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-headline);
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 10px;
+  gap: 4px 12px;
   align-items: baseline;
 }
 
 .iv-cal__detail-meta {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 400;
   color: var(--dash-muted, var(--text-caption));
 }
 
 .iv-cal__empty {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--dash-muted, var(--text-caption));
 }
 
@@ -8706,27 +8594,24 @@ html.admin-fit-viewport body {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 160px;
+  max-height: 200px;
   overflow: auto;
 }
 
 .iv-cal__item {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 8px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(19, 105, 63, 0.06);
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--dash-card-border, var(--border-subtle));
 }
 
 .iv-cal__email {
-  flex: 1 1 140px;
+  flex: 1 1 160px;
   min-width: 0;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--dash-ink, var(--text-headline));
   overflow: hidden;
@@ -8734,102 +8619,28 @@ html.admin-fit-viewport body {
   white-space: nowrap;
 }
 
-.iv-cal__tag {
-  flex: 0 0 auto;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-  background: rgba(19, 105, 63, 0.12);
-  color: var(--text-headline);
-}
-
-.iv-cal__tag--time {
-  background: var(--dash-accent-soft, rgba(247, 128, 33, 0.14));
-  color: #c45e0c;
-}
-
-[data-theme='dark'] .iv-cal__day.is-high {
-  color: var(--white);
-}
-
-[data-theme='dark'] .iv-cal__tag--time {
-  color: #f0a46a;
+.iv-cal__when {
+  font-size: 12px;
+  color: var(--dash-muted, var(--text-caption));
 }
 
 @media (max-width: 960px) {
-  .iv-page__header {
-    align-items: stretch;
-  }
-
-  .iv-summary {
-    justify-content: flex-start;
-  }
-
-  .iv-page .interview-board__desktop {
-    display: none;
-  }
-
-  .interview-board__mobile {
-    display: block;
-  }
-
-  .iv-page__main {
+  .iv-stages,
+  .iv-avail {
     grid-template-columns: 1fr;
   }
-
-  .iv-page .admin-kanban-card__actions {
-    flex-wrap: wrap;
-  }
-
-  .iv-page .admin-kanban-icon-btn--primary {
-    flex: 1 1 auto;
-    min-height: 44px;
-  }
-
-  .iv-page .admin-kanban-icon-btn--danger {
-    min-width: 44px;
-    min-height: 44px;
-  }
 }
 
-@media (max-width: 640px) {
-  .iv-summary__item {
-    flex: 1 1 calc(50% - 6px);
-    justify-content: space-between;
+@media (prefers-reduced-motion: reduce) {
+  .iv-row.is-entering {
+    animation: none;
   }
 
-  .iv-cal__grid {
-    gap: 4px;
+  .iv-act:active,
+  .iv-cal__day:active,
+  .iv-cal__nav-btn:active {
+    transform: none;
   }
-}
-
-/* Interview Invites board */
-
-.interview-board__details {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.interview-board__details div {
-  display: grid;
-  gap: 2px;
-}
-
-.interview-board__details dt {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-caption);
-}
-
-.interview-board__details dd {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-body);
 }
 
 /* Field-code plain-language tips */
@@ -15915,6 +15726,12 @@ textarea.sb-input {
 
 .page-title__icon {
   flex: none;
+  align-self: center;
+  width: 1em;
+  height: 1em;
+  min-width: 20px;
+  min-height: 20px;
+  margin-left: 12px;
   opacity: 0.7;
 }
 
@@ -19423,13 +19240,11 @@ i.an-grp {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 16px;
-  margin-bottom: 12px;
-  padding: 8px 16px;
-  border: 1px solid var(--dash-card-border, var(--border-subtle));
-  border-radius: 12px;
-  background: var(--dash-card-bg, var(--surface-card, #fff));
-  box-shadow: var(--dash-card-shadow, 0 8px 22px rgba(19, 105, 63, 0.07));
+  gap: 0 16px;
+  margin-bottom: 8px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--dash-ink-soft, var(--border-default));
+  animation: riseIn 200ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
 .iv-bulk__all {
@@ -19462,7 +19277,7 @@ i.an-grp {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 44px;
+  min-height: 40px;
   padding: 0 16px;
   border-radius: var(--radius-sm, 8px);
   font-family: var(--font-sans);
@@ -19502,19 +19317,15 @@ i.an-grp {
   outline-offset: 2px;
 }
 
+/* 44px target, centred on the email line (20px tall, 12px below the row top) */
 .iv-select {
   display: grid;
   place-items: center;
   flex: none;
   width: 44px;
   height: 44px;
-  margin: -8px 0 -8px -8px;
+  margin: -12px 0 -12px -12px;
   cursor: pointer;
-}
-
-.iv-page .admin-kanban-card.is-selected {
-  border-color: var(--dark-emerald, #13693f);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--dark-emerald, #13693f) 35%, transparent);
 }
 
 /* ==========================================================================
@@ -20640,4 +20451,559 @@ html[data-theme-switching] .survey-stage *::after {
   .dash-view-toggle::before {
     transition: none;
   }
+}
+
+/* ==========================================================================
+   Data Analytics — unslop pass. Same ledger as the Dashboard: Responses is the
+   figure, the other headline numbers are ruled rows. Flat surfaces, solid hairlines.
+   ========================================================================== */
+.an-page .an-filters {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.an-page .an-filter select,
+.an-page .an-download {
+  border-radius: 8px;
+}
+
+.an-page .an-top {
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  gap: 32px;
+  align-items: start;
+}
+
+.an-page .an-ledger {
+  grid-template-columns: minmax(160px, 0.7fr) minmax(0, 2fr);
+  padding: 0;
+}
+
+.an-page .an-ledger .ledger__rows {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: none;
+  grid-auto-flow: row;
+}
+
+.an-page .an-ledger .ledger__row dd {
+  white-space: normal;
+}
+
+.an-page .an-highlights {
+  padding: 14px 0 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  animation: none;
+  color: var(--text-body);
+}
+
+.an-page .an-highlights h2 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-headline);
+}
+
+.an-page .an-highlights ul {
+  gap: 8px;
+}
+
+.an-page .an-highlights li::before {
+  width: 4px;
+  height: 4px;
+  background: var(--text-caption);
+}
+
+.an-page .an-highlights p {
+  color: var(--text-caption);
+  opacity: 1;
+}
+
+/* Solid hairlines: dotted gridlines read as generated */
+.an-page .an-trend__grid,
+.an-page .an-trend__cursor {
+  stroke-dasharray: none;
+}
+
+/* Tabs: one accent, the same emerald the Dashboard uses */
+.an-page .an-tabs__btn::after {
+  background: var(--dark-emerald);
+}
+
+[data-theme='dark'] .an-page .an-tabs__btn::after {
+  background: var(--text-headline);
+}
+
+/* Downloads: no lift or shadow; press scales */
+@media (hover: hover) {
+  .an-page .an-download:not(:disabled):hover {
+    transform: none;
+    box-shadow: none;
+    background: var(--accent-hover);
+  }
+}
+
+.an-page .an-download:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+@media (max-width: 900px) {
+  .an-page .an-top {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .an-page .an-ledger {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Count ledger on list screens (Findings Log, Reviews): three rows sit in one column. */
+.dash-page .count-ledger {
+  grid-template-columns: minmax(160px, 0.7fr) minmax(0, 2fr);
+  padding: 0 0 8px;
+}
+
+.dash-page .count-ledger .ledger__rows {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: none;
+  grid-auto-flow: row;
+}
+
+.dash-page .count-ledger .ledger__row dd {
+  white-space: normal;
+}
+
+@media (max-width: 900px) {
+  .dash-page .count-ledger {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   Thank-you — one paper sheet (the homepage notice), no cards, no icon tiles.
+   ========================================================================== */
+.ty-page {
+  max-width: 680px;
+}
+
+.ty-sheet {
+  margin: clamp(8px, 3vw, 24px) 0 0;
+}
+
+.ty-sheet .ty-title {
+  animation: none;
+  color: var(--ty-accent, var(--dark-emerald));
+  text-align: left;
+}
+
+.ty-sheet .ty-lead {
+  max-width: 56ch;
+  margin-top: 12px;
+  animation: none;
+  color: var(--ink);
+}
+
+.ty-sheet strong {
+  font-weight: 700;
+  color: inherit;
+}
+
+.ty-sheet .ty-notice {
+  display: block;
+  margin: 20px 0 0;
+  padding: 12px 0;
+  border-radius: 0;
+  border-top: 1px solid var(--ink-hairline);
+  border-bottom: 1px solid var(--ink-hairline);
+  background: transparent;
+  color: var(--ink);
+  animation: none;
+}
+
+.ty-sheet .ty-section {
+  margin-top: 28px;
+}
+
+.ty-sheet .ty-heading {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: var(--ty-accent, var(--dark-emerald));
+}
+
+/* Numbered rows ruled like a ledger; no icons, no connector line */
+.ty-sheet .ty-steps {
+  counter-reset: ty;
+}
+
+.ty-sheet .ty-steps li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ink-hairline);
+  animation: none;
+  counter-increment: ty;
+}
+
+.ty-sheet .ty-steps li:last-child {
+  padding-bottom: 12px;
+}
+
+.ty-sheet .ty-steps li::before {
+  content: counter(ty);
+  position: static;
+  width: auto;
+  background: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.ty-sheet .ty-steps h3 {
+  grid-column: 2;
+  color: var(--ink);
+}
+
+.ty-sheet .ty-steps p {
+  grid-column: 2;
+  color: var(--ink);
+}
+
+.ty-sheet .ty-list li::before {
+  width: 4px;
+  height: 4px;
+  top: 0.8em;
+  left: 6px;
+  background: var(--ink-soft);
+}
+
+.ty-sheet .ty-body,
+.ty-sheet .ty-list {
+  color: var(--ink);
+}
+
+.ty-sheet .ty-actions {
+  justify-content: flex-start;
+  margin-top: 28px;
+}
+
+/* The sheet stays one reading column at every width (wide-screen rules above made it three). */
+.survey-flow.ty-page {
+  max-width: 680px;
+}
+
+.ty-sheet .ty-steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.ty-sheet .ty-steps li,
+.ty-sheet .ty-steps li:last-child {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-content: start;
+  gap: 2px 0;
+  padding: 12px 0;
+}
+
+.ty-sheet .ty-steps li:not(:last-child)::before {
+  position: static;
+  top: auto;
+  right: auto;
+  left: auto;
+  width: auto;
+  height: auto;
+  grid-row: 1 / span 2;
+}
+
+.ty-sheet .ty-steps h3,
+.ty-sheet .ty-steps p {
+  margin: 0;
+}
+
+/* Orange on paper fails contrast; links on the sheet use the notice green. */
+.ty-sheet .ty-list a {
+  color: var(--ty-accent, var(--dark-emerald));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ==========================================================================
+   Thank-you sheet follows the theme. It hangs from nothing, so it drops the
+   fence shadow: light is warm paper on a soft tinted shadow, dark is a lifted
+   surface with a hairline and no shadow at all.
+   ========================================================================== */
+.ty-sheet {
+  --ty-accent: var(--dark-emerald);
+}
+
+.ty-sheet .notice__shadow {
+  box-shadow:
+    0 1px 2px rgba(11, 40, 24, 0.06),
+    0 14px 32px -18px rgba(11, 40, 24, 0.2);
+}
+
+.ty-sheet .notice__shadow::before,
+.ty-sheet .notice__shadow::after {
+  display: none;
+}
+
+[data-theme='dark'] .ty-sheet {
+  --ty-accent: #8ee4b5;
+  --paper: var(--card-fill-neutral);
+  --ink: var(--white);
+  --ink-soft: rgba(229, 235, 232, 0.72);
+  --ink-hairline: rgba(255, 255, 255, 0.14);
+  --text-headline: #8ee4b5;
+  --text-section-heading: #8ee4b5;
+  --border-default: rgba(255, 255, 255, 0.3);
+  --field-bg: var(--surface-2);
+  --field-text: var(--white);
+}
+
+[data-theme='dark'] .ty-sheet .notice__shadow {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* Fibre and the upper-left light are paper effects; on a dark surface they read as a grey wash. */
+[data-theme='dark'] .ty-sheet .notice__paper::before {
+  display: none;
+}
+
+[data-theme='dark'] .ty-sheet .notice__paper::after {
+  background: none;
+  box-shadow: none;
+}
+
+[data-theme='dark'] .ty-sheet .ty-copy {
+  color: var(--white);
+}
+
+[data-theme='dark'] .ty-sheet .ty-copy[data-copied] {
+  background: var(--emerald-600);
+  border-color: var(--emerald-600);
+}
+
+/* ==========================================================================
+   Responses — unslop pass. Same flat surfaces as the Dashboard: the panel keeps
+   one border, charts inside it are ruled sections instead of cards in a card,
+   and small labels are sentence case.
+   ========================================================================== */
+.resp-page .admin-panel,
+.resp-page .gf-panel {
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+/* The filter bar sits on the page; it does not need a card of its own */
+.resp-page .responses-toolbar {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Charts: a hairline and space, not a second bordered, shadowed card */
+.resp-page .gf-card {
+  padding: 16px 0 0;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.resp-page .gf-individual__card {
+  padding: 16px 0 0;
+}
+
+.resp-page .gf-individual__sub,
+.resp-page .gf-individual__dl dt,
+.resp-page .rr-card__dl dt,
+.resp-page .rr-card__tags-label,
+.resp-page .rr-list__head,
+.resp-page .rr-table thead th,
+.resp-page .rr-table td[data-label]::before {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.resp-page .gf-individual__sub {
+  font-size: 14px;
+}
+
+/* Status pill: one cue (a tint), and no dashed outline */
+.resp-page .rr-pill {
+  border: 0;
+}
+
+.resp-page .rr-pill--partial {
+  border-style: none;
+}
+
+/* Orange text on white fails contrast */
+.resp-page .gf-question__note-link a:hover {
+  color: var(--text-headline);
+  text-decoration-thickness: 2px;
+}
+
+/* ==========================================================================
+   Responses — spacing pass. One scale (8 / 16 / 24): 16 between header, filters
+   and panel; 24 between chart sections; 12 between a chart's title and its body.
+   ========================================================================== */
+.resp-page {
+  --dash-gap: 16px;
+}
+
+.resp-page .admin-panel,
+.resp-page .gf-panel {
+  padding: clamp(16px, 2.4vw, 24px);
+}
+
+.resp-page .gf-summary,
+.resp-page .gf-bento {
+  padding-bottom: 0;
+}
+
+.resp-page .gf-bento,
+.resp-page .gf-summary__stack {
+  gap: 24px;
+  margin-top: 0;
+}
+
+.resp-page .gf-bento__pies,
+.resp-page .gf-bento__likert {
+  gap: 24px;
+}
+
+.resp-page .gf-bento__full {
+  gap: 16px;
+}
+
+.resp-page .gf-bento__full .gf-card,
+.resp-page .gf-bento__likert .gf-card {
+  padding-bottom: 0;
+}
+
+.resp-page .gf-card__head,
+.resp-page .gf-card--compact .gf-card__head {
+  margin-bottom: 12px;
+}
+
+.resp-page .gf-pager {
+  margin-bottom: 24px;
+}
+
+.resp-page .admin-panel__footnote {
+  margin-top: 24px;
+}
+
+/* ==========================================================================
+   Responses — flat surfaces. workspace-ui.css paints every admin card with a
+   white fill, border, radius and emerald shadow at specificity (0,3,0); these
+   selectors sit above it, scoped to this screen only.
+   ========================================================================== */
+.admin-app.admin-app .resp-page :is(.admin-panel, .gf-panel) {
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.admin-app.admin-app .resp-page .responses-toolbar {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.admin-app.admin-app .resp-page :is(.gf-card, .gf-individual__card) {
+  padding: 16px 0 0;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Copy and remove: quiet icon buttons, not four outlined squares per row */
+.admin-app.admin-app .resp-page :is(.gf-card__copy, .gf-card__remove) {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (hover: hover) {
+  .admin-app.admin-app .resp-page :is(.gf-card__copy, .gf-card__remove):hover {
+    background: var(--surface-2);
+  }
+}
+
+/* Filter labels: sentence case */
+.resp-page .responses-toolbar label,
+.resp-page .responses-toolbar .field__label {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ==========================================================================
+   Responses — interaction pass. The actions menu grows out of its button, hover
+   states only run where a pointer hovers, and presses scale to 0.96.
+   ========================================================================== */
+@keyframes respMenuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.gf-panel__menu {
+  transform-origin: top right;
+  animation: respMenuIn 150ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.gf-tabs__tab {
+  transition: color 150ms ease, border-color 150ms ease;
+}
+
+.gf-tabs__tab:hover {
+  color: var(--text-headline);
+}
+
+@media (hover: none) {
+  .gf-tabs__tab:hover:not(.gf-tabs__tab--active) {
+    color: var(--text-caption);
+  }
+}
+
+.gf-panel__menu-btn,
+.gf-card__copy,
+.gf-card__remove,
+.gf-pager__btn,
+.rt-dir,
+.rt-toggle {
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.gf-panel__menu-btn:active,
+.gf-card__copy:active,
+.gf-card__remove:active,
+.gf-pager__btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.admin-app.admin-app .rt-dir:active,
+.admin-app.admin-app .rt-toggle:active {
+  transform: scale(0.96);
 }

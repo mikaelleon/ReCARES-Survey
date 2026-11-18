@@ -2,12 +2,7 @@
 
 import { PageHeading } from '@/components/admin/PageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  CheckCircle2,
-  FilePenLine,
-  NotebookPen,
-  Sparkles,
-} from 'lucide-react';
+import { CountLedger } from '@/components/admin/CountLedger';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
 import { AdminOverlayPortal } from '@/components/admin/AdminOverlayPortal';
@@ -21,7 +16,6 @@ import {
   type FindingSortOption,
 } from '@/components/admin/notes/FindingNotesToolbar';
 import { Button } from '@/components/ui/Button';
-import { StatSkeleton } from '@/components/ui/Skeleton';
 import { canWriteFindingNotes } from '@/lib/admin/access';
 import { RESPONSE_QUESTION_OPTIONS } from '@/lib/admin/responseQuestions';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -320,7 +314,6 @@ function FindingNotesContent() {
                 setSelected(null);
               }}
             >
-              <NotebookPen size={16} strokeWidth={2.2} aria-hidden="true" />
               New note
             </Button>
           ) : (
@@ -331,54 +324,19 @@ function FindingNotesContent() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="finding-notes-kpis">
-          <StatSkeleton count={4} />
-        </div>
-      ) : (
-        <div className="dash-stat-grid finding-notes-kpis" aria-label="Findings summary">
-          <article className="dash-stat dash-stat--hero">
-            <div className="dash-stat__top">
-              <span className="dash-stat__icon" aria-hidden="true">
-                <NotebookPen size={16} strokeWidth={2.2} />
-              </span>
-              <p className="dash-stat__label">Total notes</p>
-            </div>
-            <p className="dash-stat__value">{emptyDataset ? '—' : kpis.total}</p>
-            <p className="dash-stat__caption">Across the team log</p>
-          </article>
-          <article className="dash-stat dash-stat--neutral">
-            <div className="dash-stat__top">
-              <span className="dash-stat__icon dash-stat__icon--neutral" aria-hidden="true">
-                <FilePenLine size={16} strokeWidth={2.2} />
-              </span>
-              <p className="dash-stat__label">Draft</p>
-            </div>
-            <p className="dash-stat__value">{emptyDataset ? '—' : kpis.draft}</p>
-            <p className="dash-stat__caption">Still being written</p>
-          </article>
-          <article className="dash-stat dash-stat--neutral">
-            <div className="dash-stat__top">
-              <span className="dash-stat__icon dash-stat__icon--neutral" aria-hidden="true">
-                <Sparkles size={16} strokeWidth={2.2} />
-              </span>
-              <p className="dash-stat__label">Reviewed</p>
-            </div>
-            <p className="dash-stat__value">{emptyDataset ? '—' : kpis.reviewed}</p>
-            <p className="dash-stat__caption">Ready for feedback</p>
-          </article>
-          <article className="dash-stat dash-stat--metric">
-            <div className="dash-stat__top">
-              <span className="dash-stat__icon dash-stat__icon--metric" aria-hidden="true">
-                <CheckCircle2 size={16} strokeWidth={2.2} />
-              </span>
-              <p className="dash-stat__label">Final</p>
-            </div>
-            <p className="dash-stat__value">{emptyDataset ? '—' : kpis.final}</p>
-            <p className="dash-stat__caption">Locked until unlocked</p>
-          </article>
-        </div>
-      )}
+      <CountLedger
+        ariaLabel="Findings summary"
+        label="Notes"
+        total={kpis.total}
+        totalNote="Across the team log"
+        empty={emptyDataset}
+        loading={loading}
+        rows={[
+          { label: 'Draft', value: kpis.draft, note: 'still being written' },
+          { label: 'Reviewed', value: kpis.reviewed, note: 'ready for feedback' },
+          { label: 'Final', value: kpis.final, note: 'locked until unlocked' },
+        ]}
+      />
 
       <FindingNotesToolbar
         search={search}

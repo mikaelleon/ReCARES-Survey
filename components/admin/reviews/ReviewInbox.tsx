@@ -1,12 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import {
-  CircleCheck,
-  CircleDot,
-  MessageSquareText,
-  MessagesSquare,
-} from 'lucide-react';
+import { CountLedger } from '@/components/admin/CountLedger';
 import { CommentForm, type ReviewNoteOption } from '@/components/admin/reviews/CommentForm';
 import styles from '@/components/admin/reviews/reviews.module.css';
 import { ThreadList } from '@/components/admin/reviews/ThreadList';
@@ -14,7 +9,6 @@ import { ThreadPanel } from '@/components/admin/reviews/ThreadPanel';
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
-import { StatSkeleton } from '@/components/ui/Skeleton';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { canCreateRootFeedback, type AdminRole } from '@/lib/admin/access';
 import { getQuestionById } from '@/lib/admin/responseQuestions';
@@ -375,54 +369,19 @@ export function ReviewInbox({
       ) : null}
 
       {!compact ? (
-        loading ? (
-          <div className={styles.kpis}>
-            <StatSkeleton count={4} />
-          </div>
-        ) : (
-          <div className={`dash-stat-grid ${styles.kpis}`} aria-label="Reviews summary">
-            <article className="dash-stat dash-stat--hero">
-              <div className="dash-stat__top">
-                <span className="dash-stat__icon" aria-hidden="true">
-                  <MessagesSquare size={16} strokeWidth={2.2} />
-                </span>
-                <p className="dash-stat__label">Threads</p>
-              </div>
-              <p className="dash-stat__value">{emptyDataset ? '—' : kpis.total}</p>
-              <p className="dash-stat__caption">Root review comments</p>
-            </article>
-            <article className="dash-stat dash-stat--neutral">
-              <div className="dash-stat__top">
-                <span className="dash-stat__icon dash-stat__icon--neutral" aria-hidden="true">
-                  <CircleDot size={16} strokeWidth={2.2} />
-                </span>
-                <p className="dash-stat__label">Open</p>
-              </div>
-              <p className="dash-stat__value">{emptyDataset ? '—' : kpis.open}</p>
-              <p className="dash-stat__caption">Awaiting response</p>
-            </article>
-            <article className="dash-stat dash-stat--neutral">
-              <div className="dash-stat__top">
-                <span className="dash-stat__icon dash-stat__icon--neutral" aria-hidden="true">
-                  <MessageSquareText size={16} strokeWidth={2.2} />
-                </span>
-                <p className="dash-stat__label">Addressed</p>
-              </div>
-              <p className="dash-stat__value">{emptyDataset ? '—' : kpis.addressed}</p>
-              <p className="dash-stat__caption">Proponent replied</p>
-            </article>
-            <article className="dash-stat dash-stat--metric">
-              <div className="dash-stat__top">
-                <span className="dash-stat__icon dash-stat__icon--metric" aria-hidden="true">
-                  <CircleCheck size={16} strokeWidth={2.2} />
-                </span>
-                <p className="dash-stat__label">Resolved</p>
-              </div>
-              <p className="dash-stat__value">{emptyDataset ? '—' : kpis.resolved}</p>
-              <p className="dash-stat__caption">Closed by adviser</p>
-            </article>
-          </div>
-        )
+        <CountLedger
+          ariaLabel="Reviews summary"
+          label="Threads"
+          total={kpis.total}
+          totalNote="Root review comments"
+          empty={emptyDataset}
+          loading={loading}
+          rows={[
+            { label: 'Open', value: kpis.open, note: 'awaiting response' },
+            { label: 'Addressed', value: kpis.addressed, note: 'proponent replied' },
+            { label: 'Resolved', value: kpis.resolved, note: 'closed by adviser' },
+          ]}
+        />
       ) : null}
 
       <div className={styles.toolbar} role="search">

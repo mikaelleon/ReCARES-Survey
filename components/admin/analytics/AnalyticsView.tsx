@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ArrowDownRight, ArrowUpRight, Download, FileText, Minus, Monitor, Sparkles, Smartphone, Users, Wifi, Handshake, Star } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import { downloadReportDocx } from '@/lib/admin/downloadDocx';
 import { AnalyticsDocument } from '@/components/admin/analytics/AnalyticsDocument';
 import { EvidenceSummaryView } from '@/components/admin/analytics/EvidenceSummaryView';
@@ -17,7 +17,7 @@ import { HorizontalBars } from '@/components/admin/charts/HorizontalBars';
 import { PieChart } from '@/components/admin/charts/PieChart';
 import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
 import { PageTitle } from '@/components/admin/PageTitle';
-import { ChartSkeleton, StatSkeleton } from '@/components/ui/Skeleton';
+import { ChartSkeleton } from '@/components/ui/Skeleton';
 import { computeKpis } from '@/lib/admin/analytics';
 import {
   ACCESS_ITEMS,
@@ -87,42 +87,14 @@ function Card({
   );
 }
 
-function Kpi({
-  icon,
-  label,
-  value,
-  caption,
-  trend,
-  hero = false,
-  empty,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  caption: string;
-  trend?: string | null;
-  hero?: boolean;
-  empty: boolean;
-}) {
-  const direction = trend?.startsWith('+') ? 'up' : trend?.startsWith('-') ? 'down' : 'flat';
+function LedgerRow({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
-    <div className={`an-kpi${hero ? ' an-kpi--hero' : ''}`}>
-      <div className="an-kpi__top">
-        <span className="an-kpi__icon" aria-hidden="true">
-          {icon}
-        </span>
-        <span className="an-kpi__label">{label}</span>
-      </div>
-      <div className="an-kpi__value">{empty ? '—' : value}</div>
-      <div className="an-kpi__foot">
-        <span>{caption}</span>
-        {trend ? (
-          <span className={`an-kpi__trend an-kpi__trend--${direction}`}>
-            {direction === 'up' ? <ArrowUpRight size={13} strokeWidth={2.4} aria-hidden="true" /> : direction === 'down' ? <ArrowDownRight size={13} strokeWidth={2.4} aria-hidden="true" /> : <Minus size={13} strokeWidth={2.4} aria-hidden="true" />}
-            {trend}
-          </span>
-        ) : null}
-      </div>
+    <div className="ledger__row">
+      <dt>{label}</dt>
+      <dd>
+        <span className="ledger__value">{value}</span>
+        {note ? <span className="ledger__note">{note}</span> : null}
+      </dd>
     </div>
   );
 }
@@ -253,7 +225,6 @@ export function AnalyticsView({
       <div className="dash-page__header">
         <div>
           <PageTitle pageId="admin-analytics-title">Data Analytics</PageTitle>
-          <p className="an-page__sub">Charts that compare, rank, and track survey answers. Use the filters to focus on a group.</p>
         </div>
         <div className="dash-page__tools" aria-label="Analytics filters">
           <div className="dash-page__filter-open">
@@ -345,10 +316,45 @@ export function AnalyticsView({
       ) : null}
 
       <div className="an-top">
+        {loading ? (
+          <div className="ledger an-ledger skel-region" aria-busy="true">
+            <span className="visually-hidden">Loading metrics</span>
+            <div className="ledger__count skel-stat" style={{ minHeight: 120 }} />
+            <div className="ledger__rows skel-stat" style={{ minHeight: 120 }} />
+          </div>
+        ) : (
+          <section className="ledger an-ledger" aria-label="Headline numbers">
+            <div className="ledger__count">
+              <p className="ledger__eyebrow">Responses</p>
+              <p className="ledger__figure">{empty ? <span className="ledger__none">—</span> : kpis.total}</p>
+              <p className="ledger__trend">
+                {empty
+                  ? 'None in view'
+                  : `${kpis.last7DaysCount} in the last 7 days${periodTrend ? ` · ${periodTrend}` : ''}`}
+              </p>
+            </div>
+            <dl className="ledger__rows">
+              <LedgerRow
+                label="Digital-ready"
+                value={empty ? '—' : `${digital.pct}%`}
+                note={empty ? undefined : `${digital.count} of ${digital.total} have a device and internet`}
+              />
+              <LedgerRow
+                label="Feature interest"
+                value={empty || !interest.n ? '—' : `${interest.mean.toFixed(1)} / 5`}
+                note="average likelihood to use a feature"
+              />
+              <LedgerRow
+                label="Open to interview"
+                value={empty ? '—' : `${interview.pct}%`}
+                note={empty ? undefined : `${interview.yes} said yes`}
+              />
+            </dl>
+          </section>
+        )}
+
         <aside className="an-highlights" aria-label="Highlights">
-          <h2>
-            <Sparkles size={16} strokeWidth={2.2} aria-hidden="true" /> Highlights
-          </h2>
+          <h2>Highlights</h2>
           {loading ? (
             <p>Loading…</p>
           ) : highlights.length === 0 ? (
@@ -361,17 +367,6 @@ export function AnalyticsView({
             </ul>
           )}
         </aside>
-
-        {loading ? (
-          <StatSkeleton count={4} />
-        ) : (
-          <div className="an-kpis">
-            <Kpi hero icon={<Users size={18} strokeWidth={2.2} />} label="Responses" value={String(kpis.total)} caption={`${kpis.last7DaysCount} in the last 7 days`} trend={periodTrend} empty={empty} />
-            <Kpi icon={<Wifi size={18} strokeWidth={2.2} />} label="Digital-ready" value={`${digital.pct}%`} caption={`${digital.count} of ${digital.total} have a device and internet`} empty={empty} />
-            <Kpi icon={<Star size={18} strokeWidth={2.2} />} label="Feature interest" value={interest.n ? `${interest.mean.toFixed(1)} / 5` : '—'} caption="Average likelihood to use a feature" empty={empty} />
-            <Kpi icon={<Handshake size={18} strokeWidth={2.2} />} label="Open to interview" value={`${interview.pct}%`} caption={`${interview.yes} said yes`} empty={empty} />
-          </div>
-        )}
       </div>
 
       <div className="an-tabs" role="tablist" aria-label="Analytics sections">
@@ -406,16 +401,14 @@ export function AnalyticsView({
             <Card title="Responses over time" hint="Daily submissions, or the running total." className="an-span-8" loading={loading}>
               <TrendChart points={series} />
             </Card>
-            <Card title="Device used" hint="Phone or computer at submission." className="an-span-4" loading={loading}>
+            <Card title="Device used" className="an-span-4" loading={loading}>
               <PieChart buckets={devices} />
-              <p className="an-card__note">
-                <Smartphone size={14} aria-hidden="true" /> / <Monitor size={14} aria-hidden="true" /> Phone-first answers mean the online service must work well on small screens.
-              </p>
+              <p className="an-card__note">Phone-first answers mean the online service must work well on small screens.</p>
             </Card>
             <Card title="Responses by resident type" hint="Who is answering over time, one colour per group." className="an-span-12" loading={loading}>
               <StackedArea series={byResident} />
             </Card>
-            <Card title="Responses by phase" hint="Where answers come from." className="an-span-12" loading={loading}>
+            <Card title="Responses by phase" className="an-span-12" loading={loading}>
               <ColumnChart buckets={phases} />
             </Card>
           </>

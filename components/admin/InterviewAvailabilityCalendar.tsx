@@ -13,13 +13,13 @@ import type { InterviewInviteRow } from '@/lib/firebase/interviewManage';
 const WEEK_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /**
- * Absolute scale, so one invite is never shown as the darkest "peak".
- * Peak only marks the busiest day(s) once at least two people overlap.
+ * Absolute scale, so one invite is never shown as the busiest day.
+ * The busiest day only stands out once at least two people overlap. The count is
+ * printed in the cell, so there is no legend.
  */
 function heatClass(count: number, max: number): string {
   if (count <= 0 || max <= 0) return 'is-empty';
   if (count >= 2 && count === max) return 'is-peak';
-  if (count >= 3) return 'is-high';
   if (count >= 2) return 'is-mid';
   return 'is-low';
 }
@@ -52,7 +52,7 @@ export function InterviewAvailabilityCalendar({
   const [cursor, setCursor] = useState(() => new Date(now.getFullYear(), now.getMonth(), 1));
   const [selectedIso, setSelectedIso] = useState<string | null>(null);
 
-  const { days, maxCount, peakWeekday } = useMemo(
+  const { days, maxCount } = useMemo(
     () => buildAvailabilityMonth(rows, cursor.getFullYear(), cursor.getMonth()),
     [rows, cursor],
   );
@@ -71,24 +71,18 @@ export function InterviewAvailabilityCalendar({
 
   if (loading) {
     return (
-      <article className="dash-insight iv-cal skel-region" aria-busy="true">
+      <div className="iv-cal skel-region" aria-busy="true">
         <span className="visually-hidden">Loading availability calendar</span>
         <ChartSkeleton height={280} />
-      </article>
+      </div>
     );
   }
 
   return (
-    <article className="dash-insight iv-cal" aria-labelledby="iv-cal-title">
+    <div className="iv-cal" role="group" aria-labelledby="iv-cal-title">
       <header className="iv-cal__head">
-        <h2 id="iv-cal-title" className="dash-insight__title">
+        <h2 id="iv-cal-title" className="iv-cal__title">
           Availability
-          {maxCount > 0 && peakWeekday ? (
-            <span className="iv-cal__peak">
-              {' '}
-              · Peak {peakWeekday}s ({maxCount})
-            </span>
-          ) : null}
         </h2>
         <div className="iv-cal__nav">
           <button
@@ -140,7 +134,6 @@ export function InterviewAvailabilityCalendar({
                 'iv-cal__day',
                 heatClass(day.inMonth ? day.count : 0, maxCount),
                 day.inMonth ? '' : 'is-outside',
-                day.isPeak && maxCount >= 2 ? 'is-peak-day' : '',
                 day.inMonth && dayTime < today ? 'is-past' : '',
                 day.inMonth && dayTime === today ? 'is-today' : '',
                 selectedDay ? 'is-selected' : '',
@@ -165,16 +158,6 @@ export function InterviewAvailabilityCalendar({
         })}
       </div>
 
-      <div className="iv-cal__legend" aria-hidden="true">
-        <span>Fewer</span>
-        <i className="iv-cal__swatch is-low" />
-        <i className="iv-cal__swatch is-mid" />
-        <i className="iv-cal__swatch is-high" />
-        <i className="iv-cal__swatch is-peak" />
-        <span>More available</span>
-        <span className="iv-cal__legend-note">Past days are dimmed</span>
-      </div>
-
       <div className="iv-cal__detail" aria-live="polite">
         {selected && selected.inMonth ? (
           <>
@@ -184,9 +167,7 @@ export function InterviewAvailabilityCalendar({
                 month: 'short',
                 day: 'numeric',
               })}
-              <span className="iv-cal__detail-meta">
-                {selected.count} available · prefers {selected.weekday}s
-              </span>
+              <span className="iv-cal__detail-meta">{selected.count} available</span>
             </h3>
             {selected.matches.length === 0 ? (
               <p className="iv-cal__empty">No open invites prefer this weekday.</p>
@@ -197,17 +178,18 @@ export function InterviewAvailabilityCalendar({
                     <span className="iv-cal__email" title={row.email}>
                       {row.email}
                     </span>
-                    <span className="iv-cal__tag">{row.interviewFormat}</span>
-                    <span className="iv-cal__tag iv-cal__tag--time">{timeLabel(row)}</span>
+                    <span className="iv-cal__when">
+                      {row.interviewFormat} · {timeLabel(row)}
+                    </span>
                   </li>
                 ))}
               </ul>
             )}
           </>
         ) : (
-          <p className="iv-cal__empty">Select a day to see who is available.</p>
+          <p className="iv-cal__empty">Select a day to see who is free.</p>
         )}
       </div>
-    </article>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Check,
   ChevronLeft,
@@ -160,6 +160,27 @@ export function ResponseViewsPanel({
   const [menuOpen, setMenuOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // The actions menu closes on Escape (focus returns to its button) and on a click elsewhere.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointer = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setMenuOpen(false);
+      menuRef.current?.querySelector<HTMLElement>('.gf-panel__menu-btn')?.focus();
+    };
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [menuOpen]);
+
   useEffect(() => {
     setSelected(new Set());
   }, [bulkClearSignal]);
@@ -255,7 +276,7 @@ export function ResponseViewsPanel({
       <div className="gf-panel__bar">
         <span className="gf-panel__bar-spacer" aria-hidden="true" />
         <div className="gf-tabs" role="tablist" aria-label="Response views">
-          {TABS.map((t) => (
+          {TABS.map((t, index) => (
             <button
               key={t.id}
               type="button"
@@ -263,6 +284,26 @@ export function ResponseViewsPanel({
               id={`gf-tab-${t.id}`}
               aria-selected={tab === t.id}
               aria-controls={`gf-panel-${t.id}`}
+              tabIndex={tab === t.id ? 0 : -1}
+              onKeyDown={(event) => {
+                // Arrow keys, Home and End move between views, as tabs do everywhere else.
+                const last = TABS.length - 1;
+                const target =
+                  event.key === 'ArrowRight'
+                    ? (index + 1) % TABS.length
+                    : event.key === 'ArrowLeft'
+                      ? (index - 1 + TABS.length) % TABS.length
+                      : event.key === 'Home'
+                        ? 0
+                        : event.key === 'End'
+                          ? last
+                          : -1;
+                if (target < 0) return;
+                event.preventDefault();
+                const next = TABS[target]!;
+                setTab(next.id);
+                document.getElementById(`gf-tab-${next.id}`)?.focus();
+              }}
               className={`gf-tabs__tab${tab === t.id ? ' gf-tabs__tab--active' : ''}`}
               onClick={() => setTab(t.id)}
             >
@@ -277,11 +318,12 @@ export function ResponseViewsPanel({
               Add widget
             </Button>
           ) : null}
-          <div className="gf-panel__menu-wrap">
+          <div className="gf-panel__menu-wrap" ref={menuRef}>
             <button
               type="button"
               className="gf-panel__menu-btn"
               aria-label="More response actions"
+              aria-haspopup="menu"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((v) => !v)}
             >
@@ -310,14 +352,6 @@ export function ResponseViewsPanel({
                   disabled={exportDisabled}
                 >
                   Download CSV
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  disabled
-                  title="Manually add a test response (not wired yet)"
-                >
-                  Add response (not available yet)
                 </button>
               </div>
             ) : null}

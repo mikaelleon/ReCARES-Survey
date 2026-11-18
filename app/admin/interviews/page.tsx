@@ -2,14 +2,13 @@
 
 import { PageHeading } from '@/components/admin/PageHeading';
 import { useEffect, useMemo, useState } from 'react';
-import { CheckSquare, Trash2, X } from 'lucide-react';
+import { CountLedger } from '@/components/admin/CountLedger';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { InterviewAvailabilityCalendar } from '@/components/admin/InterviewAvailabilityCalendar';
 import { InterviewBoard } from '@/components/admin/InterviewBoard';
-import { InterviewKpiGrid } from '@/components/admin/InterviewKpiGrid';
 import { computeInterviewKpis, buildInterviewContactsCsv } from '@/lib/admin/interviewAnalytics';
 import { downloadCsv } from '@/lib/admin/csvDownload';
 import { useInterviewInvites } from '@/lib/admin/useInterviewInvites';
@@ -107,9 +106,8 @@ function InterviewInvitesContent() {
   return (
     <section className="dash-page iv-page" aria-labelledby="admin-interview-title">
       <div className="dash-page__header iv-page__header">
-        <PageHeading id="admin-interview-title" title="Interview Invites" sub={"Residents who agreed to a follow-up interview. Move each card through outreach, keep notes, and check when people are free."} />
-        <div className="iv-page__header-tools">
-          <InterviewKpiGrid kpis={kpis} loading={loading} />
+        <PageHeading id="admin-interview-title" title="Interview invites" sub={"Residents who agreed to a follow-up interview. Move each one through outreach, keep notes, and check when people are free."} />
+        <div className="dash-page__tools iv-page__tools">
           <div className="admin-toolbar__select inquiries-page__filter">
             <Select
               label="Sort"
@@ -118,22 +116,36 @@ function InterviewInvitesContent() {
               onChange={(e) => setSortBy(e.target.value)}
             />
           </div>
-          <Button variant="secondary" onClick={handleExport} disabled={rows.length === 0}>
-            Export contacts CSV
+          <Button size="sm" variant="secondary" onClick={handleExport} disabled={rows.length === 0}>
+            Export contacts
           </Button>
           {canDelete ? (
             <Button
+              size="sm"
               variant="secondary"
               aria-pressed={selectMode}
               disabled={loading || rows.length === 0}
               onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
             >
-              <CheckSquare size={16} aria-hidden="true" />
-              {selectMode ? 'Done selecting' : 'Select'}
+              {selectMode ? 'Done' : 'Select'}
             </Button>
           ) : null}
         </div>
       </div>
+
+      <CountLedger
+        ariaLabel="Interview invites summary"
+        label="Invites"
+        total={kpis.total}
+        totalNote="Residents who agreed to be interviewed"
+        empty={kpis.total === 0}
+        loading={loading}
+        rows={[
+          { label: 'Not contacted', value: kpis.notContacted, note: 'no outreach yet' },
+          { label: 'Pending', value: kpis.pending, note: 'waiting for a reply' },
+          { label: 'Confirmed', value: kpis.confirmed, note: 'date agreed' },
+        ]}
+      />
 
       {error && !deleteTarget ? (
         <p className="na-error" role="alert">
@@ -170,11 +182,9 @@ function InterviewInvitesContent() {
             disabled={selectedIds.size === 0 || busyId === '__bulk__'}
             onClick={() => setBulkOpen(true)}
           >
-            <Trash2 size={16} aria-hidden="true" />
-            Delete {selectedIds.size > 0 ? selectedIds.size : ''}
+            Delete{selectedIds.size > 0 ? ` ${selectedIds.size}` : ''}
           </button>
           <button type="button" className="iv-bulk__cancel" onClick={exitSelectMode}>
-            <X size={16} aria-hidden="true" />
             Cancel
           </button>
         </div>
@@ -208,66 +218,25 @@ function InterviewInvitesContent() {
         </div>
       )}
 
-      <div className="iv-page__main">
+      <section className="iv-avail" aria-label="When people are free">
+        <div className="iv-avail__lead">
+          <p className="iv-avail__eyebrow">Most often free</p>
+          {kpis.topDay ? (
+            <p className="iv-avail__slot">
+              {kpis.topDay.label}
+              {kpis.topTime ? `, ${kpis.topTime.label.toLowerCase()}` : ''}
+            </p>
+          ) : (
+            <p className="iv-avail__slot iv-avail__slot--none">—</p>
+          )}
+          <p className="iv-avail__note">
+            {kpis.topDay
+              ? `${kpis.topDay.count} of ${kpis.total} invites prefer ${kpis.topDay.label}`
+              : 'Appears once invites come in'}
+          </p>
+        </div>
         <InterviewAvailabilityCalendar rows={rows} loading={loading} />
-        <aside className="iv-page__aside" aria-label="Preference charts">
-          <article className="dash-insight iv-prefs-card iv-prefs-card--days">
-            <header className="iv-prefs-card__head">
-              <h2 className="dash-insight__title">Preferred weekdays</h2>
-              {kpis.topDay && kpis.topDay.count > 0 ? (
-                <span className="iv-prefs-card__badge">{kpis.topDay.label}</span>
-              ) : null}
-            </header>
-            <ul className="iv-day-bars iv-day-bars--roomy">
-              {kpis.dayCounts.map((d) => {
-                const max = Math.max(1, ...kpis.dayCounts.map((x) => x.count));
-                const pct = Math.round((d.count / max) * 100);
-                const isTop = kpis.topDay?.label === d.label && d.count > 0;
-                return (
-                  <li
-                    key={d.label}
-                    className={`iv-day-bars__row${isTop ? ' is-top' : ''}${d.count === 0 ? ' is-zero' : ''}`}
-                  >
-                    <span className="iv-day-bars__label">{d.label.slice(0, 3)}</span>
-                    <span className="iv-day-bars__track" aria-hidden="true">
-                      <span className="iv-day-bars__fill" style={{ width: `${pct}%` }} />
-                    </span>
-                    <span className="iv-day-bars__value">{d.count}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </article>
-
-          <article className="dash-insight iv-prefs-card iv-prefs-card--times">
-            <header className="iv-prefs-card__head">
-              <h2 className="dash-insight__title">Time windows</h2>
-              {kpis.topTime && kpis.topTime.count > 0 ? (
-                <span className="iv-prefs-card__badge">{kpis.topTime.label}</span>
-              ) : null}
-            </header>
-            <ul className="iv-day-bars iv-day-bars--roomy">
-              {kpis.timeCounts.map((t) => {
-                const max = Math.max(1, ...kpis.timeCounts.map((x) => x.count));
-                const pct = Math.round((t.count / max) * 100);
-                const isTop = kpis.topTime?.label === t.label && t.count > 0;
-                return (
-                  <li
-                    key={t.label}
-                    className={`iv-day-bars__row${isTop ? ' is-top' : ''}${t.count === 0 ? ' is-zero' : ''}`}
-                  >
-                    <span className="iv-day-bars__label">{t.label}</span>
-                    <span className="iv-day-bars__track" aria-hidden="true">
-                      <span className="iv-day-bars__fill" style={{ width: `${pct}%` }} />
-                    </span>
-                    <span className="iv-day-bars__value">{t.count}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </article>
-        </aside>
-      </div>
+      </section>
 
       <ConfirmDeleteModal
         open={bulkOpen}
@@ -311,7 +280,7 @@ export default function AdminInterviewsPage() {
       ) : (
         <section className="dash-page" aria-labelledby="admin-interview-title">
           <div className="dash-page__header">
-            <PageHeading id="admin-interview-title" title="Interview Invites" sub={"Residents who agreed to a follow-up interview. Move each card through outreach, keep notes, and check when people are free."} />
+            <PageHeading id="admin-interview-title" title="Interview invites" sub={"Residents who agreed to a follow-up interview. Move each one through outreach, keep notes, and check when people are free."} />
           </div>
           <p className="na-error" role="alert">
             You do not have permission to view interview invites. Ask a superadmin if you need

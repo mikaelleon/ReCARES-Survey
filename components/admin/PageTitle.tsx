@@ -196,7 +196,7 @@ export function PageTitle({ pageId, children }: { pageId: string; children: Reac
         }}
       >
         <span className="page-title__text">{children}</span>
-        <CircleHelp size={18} strokeWidth={2.2} className="page-title__icon" aria-hidden="true" />
+        <CircleHelp size={22} strokeWidth={2} className="page-title__icon" aria-hidden="true" />
         <span className="visually-hidden"> — about this page</span>
       </button>
       {tipOpen && buttonRef.current ? (

@@ -2,41 +2,16 @@
 
 import { formatClock, formatDate } from '@/survey/interviewSchedule';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  CalendarCheck,
-  CheckCircle2,
-  Inbox,
-  Mail,
-  MessageCircle,
-  StickyNote,
-  Trash2,
-} from 'lucide-react';
 import { InterviewNotesDrawer } from '@/components/admin/InterviewNotesDrawer';
 import type { InterviewInviteRow } from '@/lib/firebase/interviewManage';
 import type { InterviewContactStatus } from '@/survey/schema';
 
 type BoardColumnId = Exclude<InterviewContactStatus, 'withdrawn'>;
 
-const COLUMNS: {
-  id: BoardColumnId;
-  title: string;
-  shortTitle: string;
-}[] = [
-  {
-    id: 'not_contacted',
-    title: 'Not Yet Contacted',
-    shortTitle: 'Not contacted',
-  },
-  {
-    id: 'pending_confirmation',
-    title: 'Pending Confirmation',
-    shortTitle: 'Pending',
-  },
-  {
-    id: 'confirmed',
-    title: 'Confirmed',
-    shortTitle: 'Confirmed',
-  },
+const COLUMNS: { id: BoardColumnId; title: string }[] = [
+  { id: 'not_contacted', title: 'Not contacted' },
+  { id: 'pending_confirmation', title: 'Pending' },
+  { id: 'confirmed', title: 'Confirmed' },
 ];
 
 function formatSubmitted(iso: string): string {
@@ -60,9 +35,14 @@ function timeLabel(row: InterviewInviteRow): string {
   return row.preferredTime;
 }
 
-function emailInitials(email: string): string {
-  const local = email.split('@')[0] || email;
-  return local.slice(0, 2).toUpperCase();
+/** One phrase per invite: format, when, time. */
+function whenLabel(row: InterviewInviteRow): string {
+  const day = row.preferredDate
+    ? formatDate(row.preferredDate)
+    : row.preferredDays.length > 0
+      ? row.preferredDays.map((d) => d.slice(0, 3)).join(', ')
+      : '';
+  return [row.interviewFormat, day, timeLabel(row)].filter(Boolean).join(' · ');
 }
 
 /** Legacy `withdrawn` invites stay visible under Not contacted so they can be deleted. */
@@ -71,15 +51,7 @@ function boardColumnFor(status: InterviewContactStatus): BoardColumnId {
   return 'not_contacted';
 }
 
-function ColumnIcon({ id }: { id: BoardColumnId }) {
-  if (id === 'not_contacted') return <Mail size={16} strokeWidth={2.2} aria-hidden="true" />;
-  if (id === 'pending_confirmation') {
-    return <MessageCircle size={16} strokeWidth={2.2} aria-hidden="true" />;
-  }
-  return <CalendarCheck size={16} strokeWidth={2.2} aria-hidden="true" />;
-}
-
-function InviteCard({
+function InviteRow({
   row,
   columnId,
   busyId,
@@ -89,7 +61,9 @@ function InviteCard({
   onOpenNotes,
   canDelete,
   selection,
+  enter,
 }: {
+  enter: boolean;
   selection?: InviteSelection;
   row: InterviewInviteRow;
   canDelete: boolean;
@@ -103,110 +77,85 @@ function InviteCard({
   const noteCount = row.notes?.length ?? 0;
   const selecting = Boolean(selection?.active);
   const isSelected = Boolean(selection?.selected.has(row.id));
+  const busy = busyId === row.id;
   return (
-    <article className={`admin-kanban-card${isSelected ? ' is-selected' : ''}`}>
-      <div className="admin-kanban-card__top admin-kanban-card__top--polish">
-        {selecting ? (
-          <label className="iv-select" title={`Select ${row.email}`}>
-            <input
-              type="checkbox"
-              checked={isSelected}
-              disabled={busyId === '__bulk__'}
-              aria-label={`Select ${row.email}`}
-              onChange={() => selection?.onToggle(row.id)}
-            />
-          </label>
-        ) : null}
-        <span className="admin-avatar admin-kanban-card__avatar" aria-hidden="true">
-          {emailInitials(row.email)}
-        </span>
-        <div className="admin-kanban-card__meta">
-          <div className="admin-kanban-card__name" title={row.email}>
+    <li
+      className={`iv-row${isSelected ? ' is-selected' : ''}${enter ? ' is-entering' : ''}${busy ? ' is-busy' : ''}`}
+      aria-busy={busy || undefined}
+    >
+      {selecting ? (
+        <label className="iv-select" title={`Select ${row.email}`}>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            disabled={busyId === '__bulk__'}
+            aria-label={`Select ${row.email}`}
+            onChange={() => selection?.onToggle(row.id)}
+          />
+        </label>
+      ) : null}
+      <div className="iv-row__body">
+        <div className="iv-row__main">
+          <p className="iv-row__email" title={row.email}>
             {row.email}
-          </div>
-          <div className="admin-kanban-card__muted">
-            Submitted {formatSubmitted(row.submittedAt)}
-          </div>
+          </p>
+          <p className="iv-row__when">{whenLabel(row)}</p>
+          <p className="iv-row__meta">
+            {columnId === 'confirmed' && row.confirmedDateTime
+              ? `Confirmed ${formatSubmitted(row.confirmedDateTime)}`
+              : `Submitted ${formatSubmitted(row.submittedAt)}`}
+          </p>
         </div>
-        <span className="admin-kanban-role interview-board__format">{row.interviewFormat}</span>
-      </div>
-      <dl className="interview-board__details">
-        <div>
-          <dt>{row.preferredDate ? 'Preferred date' : 'Preferred days'}</dt>
-          <dd>
-            {row.preferredDate
-              ? formatDate(row.preferredDate)
-              : row.preferredDays.length > 0
-                ? row.preferredDays.join(', ')
-                : '—'}
-          </dd>
-        </div>
-        <div>
-          <dt>Preferred time</dt>
-          <dd>{timeLabel(row)}</dd>
-        </div>
-        {row.contactStatus === 'confirmed' && row.confirmedDateTime ? (
-          <div>
-            <dt>Confirmed</dt>
-            <dd>{formatSubmitted(row.confirmedDateTime)}</dd>
-          </div>
-        ) : null}
-      </dl>
-      <div className="admin-kanban-card__actions">
-        {columnId === 'not_contacted' ? (
-          <button
-            type="button"
-            className="admin-kanban-icon-btn admin-kanban-icon-btn--primary"
-            disabled={busyId === row.id}
-            onClick={() => onMarkContacted(row.id, row.email)}
-          >
-            Mark Contacted
+        <div className="iv-row__actions">
+          {columnId === 'not_contacted' ? (
+            <button
+              type="button"
+              className="iv-act iv-act--primary"
+              disabled={busy}
+              onClick={() => onMarkContacted(row.id, row.email)}
+            >
+              {busy ? 'Saving…' : 'Mark contacted'}
+            </button>
+          ) : null}
+          {columnId === 'pending_confirmation' ? (
+            <button
+              type="button"
+              className="iv-act iv-act--primary"
+              disabled={busy}
+              onClick={() => onConfirm(row.id, row.email)}
+            >
+              {busy ? 'Saving…' : 'Confirm'}
+            </button>
+          ) : null}
+          <button type="button" className="iv-act" onClick={() => onOpenNotes(row)}>
+            Notes{noteCount > 0 ? ` (${noteCount})` : ''}
           </button>
-        ) : null}
-        {columnId === 'pending_confirmation' ? (
-          <button
-            type="button"
-            className="admin-kanban-icon-btn admin-kanban-icon-btn--primary"
-            disabled={busyId === row.id}
-            onClick={() => onConfirm(row.id, row.email)}
-          >
-            <CheckCircle2 size={14} aria-hidden="true" />
-            Confirm
-          </button>
-        ) : null}
-        {canDelete ? (
-        <button
-          type="button"
-          className="admin-kanban-icon-btn admin-kanban-icon-btn--danger"
-          disabled={busyId === row.id}
-          onClick={() => onRequestDelete(row)}
-        >
-          <Trash2 size={14} aria-hidden="true" />
-          Delete
-        </button>
-        ) : null}
-        <button
-          type="button"
-          className="admin-kanban-icon-btn"
-          onClick={() => onOpenNotes(row)}
-        >
-          <StickyNote size={14} aria-hidden="true" />
-          Notes{noteCount > 0 ? ` (${noteCount})` : ''}
-        </button>
+          {canDelete ? (
+            <button
+              type="button"
+              className="iv-act iv-act--danger"
+              disabled={busy}
+              onClick={() => onRequestDelete(row)}
+            >
+              Delete
+            </button>
+          ) : null}
+        </div>
       </div>
-    </article>
+    </li>
   );
 }
 
-/**
- * Interview Invites Kanban — three columns on desktop; tabbed single column on mobile.
- */
 export interface InviteSelection {
   active: boolean;
   selected: ReadonlySet<string>;
   onToggle: (id: string) => void;
 }
 
+/**
+ * Interview pipeline: three ruled lists, one invite per line. Columns on desktop,
+ * stacked on narrow screens. No tabs, no cards.
+ */
 export function InterviewBoard({
   rows,
   busyId,
@@ -227,6 +176,9 @@ export function InterviewBoard({
   onAddNote: (id: string, existing: InterviewInviteRow['notes'], text: string) => void;
 }) {
   const [notesRow, setNotesRow] = useState<InterviewInviteRow | null>(null);
+  /** Rows that exist at first paint stay still; only rows that arrive or move afterwards ease in. */
+  const [settled, setSettled] = useState(false);
+  useEffect(() => setSettled(true), []);
 
   useEffect(() => {
     setNotesRow((current) => {
@@ -247,21 +199,7 @@ export function InterviewBoard({
     return map;
   }, [rows]);
 
-  const defaultTab = useMemo<BoardColumnId>(() => {
-    if (byColumn.not_contacted.length > 0) return 'not_contacted';
-    if (byColumn.pending_confirmation.length > 0) return 'pending_confirmation';
-    return 'confirmed';
-  }, [byColumn]);
-
-  const [mobileTab, setMobileTab] = useState<BoardColumnId>(defaultTab);
-
-  useEffect(() => {
-    setMobileTab(defaultTab);
-  }, [defaultTab]);
-
-  const mobileList = byColumn[mobileTab];
-
-  const cardProps = {
+  const rowProps = {
     busyId,
     onMarkContacted,
     onConfirm,
@@ -269,89 +207,31 @@ export function InterviewBoard({
     onOpenNotes: setNotesRow,
     canDelete,
     selection,
+    enter: settled,
   };
 
   return (
-    <div className="interview-board">
-      <div
-        className="admin-kanban interview-board__desktop"
-        role="region"
-        aria-label="Interview invites pipeline"
-      >
-        <div className="admin-kanban__scroller">
-          {COLUMNS.map((col) => {
-            const list = byColumn[col.id];
-            return (
-              <section
-                key={col.id}
-                className={`admin-kanban-col admin-kanban-col--${col.id}`}
-                aria-labelledby={`interview-col-${col.id}`}
-              >
-                <header className="admin-kanban-col__head">
-                  <ColumnIcon id={col.id} />
-                  <h2 id={`interview-col-${col.id}`} className="admin-kanban-col__title">
-                    {col.title}
-                  </h2>
-                  <span className="admin-kanban-col__count">{list.length}</span>
-                </header>
-                <div className="admin-kanban-col__body">
-                  {list.length === 0 ? (
-                    <div className="admin-kanban-empty">
-                      <span className="admin-kanban-empty__icon" aria-hidden="true">
-                        <Inbox size={22} />
-                      </span>
-                      <p className="admin-kanban-empty__msg">No invites here</p>
-                    </div>
-                  ) : (
-                    list.map((row) => (
-                      <InviteCard key={row.id} row={row} columnId={col.id} {...cardProps} />
-                    ))
-                  )}
-                </div>
-              </section>
-            );
-          })}
-        </div>
-      </div>
-
-      <div
-        className="interview-board__mobile"
-        role="region"
-        aria-label="Interview invites pipeline"
-      >
-        <div className="interview-board__tabs" role="tablist" aria-label="Pipeline stage">
-          {COLUMNS.map((col) => {
-            const count = byColumn[col.id].length;
-            const selected = mobileTab === col.id;
-            return (
-              <button
-                key={col.id}
-                type="button"
-                role="tab"
-                aria-selected={selected}
-                className={`interview-board__tab${selected ? ' is-active' : ''}`}
-                onClick={() => setMobileTab(col.id)}
-              >
-                <span className="interview-board__tab-label">{col.shortTitle}</span>
-                <span className="interview-board__tab-count">{count}</span>
-              </button>
-            );
-          })}
-        </div>
-        <div key={mobileTab} className="interview-board__mobile-body admin-view-transition" role="tabpanel">
-          {mobileList.length === 0 ? (
-            <div className="admin-kanban-empty">
-              <span className="admin-kanban-empty__icon" aria-hidden="true">
-                <Inbox size={22} />
-              </span>
-              <p className="admin-kanban-empty__msg">No invites in this stage</p>
-            </div>
-          ) : (
-            mobileList.map((row) => (
-              <InviteCard key={row.id} row={row} columnId={mobileTab} {...cardProps} />
-            ))
-          )}
-        </div>
+    <div className="interview-board" role="region" aria-label="Interview invites pipeline">
+      <div className="iv-stages">
+        {COLUMNS.map((col) => {
+          const list = byColumn[col.id];
+          return (
+            <section key={col.id} className="iv-stage" aria-labelledby={`interview-col-${col.id}`}>
+              <h2 id={`interview-col-${col.id}`} className="iv-stage__title">
+                {col.title}
+              </h2>
+              {list.length === 0 ? (
+                <p className="iv-stage__empty">None</p>
+              ) : (
+                <ul className="iv-list">
+                  {list.map((row) => (
+                    <InviteRow key={row.id} row={row} columnId={col.id} {...rowProps} />
+                  ))}
+                </ul>
+              )}
+            </section>
+          );
+        })}
       </div>
 
       <InterviewNotesDrawer
