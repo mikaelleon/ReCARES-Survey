@@ -21,7 +21,16 @@ const ROWS: Array<[keyof Pick<EvidenceSummary['blocks'][number], 'shows' | 'prov
  * why it matters to these residents, and what it means for planning the system.
  * Used in the printed report (with figure numbers) and on the Interpretation tab.
  */
-export function EvidenceSummaryView({ summary, showFigures = false }: { summary: EvidenceSummary; showFigures?: boolean }) {
+export function EvidenceSummaryView({
+  summary,
+  showFigures = false,
+  collapsible = false,
+}: {
+  summary: EvidenceSummary;
+  showFigures?: boolean;
+  /** Screen use: each block opens on demand (the first starts open). Print keeps them all open. */
+  collapsible?: boolean;
+}) {
   return (
     <div className="an-ev">
       <div className="an-ev__intro">
@@ -30,13 +39,15 @@ export function EvidenceSummaryView({ summary, showFigures = false }: { summary:
         ))}
       </div>
 
-      {summary.blocks.map((block, index) => (
-        <article key={block.id} className="an-ev__block">
-          <header className="an-ev__head">
+      {summary.blocks.map((block, index) => {
+        const head = (
+          <>
             <span className="an-ev__num">{index + 1}</span>
             <h3>{block.title}</h3>
             {showFigures ? <span className="an-ev__figs">{figureLabel(block.figures)}</span> : null}
-          </header>
+          </>
+        );
+        const rows = (
           <dl className="an-ev__rows">
             {ROWS.map(([key, label]) => (
               <div key={key} className={`an-ev__row an-ev__row--${key}`}>
@@ -45,8 +56,19 @@ export function EvidenceSummaryView({ summary, showFigures = false }: { summary:
               </div>
             ))}
           </dl>
-        </article>
-      ))}
+        );
+        return collapsible ? (
+          <details key={block.id} className="an-ev__block an-ev__block--fold" open={index === 0}>
+            <summary className="an-ev__head">{head}</summary>
+            {rows}
+          </details>
+        ) : (
+          <article key={block.id} className="an-ev__block">
+            <header className="an-ev__head">{head}</header>
+            {rows}
+          </article>
+        );
+      })}
 
       {summary.closing.length ? (
         <div className="an-ev__closing">

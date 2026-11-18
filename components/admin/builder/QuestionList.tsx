@@ -5,23 +5,15 @@ import {
   ArrowUp,
   ChevronDown,
   ChevronRight,
-  GitBranch,
   GripVertical,
-  LayoutList,
-  List as ListIcon,
-  Lock,
-  Pencil,
   Plus,
-  Rows3,
   Search,
-  Table2,
   Trash2,
   X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { BuilderView } from '@/components/admin/builder/useBuilderView';
 import { OverflowMenu, type OverflowItem } from '@/components/ui/OverflowMenu';
-import { ViewSwitcher, type ViewOption } from '@/components/ui/ViewSwitcher';
+import { Select } from '@/components/ui/Select';
 import { isCoreCode } from '@/survey/lint';
 import { describeConditionPlain, type Instrument, type QuestionDef, type StepDef } from '@/survey/model';
 
@@ -40,13 +32,6 @@ const TYPE_LABEL: Record<QuestionDef['type'], string> = {
   number: 'Number',
   nested_multi: 'Nested list',
 };
-
-const VIEW_OPTIONS: ViewOption<BuilderView>[] = [
-  { id: 'comfortable', label: 'Comfortable', icon: <LayoutList size={16} /> },
-  { id: 'compact', label: 'Compact', icon: <Rows3 size={16} /> },
-  { id: 'list', label: 'List', icon: <ListIcon size={16} /> },
-  { id: 'table', label: 'Table', icon: <Table2 size={16} /> },
-];
 
 const FILTER_LABEL: Record<Filter, string> = {
   all: 'All questions',
@@ -123,46 +108,34 @@ function compare(a: Row, b: Row, sort: SortKey): number {
 // ---------------------------------------------------------------------------
 // Shared pieces
 
-function StatusChips({ row, dense }: { row: Row; dense?: boolean }) {
+/** Type, whether it is optional, and where it comes from, as one quiet line of words. */
+function RowMeta({ row }: { row: Row }) {
   const { q } = row;
+  const parts: string[] = [TYPE_LABEL[q.type]];
+  if (!row.required) parts.push('Optional');
+  if (row.core) parts.push('Dashboard');
+  if (q.options?.some((o) => o.showWhen)) parts.push('Conditional choices');
+  if (q.textVariants?.length) parts.push('Wording varies');
   return (
-    <span className="qc__chips">
-      <span className="qc__code">{q.code}</span>
-      <span className="qc__chip">{TYPE_LABEL[q.type]}</span>
-      {row.required ? null : <span className="qc__chip">Optional</span>}
-      {row.core ? (
-        <span className="qc__chip qc__chip--lock" title="The dashboard reads this answer by its code">
-          <Lock size={11} aria-hidden="true" /> Dashboard
-        </span>
-      ) : null}
-      {dense ? (
-        row.rule ? (
-          <span className="qc__chip">
-            <GitBranch size={11} aria-hidden="true" /> Conditional
-          </span>
-        ) : null
-      ) : (
-        <>
-          {q.options?.some((o) => o.showWhen) ? <span className="qc__chip">Conditional choices</span> : null}
-          {q.textVariants?.length ? <span className="qc__chip">Wording varies</span> : null}
-        </>
-      )}
+    <span className="qx-meta" title={row.core ? 'The dashboard reads this answer by its code' : undefined}>
+      {parts.join(' · ')}
     </span>
   );
 }
 
+/** Only a rule is worth a line. A question that is always shown says nothing. */
 function RuleLine({ row }: { row: Row }) {
-  const text = row.rule ? `Shown only when ${row.rule}` : 'Always shown';
+  if (!row.rule) return null;
+  const text = `Shown only when ${row.rule}`;
   return (
-    <span className={`qc__rule${row.rule ? ' is-conditional' : ''}`} title={text}>
-      {row.rule ? <GitBranch size={13} aria-hidden="true" /> : null}
-      <span className="qc__rule-text">{text}</span>
+    <span className="qx-rule" title={text}>
+      {text}
     </span>
   );
 }
 
-/** One primary button plus an overflow menu for the rest. Delete is never next to the arrows. */
-function RowActions({ row, h, labelled = true }: { row: Row; h: Handlers; labelled?: boolean }) {
+/** Reordering and delete live in one overflow menu. Opening a question is the row itself. */
+function RowActions({ row, h }: { row: Row; h: Handlers }) {
   const { q } = row;
   const items: OverflowItem[] = h.readOnly
     ? []
@@ -193,13 +166,10 @@ function RowActions({ row, h, labelled = true }: { row: Row; h: Handlers; labell
           onSelect: () => h.onDeleteQuestion(q.code),
         },
       ];
+  if (items.length === 0) return <span className="qx-actions" />;
   return (
-    <span className="qc__actions">
-      <button type="button" className="qc__edit" onClick={() => h.onSelectQuestion(q.code)} aria-label={`${h.readOnly ? 'View' : 'Edit'} ${q.code}`}>
-        <Pencil size={14} aria-hidden="true" />
-        {labelled ? <span>{h.readOnly ? 'View' : 'Edit'}</span> : null}
-      </button>
-      {items.length ? <OverflowMenu label={`More actions for ${q.code}`} items={items} /> : null}
+    <span className="qx-actions">
+      <OverflowMenu label={`More actions for ${q.code}`} items={items} />
     </span>
   );
 }
@@ -210,8 +180,6 @@ export function QuestionList({
   inst,
   selected,
   readOnly,
-  view,
-  onViewChange,
   onSelectQuestion,
   onSelectStep,
   onMoveQuestion,
@@ -225,8 +193,6 @@ export function QuestionList({
   inst: Instrument;
   selected: Selection;
   readOnly: boolean;
-  view: BuilderView;
-  onViewChange: (view: BuilderView) => void;
   onSelectQuestion: (code: string) => void;
   onSelectStep: (id: string) => void;
   /** Place `code` before `beforeCode` (in that question's step), or at the end of `stepId`. */
@@ -243,7 +209,6 @@ export function QuestionList({
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const [sort, setSort] = useState<SortKey>('order');
-  const [tableStep, setTableStep] = useState('');
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   const term = query.trim().toLowerCase();
@@ -286,9 +251,11 @@ export function QuestionList({
   // ---- renderers -----------------------------------------------------------
 
   const grip = (code: string) =>
-    readOnly || sorted ? null : (
+    readOnly || sorted ? (
+      <span className="qx-grip" aria-hidden="true" />
+    ) : (
       <span
-        className="qc__grip"
+        className="qx-grip is-active"
         draggable
         title="Drag to reorder"
         aria-hidden="true"
@@ -317,109 +284,32 @@ export function QuestionList({
     },
   });
 
-  const rowClass = (row: Row, mode: string) =>
-    `qc qc--${mode}${handlers.selectedCode === row.q.code ? ' is-selected' : ''}${over === `q:${row.q.code}` ? ' is-over' : ''}`;
+  const rowClass = (row: Row) =>
+    `qx${handlers.selectedCode === row.q.code ? ' is-selected' : ''}${over === `q:${row.q.code}` ? ' is-over' : ''}`;
 
   const openOnClick = (row: Row) => (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button, a, input, select, [role="menu"]')) return;
     onSelectQuestion(row.q.code);
   };
 
-  const renderCard = (row: Row, mode: 'comfortable' | 'compact') => (
-    <li key={row.q.code} className={rowClass(row, mode)} onClick={openOnClick(row)} {...dropProps(row)}>
-      {grip(row.q.code)}
-      <div className="qc__body">
-        <span className="qc__title" title={row.q.text}>
-          {row.q.text}
-        </span>
-        <RuleLine row={row} />
-        <StatusChips row={row} dense={mode === 'compact'} />
-      </div>
-      <RowActions row={row} h={handlers} labelled={mode === 'comfortable'} />
-    </li>
-  );
-
-  const renderListRow = (row: Row) => (
-    <li key={row.q.code} className={rowClass(row, 'list')} onClick={openOnClick(row)} {...dropProps(row)}>
-      {grip(row.q.code) ?? <span className="qc__grip-gap" aria-hidden="true" />}
-      <span className="qc__code">{row.q.code}</span>
-      <span className="qc__title" title={row.q.text}>
-        {row.q.text}
-      </span>
-      <span className="qc__chip qc__col-type">{TYPE_LABEL[row.q.type]}</span>
-      <span className="qc__col-rule">
-        <RuleLine row={row} />
-      </span>
-      <RowActions row={row} h={handlers} labelled={false} />
-    </li>
-  );
-
-  const sortHeader = (key: SortKey, label: string) => (
-    <button type="button" className={`qt__sort${sort === key ? ' is-active' : ''}`} onClick={() => setSort(sort === key ? 'order' : key)}>
-      {label}
-      <span aria-hidden="true">{sort === key ? ' ▲' : ''}</span>
+  /** The question text is the real button, so a row works from the keyboard as well. */
+  const openButton = (row: Row) => (
+    <button type="button" className="qx-title" title={row.q.text} onClick={() => onSelectQuestion(row.q.code)}>
+      {row.q.text}
     </button>
   );
 
-  const renderTable = () => (
-    <div className="qt">
-      <table className="qt__table">
-        <thead>
-          <tr>
-            <th scope="col" aria-sort={sort === 'order' ? 'ascending' : 'none'}>{sortHeader('order', 'Step')}</th>
-            <th scope="col" aria-sort={sort === 'code' ? 'ascending' : 'none'}>{sortHeader('code', 'Code')}</th>
-            <th scope="col">Question</th>
-            <th scope="col" aria-sort={sort === 'type' ? 'ascending' : 'none'}>{sortHeader('type', 'Type')}</th>
-            <th scope="col">Required</th>
-            <th scope="col">Shown when</th>
-            <th scope="col" className="qt__actions-col">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visible.map((row) => (
-            <tr key={row.q.code} className={handlers.selectedCode === row.q.code ? 'is-selected' : ''} onClick={openOnClick(row)}>
-              <td>
-                <span className={`qc__stepnum sb-step-${row.stepIndex % 6}`} title={row.step.title}>
-                  {row.stepIndex + 1}
-                </span>
-              </td>
-              <td>
-                <span className="qc__code">{row.q.code}</span>
-                {row.core ? <Lock size={11} aria-label="Dashboard field" className="qt__lock" /> : null}
-              </td>
-              <td className="qt__text" title={row.q.text}>
-                {row.q.text}
-              </td>
-              <td>{TYPE_LABEL[row.q.type]}</td>
-              <td>{row.required ? 'Yes' : 'Optional'}</td>
-              <td className="qt__rule" title={row.rule ?? 'Always shown'}>
-                <RuleLine row={row} />
-              </td>
-              <td className="qt__actions-col">
-                <RowActions row={row} h={handlers} labelled={false} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {readOnly || inst.steps.length === 0 ? null : (
-        <div className="qt__add">
-          <label className="qt__add-label">
-            <span>Add a question to</span>
-            <select value={tableStep || inst.steps[0]!.id} onChange={(e) => setTableStep(e.target.value)} aria-label="Step for the new question">
-              {inst.steps.map((s, i) => (
-                <option key={s.id} value={s.id}>
-                  {i + 1}. {s.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="button" className="qc__edit" onClick={() => onAddQuestion(tableStep || inst.steps[0]!.id)}>
-            <Plus size={14} aria-hidden="true" /> <span>Add question</span>
-          </button>
-        </div>
-      )}
-    </div>
+  const renderCard = (row: Row) => (
+    <li key={row.q.code} className={rowClass(row)} onClick={openOnClick(row)} {...dropProps(row)}>
+      {grip(row.q.code)}
+      <span className="qx-code">{row.q.code}</span>
+      <div className="qx-main">
+        {openButton(row)}
+        <RowMeta row={row} />
+        <RuleLine row={row} />
+      </div>
+      <RowActions row={row} h={handlers} />
+    </li>
   );
 
   const renderGrouped = () =>
@@ -438,9 +328,9 @@ export function QuestionList({
             { id: 'later', label: 'Move step later', icon: <ArrowDown size={14} />, disabled: stepIndex === inst.steps.length - 1, onSelect: () => onMoveStepBy(step.id, 1) },
           ];
       return (
-        <section key={step.id} className={`qs sb-step-${stepIndex % 6}`} aria-label={`Step ${stepIndex + 1}: ${step.title}`}>
+        <section key={step.id} className="qxs" aria-label={`Step ${stepIndex + 1}: ${step.title}`}>
           <div
-            className={`qs__head${stepSelected ? ' is-selected' : ''}${over === `s:${step.id}` ? ' is-over' : ''}`}
+            className={`qxs__head${stepSelected ? ' is-selected' : ''}${over === `s:${step.id}` ? ' is-over' : ''}`}
             onDragOver={(e) => {
               if (accept(e, MIME_S) || accept(e, MIME_Q)) setOver(`s:${step.id}`);
             }}
@@ -458,18 +348,11 @@ export function QuestionList({
               }
             }}
           >
-            <button
-              type="button"
-              className="qc__iconbtn"
-              aria-label={isCollapsed ? `Expand step ${stepIndex + 1}` : `Collapse step ${stepIndex + 1}`}
-              aria-expanded={!isCollapsed}
-              onClick={() => setCollapsed((c) => ({ ...c, [step.id]: !c[step.id] }))}
-            >
-              {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
-            </button>
-            {readOnly || sorted ? null : (
+            {readOnly || sorted ? (
+              <span className="qx-grip" aria-hidden="true" />
+            ) : (
               <span
-                className="qc__grip"
+                className="qx-grip is-active"
                 draggable
                 title="Drag to reorder"
                 aria-hidden="true"
@@ -481,28 +364,35 @@ export function QuestionList({
                 <GripVertical size={16} />
               </span>
             )}
-            <span className="qc__stepnum">{stepIndex + 1}</span>
-            <span className="qs__name" title={step.title}>
+            <span className="qxs__num">{stepIndex + 1}</span>
+            <button type="button" className="qxs__name" title={step.title} onClick={() => onSelectStep(step.id)}>
               {step.title || 'Untitled step'}
-            </span>
-            <span className="qs__count">{countText}</span>
-            <span className="qc__actions">
-              <button type="button" className="qc__edit" onClick={() => onSelectStep(step.id)} aria-label={`${readOnly ? 'View' : 'Edit'} step ${stepIndex + 1}`}>
-                <Pencil size={14} aria-hidden="true" />
-                <span>{readOnly ? 'View step' : 'Edit step'}</span>
-              </button>
-              {stepItems.length ? <OverflowMenu label={`More actions for step ${stepIndex + 1}`} items={stepItems} /> : null}
-            </span>
+            </button>
+            <span className="qxs__count">{countText}</span>
+            <button
+              type="button"
+              className="qx-icon"
+              aria-label={isCollapsed ? `Expand step ${stepIndex + 1}` : `Collapse step ${stepIndex + 1}`}
+              aria-expanded={!isCollapsed}
+              onClick={() => setCollapsed((c) => ({ ...c, [step.id]: !c[step.id] }))}
+            >
+              {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+            </button>
+            {stepItems.length ? (
+              <span className="qx-actions">
+                <OverflowMenu label={`More actions for step ${stepIndex + 1}`} items={stepItems} />
+              </span>
+            ) : null}
           </div>
 
           {isCollapsed ? null : (
-            <ul className={`qs__list qs__list--${view}`}>
-              {rows.map((row) => (view === 'list' ? renderListRow(row) : renderCard(row, view === 'compact' ? 'compact' : 'comfortable')))}
-              {own.length === 0 ? <li className="qs__empty">No questions in this step yet.</li> : null}
+            <ul className="qxs__list">
+              {rows.map((row) => renderCard(row))}
+              {own.length === 0 ? <li className="qxs__empty">No questions in this step yet.</li> : null}
               {readOnly || filtering ? null : (
-                <li>
-                  <button type="button" className="qs__add" onClick={() => onAddQuestion(step.id)}>
-                    <Plus size={16} aria-hidden="true" /> Add question to this step
+                <li className="qxs__add">
+                  <button type="button" className="qx-btn" onClick={() => onAddQuestion(step.id)}>
+                    Add question to this step
                   </button>
                 </li>
               )}
@@ -514,94 +404,89 @@ export function QuestionList({
 
   const shown = visible.length;
 
-  return (
-    <div className="qlist" ref={rootRef}>
-      <div className="qlist__tools">
-        <div className="qlist__row">
-          <label className="qlist__search">
-            <Search size={16} aria-hidden="true" />
-            <input type="search" placeholder="Find a question" aria-label="Find a question" value={query} onChange={(e) => setQuery(e.target.value)} />
-            {query ? (
-              <button type="button" aria-label="Clear search" onClick={() => setQuery('')}>
-                <X size={14} />
-              </button>
-            ) : null}
-          </label>
-          <label className="qlist__select">
-            <span className="visually-hidden">Filter</span>
-            <select value={filter} onChange={(e) => setFilter(e.target.value as Filter)} aria-label="Filter questions">
-              {(Object.keys(FILTER_LABEL) as Filter[]).map((key) => (
-                <option key={key} value={key}>
-                  {FILTER_LABEL[key]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="qlist__select">
-            <span className="visually-hidden">Sort</span>
-            <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="Sort questions">
-              {(Object.keys(SORT_LABEL) as SortKey[]).map((key) => (
-                <option key={key} value={key}>
-                  {SORT_LABEL[key]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+  const conditionalCount = all.filter((r) => r.rule).length;
+  const FILTER_KEYS = Object.keys(FILTER_LABEL) as Filter[];
+  const SORT_KEYS = Object.keys(SORT_LABEL) as SortKey[];
 
-        <div className="qlist__row qlist__row--foot">
-          <p className="qlist__count" aria-live="polite">
-            {filtering ? `Showing ${shown} of ${all.length} questions` : `${all.length} questions in ${inst.steps.length} steps`}
-            {sorted && !readOnly ? ' · reordering is off while sorted' : ''}
-          </p>
-          <div className="qlist__foot-actions">
-            {filtering ? (
-              <button type="button" className="qlist__link" onClick={clearFilters}>
-                Clear filters
-              </button>
-            ) : null}
-            {view === 'table' ? null : (
-              <button
-                type="button"
-                className="qlist__link"
-                onClick={() => setCollapsed(allCollapsed ? {} : Object.fromEntries(inst.steps.map((s) => [s.id, true])))}
-              >
-                {allCollapsed ? 'Expand all' : 'Collapse all'}
-              </button>
-            )}
-            <ViewSwitcher label="View" value={view} options={VIEW_OPTIONS} onChange={onViewChange} />
-          </div>
+  return (
+    <div className="qx-wrap" ref={rootRef}>
+      <div className="inq-toolbar qx-toolbar">
+        <div className="inq-toolbar__search">
+          <Search size={16} aria-hidden="true" />
+          <input type="search" placeholder="Find a question" aria-label="Find a question" value={query} onChange={(e) => setQuery(e.target.value)} />
+          {query ? (
+            <button type="button" aria-label="Clear search" onClick={() => setQuery('')}>
+              <X size={16} aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
+        <div className="inq-toolbar__sort">
+          <Select
+            label="Filter questions"
+            options={FILTER_KEYS.map((k) => FILTER_LABEL[k])}
+            value={FILTER_LABEL[filter]}
+            onChange={(e) => setFilter(FILTER_KEYS.find((k) => FILTER_LABEL[k] === e.target.value) ?? 'all')}
+          />
+        </div>
+        <div className="inq-toolbar__sort">
+          <Select
+            label="Sort questions"
+            options={SORT_KEYS.map((k) => SORT_LABEL[k])}
+            value={SORT_LABEL[sort]}
+            onChange={(e) => setSort(SORT_KEYS.find((k) => SORT_LABEL[k] === e.target.value) ?? 'order')}
+          />
+        </div>
+      </div>
+
+      <div className="qx-foot">
+        <p className="qx-count" aria-live="polite">
+          {filtering
+            ? `Showing ${shown} of ${all.length} questions`
+            : `${all.length} questions in ${inst.steps.length} steps${conditionalCount ? ` · ${conditionalCount} conditional` : ''}`}
+          {sorted && !readOnly ? ' · reordering is off while sorted' : ''}
+        </p>
+        <div className="qx-foot__actions">
+          {filtering ? (
+            <button type="button" className="qx-btn" onClick={clearFilters}>
+              Clear filters
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="qx-btn"
+            onClick={() => setCollapsed(allCollapsed ? {} : Object.fromEntries(inst.steps.map((s) => [s.id, true])))}
+          >
+            {allCollapsed ? 'Expand all' : 'Collapse all'}
+          </button>
         </div>
       </div>
 
       {inst.steps.length === 0 ? (
-        <div className="qlist__state">
-          <h3>This survey has no steps yet</h3>
-          <p>Add a step, then add questions to it.</p>
+        <div className="inq-state">
+          <p className="admin-empty__title">This survey has no steps yet</p>
+          <p className="admin-empty__body">Add a step, then add questions to it.</p>
           {readOnly ? null : (
-            <button type="button" className="qc__edit qc__edit--solid" onClick={onAddStep}>
-              <Plus size={14} aria-hidden="true" /> <span>Add step</span>
+            <button type="button" className="qx-btn qx-btn--primary" onClick={onAddStep}>
+              Add step
             </button>
           )}
         </div>
       ) : filtering && shown === 0 ? (
-        <div className="qlist__state">
-          <h3>No questions match</h3>
-          <p>Nothing fits {query ? `“${query}”` : 'this filter'}. Try a different word or clear the filters.</p>
-          <button type="button" className="qc__edit" onClick={clearFilters}>
-            <span>Clear search and filters</span>
+        <div className="inq-state">
+          <p className="admin-empty__title">No questions match</p>
+          <p className="admin-empty__body">Nothing fits {query ? `“${query}”` : 'this filter'}. Try a different word or clear the filters.</p>
+          <button type="button" className="qx-btn" onClick={clearFilters}>
+            Clear search and filters
           </button>
         </div>
-      ) : view === 'table' ? (
-        renderTable()
       ) : (
         renderGrouped()
       )}
 
-      {readOnly || view === 'table' ? null : (
+      {readOnly ? null : (
         <button
           type="button"
-          className="qs__addstep"
+          className="qx-btn qxs__addstep"
           onClick={onAddStep}
           onDragOver={(e) => {
             accept(e, MIME_S);
@@ -614,7 +499,7 @@ export function QuestionList({
             }
           }}
         >
-          <Plus size={16} aria-hidden="true" /> Add step
+          Add step
         </button>
       )}
     </div>

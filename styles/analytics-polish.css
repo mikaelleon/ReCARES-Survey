@@ -1,0 +1,908 @@
+/* ==========================================================================
+   Data Analytics: room to read. The screen packed 14px gaps, 16px card padding and a
+   narrow 820px text column beside empty space. This file spends the white space instead:
+   one 8px-based rhythm (8 / 16 / 24 / 40), long text in two columns on wide screens,
+   and each evidence row stacked label-over-text so lines stay at a readable measure.
+   Loaded after globals.css (app/layout.tsx).
+   ========================================================================== */
+
+.an-page {
+  --an-gap: 24px;
+  --an-section: 40px;
+  gap: 0;
+  max-width: none;
+}
+
+/* Rhythm: tight within a group, wide between groups */
+.an-page > .dash-page__header { margin-bottom: 0; }
+.an-page > .an-filters { margin: 16px 0 0; }
+.an-page > .an-top { margin-top: var(--an-section); }
+.an-page > .an-tabs { margin-top: 24px; }
+.an-page > .an-panel { margin-top: var(--an-gap); }
+.an-page > .na-error { margin-top: 16px; }
+
+/* ── Filters: no box, just two quiet fields and the count ───────────────────────────── */
+.an-page .an-filters {
+  gap: 8px 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.an-page .an-filter {
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.an-page .an-filter select {
+  min-height: 40px;
+  border-radius: 8px;
+  padding: 0 36px 0 14px;
+}
+
+.an-page .an-filters__count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Top band: the figure gets a column to itself, highlights get a gutter ──────────── */
+.an-page .an-top {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 56px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* The ledger takes the same columns, padding and 41px ruled rows as every other screen's */
+.an-page .an-ledger {
+  grid-template-columns: minmax(160px, 0.7fr) minmax(0, 2fr);
+  column-gap: 32px;
+  padding: 0 0 8px;
+}
+
+.an-page .an-ledger .ledger__value {
+  font-variant-numeric: tabular-nums;
+}
+
+.an-page .an-highlights {
+  padding: 4px 0 0 32px;
+  border-left: 1px solid var(--border-subtle);
+}
+
+.an-page .an-highlights h2 {
+  margin-bottom: 16px;
+}
+
+.an-page .an-highlights ul {
+  gap: 16px;
+  line-height: 1.55;
+}
+
+.an-page .an-highlights li {
+  padding-left: 16px;
+  text-wrap: pretty;
+}
+
+.an-page .an-highlights li::before {
+  top: 0.65em;
+}
+
+/* ── Tabs: more air above the content they open ─────────────────────────────────────── */
+.an-page .an-tabs {
+  gap: 8px;
+}
+
+.an-page .an-tabs__btn {
+  padding: 0 20px;
+}
+
+/* ── Chart cards ────────────────────────────────────────────────────────────────────── */
+.an-page .an-grid {
+  gap: var(--an-gap);
+}
+
+.an-page .an-card {
+  gap: 24px;
+  padding: 28px 32px 32px;
+  border-radius: 16px;
+}
+
+.an-page .an-card .dash-insight__head {
+  gap: 8px;
+}
+
+.an-page .an-card__hint {
+  max-width: 60ch;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.an-page .an-card__note {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* ── Interpretation tab: use the full width instead of an 820px strip ───────────────── */
+.an-page .an-prose {
+  max-width: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--an-gap);
+  align-items: start;
+}
+
+.an-page .an-prose > .an-prose__note,
+.an-page .an-prose > .an-prose__card--evidence {
+  grid-column: 1 / -1;
+}
+
+.an-page .an-prose__note {
+  padding: 16px 24px;
+  max-width: 80ch;
+  line-height: 1.6;
+}
+
+.an-page .an-prose__card {
+  gap: 16px;
+  padding: 28px 32px;
+  border-radius: 16px;
+}
+
+.an-page .an-prose__card .dash-insight__title {
+  margin-bottom: 4px;
+}
+
+.an-page .an-prose__card p,
+.an-page .an-prose__card li {
+  max-width: 68ch;
+  line-height: 1.7;
+}
+
+.an-page .an-prose__card ul {
+  gap: 12px;
+  padding-left: 24px;
+}
+
+/* Evidence summary: intro reads as one column, the five blocks as a two-up grid */
+.an-page .an-prose__card--evidence {
+  padding: 32px 36px 36px;
+  gap: 24px;
+}
+
+.an-page .an-ev {
+  gap: 32px;
+}
+
+.an-page .an-ev__intro {
+  display: grid;
+  gap: 16px;
+  max-width: 72ch;
+}
+
+.an-page .an-ev__intro p,
+.an-page .an-ev__closing p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.an-page .an-ev__block {
+  padding: 28px 32px 32px;
+  border-radius: 16px;
+}
+
+.an-page .an-ev__head {
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.an-page .an-ev__head h3 {
+  font-size: 16px;
+}
+
+.an-page .an-ev__num {
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+}
+
+/* Label above its text: the label column no longer eats 150px of a 300px block */
+.an-page .an-ev__rows {
+  gap: 20px;
+}
+
+.an-page .an-ev__row {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+
+.an-page .an-ev__row dt {
+  padding-top: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.an-page .an-ev__row dd {
+  max-width: 68ch;
+  line-height: 1.7;
+}
+
+.an-page .an-ev__row--plan {
+  margin: 4px -16px 0;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.an-page .an-ev__closing {
+  padding: 24px 32px;
+  border-radius: 12px;
+}
+
+.an-page .an-ev__closing h3 {
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+.an-page .an-ev__closing p {
+  max-width: 72ch;
+}
+
+@media (min-width: 1100px) {
+  .an-page .an-ev {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 24px;
+  }
+
+  .an-page .an-ev > .an-ev__intro,
+  .an-page .an-ev > .an-ev__closing {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ── Narrower screens: collapse in steps, keep the rhythm ──────────────────────────── */
+@media (max-width: 1099px) {
+  .an-page .an-prose {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .an-page {
+    --an-gap: 16px;
+    --an-section: 32px;
+  }
+
+  .an-page .an-top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .an-page .an-ledger {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 24px;
+  }
+
+  .an-page .an-highlights {
+    padding: 24px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--border-subtle);
+  }
+}
+
+@media (max-width: 640px) {
+  .an-page .an-card,
+  .an-page .an-prose__card,
+  .an-page .an-ev__block,
+  .an-page .an-prose__card--evidence {
+    padding: 20px;
+  }
+
+  .an-page .an-ev__row--plan {
+    margin-inline: -8px;
+    padding: 12px;
+  }
+}
+
+/* ── Charts ─────────────────────────────────────────────────────────────────────────── */
+/* Nothing people must read sits under 12px */
+.an-page .an-trend__tick {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A single day: stem, ringed dot and its value, in the line's own colour */
+.an-page .an-trend__stem {
+  stroke: var(--emerald-700);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.an-page .an-trend__value {
+  fill: var(--text-headline);
+  font: 700 14px var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+}
+
+[data-theme='dark'] .an-page .an-trend__stem,
+[data-theme='dark'] .an-page .an-trend__dot {
+  stroke: var(--emerald-400);
+}
+
+/* Chart toolbar: the hint reads as a caption, not a second control */
+.an-page .an-trend__bar {
+  margin-bottom: 16px;
+}
+
+/* Scale and compare rows: breathing room that matches the cards around them */
+.an-page .an-scale__legend {
+  gap: 8px 20px;
+  margin-bottom: 24px;
+  font-size: 12px;
+}
+
+.an-page .an-scale__rows {
+  gap: 24px;
+}
+
+.an-page .an-scale__row {
+  grid-template-columns: minmax(140px, 0.9fr) minmax(0, 1.6fr) 44px;
+  gap: 8px 20px;
+}
+
+.an-page .an-scale__label {
+  gap: 4px;
+  line-height: 1.4;
+}
+
+.an-page .an-scale__label small {
+  font-size: 12px;
+}
+
+.an-page .an-scale__bar {
+  height: 28px;
+}
+
+.an-page .an-scale__bar span {
+  font-size: 12px;
+}
+
+.an-page .an-cmp__rows {
+  gap: 24px;
+}
+
+.an-page .an-cmp__row {
+  gap: 8px;
+}
+
+.an-page .an-cmp > .an-scale__legend {
+  margin-bottom: 24px;
+}
+
+/* Narrower windows: the highlights drop under the figures instead of squeezing the ledger */
+@media (max-width: 1100px) {
+  .an-page .an-top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+}
+
+@media (max-width: 720px) {
+  .an-page .an-ledger {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 16px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .an-page .an-highlights {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+/* ==========================================================================
+   Interpretation: one topic at a time. A list of topics beside one reading pane at a
+   comfortable measure; no stacked cards, no two-up grid of dense blocks.
+   Same family as the other tabs: 16px cards, 8px controls, orange only for the selected mark.
+   ========================================================================== */
+.an-page .an-interp {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+
+.an-page .an-interp__nav {
+  position: sticky;
+  top: 16px;
+}
+
+.an-page .an-interp__nav ol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.an-page .an-interp__link {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-caption);
+  font: 500 14px/1.35 var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.an-page .an-interp__n {
+  flex: none;
+  width: 16px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.an-page .an-interp__link[aria-current='true'] {
+  background: color-mix(in srgb, var(--dark-emerald) 10%, transparent);
+  color: var(--text-headline);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .an-page .an-interp__link:not([aria-current='true']):hover {
+    background: color-mix(in srgb, var(--dark-emerald) 6%, transparent);
+    color: var(--text-body);
+  }
+}
+
+.an-page .an-interp__pane {
+  min-width: 0;
+  max-width: 72ch;
+}
+
+.an-page .an-interp__head h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  color: var(--text-headline);
+}
+
+.an-page .an-interp__sample {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-caption);
+  text-wrap: pretty;
+}
+
+.an-page .an-interp__body {
+  margin-top: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.an-page .an-interp__body p,
+.an-page .an-interp__body li {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.an-page .an-interp__body ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.an-page .an-interp__next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  margin-top: 40px;
+  padding: 16px 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-headline);
+  font: 600 15px/1.35 var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease, transform 150ms var(--am-ease-out, ease);
+}
+
+.an-page .an-interp__next small {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-caption);
+}
+
+.an-page .an-interp__next:active {
+  transform: scale(0.99);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .an-page .an-interp__next:hover {
+    border-color: var(--dark-emerald);
+  }
+}
+
+/* Chart by chart: a ruled list that opens on demand, one column */
+.an-page .an-interp .an-ev {
+  display: block;
+  margin-top: 24px;
+}
+
+.an-page .an-interp .an-ev__intro {
+  margin-bottom: 24px;
+}
+
+.an-page .an-interp .an-ev__block--fold {
+  padding: 0;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+}
+
+.an-page .an-interp .an-ev__block--fold:last-of-type {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.an-page .an-interp .an-ev__block--fold > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  margin: 0;
+  padding: 12px 4px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.an-page .an-interp .an-ev__block--fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.an-page .an-interp .an-ev__block--fold > summary::after {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-right: 1.5px solid var(--text-caption);
+  border-bottom: 1.5px solid var(--text-caption);
+  transform: rotate(45deg);
+  transition: transform 200ms var(--am-ease-move, ease-in-out);
+}
+
+.an-page .an-interp .an-ev__block--fold[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
+.an-page .an-interp .an-ev__num {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.an-page .an-interp .an-ev__block--fold .an-ev__rows {
+  padding: 4px 4px 24px 36px;
+  gap: 16px;
+}
+
+.an-page .an-interp .an-ev__row--plan {
+  margin: 0;
+  padding: 12px 16px;
+}
+
+.an-page .an-interp .an-ev__closing {
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .an-page .an-interp {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .an-page .an-interp__nav {
+    position: static;
+    margin-inline: calc(var(--an-gap) * -1);
+    padding-inline: var(--an-gap);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .an-page .an-interp__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .an-page .an-interp__nav ol {
+    flex-direction: row;
+    gap: 8px;
+    width: max-content;
+  }
+
+  .an-page .an-interp__link {
+    width: auto;
+    min-height: 44px;
+    white-space: nowrap;
+    border: 1px solid var(--border-subtle);
+  }
+
+  .an-page .an-interp__n {
+    display: none;
+  }
+
+  .an-page .an-interp .an-ev__block--fold .an-ev__rows {
+    padding-left: 4px;
+  }
+}
+
+@media print {
+  .an-page .an-interp {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   More air. One scale (8 / 16 / 24 / 32 / 48 / 64) spent between groups, never inside them:
+   section gaps 64, card gaps 32, card padding 40, reading pane lines 1.8 with 24px paragraph gaps.
+   ========================================================================== */
+.an-page {
+  --an-gap: 32px;
+  --an-section: 64px;
+}
+
+.an-page > .an-filters { margin-top: 24px; }
+
+.an-page .an-card {
+  gap: 32px;
+  padding: 40px 40px 44px;
+}
+
+.an-page .an-card .dash-insight__head { gap: 12px; }
+.an-page .an-card__note { margin-top: 32px; padding-top: 24px; }
+
+.an-page .an-top { gap: 64px; }
+.an-page .an-highlights { padding-left: 40px; }
+.an-page .an-highlights li { margin-bottom: 8px; }
+
+.an-page .an-tabs__btn { padding: 0 24px; }
+
+.an-page .an-interp { gap: 64px; grid-template-columns: 256px minmax(0, 1fr); }
+.an-page .an-interp__nav ol { gap: 4px; }
+.an-page .an-interp__link { padding: 10px 16px; }
+.an-page .an-interp__body { margin-top: 32px; gap: 24px; }
+.an-page .an-interp__body p,
+.an-page .an-interp__body li { line-height: 1.8; }
+.an-page .an-interp__body ul { gap: 16px; }
+.an-page .an-interp__sample { margin-top: 12px; }
+.an-page .an-interp__next { margin-top: 64px; padding: 20px 24px; }
+.an-page .an-interp .an-ev__intro { margin-bottom: 40px; }
+.an-page .an-interp .an-ev__block--fold > summary { min-height: 64px; padding: 16px 8px; }
+.an-page .an-interp .an-ev__block--fold .an-ev__rows { padding: 8px 8px 40px 40px; gap: 24px; }
+.an-page .an-interp .an-ev__closing { margin-top: 40px; padding: 32px 40px; }
+
+@media (max-width: 900px) {
+  .an-page { --an-gap: 24px; --an-section: 48px; }
+  .an-page .an-top { gap: 48px; }
+  .an-page .an-highlights { padding: 32px 0 0; }
+}
+
+@media (max-width: 640px) {
+  .an-page .an-card { padding: 24px; gap: 24px; }
+  .an-page .an-interp .an-ev__closing { padding: 24px; }
+}
+
+/* ── Interpretation: use the whole canvas ────────────────────────────────────────────
+   The pane fills the space beside the topic list. Long text flows into columns that each
+   keep a readable measure, and an open chart block lays its five rows out two-up. */
+.an-page .an-interp {
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 32px;
+}
+
+.an-page .an-interp__pane {
+  max-width: none;
+}
+
+.an-page .an-interp__head {
+  max-width: 80ch;
+}
+
+@media (min-width: 1200px) {
+  .an-page .an-interp__body {
+    display: block;
+    columns: 2 34ch;
+    column-gap: 48px;
+  }
+
+  .an-page .an-interp__body p,
+  .an-page .an-interp__body ul {
+    break-inside: avoid-column;
+    margin-bottom: 16px;
+  }
+
+  .an-page .an-interp .an-ev__intro {
+    columns: 2 34ch;
+    column-gap: 48px;
+    max-width: none;
+    display: block;
+  }
+
+  .an-page .an-interp .an-ev__intro p {
+    break-inside: avoid-column;
+    margin-bottom: 16px;
+  }
+
+  .an-page .an-interp .an-ev__closing p {
+    max-width: none;
+  }
+
+  .an-page .an-interp .an-ev__block--fold .an-ev__rows {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 48px;
+    padding-right: 8px;
+  }
+
+  .an-page .an-interp .an-ev__row--plan {
+    grid-column: 1 / -1;
+  }
+
+  .an-page .an-interp .an-ev__row dd {
+    max-width: 60ch;
+  }
+}
+
+.an-page .an-interp__next {
+  max-width: 420px;
+}
+
+/* ── Interpretation: key facts as cards ──────────────────────────────────────────────
+   Six numbers worth knowing before reading. Flat hairline cards, the number is the card;
+   each jumps to the topic that explains it. */
+.an-page .an-interp-wrap {
+  display: grid;
+  gap: 32px;
+}
+
+.an-page .an-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.an-page .an-facts__card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 20px 24px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--card-fill-neutral);
+  color: var(--text-body);
+  font: inherit;
+  text-align: left;
+}
+
+.an-page button.an-facts__card {
+  cursor: pointer;
+  transition: border-color 150ms ease, transform 150ms var(--am-ease-out, ease);
+}
+
+.an-page button.an-facts__card:active {
+  transform: scale(0.98);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .an-page button.an-facts__card:hover {
+    border-color: var(--dark-emerald);
+  }
+}
+
+.an-page .an-facts__label {
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--text-caption);
+}
+
+.an-page .an-facts__value {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-headline);
+}
+
+.an-page .an-facts__note {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-caption);
+  text-wrap: pretty;
+}
+
+@media print {
+  .an-page .an-facts {
+    display: none;
+  }
+}
+
+/* ── Highlights: ruled rows on the ledger's rhythm ───────────────────────────────────────
+   The title is the first row, each line is a row with a thin rule under it, and the column
+   starts at the same top as the ledger, so the two read as one band. */
+.an-page .an-highlights {
+  padding: 0 0 8px 32px;
+  border-left: 0;
+}
+
+.an-page .an-highlights h2 {
+  display: flex;
+  align-items: center;
+  min-height: 41px;
+  margin: 0;
+  border-bottom: 0.8px solid var(--border-subtle);
+  font-size: 14px;
+  color: var(--text-headline);
+}
+
+.an-page .an-highlights ul {
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  line-height: 1.45;
+}
+
+.an-page .an-highlights li {
+  display: flex;
+  align-items: center;
+  min-height: 41px;
+  box-sizing: border-box;
+  padding: 8px 0;
+  border-bottom: 0.8px solid var(--border-subtle);
+  font-size: 14px;
+}
+
+.an-page .an-highlights li::before {
+  display: none;
+}
+
+.an-page .an-highlights p {
+  margin: 0;
+  padding: 10px 0;
+  border-bottom: 0.8px solid var(--border-subtle);
+}
+
+@media (max-width: 1100px) {
+  .an-page .an-highlights {
+    padding-left: 0;
+  }
+}

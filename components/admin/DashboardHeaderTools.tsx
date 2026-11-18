@@ -1,5 +1,6 @@
 'use client';
 
+import { useSlidingThumb } from '@/lib/ui/useSlidingThumb';
 import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
 import type { DateRangeValue } from '@/lib/admin/dateRange';
 import type { DashboardViewMode } from '@/lib/admin/dashboardView';
@@ -20,10 +21,12 @@ export function DashboardHeaderTools({
   viewMode = 'detailed',
   onViewModeChange,
 }: DashboardHeaderToolsProps) {
+  const thumbRef = useSlidingThumb<HTMLDivElement>(viewMode);
   return (
     <div className="dash-page__tools" aria-label="Dashboard filters">
       {onViewModeChange ? (
         <div
+          ref={thumbRef}
           className="dash-view-toggle"
           role="tablist"
           aria-label="Dashboard view"

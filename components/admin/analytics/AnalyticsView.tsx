@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Download, FileText } from 'lucide-react';
 import { downloadReportDocx } from '@/lib/admin/downloadDocx';
 import { AnalyticsDocument } from '@/components/admin/analytics/AnalyticsDocument';
-import { EvidenceSummaryView } from '@/components/admin/analytics/EvidenceSummaryView';
+import { InterpretationPanel, type Fact } from '@/components/admin/analytics/InterpretationPanel';
 import { buildEvidenceSummary } from '@/lib/admin/evidence';
-import { buildInterpretation } from '@/lib/admin/interpretation';
+import { buildInterpretation, positive } from '@/lib/admin/interpretation';
 import { GroupCompare } from '@/components/admin/analytics/GroupCompare';
 import { Heatmap } from '@/components/admin/analytics/Heatmap';
 import { ColumnChart } from '@/components/admin/analytics/ColumnChart';
@@ -163,6 +163,63 @@ export function AnalyticsView({
   const evidence = useMemo(() => buildEvidenceSummary(filtered), [filtered]);
   const highlights = useMemo(() => highlightLines(filtered, kpis.last7DaysCount), [filtered, kpis.last7DaysCount]);
 
+  const facts = useMemo<Fact[]>(() => {
+    if (filtered.length === 0) return [];
+    const out: Fact[] = [
+      {
+        id: 'responses',
+        label: 'Responses',
+        value: String(kpis.total),
+        note: `${kpis.last7DaysCount} in the last 7 days`,
+        topic: 'people',
+      },
+      {
+        id: 'digital',
+        label: 'Digital-ready',
+        value: `${digital.pct}%`,
+        note: `${digital.count} of ${digital.total} have a device and internet`,
+        topic: 'readiness',
+      },
+    ];
+    const topFeature = [...featureRows].filter((r) => r.n).sort((a, b) => b.mean - a.mean)[0];
+    if (topFeature) {
+      out.push({
+        id: 'feature',
+        label: 'Most wanted feature',
+        value: `${topFeature.mean.toFixed(1)} / 5`,
+        note: `${topFeature.label}, ${positive(topFeature)}% likely to use`,
+        topic: 'features',
+      });
+    }
+    const topProblem = problems[0];
+    if (topProblem) {
+      out.push({
+        id: 'problem',
+        label: 'Top reported problem',
+        value: `${topProblem.pct}%`,
+        note: topProblem.label,
+        topic: 'problems',
+      });
+    }
+    const weakest = [...readinessRows].filter((r) => r.n).sort((a, b) => positive(a) - positive(b))[0];
+    if (weakest) {
+      out.push({
+        id: 'weakest',
+        label: 'Weakest readiness',
+        value: `${positive(weakest)}%`,
+        note: `agree: ${weakest.label}`,
+        topic: 'readiness',
+      });
+    }
+    out.push({
+      id: 'interview',
+      label: 'Open to interview',
+      value: `${interview.pct}%`,
+      note: `${interview.yes} said yes`,
+    });
+    return out;
+  }, [filtered.length, kpis, digital, featureRows, problems, readinessRows, interview]);
+
   const periodTrend = useMemo(() => {
     if (source !== 'firestore' || usingDemoSample || filtering) return null;
     const prev = previousPeriodBounds(dateRange);
@@ -227,15 +284,6 @@ export function AnalyticsView({
           <PageTitle pageId="admin-analytics-title">Data Analytics</PageTitle>
         </div>
         <div className="dash-page__tools" aria-label="Analytics filters">
-          <div className="dash-page__filter-open">
-            <DateRangePicker
-              value={dateRange}
-              onChange={(next) => {
-                setDateRange(next);
-                storeDateRange(next);
-              }}
-            />
-          </div>
           <button
             type="button"
             className="an-download"
@@ -264,10 +312,10 @@ export function AnalyticsView({
         </div>
       </div>
 
-      <div className="an-filters" role="group" aria-label="Narrow the data">
-        <label className="an-filter">
-          <span>Phase</span>
-          <select value={phase} onChange={(e) => setPhase(e.target.value)}>
+      <div className="an-filters inq-toolbar" role="group" aria-label="Narrow the data">
+        <div className="inq-toolbar__sort">
+          <label htmlFor="an-phase">Phase</label>
+          <select id="an-phase" value={phase} onChange={(e) => setPhase(e.target.value)}>
             <option value="all">All phases</option>
             {PHASE_OPTIONS.map((p) => (
               <option key={p} value={p}>
@@ -275,10 +323,10 @@ export function AnalyticsView({
               </option>
             ))}
           </select>
-        </label>
-        <label className="an-filter">
-          <span>Resident type</span>
-          <select value={resident} onChange={(e) => setResident(e.target.value)}>
+        </div>
+        <div className="inq-toolbar__sort">
+          <label htmlFor="an-resident">Resident type</label>
+          <select id="an-resident" value={resident} onChange={(e) => setResident(e.target.value)}>
             <option value="all">All residents</option>
             {residentOptions.map((r) => (
               <option key={r} value={r}>
@@ -286,11 +334,21 @@ export function AnalyticsView({
               </option>
             ))}
           </select>
-        </label>
+        </div>
+        <div className="dash-page__filter-open">
+          <DateRangePicker
+            value={dateRange}
+            onChange={(next) => {
+              setDateRange(next);
+              storeDateRange(next);
+            }}
+          />
+        </div>
+        <div className="inq-toolbar__end">
         {filtering ? (
           <button
             type="button"
-            className="an-filters__reset"
+            className="inq-toolbar__reset"
             onClick={() => {
               setPhase('all');
               setResident('all');
@@ -299,9 +357,10 @@ export function AnalyticsView({
             Reset filters
           </button>
         ) : null}
-        <p className="an-filters__count" aria-live="polite">
+        <p className="inq-toolbar__count" aria-live="polite">
           {loading ? 'Loading…' : `${filtered.length} ${filtered.length === 1 ? 'response' : 'responses'} in view`}
         </p>
+        </div>
       </div>
 
       {status === 'error' && !usingDemoSample ? (
@@ -415,28 +474,7 @@ export function AnalyticsView({
         ) : null}
 
         {tab === 'insights' ? (
-          <div className="an-span-12 an-prose">
-            <p className="an-prose__note">{interpretation.sampleNote}</p>
-            <article className="dash-insight an-card an-prose__card an-prose__card--evidence">
-              <h2 className="dash-insight__title">Summary: what each chart proves</h2>
-              <EvidenceSummaryView summary={evidence} />
-            </article>
-            {interpretation.sections.map((section) => (
-              <article key={section.id} className="dash-insight an-card an-prose__card">
-                <h2 className="dash-insight__title">{section.title}</h2>
-                {section.paragraphs.map((p) => (
-                  <p key={p}>{p}</p>
-                ))}
-                {section.bullets?.length ? (
-                  <ul>
-                    {section.bullets.map((b) => (
-                      <li key={b}>{b}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </article>
-            ))}
-          </div>
+          <InterpretationPanel interpretation={interpretation} evidence={evidence} facts={facts} />
         ) : null}
 
         {tab === 'features' ? (

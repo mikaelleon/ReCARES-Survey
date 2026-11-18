@@ -1,7 +1,6 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { RESPONSE_QUESTION_OPTIONS, isKnownQuestionId } from '@/lib/admin/responseQuestions';
@@ -15,7 +14,7 @@ import {
   type FeedbackTargetType,
   type RootCommentInput,
 } from '@/lib/firebase/adviserFeedback';
-import styles from '@/components/admin/reviews/reviews.module.css';
+import styles from '@/components/admin/reviews/styles';
 
 const TARGET_OPTIONS = ['Note', 'Question', 'Instrument'];
 const SEVERITY_OPTIONS = ['Suggestion', 'Required fix', 'Approved'];
@@ -235,9 +234,9 @@ export function CommentForm({
         </p>
       ) : null}
       <div className={styles.actions}>
-        <Button type="submit" variant="primary" size="sm" loading={busy} disabled={busy}>
-          {submitLabel || (mode === 'reply' ? 'Reply' : 'Add review')}
-        </Button>
+        <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={busy}>
+          {busy ? 'Saving…' : submitLabel || (mode === 'reply' ? 'Reply' : 'Add review')}
+        </button>
       </div>
     </form>
   );

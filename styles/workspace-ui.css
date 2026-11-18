@@ -492,13 +492,14 @@
   color: var(--tone);
 }
 
-/* ── Segmented view switcher: the Members pill control ──────────────────── */
+/* ── Segmented control: 8px outside, 6px inside, so it sits in the same radius family
+   as every field and button ─────────────────────────────────────────────────── */
 .admin-app.admin-app :is(.ws-seg, .members-view, .view-switcher, .dash-view-toggle) {
   display: inline-flex;
   gap: 2px;
-  padding: 3px;
+  padding: 2px;
   border: 1px solid var(--ws-control-border);
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--surface-1);
 }
 
@@ -508,10 +509,10 @@
   justify-content: center;
   gap: 6px;
   min-width: 0;
-  min-height: 34px;
+  min-height: 36px;
   padding: 0 12px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   box-shadow: none;
   color: var(--text-body);
@@ -554,10 +555,11 @@
   }
 }
 
-/* ── Toolbar fields are pills too (inline component styles need !important) ─ */
+/* ── Toolbar fields share the 8px family (inline component styles need !important) ─ */
 .admin-app.admin-app :is(.members-toolbar, .finding-notes-toolbar, .responses-toolbar) :is(input:not([type='checkbox']):not([type='radio']), select) {
-  border-radius: 999px !important;
-  padding-inline: 16px !important;
+  border-radius: 8px !important;
+  padding-inline: 12px !important;
+  font-size: 14px !important;
 }
 
 /* ── Motion ─────────────────────────────────────────────────────────────── */

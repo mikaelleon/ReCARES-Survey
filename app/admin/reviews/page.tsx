@@ -3,7 +3,7 @@
 import { PageHeading } from '@/components/admin/PageHeading';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { ReviewInbox } from '@/components/admin/reviews/ReviewInbox';
-import styles from '@/components/admin/reviews/reviews.module.css';
+import styles from '@/components/admin/reviews/styles';
 
 function ReviewsContent() {
   return (

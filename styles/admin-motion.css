@@ -1,0 +1,471 @@
+/* ==========================================================================
+   Admin motion pass. One set of named curves and durations for every admin screen; this file
+   only holds what the screens disagreed on. Loaded last (app/layout.tsx).
+
+   Rules it applies (UX & animation):
+   - Lists people filter, search and re-sort never replay an entrance: the rows are already
+     there, the route change carries them in.
+   - Appearing things ease out, leaving things ease in and are ~25% shorter.
+   - A press is a 0.96 scale on a 150ms ease-out, only where the control is not dense chrome.
+   - Hover motion runs only on a real pointer.
+   - A failed submit moves the field that is wrong, once, 360ms.
+   - Reduced motion: no entrances, no shimmer loop; spinners keep turning.
+   ========================================================================== */
+
+:root {
+  --am-ease-out: cubic-bezier(0.32, 0.72, 0, 1); /* appearing */
+  --am-ease-in: cubic-bezier(0.55, 0, 1, 0.45); /* leaving */
+  --am-ease-move: cubic-bezier(0.77, 0, 0.175, 1); /* moving or resizing on screen */
+  --am-press: 150ms;
+  --am-page: 240ms;
+  --am-overlay-in: 260ms;
+  --am-overlay-out: 200ms;
+  --am-toast: 220ms;
+}
+
+/* ── Route change: one slide-up, 8px, on the shared curve ───────────────────────────── */
+@keyframes amPageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.admin-page-transition {
+  animation: amPageEnter var(--am-page) var(--am-ease-out) both;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+  animation-timing-function: var(--am-ease-out);
+}
+
+/* ── Rows, cards and tiles that re-render with the data: no entrance ────────────────── */
+.admin-app.admin-app :is(
+    .admin-table__row:not(.admin-table__row--flash),
+    .admin-response-card:not(.admin-response-card--flash),
+    .finding-notes-grid > li,
+    .admin-kanban-note,
+    .admin-stat,
+    .survey-card
+  ) {
+  animation: none;
+}
+
+/* ── Drawers and their scrim: in on ease-out, out 25% faster on ease-in ─────────────── */
+.admin-drawer {
+  animation-duration: var(--am-overlay-in);
+  animation-timing-function: var(--am-ease-out);
+}
+
+.admin-drawer.is-exiting {
+  animation-duration: var(--am-overlay-out);
+  animation-timing-function: var(--am-ease-in);
+}
+
+.admin-drawer__backdrop {
+  animation-duration: var(--am-overlay-in);
+  animation-timing-function: var(--am-ease-out);
+}
+
+.admin-drawer__backdrop.is-exiting {
+  animation-duration: var(--am-overlay-out);
+  animation-timing-function: var(--am-ease-in);
+}
+
+/* Closed or closing, it cannot catch a click */
+.admin-drawer-root:has(.is-exiting) {
+  pointer-events: none;
+}
+
+/* ── Toasts and notices: rise on ease-out ───────────────────────────────────────────── */
+.admin-undo,
+.rr-toast,
+.sb-toast {
+  animation-duration: var(--am-toast);
+  animation-timing-function: var(--am-ease-out);
+}
+
+.admin-fil-banner,
+.page-help__backdrop {
+  animation-timing-function: var(--am-ease-out);
+}
+
+/* ── Popovers and menus grow from the control that opened them ───────────────────────── */
+@keyframes amMenuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+.row-menu {
+  transform-origin: top right;
+  animation: amMenuIn 150ms var(--am-ease-out) both;
+}
+
+/* ── Press: one feel for every admin button ──────────────────────────────────────────── */
+.admin-app.admin-app :is(.admin-action, .iv-act, .rr-btn, .an-download, .ws-btn, .page-title__btn) {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    opacity 150ms ease,
+    box-shadow 150ms ease,
+    transform var(--am-press) var(--am-ease-out);
+}
+
+.admin-app.admin-app :is(.admin-action, .iv-act, .rr-btn, .an-download, .ws-btn, .page-title__btn):active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+/* Dense chrome (toolbars, tab strips, segmented controls) stays still; colour confirms it */
+.admin-app.admin-app :is(.sb-toolbar, .view-switcher, .ws-seg, .an-seg, .rt-toolbar) :is(button, a):active {
+  transform: none;
+}
+
+/* ── Touch fires :hover on tap: no hover movement unless a real pointer hovers ──────── */
+@media (hover: none), (pointer: coarse) {
+  .admin-app.admin-app :is(.ws-card--lift, .finding-note-card, .dash-insight, .admin-kanban-card):hover {
+    transform: none;
+  }
+}
+
+/* ── A failed submit moves the field that is wrong, once ─────────────────────────────── */
+@keyframes amShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(-10px);
+  }
+  30% {
+    transform: translateX(10px);
+  }
+  50% {
+    transform: translateX(-6px);
+  }
+  65% {
+    transform: translateX(6px);
+  }
+  82% {
+    transform: translateX(-3px);
+  }
+}
+
+.auth-card [aria-invalid='true'],
+.auth-card__alert[role='alert'] {
+  animation: amShake 360ms var(--am-ease-out) both;
+}
+
+/* ── Skeleton shimmer is a sweep at constant rate ───────────────────────────────────── */
+.admin-app .dash-stat--skeleton,
+.admin-app .ledger-skel,
+.admin-app .mem-skel {
+  animation-timing-function: linear;
+}
+
+/* ==========================================================================
+   Reduced motion: every entrance off, fades included, nothing loops. Only the indicators
+   that say work is still happening keep turning.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .admin-app *,
+  .admin-app *::before,
+  .admin-app *::after,
+  .admin-drawer-root *,
+  .ui-modal__backdrop,
+  .ui-modal__panel {
+    animation-iteration-count: 1 !important;
+  }
+
+  .admin-page-transition,
+  .admin-drawer,
+  .admin-drawer__backdrop,
+  .admin-undo,
+  .row-menu,
+  .rr-toast,
+  .auth-card [aria-invalid='true'],
+  .auth-card__alert[role='alert'] {
+    animation: none !important;
+  }
+
+  /* globals.css turns spinners off for reduced motion; a frozen spinner looks like a hang */
+  .page-loader__spinner {
+    animation: pageLoaderSpin 0.7s linear infinite !important;
+  }
+
+  .btn-spinner {
+    animation: pageLoaderSpin 0.65s linear infinite !important;
+  }
+
+  /* The loader's fade-in delay is a timing gate, not motion: keep it, drop the fade */
+  .page-loader__inner {
+    animation-duration: 1ms !important;
+  }
+
+  .admin-app.admin-app :is(.admin-action, .iv-act, .rr-btn, .an-download, .ws-btn, .page-title__btn):active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   Loading screen. Answers within 400ms: the shell silhouette paints at once (it matches the
+   real sidebar, so the page never goes blank), and the mark, spinner and label wait 300ms
+   before they fade in. A load that finishes sooner never flashes a spinner.
+   ========================================================================== */
+@keyframes amLoaderIn {
+  from {
+    opacity: 0;
+  }
+}
+
+.page-loader__inner {
+  animation: amLoaderIn 150ms var(--am-ease-out) 300ms backwards;
+}
+
+.page-loader__spinner {
+  will-change: transform;
+}
+
+/* ==========================================================================
+   Notifications popup, unslopped. Direction: calm, exact, quiet; the emerald rail at night.
+   One unread signal per row (the dot, which is also the read toggle), one for the bell (its
+   badge). No pill in the header, no divider, no bordered card per row, no glow.
+   ========================================================================== */
+.admin-sidebar__popover {
+  padding: 8px;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.admin-sidebar__popover-head {
+  margin: 0;
+  padding: 4px 4px 8px 8px;
+  border-bottom: 0;
+}
+
+.admin-sidebar__popover-head .admin-sidebar__popover-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-sidebar__popover-action {
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(229, 235, 232, 0.72);
+  font-weight: 600;
+}
+
+.admin-sidebar__notify-list {
+  gap: 2px;
+}
+
+.admin-sidebar__notify-row,
+.admin-sidebar__notify-row.is-unread {
+  align-items: flex-start;
+  gap: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.admin-sidebar__notify-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: transparent;
+}
+
+.admin-sidebar__notify-link,
+.admin-sidebar__notify-link:link,
+.admin-sidebar__notify-link:visited,
+.admin-sidebar__notify-link:hover,
+.admin-sidebar__notify-link:active,
+.admin-sidebar__notify-link:focus {
+  padding: 10px 12px 10px 0;
+}
+
+.admin-sidebar__notify-title {
+  display: block;
+  font-weight: 500;
+  color: rgba(229, 235, 232, 0.86);
+}
+
+.admin-sidebar__notify-row.is-unread .admin-sidebar__notify-title {
+  font-weight: 600;
+  color: var(--white);
+}
+
+.admin-sidebar__notify-detail {
+  color: rgba(229, 235, 232, 0.68);
+}
+
+.admin-sidebar__notify-time,
+.admin-sidebar__notify-row.is-unread .admin-sidebar__notify-time {
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: rgba(229, 235, 232, 0.56);
+}
+
+/* The dot is the read toggle: filled = unread, ring = read. 32px target, 8px dot. */
+.admin-sidebar__notify-row .admin-sidebar__notify-toggle,
+.admin-sidebar__notify-row.is-unread .admin-sidebar__notify-toggle {
+  align-self: flex-start;
+  width: 32px;
+  height: 36px;
+  margin: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.admin-sidebar__notify-dot {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: none;
+  background: var(--harvest-orange);
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms var(--am-ease-out);
+}
+
+.admin-sidebar__notify-row.is-read .admin-sidebar__notify-dot {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px rgba(229, 235, 232, 0.36);
+}
+
+.admin-sidebar__notify-toggle:active .admin-sidebar__notify-dot {
+  transform: scale(0.8);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-sidebar__notify-toggle:hover .admin-sidebar__notify-dot {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12);
+  }
+}
+
+@media (pointer: coarse) {
+  .admin-sidebar__notify-row .admin-sidebar__notify-toggle {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* ==========================================================================
+   Dropdowns. One select: 40px, 8px corners, hairline border, one chevron, a border-colour
+   hover, a disabled state. Pills and 44px builder variants fold into the same family.
+   The native option list stays native (best on phones, keyboard and screen readers).
+   ========================================================================== */
+.admin-app.admin-app select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 40px;
+  padding-block: 0;
+  padding-inline: 12px 36px;
+  border: 1px solid var(--field-border);
+  border-radius: 8px;
+  background-color: var(--field-bg);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%230b0b0b' stroke-opacity='.7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6.5l4 4 4-4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  color: var(--field-text);
+  font-family: var(--font-sans);
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
+}
+
+[data-theme='dark'] .admin-app.admin-app select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23f2f5f3' stroke-opacity='.75' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6.5l4 4 4-4'/></svg>");
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-app.admin-app select:hover:not(:disabled) {
+    border-color: var(--dark-emerald);
+  }
+
+  [data-theme='dark'] .admin-app.admin-app select:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+}
+
+.admin-app.admin-app select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-app.admin-app select[aria-invalid='true'] {
+  border-color: var(--error-red);
+}
+
+@media (pointer: coarse) {
+  .admin-app.admin-app select {
+    min-height: var(--touch-target-min);
+  }
+}
+
+/* ── "More actions" menu: same corners as every control, grows from its trigger ─────── */
+@keyframes amOverflowIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+.overflow-menu__btn {
+  border-radius: 8px;
+  transition:
+    background-color 150ms ease,
+    transform var(--am-press) var(--am-ease-out);
+}
+
+.overflow-menu__btn:active {
+  transform: scale(0.96);
+}
+
+.overflow-menu__list {
+  animation: amOverflowIn 150ms var(--am-ease-out) both;
+}
+
+.overflow-menu__list--right {
+  transform-origin: top right;
+}
+
+.overflow-menu__list--left {
+  transform-origin: top left;
+}
+
+.qt tbody tr:nth-last-child(-n + 3) .overflow-menu__list--right {
+  transform-origin: bottom right;
+}
+
+.qt tbody tr:nth-last-child(-n + 3) .overflow-menu__list--left {
+  transform-origin: bottom left;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .overflow-menu__item {
+    min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overflow-menu__list {
+    animation: none !important;
+  }
+
+  .overflow-menu__btn:active {
+    transform: none;
+  }
+}

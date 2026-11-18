@@ -1,43 +1,24 @@
 'use client';
 
-import { StatusBadge } from '@/components/ui/StatusBadge';
 import {
   SEVERITY_LABELS,
   STATUS_LABELS,
   type FeedbackComment,
-  type FeedbackSeverity,
-  type FeedbackStatus,
 } from '@/lib/firebase/adviserFeedback';
-import styles from '@/components/admin/reviews/reviews.module.css';
-
-function severityTone(severity: FeedbackSeverity): 'amber' | 'danger' | 'emerald' {
-  if (severity === 'required_fix') return 'danger';
-  if (severity === 'approved') return 'emerald';
-  return 'amber';
-}
-
-function statusTone(status: FeedbackStatus): 'amber' | 'neutral' | 'emerald' {
-  if (status === 'resolved') return 'emerald';
-  if (status === 'addressed') return 'neutral';
-  return 'amber';
-}
+import styles from '@/components/admin/reviews/styles';
 
 function formatWhen(ms: number): string {
   if (!ms) return '—';
   try {
-    return new Date(ms).toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
+    return new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   } catch {
     return '—';
   }
 }
 
 /**
- * Inbox rows for root review comments.
+ * Index of root review comments: ruled rows, the comment first, then one line of plain facts.
+ * Severity is bold only when it blocks (a required fix); status is a word, not a pill.
  */
 export function ThreadList({
   roots,
@@ -63,6 +44,16 @@ export function ThreadList({
       {roots.map((row) => {
         const replies = replyCounts.get(row.id) ?? row.replyCount;
         const selected = row.id === selectedId;
+        const parts: React.ReactNode[] = [];
+        if (row.severity) {
+          const label = SEVERITY_LABELS[row.severity];
+          parts.push(row.severity === 'required_fix' ? <strong key="sev">{label}</strong> : label);
+        }
+        if (row.status) parts.push(STATUS_LABELS[row.status]);
+        parts.push(row.authorName);
+        parts.push(formatWhen(row.updatedAtMs));
+        parts.push(`${replies} ${replies === 1 ? 'reply' : 'replies'}`);
+        if (showTarget) parts.push(targetLabel(row));
         return (
           <li key={row.id}>
             <button
@@ -71,24 +62,14 @@ export function ThreadList({
               aria-current={selected ? 'true' : undefined}
               onClick={() => onSelect(row.id)}
             >
-              <span className={styles.badges}>
-                {row.severity ? (
-                  <StatusBadge tone={severityTone(row.severity)}>
-                    {SEVERITY_LABELS[row.severity]}
-                  </StatusBadge>
-                ) : null}
-                {row.status ? (
-                  <StatusBadge tone={statusTone(row.status)}>{STATUS_LABELS[row.status]}</StatusBadge>
-                ) : null}
-              </span>
               <p className={styles.snippet}>{row.comment}</p>
               <p className={styles.meta}>
-                {row.authorName}
-                {' · '}
-                {formatWhen(row.updatedAtMs)}
-                {' · '}
-                {replies} {replies === 1 ? 'reply' : 'replies'}
-                {showTarget ? ` · ${targetLabel(row)}` : ''}
+                {parts.map((part, i) => (
+                  <span key={i}>
+                    {i > 0 ? ' · ' : null}
+                    {part}
+                  </span>
+                ))}
               </p>
             </button>
           </li>

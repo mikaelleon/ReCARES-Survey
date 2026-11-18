@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { CommentForm } from '@/components/admin/reviews/CommentForm';
-import styles from '@/components/admin/reviews/reviews.module.css';
-import { StatusBadge } from '@/components/ui/StatusBadge';
-import { Button } from '@/components/ui/Button';
+import styles from '@/components/admin/reviews/styles';
 import { Textarea } from '@/components/ui/Textarea';
 import { canResolveThread, type AdminRole } from '@/lib/admin/access';
 import {
@@ -14,21 +12,8 @@ import {
   commentInputHasErrors,
   validateCommentInput,
   type FeedbackComment,
-  type FeedbackSeverity,
   type FeedbackStatus,
 } from '@/lib/firebase/adviserFeedback';
-
-function severityTone(severity: FeedbackSeverity): 'amber' | 'danger' | 'emerald' {
-  if (severity === 'required_fix') return 'danger';
-  if (severity === 'approved') return 'emerald';
-  return 'amber';
-}
-
-function statusTone(status: FeedbackStatus): 'amber' | 'neutral' | 'emerald' {
-  if (status === 'resolved') return 'emerald';
-  if (status === 'addressed') return 'neutral';
-  return 'amber';
-}
 
 function formatWhen(ms: number): string {
   if (!ms) return '—';
@@ -51,6 +36,7 @@ function CommentBlock({
   isSuperadmin,
   busy,
   canDelete,
+  root = false,
   deleteHint,
   onEdit,
   onRequestDelete,
@@ -60,6 +46,7 @@ function CommentBlock({
   isSuperadmin: boolean;
   busy: boolean;
   canDelete: boolean;
+  root?: boolean;
   deleteHint?: string | null;
   onEdit: (id: string, comment: string) => Promise<void>;
   onRequestDelete: (row: FeedbackComment) => void;
@@ -86,15 +73,7 @@ function CommentBlock({
   };
 
   return (
-    <article className={styles.comment}>
-      <div className={styles.badges}>
-        {row.severity ? (
-          <StatusBadge tone={severityTone(row.severity)}>{SEVERITY_LABELS[row.severity]}</StatusBadge>
-        ) : null}
-        {row.status ? (
-          <StatusBadge tone={statusTone(row.status)}>{STATUS_LABELS[row.status]}</StatusBadge>
-        ) : null}
-      </div>
+    <article className={`${styles.comment} ${root ? styles.commentRoot : styles.commentReply}`}>
       {editing ? (
         <Textarea
           label="Comment"
@@ -108,45 +87,46 @@ function CommentBlock({
         <p className={styles.commentBody}>{row.comment}</p>
       )}
       <p className={styles.meta}>
+        {root && row.severity ? (
+          <>
+            {row.severity === 'required_fix' ? (
+              <strong>{SEVERITY_LABELS[row.severity]}</strong>
+            ) : (
+              SEVERITY_LABELS[row.severity]
+            )}
+            {' · '}
+          </>
+        ) : null}
+        {root && row.status ? `${STATUS_LABELS[row.status]} · ` : null}
         {row.authorName}
         {' · '}
         {formatWhen(row.updatedAtMs)}
-        {row.edited ? <span className={styles.edited}> · Edited</span> : null}
+        {row.edited ? ' · Edited' : null}
       </p>
       <div className={styles.actions}>
         {mine && !editing ? (
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={busy}
-            onClick={() => {
+          <button type="button" className={styles.btn} disabled={busy} onClick={() => {
               setDraft(row.comment);
               setError(null);
               setEditing(true);
-            }}
-          >
+            }}>
             Edit
-          </Button>
+          </button>
         ) : null}
         {mine && editing ? (
           <>
-            <Button variant="primary" size="sm" disabled={busy} onClick={() => void save()}>
+            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} disabled={busy} onClick={() => void save()}>
               Save
-            </Button>
-            <Button variant="secondary" size="sm" disabled={busy} onClick={() => setEditing(false)}>
+            </button>
+            <button type="button" className={styles.btn} disabled={busy} onClick={() => setEditing(false)}>
               Cancel
-            </Button>
+            </button>
           </>
         ) : null}
         {mayDelete ? (
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={busy || !canDelete}
-            onClick={() => onRequestDelete(row)}
-          >
+          <button type="button" className={`${styles.btn} ${styles.btnDanger}`} disabled={busy || !canDelete} onClick={() => onRequestDelete(row)}>
             Delete
-          </Button>
+          </button>
         ) : null}
       </div>
       {mayDelete && !canDelete && deleteHint ? (
@@ -193,23 +173,20 @@ export function ThreadPanel({
   const rootDeleteBlocked = replyCount > 0;
 
   return (
-    <div className={styles.threadPanel}>
-      <header className={styles.threadPanelHead}>
-        <h2 className={styles.panelTitle}>Thread</h2>
-        <p className={styles.meta}>
-          {targetLabel}
-          {noteHref ? (
-            <>
-              {' · '}
-              <span className={styles.noteLink}>
-                <Link href={noteHref}>Open in Findings Log</Link>
-              </span>
-            </>
-          ) : null}
-        </p>
+    <div className={styles.thread}>
+      <header className={styles.threadHead}>
+        <h2 className={styles.heading}>{targetLabel}</h2>
+        {noteHref ? (
+          <p className={styles.meta}>
+            <Link className={styles.link} href={noteHref}>
+              Open in Findings Log
+            </Link>
+          </p>
+        ) : null}
       </header>
       <CommentBlock
         row={root}
+        root
         currentUid={currentUid}
         isSuperadmin={isSuperadmin}
         busy={busy}
@@ -220,26 +197,25 @@ export function ThreadPanel({
       />
       <div className={styles.actions}>
         {root.status === 'open' && staff ? (
-          <Button variant="secondary" size="sm" disabled={busy} onClick={() => void onStatus(root.id, 'addressed')}>
+          <button type="button" className={styles.btn} disabled={busy} onClick={() => void onStatus(root.id, 'addressed')}>
             Mark addressed
-          </Button>
+          </button>
         ) : null}
         {root.status === 'addressed' && canResolve ? (
-          <Button variant="secondary" size="sm" disabled={busy} onClick={() => void onStatus(root.id, 'resolved')}>
+          <button type="button" className={styles.btn} disabled={busy} onClick={() => void onStatus(root.id, 'resolved')}>
             Resolve
-          </Button>
+          </button>
         ) : null}
         {resolved && canResolve ? (
-          <Button variant="secondary" size="sm" disabled={busy} onClick={() => void onStatus(root.id, 'open')}>
+          <button type="button" className={styles.btn} disabled={busy} onClick={() => void onStatus(root.id, 'open')}>
             Reopen
-          </Button>
+          </button>
         ) : null}
       </div>
       {replies.length > 0 ? (
-        <div>
-          <h3 className={styles.columnTitle}>Replies</h3>
+        <ul className={styles.replies} aria-label="Replies">
           {replies.map((reply) => (
-            <div key={reply.id} className={styles.reply}>
+            <li key={reply.id}>
               <CommentBlock
                 row={reply}
                 currentUid={currentUid}
@@ -249,9 +225,9 @@ export function ThreadPanel({
                 onEdit={onEdit}
                 onRequestDelete={onRequestDelete}
               />
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : null}
       {resolved ? (
         <p className={styles.empty}>

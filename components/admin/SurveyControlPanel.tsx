@@ -190,6 +190,8 @@ export function SurveyControlPanel() {
   const [resetting, setResetting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [barHost, setBarHost] = useState<HTMLElement | null>(null);
@@ -456,6 +458,20 @@ export function SurveyControlPanel() {
   }
 
   const busy = saving || resetting;
+  const hasSchedule = Boolean(draft.opensAt || draft.closesAt);
+  const scheduleSummary = hasSchedule
+    ? [
+        draft.opensAt ? `Opens ${formatAbsoluteTime(new Date(draft.opensAt).getTime())}` : '',
+        draft.closesAt ? `Closes ${formatAbsoluteTime(new Date(draft.closesAt).getTime())}` : '',
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : 'Not scheduled';
+  const messageSummary = draft.message
+    ? draft.message.length > 48
+      ? `${draft.message.slice(0, 48)}…`
+      : draft.message
+    : 'Default message';
   const templates = MESSAGE_TEMPLATES;
 
   // The page-transition wrapper traps position:fixed, so the bar mounts on the app shell instead.
@@ -588,8 +604,9 @@ export function SurveyControlPanel() {
                     rows={ledgerRows}
                   />
 
+                  <div className="sc-card">
                   <section className="sc-section" aria-labelledby="sc-window-title">
-                    <h2 id="sc-window-title" className="sc-section__title">
+                    <h2 id="sc-window-title" className="visually-hidden">
                       Survey window
                     </h2>
                     <p className={`sc-state sc-state--${effective}`} aria-live="polite">
@@ -624,74 +641,85 @@ export function SurveyControlPanel() {
                     </div>
                   </section>
 
-                  <section className="sc-section" aria-labelledby="sc-schedule-title">
-                    <h2 id="sc-schedule-title" className="sc-section__title">
-                      Schedule <span className="sc-section__opt">optional</span>
-                    </h2>
-                    <div className="sc-fields">
-                      <Input
-                        id="survey-opens"
-                        type="datetime-local"
-                        label="Opens at"
-                        value={draft.opensAt}
-                        onChange={(e) => patch({ opensAt: e.target.value })}
-                      />
-                      <Input
-                        id="survey-closes"
-                        type="datetime-local"
-                        label="Closes at"
-                        value={draft.closesAt}
-                        onChange={(e) => patch({ closesAt: e.target.value })}
-                        error={scheduleError}
-                      />
-                    </div>
-                    <p className="sc-hint">
-                      Leave a time empty for no limit. The database enforces these times, and they only apply while
-                      the window is Open.
-                    </p>
-                    {scheduleNotes.map((text) => (
-                      <p key={text} className="sc-note" role="note">
-                        {text}
-                      </p>
-                    ))}
-                    <div className="sc-quick" role="group" aria-label="Opening shortcuts">
-                      <span className="sc-quick__label">Opens</span>
-                      {[
-                        { label: 'Tomorrow 8 AM', ms: () => atHour(new Date(Date.now() + 86_400_000), 8) },
-                        { label: 'Next Monday 8 AM', ms: () => nextWeekday(new Date(), 1, 8) },
-                      ].map((chip) => (
-                        <button
-                          key={chip.label}
-                          type="button"
-                          className="sc-link"
-                          onClick={() => patch({ opensAt: toLocalInput(chip.ms()), status: 'open' })}
-                        >
-                          {chip.label}
-                        </button>
+                  <section className="sc-section">
+                    <details
+                      className="sc-fold"
+                      open={scheduleOpen || hasSchedule}
+                      onToggle={(e) => setScheduleOpen(e.currentTarget.open)}
+                    >
+                      <summary className="sc-section__title sc-fold__title">
+                        <span>Schedule</span>
+                        <span className="sc-fold__summary">{scheduleSummary}</span>
+                      </summary>
+                      <div className="sc-fields">
+                        <div className="sc-col">
+                          <Input
+                            id="survey-opens"
+                            type="datetime-local"
+                            label="Opens at"
+                            value={draft.opensAt}
+                            onChange={(e) => patch({ opensAt: e.target.value })}
+                          />
+                          <div className="sc-quick" role="group" aria-label="Opening shortcuts">
+                            {[
+                              { label: 'Tomorrow 8 AM', ms: () => atHour(new Date(Date.now() + 86_400_000), 8) },
+                              { label: 'Next Monday 8 AM', ms: () => nextWeekday(new Date(), 1, 8) },
+                            ].map((chip) => (
+                              <button
+                                key={chip.label}
+                                type="button"
+                                className="sc-link"
+                                onClick={() => patch({ opensAt: toLocalInput(chip.ms()), status: 'open' })}
+                              >
+                                {chip.label}
+                              </button>
+                            ))}
+                            {draft.opensAt ? (
+                              <button type="button" className="sc-link sc-link--quiet" onClick={() => patch({ opensAt: '' })}>
+                                Clear
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                        <div className="sc-col">
+                          <Input
+                            id="survey-closes"
+                            type="datetime-local"
+                            label="Closes at"
+                            value={draft.closesAt}
+                            onChange={(e) => patch({ closesAt: e.target.value })}
+                            error={scheduleError}
+                          />
+                          <div className="sc-quick" role="group" aria-label="Closing shortcuts">
+                            {[
+                              { label: 'In 7 days', ms: () => Date.now() + 7 * 86_400_000 },
+                              { label: 'In 30 days', ms: () => Date.now() + 30 * 86_400_000 },
+                              { label: 'End of this month', ms: () => endOfMonth(new Date()) },
+                            ].map((chip) => (
+                              <button
+                                key={chip.label}
+                                type="button"
+                                className="sc-link"
+                                onClick={() => patch({ closesAt: toLocalInput(chip.ms()), status: 'open' })}
+                              >
+                                {chip.label}
+                              </button>
+                            ))}
+                            {draft.closesAt ? (
+                              <button type="button" className="sc-link sc-link--quiet" onClick={() => patch({ closesAt: '' })}>
+                                Clear
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                      <p className="sc-hint">Leave a time empty for no limit. Times only apply while the window is Open.</p>
+                      {scheduleNotes.map((text) => (
+                        <p key={text} className="sc-note" role="note">
+                          {text}
+                        </p>
                       ))}
-                    </div>
-                    <div className="sc-quick" role="group" aria-label="Closing shortcuts">
-                      <span className="sc-quick__label">Closes</span>
-                      {[
-                        { label: 'In 7 days', ms: () => Date.now() + 7 * 86_400_000 },
-                        { label: 'In 30 days', ms: () => Date.now() + 30 * 86_400_000 },
-                        { label: 'End of this month', ms: () => endOfMonth(new Date()) },
-                      ].map((chip) => (
-                        <button
-                          key={chip.label}
-                          type="button"
-                          className="sc-link"
-                          onClick={() => patch({ closesAt: toLocalInput(chip.ms()), status: 'open' })}
-                        >
-                          {chip.label}
-                        </button>
-                      ))}
-                      {draft.opensAt || draft.closesAt ? (
-                        <button type="button" className="sc-link sc-link--quiet" onClick={() => patch({ opensAt: '', closesAt: '' })}>
-                          Clear both times
-                        </button>
-                      ) : null}
-                    </div>
+                    </details>
                   </section>
 
                   <section className="sc-section" aria-labelledby="sc-version-title">
@@ -716,10 +744,10 @@ export function SurveyControlPanel() {
                     </div>
                     <p className="sc-hint">
                       {versionHasResponses
-                        ? `${stats.onVersion} response${stats.onVersion === 1 ? '' : 's'} already use ${savedVersion}.`
+                        ? `${stats.onVersion} response${stats.onVersion === 1 ? '' : 's'} use ${savedVersion}.`
                         : `No responses use ${savedVersion} yet.`}{' '}
-                      Change the label only when the question set changes. The questions live in the{' '}
-                      <Link href="/admin/survey/builder/">Survey builder</Link>, and publishing there sets this label.
+                      Change it only when the questions change; publishing in the{' '}
+                      <Link href="/admin/survey/builder/">Survey builder</Link> sets it too.
                     </p>
                     {versionChanged && versionHasResponses ? (
                       <p className="sc-note" role="note">
@@ -729,52 +757,60 @@ export function SurveyControlPanel() {
                     ) : null}
                   </section>
 
-                  <section className="sc-section" aria-labelledby="sc-message-title">
-                    <h2 id="sc-message-title" className="sc-section__title">
-                      Message to residents <span className="sc-section__opt">optional</span>
-                    </h2>
-                    <Textarea
-                      id="survey-message"
-                      label={
-                        draft.status === 'open'
-                          ? 'Shown if the survey is paused or closed later'
-                          : 'Shown to residents while the survey is ' + draft.status
-                      }
-                      value={draft.message}
-                      rows={4}
-                      onChange={(e) => patch({ message: e.target.value.slice(0, MESSAGE_MAX) })}
-                    />
-                    <p className="sc-hint">
-                      Leave blank to use the default: “
-                      {defaultResidentMessage(draft.status === 'open' ? 'paused' : draft.status)}”
-                    </p>
-                    <div className="sc-foot">
-                      <div className="sc-quick" role="group" aria-label="Message templates">
-                        <span className="sc-quick__label">Start from</span>
-                        {templates.map((tpl) => (
-                          <button
-                            key={tpl.label}
-                            type="button"
-                            className="sc-link"
-                            onClick={() => patch({ message: tpl.text })}
-                          >
-                            {tpl.label}
-                          </button>
-                        ))}
-                        {draft.message ? (
-                          <button type="button" className="sc-link sc-link--quiet" onClick={() => patch({ message: '' })}>
-                            Use default
-                          </button>
-                        ) : null}
+                  <section className="sc-section">
+                    <details
+                      className="sc-fold"
+                      open={messageOpen || Boolean(draft.message)}
+                      onToggle={(e) => setMessageOpen(e.currentTarget.open)}
+                    >
+                      <summary className="sc-section__title sc-fold__title">
+                        <span>Message to residents</span>
+                        <span className="sc-fold__summary">{messageSummary}</span>
+                      </summary>
+                      <Textarea
+                        id="survey-message"
+                        label={
+                          draft.status === 'open'
+                            ? 'Shown if the survey is paused or closed later'
+                            : 'Shown to residents while the survey is ' + draft.status
+                        }
+                        value={draft.message}
+                        rows={4}
+                        onChange={(e) => patch({ message: e.target.value.slice(0, MESSAGE_MAX) })}
+                      />
+                      <p className="sc-hint">
+                        Leave blank to use the default: “
+                        {defaultResidentMessage(draft.status === 'open' ? 'paused' : draft.status)}”
+                      </p>
+                      <div className="sc-foot">
+                        <div className="sc-quick" role="group" aria-label="Message templates">
+                          <span className="sc-quick__label">Start from</span>
+                          {templates.map((tpl) => (
+                            <button
+                              key={tpl.label}
+                              type="button"
+                              className="sc-link"
+                              onClick={() => patch({ message: tpl.text })}
+                            >
+                              {tpl.label}
+                            </button>
+                          ))}
+                          {draft.message ? (
+                            <button type="button" className="sc-link sc-link--quiet" onClick={() => patch({ message: '' })}>
+                              Use default
+                            </button>
+                          ) : null}
+                        </div>
+                        <span
+                          className={`survey-counter sc-counter${draft.message.length > MESSAGE_MAX - 40 ? ' is-near' : ''}`}
+                          aria-live="polite"
+                        >
+                          {draft.message.length}/{MESSAGE_MAX}
+                        </span>
                       </div>
-                      <span
-                        className={`survey-counter sc-counter${draft.message.length > MESSAGE_MAX - 40 ? ' is-near' : ''}`}
-                        aria-live="polite"
-                      >
-                        {draft.message.length}/{MESSAGE_MAX}
-                      </span>
-                    </div>
+                    </details>
                   </section>
+                  </div>
                 </div>
 
                 <aside className="sc-rail" aria-label="Preview and history">

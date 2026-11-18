@@ -1,0 +1,373 @@
+/* ==========================================================================
+   Reviews. A review is a conversation about one thing: the list is the index, the thread is
+   the page. Flat and ruled like Inquiries and Findings Log: no cards, no shadows, no pills,
+   no scroll area inside the page scroll. Status filters live in the ledger. The same classes
+   style the compact thread embedded in the Findings Log drawer (.rv-compact).
+   Tokens (--ws-*) come from workspace-ui.css; fallbacks keep the drawer legible.
+   ========================================================================== */
+
+.rv-page {
+  min-width: 0;
+}
+
+.rv-shell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+/* ── Toolbar: three selects, Mine, and the one primary ───────────────────────────────── */
+.rv-toolbar-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-left: auto;
+}
+
+/* ── Buttons: hairline for anything pressable, one primary ───────────────────────────── */
+.rv-btn {
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--ws-hit, 40px);
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--ws-control-border, var(--field-border));
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ws-ink, var(--text-headline));
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color 150ms ease-in-out,
+    border-color 150ms ease-in-out;
+}
+
+.rv-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.rv-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .rv-btn:hover:not(:disabled) {
+    background: var(--ws-tint, transparent);
+    border-color: var(--ws-fill, var(--dark-emerald));
+  }
+}
+
+.rv-btn-primary {
+  border-color: transparent;
+  background: var(--harvest-orange);
+  color: var(--black);
+}
+
+@media (hover: hover) {
+  .rv-btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    border-color: transparent;
+    color: var(--text-on-accent);
+  }
+}
+
+.rv-btn-danger {
+  color: color-mix(in srgb, var(--error-red) 70%, var(--black));
+}
+
+[data-theme='dark'] .rv-btn-danger {
+  color: color-mix(in srgb, var(--error-red) 40%, var(--white));
+}
+
+.rv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── New review: a flat section under the toolbar, not a card ────────────────────────── */
+.rv-composer {
+  max-width: 640px;
+  margin: 0 0 32px;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--ws-rule, var(--border-subtle));
+}
+
+.rv-composer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rv-heading {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ws-ink, var(--text-headline));
+}
+
+.rv-locked-note {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--ws-muted, var(--text-caption));
+}
+
+/* ── Notes and empty states ──────────────────────────────────────────────────────────── */
+.rv-note {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 24px;
+  color: var(--ws-ink-soft, var(--text-body));
+}
+
+.rv-empty {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ws-muted, var(--text-caption));
+}
+
+.rv-state {
+  padding: 24px 0;
+}
+
+.rv-state .rv-heading {
+  margin-bottom: 4px;
+}
+
+.rv-state .rv-btn {
+  margin-top: 16px;
+}
+
+.rv-approved {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ws-ink, var(--text-headline));
+}
+
+/* ── Index and thread: list on the left, the page on the right ───────────────────────── */
+.rv-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 0 40px;
+  align-items: start;
+  width: 100%;
+}
+
+.rv-index {
+  min-width: 0;
+}
+
+.rv-thread-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--ws-rule, var(--border-subtle));
+}
+
+.rv-thread-list > li {
+  border-bottom: 1px solid var(--ws-rule, var(--border-subtle));
+}
+
+.rv-thread-btn {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--ws-hit, 40px);
+  margin: 0;
+  padding: 12px 12px 12px 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: var(--ws-ink-soft, var(--text-body));
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 150ms ease-in-out;
+}
+
+@media (hover: hover) {
+  .rv-thread-btn:hover {
+    background: var(--ws-tint, transparent);
+  }
+}
+
+.rv-thread-btn:focus-visible {
+  outline: 2px solid var(--ws-ink, currentColor);
+  outline-offset: -2px;
+}
+
+.rv-thread-btn[aria-current='true'] {
+  background: var(--ws-tint, transparent);
+  box-shadow: inset 2px 0 0 var(--ws-fill, var(--dark-emerald));
+}
+
+.rv-snippet {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--ws-ink, var(--text-headline));
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rv-meta {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ws-muted, var(--text-caption));
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-meta strong {
+  font-weight: 700;
+  color: var(--ws-ink, var(--text-headline));
+}
+
+/* The thread stays in view while the index scrolls */
+.rv-panel {
+  position: sticky;
+  top: 16px;
+  min-width: 0;
+  max-width: 720px;
+}
+
+.rv-panel-hint {
+  margin: 0;
+  padding: 12px 0;
+  font-size: 14px;
+  color: var(--ws-muted, var(--text-caption));
+}
+
+.rv-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.rv-thread-head .rv-heading {
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.rv-link {
+  color: var(--ws-ink, var(--text-headline));
+  text-underline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .rv-link:hover {
+    color: var(--harvest-orange);
+  }
+}
+
+.rv-replies {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--ws-rule, var(--border-subtle));
+}
+
+.rv-replies > li {
+  border-bottom: 1px solid var(--ws-rule, var(--border-subtle));
+}
+
+.rv-comment {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+.rv-comment-root {
+  padding-top: 0;
+}
+
+.rv-comment-body {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ws-ink, var(--text-headline));
+}
+
+.rv-comment-reply .rv-comment-body {
+  font-size: 15px;
+  color: var(--ws-ink-soft, var(--text-body));
+}
+
+/* ── Compact: embedded in the Findings Log note drawer ───────────────────────────────── */
+.rv-compact .rv-layout {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+
+.rv-compact .rv-panel {
+  position: static;
+  max-width: none;
+}
+
+.rv-compact .rv-composer {
+  max-width: none;
+}
+
+/* ── Narrow ──────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .rv-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .rv-panel {
+    position: static;
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .rv-toolbar-end {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .rv-toolbar-end > * {
+    flex: 1 1 auto;
+  }
+
+  .rv-shell > .inq-toolbar .inq-toolbar__sort {
+    flex: 1 1 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-btn,
+  .rv-thread-btn {
+    transition: none;
+  }
+
+  .rv-btn:active:not(:disabled) {
+    transform: none;
+  }
+}

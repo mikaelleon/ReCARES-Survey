@@ -1,5 +1,6 @@
 'use client';
 
+import { useSlidingThumb } from '@/lib/ui/useSlidingThumb';
 import { useId, useMemo, useState } from 'react';
 import type { DayPoint } from '@/lib/admin/dataAnalytics';
 
@@ -22,6 +23,7 @@ function niceMax(value: number): number {
  */
 export function TrendChart({ points, readOnly = false }: { points: DayPoint[]; readOnly?: boolean }) {
   const [mode, setMode] = useState<Mode>('daily');
+  const segRef = useSlidingThumb<HTMLDivElement>(mode);
   const [active, setActive] = useState<number | null>(null);
   const gradientId = useId();
 
@@ -52,7 +54,7 @@ export function TrendChart({ points, readOnly = false }: { points: DayPoint[]; r
     <div className="an-trend">
       {readOnly ? null : (
       <div className="an-trend__bar">
-        <div className="an-seg" role="group" aria-label="Chart type">
+        <div ref={segRef} className="an-seg" role="group" aria-label="Chart type">
           <button type="button" aria-pressed={mode === 'daily'} onClick={() => setMode('daily')}>
             Per day
           </button>
@@ -97,8 +99,21 @@ export function TrendChart({ points, readOnly = false }: { points: DayPoint[]; r
           </g>
         ))}
 
-        <path d={area} fill={`url(#${gradientId})`} className="an-trend__area" />
-        <path d={line} className="an-trend__line" fill="none" />
+        {points.length > 1 ? (
+          <>
+            <path d={area} fill={`url(#${gradientId})`} className="an-trend__area" />
+            <path d={line} className="an-trend__line" fill="none" />
+          </>
+        ) : (
+          /* One day only: a path of a single point draws nothing, so show a stem, a dot and its value */
+          <g className="an-trend__single">
+            <line x1={x(0)} x2={x(0)} y1={y(values[0]!)} y2={PAD.top + innerH} className="an-trend__stem" />
+            <circle cx={x(0)} cy={y(values[0]!)} r={6} className="an-trend__dot" />
+            <text x={x(0)} y={y(values[0]!) - 14} textAnchor="middle" className="an-trend__value">
+              {values[0]}
+            </text>
+          </g>
+        )}
 
         {labelAt.map((i) => (
           <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'} className="an-trend__tick">

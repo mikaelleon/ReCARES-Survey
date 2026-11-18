@@ -3,13 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CountLedger } from '@/components/admin/CountLedger';
 import { CommentForm, type ReviewNoteOption } from '@/components/admin/reviews/CommentForm';
-import styles from '@/components/admin/reviews/reviews.module.css';
+import styles from '@/components/admin/reviews/styles';
 import { ThreadList } from '@/components/admin/reviews/ThreadList';
 import { ThreadPanel } from '@/components/admin/reviews/ThreadPanel';
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
-import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
-import { StatusBadge } from '@/components/ui/StatusBadge';
 import { canCreateRootFeedback, type AdminRole } from '@/lib/admin/access';
 import { getQuestionById } from '@/lib/admin/responseQuestions';
 import { useSurveyWindow } from '@/lib/admin/useSurveyWindow';
@@ -35,7 +33,6 @@ import {
 import { subscribeNotes } from '@/lib/firebase/findingNotes';
 import { useQueryParam } from '@/lib/navigation/useQueryParam';
 
-const STATUS_FILTERS = ['All statuses', 'Open', 'Addressed', 'Resolved'];
 const SEVERITY_FILTERS = ['All severities', 'Suggestion', 'Required fix', 'Approved'];
 const TARGET_FILTERS = ['All targets', 'Note', 'Question', 'Instrument'];
 const SORTS = ['Newest', 'Oldest', 'Severity', 'Most replies'];
@@ -360,112 +357,120 @@ export function ReviewInbox({
   }, [allRoots]);
   const emptyDataset = !loading && !error && allRoots.length === 0;
 
+  const toggleStatus = (label: string) =>
+    setStatusFilter((current) => (current === label ? 'All statuses' : label));
+
+  const clearFilters = () => {
+    setStatusFilter('All statuses');
+    setSeverityFilter('All severities');
+    setTargetFilter('All targets');
+    setMineOnly(false);
+  };
+
   return (
     <div className={shellClass}>
-      {approved ? (
-        <div className={styles.badgeRow}>
-          <StatusBadge tone="emerald">Approved</StatusBadge>
-        </div>
-      ) : null}
+      {approved ? <p className={styles.approved}>Approved</p> : null}
 
       {!compact ? (
         <CountLedger
-          ariaLabel="Reviews summary"
+          ariaLabel="Reviews by status"
           label="Threads"
           total={kpis.total}
-          totalNote="Root review comments"
+          totalNote="review comments"
           empty={emptyDataset}
           loading={loading}
           rows={[
-            { label: 'Open', value: kpis.open, note: 'awaiting response' },
-            { label: 'Addressed', value: kpis.addressed, note: 'proponent replied' },
-            { label: 'Resolved', value: kpis.resolved, note: 'closed by adviser' },
+            {
+              label: 'Open',
+              value: kpis.open,
+              note: 'awaiting response',
+              active: statusFilter === 'Open',
+              onSelect: () => toggleStatus('Open'),
+            },
+            {
+              label: 'Addressed',
+              value: kpis.addressed,
+              note: 'proponent replied',
+              active: statusFilter === 'Addressed',
+              onSelect: () => toggleStatus('Addressed'),
+            },
+            {
+              label: 'Resolved',
+              value: kpis.resolved,
+              note: 'closed by adviser',
+              active: statusFilter === 'Resolved',
+              onSelect: () => toggleStatus('Resolved'),
+            },
           ]}
         />
       ) : null}
 
-      <div className={styles.toolbar} role="search">
-        <div
-          className={`${styles.toolbarFilters}${fixedTarget ? ` ${styles.toolbarFiltersCompact}` : ''}`}
-        >
-          <div className={styles.filter}>
+      <div className="inq-toolbar" role="search">
+        {compact ? (
+          <div className="inq-toolbar__sort">
             <Select
               label="Status"
-              options={STATUS_FILTERS}
+              options={['All statuses', 'Open', 'Addressed', 'Resolved']}
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
             />
           </div>
-          <div className={styles.filter}>
+        ) : null}
+        <div className="inq-toolbar__sort">
+          <Select
+            label="Severity"
+            options={SEVERITY_FILTERS}
+            value={severityFilter}
+            onChange={(event) => setSeverityFilter(event.target.value)}
+          />
+        </div>
+        {fixedTarget ? null : (
+          <div className="inq-toolbar__sort">
             <Select
-              label="Severity"
-              options={SEVERITY_FILTERS}
-              value={severityFilter}
-              onChange={(event) => setSeverityFilter(event.target.value)}
+              label="Target"
+              options={TARGET_FILTERS}
+              value={targetFilter}
+              onChange={(event) => setTargetFilter(event.target.value)}
             />
           </div>
-          {fixedTarget ? null : (
-            <div className={styles.filter}>
-              <Select
-                label="Target"
-                options={TARGET_FILTERS}
-                value={targetFilter}
-                onChange={(event) => setTargetFilter(event.target.value)}
-              />
-            </div>
-          )}
-          <div className={styles.filter}>
-            <Select
-              label="Sort"
-              options={SORTS}
-              value={sortBy}
-              onChange={(event) => setSortBy(event.target.value)}
+        )}
+        <div className="inq-toolbar__sort">
+          <Select
+            label="Sort"
+            options={SORTS}
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value)}
+          />
+        </div>
+        <div className={styles.toolbarEnd}>
+          <label className="ws-toggle">
+            <input
+              type="checkbox"
+              checked={mineOnly}
+              onChange={(event) => setMineOnly(event.target.checked)}
             />
-          </div>
+            Mine
+          </label>
+          {canStart && !compact ? (
+            <button
+              type="button"
+              className={`${styles.btn}${composerOpen ? '' : ` ${styles.btnPrimary}`}`}
+              aria-expanded={composerOpen}
+              onClick={() => setComposerOpen((open) => !open)}
+            >
+              {composerOpen ? 'Hide form' : 'New review'}
+            </button>
+          ) : null}
         </div>
-        <div className={styles.toolbarActions}>
-          <p className={styles.count} aria-live="polite">
-            {loading || error
-              ? ' '
-              : `${roots.length} thread${roots.length === 1 ? '' : 's'}`}
-          </p>
-          <div className={styles.toolbarTools}>
-            <label className={styles.mine}>
-              <input
-                type="checkbox"
-                checked={mineOnly}
-                onChange={(event) => setMineOnly(event.target.checked)}
-              />
-              Mine
-            </label>
-            {canStart && !compact ? (
-              <Button
-                variant={composerOpen ? 'secondary' : 'primary'}
-                size="sm"
-                onClick={() => setComposerOpen((open) => !open)}
-              >
-                {composerOpen ? 'Hide form' : 'New review'}
-              </Button>
-            ) : null}
-          </div>
-        </div>
+        <p className="visually-hidden" aria-live="polite">
+          {loading || error ? '' : `${roots.length} thread${roots.length === 1 ? '' : 's'}`}
+        </p>
       </div>
 
       {canStart && (composerOpen || compact) ? (
-        <div className={styles.formCard}>
-          <div className={styles.formCardHead}>
-            <h2 className={styles.columnTitle}>
-              {fixedTarget ? 'Add a review' : 'New review'}
-            </h2>
-            {!compact ? (
-              <button
-                type="button"
-                className={styles.formCardClose}
-                onClick={() => setComposerOpen(false)}
-              >
-                Close
-              </button>
-            ) : null}
+        <div className={styles.composer}>
+          <div className={styles.composerHead}>
+            <h2 className={styles.heading}>{fixedTarget ? 'Add a review' : 'New review'}</h2>
           </div>
           {notesError && !fixedTarget ? (
             <p className="na-error" role="alert">
@@ -499,112 +504,80 @@ export function ReviewInbox({
       ) : null}
 
       {error ? (
-        <div className="dash-empty" role="alert">
-          <p className="dash-empty__title">Could not load reviews</p>
-          <p className="dash-empty__secondary">{error}</p>
+        <div className={styles.state} role="alert">
+          <h2 className={styles.heading}>Could not load reviews</h2>
+          <p className={styles.empty}>{error}</p>
         </div>
       ) : null}
       {banner ? (
-        <p role="status" className="admin-kanban-note">
+        <p role="status" className={styles.note}>
           {banner}
         </p>
       ) : null}
 
       {loading ? (
-        <p className="na-intro" role="status">
+        <p className={styles.note} role="status">
           Loading reviews…
         </p>
       ) : error ? null : emptyDataset ? (
-        <div className={`dash-insight ${styles.emptyCard}`}>
-          <div className="dash-empty" role="status">
-            <p className="dash-empty__title">
-              {fixedTarget ? 'No comments on this note yet' : 'No review threads yet'}
-            </p>
-            <p className="dash-empty__secondary">
-              {fixedTarget
-                ? 'Adviser feedback will appear here when a review is started.'
-                : 'Advisers can start a thread on a note, question, or instrument version.'}
-            </p>
-            {canStart && !compact && !composerOpen ? (
-              <button
-                type="button"
-                className="admin-empty__btn"
-                onClick={() => setComposerOpen(true)}
-              >
-                Start a review
-              </button>
-            ) : null}
-          </div>
+        <div className={styles.state} role="status">
+          <h2 className={styles.heading}>
+            {fixedTarget ? 'No comments on this note yet' : 'No review threads yet'}
+          </h2>
+          <p className={styles.empty}>
+            {fixedTarget
+              ? 'Adviser feedback will appear here when a review is started.'
+              : 'Advisers can start a thread on a note, question, or instrument version.'}
+          </p>
         </div>
       ) : roots.length === 0 ? (
-        <div className={`dash-insight ${styles.emptyCard}`}>
-          <div className="dash-empty" role="status">
-            <p className="dash-empty__title">No threads match</p>
-            <p className="dash-empty__secondary">Try a different filter or clear the search.</p>
-            {filtersActive ? (
-              <button
-                type="button"
-                className="admin-empty__btn"
-                onClick={() => {
-                  setStatusFilter('All statuses');
-                  setSeverityFilter('All severities');
-                  setTargetFilter('All targets');
-                  setMineOnly(false);
-                }}
-              >
-                Reset filters
-              </button>
-            ) : null}
-          </div>
+        <div className={styles.state} role="status">
+          <h2 className={styles.heading}>No threads match</h2>
+          <p className={styles.empty}>Try a different filter.</p>
+          {filtersActive ? (
+            <button type="button" className={styles.btn} onClick={clearFilters}>
+              Reset filters
+            </button>
+          ) : null}
         </div>
       ) : (
         <div className={styles.layout}>
-          <div className={styles.column}>
-            <h2 className={styles.columnTitle}>Threads</h2>
-            <div className={styles.scrollBody}>
-              <ThreadList
-                roots={roots}
-                selectedId={selectedId}
-                targetLabel={targetLabelFor}
-                replyCounts={replyCounts}
-                showTarget={!fixedTarget}
-                onSelect={setSelectedId}
-              />
-            </div>
+          <div className={styles.index}>
+            <ThreadList
+              roots={roots}
+              selectedId={selectedId}
+              targetLabel={targetLabelFor}
+              replyCounts={replyCounts}
+              showTarget={!fixedTarget}
+              onSelect={setSelectedId}
+            />
           </div>
           <div className={styles.panel}>
-            <div className={styles.scrollBody}>
-              {selected ? (
-                <ThreadPanel
-                  root={selected}
-                  replies={replies}
-                  role={role}
-                  currentUid={user?.uid || ''}
-                  isSuperadmin={isSuperadmin}
-                  busy={busy || deleteBusy}
-                  targetLabel={targetLabelFor(selected)}
-                  noteHref={
-                    !fixedTarget && selected.targetType === 'note'
-                      ? `/admin/notes/?note=${encodeURIComponent(selected.targetId)}`
-                      : null
-                  }
-                  onReply={handleReply}
-                  onEdit={handleEdit}
-                  onStatus={handleStatus}
-                  onRequestDelete={(row) => {
-                    setDeleteError(null);
-                    setDeleteTarget(row);
-                  }}
-                />
-              ) : (
-                <div className={`dash-empty dash-empty--compact ${styles.panelPlaceholder}`}>
-                  <p className="dash-empty__title">Select a thread</p>
-                  <p className="dash-empty__secondary">
-                    Read replies and respond from this panel.
-                  </p>
-                </div>
-              )}
-            </div>
+            {selected ? (
+              <ThreadPanel
+                root={selected}
+                replies={replies}
+                role={role}
+                currentUid={user?.uid || ''}
+                isSuperadmin={isSuperadmin}
+                busy={busy || deleteBusy}
+                targetLabel={targetLabelFor(selected)}
+                noteHref={
+                  !fixedTarget && selected.targetType === 'note'
+                    ? `/admin/notes/?note=${encodeURIComponent(selected.targetId)}`
+                    : null
+                }
+                onReply={handleReply}
+                onEdit={handleEdit}
+                onStatus={handleStatus}
+                onRequestDelete={(row) => {
+                  setDeleteError(null);
+                  setDeleteTarget(row);
+                }}
+              />
+            ) : (
+              <p className={styles.panelHint}>Choose a thread to read it and reply.</p>
+            )}
           </div>
         </div>
       )}

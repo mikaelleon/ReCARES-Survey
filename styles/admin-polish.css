@@ -1,0 +1,388 @@
+/* ==========================================================================
+   Admin consistency pass. One content frame, one radius family (8px controls, 6px inside a
+   segmented control, 16px cards), one field size, one hit-area rule. Measured across the ten
+   admin screens first; this file only holds what they disagreed on. Loaded last (app/layout.tsx).
+   ========================================================================== */
+
+/* ── Frame: the Dashboard fits the window, but its title sits where every other screen's does ─ */
+@media (min-width: 1001px) {
+  .admin-app.is-fit-viewport .admin-app__content {
+    padding: clamp(20px, 3vw, 32px) clamp(16px, 4vw, 32px) 16px;
+  }
+}
+
+/* ── Fields: 8px corners and one type size, whatever the screen drew them as ─────────── */
+.admin-app.admin-app .admin-app__main :is(
+    select,
+    textarea,
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color'])
+  ) {
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Phones get 16px so focusing a field never zooms the page */
+@media (pointer: coarse) {
+  .admin-app.admin-app .admin-app__main :is(
+      select,
+      textarea,
+      input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color'])
+    ) {
+    font-size: 16px;
+  }
+}
+
+/* ── Segmented controls: 8px outside, 6px inside, 36px buttons ───────────────────────── */
+.admin-app.admin-app :is(.ws-seg, .members-view, .view-switcher, .dash-view-toggle, .an-seg) {
+  border-radius: 8px;
+}
+
+.admin-app.admin-app .admin-app__main :is(
+    .view-switcher__btn,
+    .dash-view-toggle__btn,
+    .members-view__btn,
+    .ws-seg button,
+    .an-seg button
+  ) {
+  border-radius: 6px;
+  min-height: 36px;
+}
+
+/* ── Small utility buttons: one 36px size, never 32 or 34 ────────────────────────────── */
+.admin-app.admin-app .admin-app__main :is(.date-range__preset, .gf-card__copy, .gf-card__remove) {
+  min-height: 36px;
+  border-radius: 8px;
+}
+
+/* ── Buttons that were drawn as pills ────────────────────────────────────────────────── */
+.admin-app.admin-app .admin-app__main :is(.rt-toggle, .gf-panel__menu-btn, .admin-empty__btn) {
+  border-radius: 8px;
+}
+
+.admin-app.admin-app .admin-app__main .gf-panel__menu-btn {
+  min-width: var(--ws-hit);
+  min-height: var(--ws-hit);
+}
+
+/* ── The little "i" buttons next to labels: small to look at, 36px to hit ───────────── */
+.field-code-hint__btn {
+  position: relative;
+}
+
+.field-code-hint__btn::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+}
+
+/* ── Analytics: the title stays on the first line when the tools wrap to a second ────── */
+.admin-app.admin-app .an-page .dash-page__header {
+  align-items: flex-start;
+}
+
+.admin-app.admin-app .admin-app__main .an-download {
+  min-height: var(--ws-hit);
+  height: auto;
+}
+
+/* ==========================================================================
+   Cards, only where they earn it. A card is one object that is read or acted on as a whole:
+   a chart or widget, a saved note, an open thread, a form being filled in, the calendar.
+   Everything that only holds controls or other cards stays on the page: filter bars, the
+   Responses tab wrapper, empty states. One depth cue per card (hairline border over a raised
+   fill, no shadow, no lift), one radius (16px).
+   ========================================================================== */
+
+/* Flat: containers that were boxed only because they held things */
+.admin-app.admin-app :is(.finding-notes-toolbar, .responses-toolbar, .members-toolbar, .members-table-wrap),
+.admin-app.admin-app .resp-page .admin-panel.gf-panel {
+  background: transparent;
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding-inline: 0;
+}
+
+.admin-app.admin-app .finding-notes-toolbar {
+  padding-block: 0;
+}
+
+/* Cards: border and fill do the work */
+.admin-app.admin-app :is(.ws-card, .finding-note-card, .gf-card, .gf-individual__card, .dash-insight, .survey-history) {
+  border-radius: var(--ws-radius-card);
+  box-shadow: none;
+  animation: none;
+}
+
+.admin-app.admin-app .gf-card .gf-card {
+  border-radius: var(--ws-radius-inner);
+}
+
+/* Browsable cards answer a hover with their border, not a lift */
+@media (hover: hover) {
+  .admin-app.admin-app :is(.finding-note-card, .dash-insight, .ws-card--lift):hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--ws-fill);
+  }
+}
+
+/* Forms being filled in, the open thread and the calendar are objects too */
+.admin-app .rv-composer,
+.admin-app .rv-panel:has(.rv-thread),
+.admin-app .iv-cal {
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid var(--ws-card-border);
+  border-radius: var(--ws-radius-card);
+  background: var(--ws-card-bg);
+}
+
+.admin-app .rv-composer {
+  max-width: 640px;
+}
+
+.admin-app .rv-compact .rv-composer {
+  max-width: none;
+}
+
+/* No card around a lone placeholder line */
+.admin-app .rv-panel:not(:has(.rv-thread)) {
+  position: static;
+}
+
+/* An empty state is a sentence, not an object */
+.admin-app.admin-app .dash-insight.finding-notes-empty,
+.admin-app.admin-app .dash-insight.emptyCard {
+  padding: 24px 0;
+  border-color: transparent;
+  background: transparent;
+}
+
+/* ==========================================================================
+   One toolbar for every list screen: search, selects, a filter toggle, then the actions.
+   Search and selects share a 40px height and 8px corners; selects carry their value as their
+   label (the label stays for screen readers); the toggle is the same hairline button.
+   ========================================================================== */
+.admin-app .inq-toolbar {
+  margin: 24px 0 16px;
+  gap: 8px 12px;
+}
+
+.admin-app .inq-toolbar__sort select {
+  width: 100%;
+}
+
+.admin-app .inq-toolbar > .ws-toggle {
+  margin-left: auto;
+}
+
+.admin-app .rt-panel.inq-toolbar {
+  margin: 16px 0 0;
+  padding-top: 16px;
+}
+
+.ws-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  min-height: var(--ws-hit, 40px);
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--ws-control-border, var(--field-border));
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ws-ink, var(--text-headline));
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition:
+    background-color 150ms ease-in-out,
+    border-color 150ms ease-in-out;
+}
+
+.ws-toggle input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--mem-switch-on, var(--dark-emerald));
+}
+
+.ws-toggle:has(input:checked) {
+  border-color: var(--ws-fill, var(--dark-emerald));
+  background: var(--ws-tint, transparent);
+}
+
+.ws-toggle:has(input:focus-visible) {
+  outline: 2px solid var(--ws-ink, currentColor);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .ws-toggle:hover {
+    background: var(--ws-tint, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-toggle {
+    transition: none;
+  }
+}
+
+/* The search field keeps room for its icon and clear button whatever a screen's field rule says */
+.admin-app.admin-app .inq-toolbar .inq-toolbar__search input[type='search'][type='search'] {
+  padding: 0 44px 0 40px !important;
+}
+
+/* The shared Select sets its type size inline; every select in the admin reads at the field size */
+.admin-app.admin-app .admin-app__main select {
+  font-size: 14px !important;
+}
+
+@media (pointer: coarse) {
+  .admin-app.admin-app .admin-app__main select {
+    font-size: 16px !important;
+  }
+}
+
+/* The shared Button shouts in capitals through inline styles; admin buttons are sentence case */
+.admin-app.admin-app .admin-app__main :is(button, a)[style*='uppercase'] {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 14px !important;
+  border-radius: 8px !important;
+}
+
+
+/* ==========================================================================
+   One filter bar. Every list screen (Responses, Analytics, Inquiries, Interviews, Notes,
+   Members, Reviews, Survey builder) puts it directly under its header and summary, above the
+   list, in this order: search, selects, date range, toggles, then at the far end Clear
+   filters and the result count. Same height (40px), corners (8px), gaps (8 / 12px).
+   ========================================================================== */
+.admin-app .inq-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 24px 0 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.admin-app .inq-toolbar__end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+  margin-left: auto;
+}
+
+.admin-app .inq-toolbar__count {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-caption);
+}
+
+.admin-app .inq-toolbar__reset {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-headline);
+  font: 600 14px var(--font-sans);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-app .inq-toolbar__reset:hover {
+    background: color-mix(in srgb, var(--dark-emerald) 8%, transparent);
+  }
+}
+
+.admin-app .inq-toolbar .inq-btn {
+  min-height: 40px;
+  border-radius: 8px;
+}
+
+/* The date range is a filter like the others: same row, no entrance, no extra margin */
+.admin-app .inq-toolbar .dash-page__filter-open {
+  margin: 0;
+  animation: none;
+}
+
+@media (max-width: 640px) {
+  .admin-app .inq-toolbar__end {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+}
+
+/* ==========================================================================
+   One sliding thumb for every segmented control (view modes, chart type, dashboard view).
+   useSlidingThumb measures the chosen option and sets --thumb-x/y/w/h; the thumb is the
+   container's ::before, so it can be any width. It travels on transform, and its width
+   follows a beat later, so it stretches toward the next option and settles into it. The
+   chosen label changes colour as the thumb reaches it. First paint places it with no travel.
+   ========================================================================== */
+.admin-app.admin-app [data-thumb] {
+  position: relative;
+  isolation: isolate;
+}
+
+.admin-app.admin-app [data-thumb]::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: var(--thumb-y, 0);
+  left: 0;
+  width: var(--thumb-w, 0);
+  height: var(--thumb-h, 0);
+  border-radius: 6px;
+  background: var(--ws-fill);
+  transform: translateX(var(--thumb-x, 0));
+  pointer-events: none;
+}
+
+.admin-app.admin-app .an-seg[data-thumb]::before {
+  border-radius: 999px;
+  background: var(--dark-emerald);
+}
+
+.admin-app.admin-app [data-thumb='live']::before {
+  transition:
+    transform 260ms cubic-bezier(0.32, 0.72, 0, 1),
+    width 340ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* The thumb is the fill now: the chosen option itself stays clear and only changes colour */
+.admin-app.admin-app [data-thumb] button:is(.is-active, [aria-pressed='true'], [aria-selected='true']) {
+  background: transparent;
+}
+
+.admin-app.admin-app [data-thumb] button {
+  transition: color 200ms ease;
+}
+
+.admin-app.admin-app .view-switcher[data-thumb] button.is-active,
+.admin-app.admin-app .dash-view-toggle[data-thumb] button.is-active {
+  color: var(--ws-on-fill);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-app.admin-app [data-thumb='live']::before,
+  .admin-app.admin-app [data-thumb] button {
+    transition: none;
+  }
+}

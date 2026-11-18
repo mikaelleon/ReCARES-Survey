@@ -13,7 +13,7 @@ export default function AdminMembersPage() {
   const { canTeamOps } = useAuth();
 
   return (
-    <AdminAppShell fitViewport>
+    <AdminAppShell>
       {canTeamOps ? (
         <MemberManagement />
       ) : (

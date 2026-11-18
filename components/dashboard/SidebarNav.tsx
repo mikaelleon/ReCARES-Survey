@@ -16,7 +16,6 @@ import {
   Bell,
   CalendarHeart,
   ChartNoAxesCombined,
-  Check,
   ChevronLeft,
   GitBranch,
   Inbox,
@@ -25,7 +24,6 @@ import {
   LogOut,
   MessageSquare,
   NotebookPen,
-  RotateCcw,
   Settings2,
   Users,
   X,
@@ -339,9 +337,6 @@ export function SidebarNav({
                   <div className="admin-sidebar__popover-head">
                     <p className="admin-sidebar__popover-title">
                       Notifications
-                      {unreadCount > 0 ? (
-                        <span className="admin-sidebar__popover-count">{unreadCount} unread</span>
-                      ) : null}
                     </p>
                     {unreadCount > 0 ? (
                       <button
@@ -364,6 +359,19 @@ export function SidebarNav({
                             key={item.id}
                             className={`admin-sidebar__notify-row${item.read ? ' is-read' : ' is-unread'}`}
                           >
+                            <button
+                              type="button"
+                              className="admin-sidebar__notify-toggle"
+                              aria-label={
+                                item.read
+                                  ? `Mark "${item.title}" as unread`
+                                  : `Mark "${item.title}" as read`
+                              }
+                              title={item.read ? 'Mark as unread' : 'Mark as read'}
+                              onClick={() => (item.read ? markUnread(item.id) : markRead(item.id))}
+                            >
+                              <span className="admin-sidebar__notify-dot" aria-hidden="true" />
+                            </button>
                             <AdminNavLink
                               href={item.href}
                               className="admin-sidebar__notify-link"
@@ -375,9 +383,6 @@ export function SidebarNav({
                             >
                               <span className="admin-sidebar__notify-body">
                                 <span className="admin-sidebar__notify-title">
-                                  {!item.read ? (
-                                    <span className="admin-sidebar__notify-dot" aria-hidden="true" />
-                                  ) : null}
                                   {item.title}
                                   <span className="visually-hidden">
                                     {item.read ? ' (read)' : ' (unread)'}
@@ -395,23 +400,6 @@ export function SidebarNav({
                                 ) : null}
                               </span>
                             </AdminNavLink>
-                            <button
-                              type="button"
-                              className="admin-sidebar__notify-toggle"
-                              aria-label={
-                                item.read
-                                  ? `Mark "${item.title}" as unread`
-                                  : `Mark "${item.title}" as read`
-                              }
-                              title={item.read ? 'Mark as unread' : 'Mark as read'}
-                              onClick={() => (item.read ? markUnread(item.id) : markRead(item.id))}
-                            >
-                              {item.read ? (
-                                <RotateCcw size={15} strokeWidth={1.5} aria-hidden="true" />
-                              ) : (
-                                <Check size={15} strokeWidth={1.5} aria-hidden="true" />
-                              )}
-                            </button>
                           </li>
                         );
                       })}

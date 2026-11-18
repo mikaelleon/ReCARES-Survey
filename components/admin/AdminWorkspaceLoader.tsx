@@ -10,7 +10,7 @@ export function AdminWorkspaceLoader({
   label?: string;
 }) {
   return (
-    <div className="admin-workspace-loader" role="status" aria-live="polite" aria-busy="true">
+    <div className="admin-workspace-loader" aria-busy="true">
       <aside className="admin-workspace-loader__rail" aria-hidden="true">
         <div className="admin-workspace-loader__brand" />
         <div className="admin-workspace-loader__nav">

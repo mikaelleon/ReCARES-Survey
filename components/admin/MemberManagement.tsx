@@ -360,7 +360,7 @@ function PermissionToggleList({
   );
 }
 
-const DRAWER_EXIT_MS = 240;
+const DRAWER_EXIT_MS = 200;
 
 /** Right sidebar panel — enter/exit slide + backdrop fade. */
 function MembersDrawer({

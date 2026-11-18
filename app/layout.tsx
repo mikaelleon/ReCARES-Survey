@@ -8,6 +8,11 @@ import '@/styles/inquiries.css';
 import '@/styles/workspace-ui.css';
 import '@/styles/members.css';
 import '@/styles/survey-control.css';
+import '@/styles/builder.css';
+import '@/styles/reviews.css';
+import '@/styles/admin-polish.css';
+import '@/styles/analytics-polish.css';
+import '@/styles/admin-motion.css';
 
 const lato = Lato({
   subsets: ['latin'],

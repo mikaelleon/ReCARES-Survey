@@ -1,0 +1,909 @@
+/* ==========================================================================
+   Survey builder — the list reads like the questionnaire: a code in the margin, the
+   question as the line, one quiet line of facts under it. Steps are ruled headings, the
+   inspector is the margin note. Flat, no cards. Tokens (--ws-*) come from workspace-ui.css;
+   the search toolbar and empty states reuse .inq-toolbar and .inq-state. Loaded after
+   globals.css, so these win on equal specificity.
+   ========================================================================== */
+
+.sb-page {
+  gap: 0;
+}
+
+.sb-page > * + * {
+  margin-top: 16px;
+}
+
+.sb-page .sb-alerts:empty {
+  display: none;
+}
+
+/* ── Top bar: version, one status sentence, actions ──────────────────────── */
+.sbx-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-top: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ws-card-border);
+}
+
+.sbx-bar__lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  min-width: 0;
+}
+
+.sbx-pick .sb-input {
+  width: auto;
+  min-width: 168px;
+  min-height: var(--ws-hit);
+}
+
+.sbx-state {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ws-ink-soft);
+}
+
+.sbx-state__dirty {
+  font-weight: 700;
+  color: var(--ws-ink);
+}
+
+/* The readiness count is the one inline control: bold, underlined, tinted by how bad it is */
+.sbx-issues {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  color: var(--ws-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.sbx-issues::after {
+  content: '';
+  position: absolute;
+  inset: -10px -4px;
+}
+
+.sbx-issues.has-errors {
+  color: color-mix(in srgb, var(--error-red) 70%, var(--black));
+}
+
+.sbx-issues.has-warnings {
+  color: #b45309;
+}
+
+[data-theme='dark'] .sbx-issues.has-errors {
+  color: color-mix(in srgb, var(--error-red) 40%, var(--white));
+}
+
+[data-theme='dark'] .sbx-issues.has-warnings {
+  color: #f0b36a;
+}
+
+.sbx-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sbx-hint {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ws-ink-soft);
+}
+
+/* ── Buttons: a hairline box says it is pressable; only the main action is filled ─ */
+.sbx-btn,
+.qx-btn {
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--ws-hit);
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--ws-control-border);
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ws-ink);
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color 150ms ease-in-out,
+    border-color 150ms ease-in-out;
+}
+
+.sbx-btn:active:not(:disabled),
+.qx-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.sbx-btn:disabled,
+.qx-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .sbx-btn:hover:not(:disabled),
+  .qx-btn:hover:not(:disabled) {
+    background: var(--ws-tint);
+    border-color: var(--ws-fill);
+  }
+}
+
+.sbx-btn--primary,
+.qx-btn--primary {
+  border-color: transparent;
+  background: var(--harvest-orange);
+  color: var(--black);
+}
+
+@media (hover: hover) {
+  .sbx-btn--primary:hover:not(:disabled),
+  .qx-btn--primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    border-color: transparent;
+    color: var(--text-on-accent);
+  }
+}
+
+.sbx-btn--danger {
+  color: color-mix(in srgb, var(--error-red) 70%, var(--black));
+}
+
+[data-theme='dark'] .sbx-btn--danger {
+  color: color-mix(in srgb, var(--error-red) 40%, var(--white));
+}
+
+@media (hover: hover) {
+  .sbx-btn--danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--error-red) 10%, transparent);
+    border-color: var(--error-red);
+  }
+}
+
+/* ── Notes: frozen reason, problems and messages as plain lines ──────────── */
+.sb-page .sb-banner {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ws-ink-soft);
+}
+
+.sb-page .sb-banner--error {
+  color: color-mix(in srgb, var(--error-red) 70%, var(--black));
+}
+
+[data-theme='dark'] .sb-page .sb-banner--error {
+  color: color-mix(in srgb, var(--error-red) 40%, var(--white));
+}
+
+.sb-page .sb-issues__list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  border: 0;
+  border-top: 1px solid var(--ws-ink-soft);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ── Workspace: the list, and the inspector as its margin note ───────────── */
+.sb-page .sb-workspace {
+  gap: 40px;
+  margin-top: 24px;
+}
+
+@media (min-width: 1001px) {
+  .sb-page .sb-side {
+    padding: 0 0 0 24px;
+    border: 0;
+    border-left: 1px solid var(--ws-card-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+.sb-page .sb-insp {
+  padding: 0;
+}
+
+.sb-page .sb-insp--empty .sb-muted {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ws-muted);
+  text-wrap: pretty;
+}
+
+.sb-page .sb-section {
+  border-top: 1px solid var(--ws-card-border);
+}
+
+.sb-page .sb-section__head {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ws-ink);
+}
+
+.sb-page .sb-section__badge {
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ws-muted);
+}
+
+.sb-page .sb-card {
+  border: 0;
+  border-top: 1px solid var(--ws-card-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sb-page .sb-input {
+  border-radius: 8px;
+}
+
+/* Status chips in the inspector heading read as words */
+.sb-page .sb-insp .sb-pill {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ws-muted);
+}
+
+/* ── List ────────────────────────────────────────────────────────────────── */
+.qx-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.qx-toolbar {
+  margin: 0 0 4px;
+}
+
+.qx-toolbar {
+  gap: 8px;
+}
+
+.qx-toolbar .inq-toolbar__search {
+  flex: 1 1 180px;
+  min-width: 150px;
+}
+
+.qx-toolbar .inq-toolbar__sort {
+  flex: 0 1 144px;
+  min-width: 112px;
+}
+
+.qx-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 0 0 24px;
+}
+
+.qx-count {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ws-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.qx-foot__actions {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Steps: ruled headings */
+.qxs {
+  margin: 0 0 32px;
+}
+
+.qxs__head {
+  display: grid;
+  grid-template-columns: 20px 76px minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 0 8px;
+  margin: 0 -8px;
+  padding: 0 8px 4px;
+  border-bottom: 1px solid var(--ws-ink-soft);
+  transition: background-color 150ms ease-in-out;
+}
+
+.qxs__head.is-selected,
+.qxs__head.is-over {
+  background: var(--ws-tint);
+}
+
+.qxs__num {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ws-muted);
+}
+
+.qxs__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--ws-hit);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  text-align: left;
+  color: var(--ws-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 150ms ease-in-out;
+}
+
+@media (hover: hover) {
+  .qxs__name:hover {
+    color: var(--ws-fill);
+  }
+}
+
+.qxs__count {
+  flex: none;
+  font-size: 13px;
+  color: var(--ws-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.qxs__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qxs__empty,
+.qxs__add {
+  padding: 12px 0 0;
+  font-size: 14px;
+  color: var(--ws-muted);
+}
+
+.qxs__addstep {
+  align-self: flex-start;
+}
+
+.qx-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--ws-hit);
+  height: var(--ws-hit);
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--ws-ink-soft);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+@media (hover: hover) {
+  .qx-icon:hover {
+    background: var(--ws-tint);
+  }
+}
+
+.qx-grip {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 24px;
+  color: var(--ws-muted);
+}
+
+.qx-grip.is-active {
+  cursor: grab;
+}
+
+.qx-grip.is-active:active {
+  cursor: grabbing;
+}
+
+/* Questions: margin code, the question as the line, one quiet line of facts */
+.qx {
+  display: grid;
+  grid-template-columns: 20px 76px minmax(0, 1fr) 40px;
+  align-items: start;
+  gap: 0 8px;
+  margin: 0 -8px;
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--ws-card-border);
+  transition: background-color 150ms ease-in-out;
+}
+
+@media (hover: hover) {
+  .qx:not(.qx--skel):hover {
+    background: color-mix(in srgb, var(--ws-tint) 55%, transparent);
+  }
+}
+
+.qx.is-selected {
+  background: var(--ws-tint);
+  box-shadow: inset 2px 0 0 var(--ws-fill);
+}
+
+.qx.is-over {
+  box-shadow: inset 0 2px 0 var(--ws-fill);
+}
+
+.qx-code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: left;
+  color: var(--ws-muted);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qx-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.qx-title {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  text-align: left;
+  color: var(--ws-ink);
+  cursor: pointer;
+  text-wrap: pretty;
+  transition: color 150ms ease-in-out;
+}
+
+@media (hover: hover) {
+  .qx-title:hover {
+    color: var(--ws-fill);
+  }
+}
+
+.qx-meta,
+.qx-rule {
+  display: block;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ws-muted);
+}
+
+.qx-rule {
+  color: var(--ws-ink-soft);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.qx-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-self: start;
+  min-width: var(--ws-hit);
+  min-height: 0;
+}
+
+.qx-actions .overflow-menu__btn {
+  min-width: var(--ws-hit);
+  min-height: var(--ws-hit);
+  margin: -8px 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+
+@media (hover: hover) {
+  .qx-actions .overflow-menu__btn:hover {
+    background: var(--ws-tint);
+  }
+}
+
+/* Loading: bars in the real rows' places */
+.qx--skel .qx-main {
+  gap: 6px;
+}
+
+.sb-page .qx--skel .skel,
+.sb-page .qxs__head .skel {
+  --skel-a: rgba(16, 40, 28, 0.07);
+  --skel-b: rgba(16, 40, 28, 0.14);
+  background-image: linear-gradient(90deg, var(--skel-a) 0%, var(--skel-b) 45%, var(--skel-a) 100%);
+  border-radius: 4px;
+}
+
+[data-theme='dark'] .sb-page .qx--skel .skel,
+[data-theme='dark'] .sb-page .qxs__head .skel {
+  --skel-a: rgba(229, 235, 232, 0.08);
+  --skel-b: rgba(229, 235, 232, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sbx-btn,
+  .qx-btn,
+  .qx,
+  .qxs__head,
+  .qxs__name,
+  .qx-title {
+    transition: none;
+  }
+
+  .sbx-btn:active:not(:disabled),
+  .qx-btn:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   One control family. Everything you can press or type into on this screen shares
+   a 40px height, an 8px radius, a 14px label and the same hairline, so the top bar,
+   the list and the inspector read as one screen. Touch targets grow with --ws-hit.
+   ========================================================================== */
+
+/* Fields */
+.sb-page .sb-input,
+.sb-page select.sb-input,
+.sb-page .field__input {
+  min-height: var(--ws-hit);
+  padding: 0 12px;
+  border: 1px solid var(--field-border);
+  border-radius: 8px;
+  background: var(--field-bg);
+  color: var(--field-text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.sb-page textarea.sb-input {
+  padding: 10px 12px;
+  min-height: 88px;
+}
+
+.sb-page .sb-input:disabled {
+  opacity: 1;
+  color: var(--ws-ink-soft);
+  background: transparent;
+  border-style: solid;
+  border-color: var(--ws-card-border);
+}
+
+.sb-page .sb-input--id {
+  flex: 0 0 88px;
+  width: 88px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sb-page .sb-field__label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ws-ink);
+}
+
+.sb-page .sb-field__hint {
+  font-size: 13px;
+  color: var(--ws-muted);
+}
+
+/* Buttons: the same box as the top bar's */
+.sb-page .sb-btn {
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--ws-hit);
+  padding: 0 14px;
+  border: 1px solid var(--ws-control-border);
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ws-ink);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color 150ms ease-in-out,
+    border-color 150ms ease-in-out;
+}
+
+.sb-page .sb-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.sb-page .sb-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .sb-page .sb-btn:hover:not(:disabled) {
+    background: var(--ws-tint);
+    border-color: var(--ws-fill);
+  }
+}
+
+.sb-page .sb-btn--danger {
+  color: color-mix(in srgb, var(--error-red) 70%, var(--black));
+}
+
+[data-theme='dark'] .sb-page .sb-btn--danger {
+  color: color-mix(in srgb, var(--error-red) 40%, var(--white));
+}
+
+@media (hover: hover) {
+  .sb-page .sb-btn--danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--error-red) 10%, transparent);
+    border-color: var(--error-red);
+  }
+}
+
+/* Icon buttons in rows (reorder, delete): quiet squares, full-size hit area */
+.sb-page .sb-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--ws-hit);
+  height: var(--ws-hit);
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ws-ink-soft);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 150ms ease-in-out;
+}
+
+.sb-page .sb-icon-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.sb-page .sb-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .sb-page .sb-icon-btn:hover:not(:disabled) {
+    background: var(--ws-tint);
+  }
+}
+
+/* Text links inside the inspector are the same quiet button */
+.sb-page .sb-link {
+  min-height: var(--ws-hit);
+  margin-left: 0;
+  padding: 0 12px;
+  border: 1px solid var(--ws-control-border);
+  border-radius: 8px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ws-ink);
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .sb-page .sb-link:hover:not(:disabled) {
+    background: var(--ws-tint);
+    border-color: var(--ws-fill);
+  }
+}
+
+.sb-page .sb-link--danger {
+  color: color-mix(in srgb, var(--error-red) 70%, var(--black));
+}
+
+[data-theme='dark'] .sb-page .sb-link--danger {
+  color: color-mix(in srgb, var(--error-red) 40%, var(--white));
+}
+
+/* Status chips read as words everywhere */
+.sb-page .sb-pill {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ws-muted);
+}
+
+/* Yes/no settings are a switch, the same one the Members and Survey control screens use */
+.sb-page .sb-check--switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--ws-hit);
+  cursor: pointer;
+}
+
+.sb-page .sb-check--switch input {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: none;
+  width: 42px;
+  height: 24px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--mem-switch-off, rgba(16, 40, 28, 0.32));
+  cursor: pointer;
+  transition: background-color 150ms ease-in-out;
+}
+
+[data-theme='dark'] .sb-page .sb-check--switch input {
+  background: var(--mem-switch-off, rgba(229, 235, 232, 0.3));
+}
+
+.sb-page .sb-check--switch input::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--white);
+  transition: transform 150ms ease-in-out;
+}
+
+.sb-page .sb-check--switch input:checked {
+  background: var(--mem-switch-on, #1f8a55);
+}
+
+.sb-page .sb-check--switch input:checked::after {
+  transform: translateX(18px);
+}
+
+.sb-page .sb-check--switch input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sb-page .sb-check--switch input:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Multi-pick lists in rules stay real checkboxes, sized to the same row */
+.sb-page .sb-check:not(.sb-check--switch) {
+  min-height: var(--ws-hit);
+}
+
+.sb-page .sb-check:not(.sb-check--switch) input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ws-fill);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-page .sb-btn,
+  .sb-page .sb-icon-btn,
+  .sb-page .sb-check--switch input,
+  .sb-page .sb-check--switch input::after {
+    transition: none;
+  }
+
+  .sb-page .sb-btn:active:not(:disabled),
+  .sb-page .sb-icon-btn:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* One type size for every field and control; phones get 16px so focusing never zooms the page */
+.qx-toolbar input,
+.qx-toolbar select {
+  font-size: 14px;
+}
+
+@media (pointer: coarse) {
+  .sb-page input:not([type='checkbox']):not([type='radio']),
+  .sb-page select,
+  .sb-page textarea {
+    font-size: 16px;
+  }
+}
+
+/* ── Phones: the same rows, with the gutters given back to the question ───── */
+@media (max-width: 640px) {
+  /* Dragging is a mouse gesture; the overflow menu moves rows on a phone */
+  .qx-grip {
+    display: none;
+  }
+
+  .qx {
+    grid-template-columns: 52px minmax(0, 1fr) 40px;
+  }
+
+  .qxs__head {
+    grid-template-columns: 52px minmax(0, 1fr) auto auto;
+  }
+
+  .qxs__count {
+    display: none;
+  }
+
+  .qx-toolbar .inq-toolbar__search {
+    flex-basis: 100%;
+  }
+
+  .qx-toolbar .inq-toolbar__sort {
+    flex: 1 1 0;
+  }
+
+  .sbx-bar__actions {
+    width: 100%;
+  }
+
+  .sbx-bar__actions .sbx-btn {
+    flex: 1 1 auto;
+  }
+}

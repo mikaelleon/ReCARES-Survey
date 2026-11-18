@@ -108,14 +108,6 @@ function InterviewInvitesContent() {
       <div className="dash-page__header iv-page__header">
         <PageHeading id="admin-interview-title" title="Interview invites" sub={"Residents who agreed to a follow-up interview. Move each one through outreach, keep notes, and check when people are free."} />
         <div className="dash-page__tools iv-page__tools">
-          <div className="admin-toolbar__select inquiries-page__filter">
-            <Select
-              label="Sort"
-              options={INTERVIEW_SORT}
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            />
-          </div>
           <Button size="sm" variant="secondary" onClick={handleExport} disabled={rows.length === 0}>
             Export contacts
           </Button>
@@ -146,6 +138,22 @@ function InterviewInvitesContent() {
           { label: 'Confirmed', value: kpis.confirmed, note: 'date agreed' },
         ]}
       />
+
+      <div className="inq-toolbar">
+        <div className="inq-toolbar__sort">
+          <Select
+            label="Sort"
+            options={INTERVIEW_SORT}
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          />
+        </div>
+        <div className="inq-toolbar__end">
+          <p className="inq-toolbar__count" aria-live="polite">
+            {loading ? 'Loading…' : `${rows.length} ${rows.length === 1 ? 'invite' : 'invites'}`}
+          </p>
+        </div>
+      </div>
 
       {error && !deleteTarget ? (
         <p className="na-error" role="alert">

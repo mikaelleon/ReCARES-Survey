@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { useSlidingThumb } from '@/lib/ui/useSlidingThumb';
 
 export interface ViewOption<T extends string> {
   /** The option's identity. `value` is accepted as an alias so existing callers keep working. */
@@ -25,8 +26,9 @@ export function ViewSwitcher<T extends string>({
   options: ViewOption<T>[];
   onChange: (next: T) => void;
 }) {
+  const ref = useSlidingThumb<HTMLDivElement>(value);
   return (
-    <div className="view-switcher" role="group" aria-label={label}>
+    <div ref={ref} className="view-switcher" role="group" aria-label={label}>
       {options.map((option) => {
         const optionId = (option.id ?? option.value) as T;
         return (

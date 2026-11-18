@@ -1,29 +1,10 @@
 'use client';
 
-import {
-  AlertTriangle,
-  Archive,
-  ArrowLeft,
-  Check,
-  CheckCircle2,
-  Copy,
-  Eye,
-  FilePen,
-  FilePlus2,
-  Lock,
-  Radio,
-  RefreshCw,
-  Rocket,
-  Save,
-  Trash2,
-  X,
-  XCircle,
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Inspector } from '@/components/admin/builder/Inspector';
 import { PreviewModal } from '@/components/admin/builder/PreviewModal';
 import { QuestionList } from '@/components/admin/builder/QuestionList';
-import { useBuilderView } from '@/components/admin/builder/useBuilderView';
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
 import { PageHeading } from '@/components/admin/PageHeading';
 import { Button } from '@/components/ui/Button';
@@ -126,36 +107,6 @@ function formatWhen(ms: number | null): string {
   return new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-/** Version state as an icon plus a word, so it never depends on colour alone. */
-function StatusPill({ status, live }: { status: Instrument['status']; live: boolean }) {
-  if (live) {
-    return (
-      <span className="sb-pill sb-pill--live">
-        <Radio size={13} aria-hidden="true" /> Live to residents
-      </span>
-    );
-  }
-  if (status === 'draft') {
-    return (
-      <span className="sb-pill sb-pill--draft">
-        <FilePen size={13} aria-hidden="true" /> Draft
-      </span>
-    );
-  }
-  if (status === 'archived') {
-    return (
-      <span className="sb-pill sb-pill--archived">
-        <Archive size={13} aria-hidden="true" /> Archived
-      </span>
-    );
-  }
-  return (
-    <span className="sb-pill sb-pill--published">
-      <Lock size={13} aria-hidden="true" /> Published
-    </span>
-  );
-}
-
 /** Wired to the signed-in team member, live responses, and Firestore. */
 export function SurveyBuilder() {
   const { user, canTeamOps } = useAuth();
@@ -208,7 +159,6 @@ export function BuilderWorkbench({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [pendingDeleteQuestion, setPendingDeleteQuestion] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [view, setView] = useBuilderView();
 
   const readOnly = !inst || inst.status !== 'draft';
   const issues = useMemo(() => (inst ? lintInstrument(inst) : []), [inst]);
@@ -557,10 +507,10 @@ export function BuilderWorkbench({
         </h1>
       </header>
 
-      <div className="sb-toolbar" role="toolbar" aria-label="Survey version actions">
-        <div className="sb-toolbar__meta">
-          <label className="sb-toolbar__pick">
-            <span className="sb-field__label">Version</span>
+      <div className="sbx-bar" role="toolbar" aria-label="Survey version actions">
+        <div className="sbx-bar__lead">
+          <label className="sbx-pick">
+            <span className="visually-hidden">Version</span>
             <select
               className="sb-input"
               value={inst?.version ?? ''}
@@ -569,99 +519,95 @@ export function BuilderWorkbench({
             >
               {list.map((row) => (
                 <option key={row.version} value={row.version}>
-                  {row.version} · {STATUS_LABEL[row.status]}
-                  {row.version === liveVersion ? ' · live' : ''}
+                  {row.version} · {row.version === liveVersion ? 'live' : STATUS_LABEL[row.status].toLowerCase()}
                 </option>
               ))}
             </select>
           </label>
-          <div className="sb-toolbar__pills">
-            {inst ? <StatusPill status={inst.status} live={Boolean(isLive)} /> : null}
-            {dirty ? (
-              <span className="sb-pill sb-pill--dirty">
-                <AlertTriangle size={13} aria-hidden="true" /> Unsaved changes
+          {inst ? (
+            <p className="sbx-state" aria-live="polite">
+              <span>
+                {isLive
+                  ? 'Live to residents · frozen'
+                  : inst.status === 'draft'
+                    ? 'Draft'
+                    : `${STATUS_LABEL[inst.status]} · frozen`}
               </span>
-            ) : null}
-            {inst ? (
+              {dirty ? <span className="sbx-state__dirty"> · unsaved changes</span> : null}
+              {!readOnly || errors.length > 0 || warnings.length > 0 ? (
+                <>
+                  <span aria-hidden="true"> · </span>
+                  <button
+                    type="button"
+                    className={`sbx-issues${errors.length ? ' has-errors' : ''}${warnings.length && !errors.length ? ' has-warnings' : ''}`}
+                    aria-expanded={showIssues}
+                    aria-controls="sb-issues-list"
+                    onClick={() => setShowIssues(!showIssues)}
+                  >
+                    {errors.length === 0 && warnings.length === 0
+                      ? 'Ready to publish'
+                      : `${errors.length} problem${errors.length === 1 ? '' : 's'}, ${warnings.length} warning${warnings.length === 1 ? '' : 's'}`}
+                  </button>
+                </>
+              ) : null}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="sbx-bar__actions">
+          <button type="button" className="sbx-btn" disabled={!inst || busy} onClick={() => setPreview(true)}>
+            Preview
+          </button>
+          {readOnly ? null : (
+            <button type="button" className="sbx-btn" disabled={!inst || busy} onClick={startCopy}>
+              Copy draft
+            </button>
+          )}
+          <button type="button" className="sbx-btn" title="Start a draft from the questions built into the app" disabled={busy} onClick={startBuiltin}>
+            From built-in
+          </button>
+          {readOnly ? (
+            <button type="button" className="sbx-btn sbx-btn--primary" disabled={!inst || busy} onClick={startCopy}>
+              Edit as draft
+            </button>
+          ) : (
+            <>
               <button
                 type="button"
-                className={`sb-issues__toggle${errors.length ? ' has-errors' : ''}${warnings.length && !errors.length ? ' has-warnings' : ''}${!errors.length && !warnings.length ? ' is-ready' : ''}`}
-                aria-expanded={showIssues}
-                aria-controls="sb-issues-list"
-                onClick={() => setShowIssues(!showIssues)}
+                className="sbx-btn sbx-btn--danger"
+                disabled={!inst || busy}
+                onClick={() => setDeleteOpen(true)}
               >
-                {errors.length ? (
-                  <XCircle size={14} strokeWidth={2.2} aria-hidden="true" />
-                ) : warnings.length ? (
-                  <AlertTriangle size={14} strokeWidth={2.2} aria-hidden="true" />
-                ) : (
-                  <CheckCircle2 size={14} strokeWidth={2.2} aria-hidden="true" />
-                )}
-                {errors.length === 0 && warnings.length === 0
-                  ? 'Ready to publish'
-                  : `${errors.length} problem${errors.length === 1 ? '' : 's'}, ${warnings.length} warning${warnings.length === 1 ? '' : 's'}`}
+                Delete draft
               </button>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="sb-toolbar__actions">
-          <div className="sb-toolbar__group" role="group" aria-label="Explore">
-            <button type="button" className="sb-btn" title="Preview" disabled={!inst || busy} onClick={() => setPreview(true)}>
-              <Eye size={16} strokeWidth={2.2} aria-hidden="true" />
-              <span>Preview</span>
-            </button>
-            <button type="button" className="sb-btn" title={readOnly ? 'Edit as draft' : 'Copy draft'} disabled={!inst || busy} onClick={startCopy}>
-              <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
-              <span>{readOnly ? 'Edit as draft' : 'Copy draft'}</span>
-            </button>
-            <button type="button" className="sb-btn" title="Start a draft from the questions built into the app" disabled={busy} onClick={startBuiltin}>
-              <FilePlus2 size={16} strokeWidth={2.2} aria-hidden="true" />
-              <span>From built-in</span>
-            </button>
-          </div>
-
-          <div className="sb-toolbar__group sb-toolbar__group--primary" role="group" aria-label="Save and publish">
-            <button
-              type="button"
-              className={`sb-btn sb-btn--primary${inst && !readOnly && !dirty ? ' is-saved' : ''}`}
-              disabled={!inst || busy || readOnly || !dirty}
-              onClick={save}
-              title={readOnly ? 'Frozen versions cannot be changed' : dirty ? 'Save (Ctrl+S)' : 'Nothing to save'}
-            >
-              {inst && !readOnly && !dirty ? (
-                <Check size={16} strokeWidth={2.4} aria-hidden="true" />
-              ) : (
-                <Save size={16} strokeWidth={2.2} aria-hidden="true" />
-              )}
-              <span>{inst && !readOnly && !dirty ? 'Saved' : 'Save'}</span>
-            </button>
-            <button
-              type="button"
-              className="sb-btn sb-btn--accent"
-              disabled={!inst || busy || readOnly || errors.length > 0}
-              title={readOnly ? 'Frozen versions cannot be changed' : errors.length ? 'Fix the problems first' : 'Make this version live'}
-              onClick={() => setPublishOpen(true)}
-            >
-              <Rocket size={16} strokeWidth={2.2} aria-hidden="true" />
-              <span>Publish</span>
-            </button>
-          </div>
-
-          <div className="sb-toolbar__group sb-toolbar__group--danger" role="group" aria-label="Delete">
-            <button
-              type="button"
-              className="sb-btn sb-btn--danger sb-btn--icon"
-              aria-label="Delete draft"
-              title={readOnly ? 'Only drafts can be deleted' : 'Delete draft'}
-              disabled={!inst || busy || readOnly}
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 size={16} strokeWidth={2.2} aria-hidden="true" />
-            </button>
-          </div>
+              <button
+                type="button"
+                className={`sbx-btn${dirty ? ' sbx-btn--primary' : ''}`}
+                disabled={!inst || busy || !dirty}
+                onClick={save}
+                title={dirty ? 'Save (Ctrl+S)' : 'Nothing to save'}
+              >
+                {dirty ? 'Save' : 'Saved'}
+              </button>
+              <button
+                type="button"
+                className={`sbx-btn${!dirty && errors.length === 0 ? ' sbx-btn--primary' : ''}`}
+                disabled={!inst || busy || errors.length > 0}
+                title={errors.length ? 'Fix the problems first' : 'Make this version live'}
+                onClick={() => setPublishOpen(true)}
+              >
+                Publish
+              </button>
+            </>
+          )}
         </div>
       </div>
+
+      {inst && readOnly ? (
+        <p className="sbx-hint">
+          Answers stay tied to {inst.version}, so it cannot change. Use <strong>Edit as draft</strong> to change questions.
+        </p>
+      ) : null}
 
       {inst && showIssues && issues.length > 0 ? (
         <ul id="sb-issues-list" className="sb-issues__list" aria-label="Validation issues">
@@ -683,24 +629,13 @@ export function BuilderWorkbench({
       ) : null}
 
       <div className="sb-alerts">
-        {inst && readOnly ? (
-          <p className="sb-banner">
-            <Lock size={15} aria-hidden="true" />
-            <span>
-              {STATUS_LABEL[inst.status]} versions are frozen, because answers stay tied to them. Use{' '}
-              <strong>Edit as draft</strong> to change questions.
-            </span>
-          </p>
-        ) : null}
         {listWarning ? (
           <p className="sb-banner sb-banner--error" role="alert">
-            <AlertTriangle size={15} aria-hidden="true" />
             <span>{listWarning}</span>
           </p>
         ) : null}
         {notice && notice.tone === 'error' ? (
           <p className="sb-banner sb-banner--error sb-banner--dismissible" role="alert">
-            <AlertTriangle size={15} aria-hidden="true" />
             <span>{notice.text}</span>
             <button type="button" className="sb-banner__close" aria-label="Dismiss message" onClick={() => setNotice(null)}>
               <X size={14} />
@@ -714,19 +649,25 @@ export function BuilderWorkbench({
           <span className="visually-hidden" role="status">
             Loading the survey
           </span>
-          <div className="qlist">
+          <div className="qx-wrap">
             {[0, 1].map((step) => (
-              <div key={step} className="qs qs--skeleton" aria-hidden="true">
-                <div className="qs__head">
+              <div key={step} className="qxs" aria-hidden="true">
+                <div className="qxs__head">
                   <SkelLine size="md" />
                 </div>
-                {[0, 1, 2].map((row) => (
-                  <div key={row} className="qc qc--skeleton">
-                    <SkelLine size="lg" />
-                    <SkelLine size="md" />
-                    <SkelLine size="sm" />
-                  </div>
-                ))}
+                <ul className="qxs__list">
+                  {[0, 1, 2].map((row) => (
+                    <li key={row} className="qx qx--comfortable qx--skel">
+                      <span className="qx-grip" />
+                      <span className="qx-code" />
+                      <div className="qx-main">
+                        <SkelLine size="lg" />
+                        <SkelLine size="sm" />
+                      </div>
+                      <span className="qx-actions" />
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
@@ -742,8 +683,6 @@ export function BuilderWorkbench({
             inst={inst}
             selected={selected}
             readOnly={readOnly}
-            view={view}
-            onViewChange={setView}
             onSelectQuestion={(id) => setSelected({ kind: 'question', id })}
             onSelectStep={(id) => setSelected({ kind: 'step', id })}
             onMoveQuestion={moveQuestion}
@@ -757,7 +696,7 @@ export function BuilderWorkbench({
           <aside className={`sb-side${selected ? ' is-open' : ''}`} aria-label="Details">
             <div className="sb-side__bar">
               <button type="button" className="sb-link" onClick={() => setSelected(null)}>
-                <ArrowLeft size={16} aria-hidden="true" /> Back to the list
+                Back to the list
               </button>
             </div>
             <Inspector
@@ -780,7 +719,6 @@ export function BuilderWorkbench({
           <h3>{loadError ? 'Could not load the survey' : 'No survey versions found'}</h3>
           <p>{loadError ?? 'There is nothing to edit yet.'}</p>
           <button type="button" className="sb-btn" onClick={() => void bootstrap()}>
-            <RefreshCw size={16} aria-hidden="true" />
             <span>Try again</span>
           </button>
         </div>
@@ -788,7 +726,6 @@ export function BuilderWorkbench({
 
       {notice && notice.tone === 'ok' ? (
         <div className="sb-toast" role="status">
-          <CheckCircle2 size={16} aria-hidden="true" />
           <span>{notice.text}</span>
           <button type="button" className="sb-banner__close" aria-label="Dismiss message" onClick={() => setNotice(null)}>
             <X size={14} />

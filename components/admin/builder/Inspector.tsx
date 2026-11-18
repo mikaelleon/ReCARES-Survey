@@ -490,9 +490,10 @@ function QuestionInspector({
             </select>
           </Field>
         </div>
-        <label className="sb-check">
+        <label className="sb-check sb-check--switch">
           <input
             type="checkbox"
+            role="switch"
             checked={q.required ?? !(q.type === 'text' || q.type === 'number')}
             disabled={disabled}
             onChange={(e) => patch((t) => (t.required = e.target.checked))}
@@ -905,9 +906,10 @@ function StepInspector({
           }
           onTranslation={(next) => step.subtitle && edit((d) => setTranslation(d, step.subtitle!, next))}
         />
-        <label className="sb-check">
+        <label className="sb-check sb-check--switch">
           <input
             type="checkbox"
+            role="switch"
             checked={Boolean(step.showRequiredNote)}
             disabled={disabled}
             onChange={(e) => patch((s) => (s.showRequiredNote = e.target.checked))}
@@ -1142,34 +1144,10 @@ export function Inspector({
   if (!selected) {
     return (
       <div className="sb-insp sb-insp--empty">
-        <h2 className="sb-insp__heading">Nothing selected</h2>
-        <dl className="sb-stats">
-          <div>
-            <dt>Steps</dt>
-            <dd>{inst.steps.length}</dd>
-          </div>
-          <div>
-            <dt>Questions</dt>
-            <dd>{inst.questions.length}</dd>
-          </div>
-          <div>
-            <dt>Conditional</dt>
-            <dd>{inst.questions.filter((q) => q.showWhen).length}</dd>
-          </div>
-        </dl>
         <p className="sb-muted">
-          Choose a question or step in the list to edit it, or add a new one.
-          {readOnly ? ' This version is frozen, so details are read-only.' : ''}
+          Choose a question or step to edit it. A rule can only read questions that come earlier in the survey.
+          {readOnly ? ' This version is frozen, so details are read-only.' : ' Ctrl+S saves the draft and Esc clears the selection.'}
         </p>
-        <h3 className="sb-insp__sub">Tips</h3>
-        <ul className="sb-help">
-          <li>
-            <kbd>Ctrl</kbd> + <kbd>S</kbd> saves the draft. <kbd>Esc</kbd> clears the selection.
-          </li>
-          <li>Open a question and use “Show this question” to add rules. Combine rules with “all of” or “any of”.</li>
-          <li>Use the up and down arrows to reorder. On a computer you can also drag a row by its handle.</li>
-          <li>A rule can only read questions that come earlier in the survey.</li>
-        </ul>
       </div>
     );
   }

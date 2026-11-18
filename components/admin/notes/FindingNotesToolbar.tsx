@@ -1,6 +1,6 @@
 'use client';
 
-import { Input } from '@/components/ui/Input';
+import { SearchField } from '@/components/admin/SearchField';
 import { Select } from '@/components/ui/Select';
 import { RESPONSE_QUESTION_OPTIONS } from '@/lib/admin/responseQuestions';
 import {
@@ -58,65 +58,38 @@ export function FindingNotesToolbar({
   resultCount?: number;
 }) {
   return (
-    <div className="finding-notes-toolbar" role="search">
-      <div className="finding-notes-toolbar__filters">
-        <div className="finding-notes-toolbar__search">
-          <Input
-            id="finding-search"
-            label="Search"
-            placeholder="Search title or body…"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-        </div>
-        <div className="finding-notes-toolbar__select">
-          <Select
-            label="Tag"
-            options={TAG_FILTER}
-            value={tagFilter}
-            onChange={(e) => onTagFilterChange(e.target.value)}
-          />
-        </div>
-        <div className="finding-notes-toolbar__select">
-          <Select
-            label="Status"
-            options={STATUS_FILTER}
-            value={statusFilter}
-            onChange={(e) => onStatusFilterChange(e.target.value)}
-          />
-        </div>
-        <div className="finding-notes-toolbar__select finding-notes-toolbar__select--wide">
-          <Select
-            label="Question"
-            options={QUESTION_FILTER}
-            value={questionFilter}
-            onChange={(e) => onQuestionFilterChange(e.target.value)}
-          />
-        </div>
-        <div className="finding-notes-toolbar__select">
-          <Select
-            label="Sort"
-            options={[...FINDING_SORT_OPTIONS]}
-            value={sortBy}
-            onChange={(e) => onSortByChange(e.target.value as FindingSortOption)}
-          />
-        </div>
+    <div className="inq-toolbar" role="search">
+      <SearchField
+        id="finding-search"
+        value={search}
+        onChange={onSearchChange}
+        placeholder="Search"
+        ariaLabel="Search title or body"
+      />
+      <div className="inq-toolbar__sort">
+        <Select label="Tag" options={TAG_FILTER} value={tagFilter} onChange={(e) => onTagFilterChange(e.target.value)} />
       </div>
-      <div className="finding-notes-toolbar__actions">
-        <p className="finding-notes-toolbar__count" aria-live="polite">
-          {typeof resultCount === 'number'
-            ? `${resultCount} note${resultCount === 1 ? '' : 's'}`
-            : ' '}
-        </p>
-        <label className="finding-notes-toolbar__mine">
-          <input
-            type="checkbox"
-            checked={mineOnly}
-            onChange={(e) => onMineOnlyChange(e.target.checked)}
-          />
-          <span>My notes</span>
-        </label>
+      <div className="inq-toolbar__sort">
+        <Select label="Status" options={STATUS_FILTER} value={statusFilter} onChange={(e) => onStatusFilterChange(e.target.value)} />
       </div>
+      <div className="inq-toolbar__sort">
+        <Select label="Question" options={QUESTION_FILTER} value={questionFilter} onChange={(e) => onQuestionFilterChange(e.target.value)} />
+      </div>
+      <div className="inq-toolbar__sort">
+        <Select
+          label="Sort"
+          options={[...FINDING_SORT_OPTIONS]}
+          value={sortBy}
+          onChange={(e) => onSortByChange(e.target.value as FindingSortOption)}
+        />
+      </div>
+      <label className="ws-toggle">
+        <input type="checkbox" checked={mineOnly} onChange={(e) => onMineOnlyChange(e.target.checked)} />
+        My notes
+      </label>
+      <p className="visually-hidden" aria-live="polite">
+        {typeof resultCount === 'number' ? `${resultCount} note${resultCount === 1 ? '' : 's'}` : ''}
+      </p>
     </div>
   );
 }

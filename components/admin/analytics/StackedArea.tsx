@@ -1,5 +1,6 @@
 'use client';
 
+import { useSlidingThumb } from '@/lib/ui/useSlidingThumb';
 import { useMemo, useState } from 'react';
 import type { ResidentSeries } from '@/lib/admin/dataAnalytics';
 
@@ -32,6 +33,7 @@ export function StackedArea({
   initialMode?: Mode;
 }) {
   const [mode, setMode] = useState<Mode>(initialMode);
+  const segRef = useSlidingThumb<HTMLDivElement>(mode);
   const [active, setActive] = useState<number | null>(null);
   const { points, groups } = series;
 
@@ -82,7 +84,7 @@ export function StackedArea({
     <div className="an-trend an-stack">
       {readOnly ? null : (
         <div className="an-trend__bar">
-          <div className="an-seg" role="group" aria-label="Chart type">
+          <div ref={segRef} className="an-seg" role="group" aria-label="Chart type">
             <button type="button" aria-pressed={mode === 'total'} onClick={() => setMode('total')}>
               Running total
             </button>
@@ -125,9 +127,24 @@ export function StackedArea({
           </g>
         ))}
 
-        {stacks.map((stack, i) => (
-          <path key={groups[i]!.id} d={areaPath(stack.base, stack.top)} className={`an-stack__area an-grp--${groups[i]!.id}`} />
-        ))}
+        {points.length > 1
+          ? stacks.map((stack, i) => (
+              <path key={groups[i]!.id} d={areaPath(stack.base, stack.top)} className={`an-stack__area an-grp--${groups[i]!.id}`} />
+            ))
+          : /* One day only: an area with no width is invisible, so stack the groups as a single bar */
+            stacks.map((stack, i) =>
+              stack.top[0]! > stack.base[0]! ? (
+                <rect
+                  key={groups[i]!.id}
+                  x={x(0) - 22}
+                  width={44}
+                  y={y(stack.top[0]!)}
+                  height={y(stack.base[0]!) - y(stack.top[0]!)}
+                  rx={3}
+                  className={`an-stack__area an-grp--${groups[i]!.id}`}
+                />
+              ) : null,
+            )}
 
         {labelAt.map((i) => (
           <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'} className="an-trend__tick">
