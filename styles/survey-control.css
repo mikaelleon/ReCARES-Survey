@@ -1,0 +1,453 @@
+/* ==========================================================================
+   Survey control — the state of the survey is one sentence, and every control on the
+   page edits it. Flat ruled sections, no cards. Tokens (--ws-*) come from
+   workspace-ui.css; the header buttons and notes reuse .inq-btn and .inq-note.
+   ========================================================================== */
+
+.sc-page a.inq-btn {
+  text-decoration: none;
+}
+
+.sc-form {
+  margin: 0;
+}
+
+/* The wrap holds the container so the fixed save bar is not trapped inside it */
+.sc-wrap {
+  container-type: inline-size;
+}
+
+.sc-layout {
+  display: grid;
+  gap: 0 40px;
+  grid-template-columns: minmax(0, 1fr);
+  padding-bottom: 80px;
+}
+
+@container (min-width: 860px) {
+  .sc-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    align-items: start;
+  }
+
+  /* The preview answers the form, so it stays in view while you edit the message below.
+     14px lines its title up with the ledger's label on the left. */
+  .sc-rail {
+    position: sticky;
+    top: 12px;
+    padding-top: 14px;
+  }
+}
+
+.sc-main,
+.sc-rail {
+  min-width: 0;
+}
+
+/* Same 32px the sections keep between each other */
+.sc-main > .count-ledger {
+  margin-bottom: 32px;
+}
+
+.sc-section {
+  margin: 0 0 32px;
+  padding: 0;
+  min-width: 0;
+}
+
+.sc-section__title {
+  margin: 0 0 16px;
+  padding-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-headline);
+  border-bottom: 1px solid var(--ws-ink-soft);
+}
+
+.sc-section__opt {
+  margin-left: 8px;
+  font-weight: 400;
+  color: var(--ws-muted);
+}
+
+/* ── Window: the sentence, then the switch ─────────────────────────────── */
+.sc-state {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 16px;
+}
+
+.sc-state strong {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  color: var(--ws-ink);
+}
+
+.sc-state span {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ws-ink-soft);
+  text-wrap: pretty;
+}
+
+/* One thumb slides between the three options, so the change reads as a move, not a recolor.
+   It turns around from where it is if you click again mid-slide. */
+.sc-seg {
+  --seg-w: 88px;
+  --seg-fill: var(--ws-fill);
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(3, var(--seg-w));
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--ws-control-border);
+  border-radius: 8px;
+}
+
+.sc-seg[data-status='paused'] {
+  --seg-fill: #b45309;
+}
+
+.sc-seg[data-status='closed'] {
+  --seg-fill: #b91c1c;
+}
+
+.sc-seg::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: var(--seg-w);
+  border-radius: 6px;
+  background: var(--seg-fill);
+  transform: translateX(calc(var(--i, 0) * (var(--seg-w) + 2px)));
+  transition:
+    transform 220ms cubic-bezier(0.77, 0, 0.175, 1),
+    background-color 150ms ease-in-out;
+}
+
+.sc-seg__opt {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ws-ink-soft);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: color 150ms ease-in-out;
+}
+
+.sc-seg__opt input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.sc-seg__opt:has(input:focus-visible) {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.sc-seg__opt:active {
+  transform: scale(0.96);
+}
+
+@media (hover: hover) {
+  .sc-seg__opt:not(.is-selected):hover {
+    color: var(--ws-ink);
+  }
+}
+
+.sc-seg__opt.is-selected {
+  color: var(--ws-on-fill);
+}
+
+/* ── Fields, hints, text buttons ───────────────────────────────────────── */
+.sc-fields {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@container (max-width: 520px) {
+  .sc-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.sc-hint,
+.sc-note {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ws-muted);
+  text-wrap: pretty;
+}
+
+.sc-note {
+  font-size: 14px;
+  color: var(--ws-ink-soft);
+}
+
+.sc-hint a {
+  color: var(--ws-ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sc-quick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.sc-quick__label {
+  min-width: 72px;
+  font-size: 13px;
+  color: var(--ws-muted);
+}
+
+/* Anything you can press is a hairline button; plain text is only ever text */
+.sc-link,
+.sc-reset summary {
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--ws-hit);
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--ws-control-border);
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ws-ink);
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color 150ms ease-in-out,
+    border-color 150ms ease-in-out;
+}
+
+/* The target reaches 2px past the box on every side */
+.sc-link::after,
+.sc-reset summary::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+}
+
+.sc-link--quiet {
+  color: var(--ws-muted);
+}
+
+.sc-link:active,
+.sc-reset summary:active {
+  transform: scale(0.96);
+}
+
+@media (hover: hover) {
+  .sc-link:hover,
+  .sc-reset summary:hover {
+    background: var(--ws-tint);
+    border-color: var(--ws-fill);
+  }
+}
+
+.sc-link:focus-visible,
+.sc-reset summary:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.sc-reset summary {
+  list-style: none;
+  width: fit-content;
+}
+
+.sc-reset summary::-webkit-details-marker {
+  display: none;
+}
+
+.sc-version {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.sc-version > .field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Same height as the field it sits beside */
+.sc-version > .sc-link {
+  flex: none;
+  min-height: 44px;
+}
+
+.sc-foot {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sc-counter {
+  flex: none;
+  margin-top: 0;
+  line-height: var(--ws-hit);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Rail: preview, history, reset ─────────────────────────────────────── */
+.sc-page .survey-preview__screen {
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--ws-card-border);
+  border-radius: 8px;
+  background: var(--ws-card-bg);
+}
+
+.sc-page .survey-preview__kicker {
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sc-history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sc-history li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ws-card-border);
+}
+
+.sc-history p {
+  margin: 0;
+}
+
+.sc-history__summary {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ws-ink);
+  overflow-wrap: anywhere;
+}
+
+.sc-history__meta {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ws-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-reset > button,
+.sc-reset > .button {
+  margin-top: 12px;
+}
+
+/* ── Loading: bars in the real sections' places ────────────────────────── */
+.sc-skel {
+  margin-top: 24px;
+}
+
+.sc-rail.sc-skel {
+  margin-top: 0;
+}
+
+.sc-skel__section {
+  margin-bottom: 32px;
+  padding-top: 0;
+  border-top: 1px solid var(--ws-ink-soft);
+}
+
+.sc-skel__bar,
+.sc-skel__field {
+  display: block;
+  border-radius: 4px;
+  --skel-a: rgba(16, 40, 28, 0.07);
+  --skel-b: rgba(16, 40, 28, 0.14);
+  background-image: linear-gradient(90deg, var(--skel-a) 0%, var(--skel-b) 45%, var(--skel-a) 100%);
+}
+
+[data-theme='dark'] .sc-skel__bar,
+[data-theme='dark'] .sc-skel__field {
+  --skel-a: rgba(229, 235, 232, 0.08);
+  --skel-b: rgba(229, 235, 232, 0.16);
+}
+
+.sc-skel__bar {
+  height: 14px;
+  margin: 12px 0 20px;
+}
+
+.sc-skel__field {
+  height: 40px;
+  max-width: 420px;
+}
+
+/* The save bar lives on the app shell, outside .sc-page: it rises on ease-out and drops
+   faster on ease-in, and a failure reads in the page's error color. */
+.admin-app .survey-savebar {
+  transition:
+    transform 240ms cubic-bezier(0.32, 0.72, 0, 1),
+    visibility 0s linear 160ms;
+}
+
+.admin-app .survey-savebar.is-visible {
+  transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.admin-app .survey-savebar:not(.is-visible) {
+  transition:
+    transform 160ms cubic-bezier(0.55, 0, 1, 0.45),
+    visibility 0s linear 160ms;
+}
+
+.admin-app .survey-savebar.is-error .survey-savebar__text {
+  color: color-mix(in srgb, var(--error-red) 70%, var(--black));
+}
+
+[data-theme='dark'] .admin-app .survey-savebar.is-error .survey-savebar__text {
+  color: color-mix(in srgb, var(--error-red) 40%, var(--white));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-seg::before,
+  .sc-seg__opt,
+  .sc-link,
+  .sc-reset summary,
+  .admin-app .survey-savebar,
+  .admin-app .survey-savebar.is-visible,
+  .admin-app .survey-savebar:not(.is-visible) {
+    transition: none;
+  }
+
+  .sc-seg__opt:active,
+  .sc-link:active,
+  .sc-reset summary:active {
+    transform: none;
+  }
+}

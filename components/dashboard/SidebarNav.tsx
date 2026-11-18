@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   GitBranch,
   Inbox,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   MessageSquare,
@@ -30,7 +31,8 @@ import {
   X,
 } from 'lucide-react';
 import { AdminNavLink } from '@/components/admin/AdminNavLink';
-import { roleLabel } from '@/lib/admin/access';
+import { ChangePasswordDialog } from '@/components/admin/ChangePasswordDialog';
+import { isSignInAllowed, roleLabel } from '@/lib/admin/access';
 import { useAdminNotifications } from '@/lib/admin/useAdminNotifications';
 import { formatAbsoluteTime, formatRelativeTime, hasRealTime } from '@/lib/admin/relativeTime';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
@@ -89,6 +91,7 @@ export function SidebarNav({
   // Keep the popover mounted for its exit animation.
   const [bellMounted, setBellMounted] = useState(false);
   const bellRef = useRef<HTMLDivElement | null>(null);
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   useEffect(() => {
     if (bellOpen) {
@@ -197,6 +200,12 @@ export function SidebarNav({
   const handleLogout = () => {
     void logout().then(() => goToAdminLogin());
   };
+
+  /** A superadmin can switch this off per member (Members → Edit → Sign-in). */
+  const canChangePassword = isSignInAllowed(
+    { role: user.role, permissions: user.permissions },
+    'changePassword',
+  );
 
   return (
     <>
@@ -427,6 +436,17 @@ export function SidebarNav({
                 <span className="admin-sidebar__user-meta">{roleText}</span>
               </span>
             </div>
+            {canChangePassword ? (
+              <button
+                type="button"
+                className="admin-sidebar__logout"
+                onClick={() => setPasswordOpen(true)}
+                title={collapsed ? 'Change password' : undefined}
+              >
+                <KeyRound size={16} strokeWidth={1.5} aria-hidden="true" />
+                <span className="admin-sidebar__logout-label">Change password</span>
+              </button>
+            ) : null}
             <button
               type="button"
               className="admin-sidebar__logout"
@@ -449,6 +469,8 @@ export function SidebarNav({
           </Link>
         </div>
       </aside>
+
+      {passwordOpen ? <ChangePasswordDialog onClose={() => setPasswordOpen(false)} /> : null}
     </>
   );
 }

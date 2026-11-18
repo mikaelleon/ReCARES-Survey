@@ -1,23 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  CalendarClock,
-  CalendarRange,
-  CheckCircle2,
-  Layers,
-  Users,
-  Copy,
-  ExternalLink,
-  History,
-  PauseCircle,
-  PlayCircle,
-  RotateCcw,
-  XCircle,
-  type LucideIcon,
-} from 'lucide-react';
+import { FormEvent, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
+import { CountLedger } from '@/components/admin/CountLedger';
 import { PageHeading } from '@/components/admin/PageHeading';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -47,15 +34,10 @@ const MESSAGE_MAX = 500;
 /** Same research target the Dashboard measures progress against. */
 const RESPONDENT_TARGET = 100;
 
-const STATUS_CARDS: {
-  id: SurveyWindowStatus;
-  title: string;
-  hint: string;
-  Icon: LucideIcon;
-}[] = [
-  { id: 'open', title: 'Open', hint: 'Residents can start and submit.', Icon: PlayCircle },
-  { id: 'paused', title: 'Paused', hint: 'A temporary hold. You can reopen it.', Icon: PauseCircle },
-  { id: 'closed', title: 'Closed', hint: 'Data collection is finished.', Icon: XCircle },
+const WINDOW_OPTIONS: { id: SurveyWindowStatus; title: string }[] = [
+  { id: 'open', title: 'Open' },
+  { id: 'paused', title: 'Paused' },
+  { id: 'closed', title: 'Closed' },
 ];
 
 const MESSAGE_TEMPLATES: { label: string; status: SurveyWindowStatus; text: string }[] = [
@@ -210,6 +192,10 @@ export function SurveyControlPanel() {
   const [note, setNote] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [barHost, setBarHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setBarHost(document.querySelector<HTMLElement>('.admin-app') ?? document.body);
+  }, []);
 
   const patch = (next: Partial<Draft>) => setDraft((prev) => ({ ...prev, ...next }));
 
@@ -281,16 +267,6 @@ export function SurveyControlPanel() {
   }, [records, savedVersion, now]);
 
   const ready = responsesStatus === 'ready';
-  const versionSharePct = stats.total > 0 ? Math.round((stats.onVersion / stats.total) * 100) : 0;
-  const weekSharePct = stats.total > 0 ? Math.round((stats.lastWeek / stats.total) * 100) : 0;
-  const StatusIcon: LucideIcon =
-    effective === 'open' ? PlayCircle : effective === 'paused' ? PauseCircle : XCircle;
-  const statusWord = effective === 'open' ? 'Open' : effective === 'paused' ? 'Paused' : 'Closed';
-  // Progress through a fully scheduled window (opens -> closes), when both times are set.
-  const windowProgress =
-    opensMs != null && closesMs != null && closesMs > opensMs && effective === 'open'
-      ? Math.max(0, Math.min(100, Math.round(((now - opensMs) / (closesMs - opensMs)) * 100)))
-      : null;
   const versionHasResponses = stats.onVersion > 0;
   const versionChanged = version !== savedVersion;
 
@@ -482,432 +458,393 @@ export function SurveyControlPanel() {
   const busy = saving || resetting;
   const templates = MESSAGE_TEMPLATES;
 
+  // The page-transition wrapper traps position:fixed, so the bar mounts on the app shell instead.
+  // It is the one place feedback lands: unsaved changes, a saved note, or a failure, right
+  // where the person just pressed Save.
+  const barMessage =
+    error ?? (dirty ? (invalid ? 'Fix the highlighted fields to save.' : 'You have unsaved changes.') : note);
+  const showBar = dirty || Boolean(barMessage);
+  const saveBar = (
+    <div
+      className={`survey-savebar${showBar ? ' is-visible' : ''}${error ? ' is-error' : ''}`}
+      role="region"
+      aria-label="Save changes"
+      aria-hidden={!showBar}
+    >
+      <p className="survey-savebar__text" role={error ? 'alert' : 'status'}>
+        {barMessage}
+        {dirty && !error && !invalid ? <span className="survey-savebar__hint"> Ctrl+S to save</span> : null}
+      </p>
+      {dirty ? (
+        <>
+          <Button
+            variant="secondary"
+            type="button"
+            disabled={busy}
+            onClick={() =>
+              setConfirm({
+                kind: 'discard',
+                title: 'Discard unsaved changes?',
+                body: 'The form returns to the last saved settings.',
+                label: 'Discard changes',
+              })
+            }
+          >
+            Discard
+          </Button>
+          <Button variant="primary" type="button" loading={saving} disabled={busy || invalid} onClick={requestSave}>
+            {exists ? 'Save changes' : 'Create settings'}
+          </Button>
+        </>
+      ) : (
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={() => {
+            setError(null);
+            setNote(null);
+          }}
+        >
+          Dismiss
+        </Button>
+      )}
+    </div>
+  );
+
+  const ledgerRows = [
+    {
+      label: 'Instrument',
+      value: savedVersion,
+      note: ready ? `${stats.onVersion} of ${stats.total} response${stats.total === 1 ? '' : 's'}` : '',
+    },
+    { label: 'Last 7 days', value: stats.lastWeek, note: stats.lastWeek === 1 ? 'response' : 'responses' },
+    {
+      label: 'Latest response',
+      value: stats.latest ? formatRelativeTime(stats.latest, now) : 'None yet',
+      note: '',
+    },
+  ];
+
   return (
-    <section className="dash-page survey-control-page" aria-labelledby="survey-control-title">
+    <section className="dash-page survey-control-page sc-page" aria-labelledby="survey-control-title">
       <div className="dash-page__header">
         <PageHeading
           id="survey-control-title"
           title="Survey control"
           sub="Decide when residents can take the survey, and what they see when they can't. Changes apply as soon as you save."
-        >
-          {!loading ? (
-            <p
-              className={`survey-window-chip survey-window-chip--${effective}`}
-              style={{ marginTop: 8 }}
-              title={banner.detail}
-            >
-              {banner.title}
-              <span aria-hidden="true"> · </span>
-              {version}
-              {dirty ? (
-                <>
-                  <span aria-hidden="true"> · </span>
-                  Unsaved
-                </>
-              ) : null}
-            </p>
-          ) : null}
-        </PageHeading>
+        />
         <div className="dash-page__tools">
-          <Link
-            href="/survey/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="survey-control__tool survey-control__tool--primary"
-          >
-            <ExternalLink size={16} strokeWidth={2.2} aria-hidden="true" />
+          <Link href="/survey/" target="_blank" rel="noopener noreferrer" className="inq-btn">
             View live survey
           </Link>
-          <button type="button" className="survey-control__tool" onClick={() => void copyLink()}>
-            <Copy size={16} strokeWidth={2.2} aria-hidden="true" />
+          <button type="button" className="inq-btn" onClick={() => void copyLink()}>
             Copy link
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="skel-region" aria-busy="true" role="status">
+        <div role="status" aria-busy="true" className="sc-wrap">
           <span className="visually-hidden">Loading current settings</span>
-          <div className="skel-stat" style={{ minHeight: 72 }} />
-          <div className="skel-stat" style={{ minHeight: 160 }} />
-          <div className="skel-stat" style={{ minHeight: 160 }} />
+          <div className="sc-layout">
+            <div className="sc-main">
+              <CountLedger
+                label="Responses"
+                total={0}
+                totalNote=""
+                ariaLabel="Survey summary"
+                loading
+                rows={ledgerRows}
+              />
+              <div className="sc-skel" aria-hidden="true">
+                {[96, 200, 152, 224].map((height, i) => (
+                  <div key={height} className="sc-skel__section" style={{ minHeight: height }}>
+                    <span className="skel sc-skel__bar" style={{ width: 120, animationDelay: `${i * -150}ms` }} />
+                    <span className="skel sc-skel__field" style={{ animationDelay: `${i * -150}ms` }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="sc-rail sc-skel" aria-hidden="true">
+              <div className="sc-skel__section" style={{ minHeight: 240 }}>
+                <span className="skel sc-skel__bar" style={{ width: 140 }} />
+                <span className="skel sc-skel__field" style={{ height: 140 }} />
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <>
-          <div className="survey-feedback" aria-live="polite">
-            {error ? (
-              <p className="na-error" role="alert">
-                {error}
-              </p>
-            ) : null}
-            {note ? (
-              <p role="status" className="admin-kanban-note">
-                <CheckCircle2 size={16} strokeWidth={2.2} aria-hidden="true" />
-                <span>{note}</span>
-              </p>
-            ) : null}
-          </div>
-
-          <div className="dash-stat-grid survey-kpis">
-            <div className={`dash-stat dash-stat--hero survey-kpi--${effective}`} style={{ animationDelay: '0ms' }}>
-              <div className="dash-stat__top">
-                <span className="dash-stat__icon" aria-hidden="true">
-                  <StatusIcon size={18} strokeWidth={2.2} />
-                </span>
-                <div className="dash-stat__label">Survey window</div>
-              </div>
-              <div className="dash-stat__value-row">
-                <div className="dash-stat__value survey-kpi__status">{statusWord}</div>
-                <span className="dash-stat__share">{version}</span>
-              </div>
-              {windowProgress != null ? (
-                <div
-                  className="dash-stat__bar"
-                  role="progressbar"
-                  aria-label="Time elapsed in the scheduled window"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={windowProgress}
-                >
-                  <div className="dash-stat__bar-fill" style={{ width: `${windowProgress}%` }} />
-                </div>
-              ) : null}
-              <div className="dash-stat__caption">{banner.detail}</div>
-            </div>
-
-            <div className="dash-stat dash-stat--neutral" style={{ animationDelay: '60ms' }}>
-              <div className="dash-stat__top">
-                <span className="dash-stat__icon dash-stat__icon--neutral" aria-hidden="true">
-                  <Users size={18} strokeWidth={2.2} />
-                </span>
-                <div className="dash-stat__label">Total responses</div>
-              </div>
-              <div className="dash-stat__value-row">
-                <div className="dash-stat__value">{ready ? stats.total : '—'}</div>
-                {ready ? (
-                  <span className="dash-stat__share">
-                    {Math.min(stats.total, RESPONDENT_TARGET)}/{RESPONDENT_TARGET}
-                  </span>
-                ) : null}
-              </div>
-              <div
-                className="dash-stat__bar"
-                role="progressbar"
-                aria-label={`Responses toward the target of ${RESPONDENT_TARGET}`}
-                aria-valuemin={0}
-                aria-valuemax={RESPONDENT_TARGET}
-                aria-valuenow={ready ? Math.min(stats.total, RESPONDENT_TARGET) : 0}
-              >
-                <div
-                  className="dash-stat__bar-fill"
-                  style={{ width: `${ready ? Math.min(100, Math.round((stats.total / RESPONDENT_TARGET) * 100)) : 0}%` }}
-                />
-              </div>
-              <div className="dash-stat__caption">
-                {stats.latest ? `Latest ${formatRelativeTime(stats.latest, now)}` : 'No submissions yet'}
-              </div>
-            </div>
-
-            <div className="dash-stat dash-stat--neutral" style={{ animationDelay: '120ms' }}>
-              <div className="dash-stat__top">
-                <span className="dash-stat__icon dash-stat__icon--neutral" aria-hidden="true">
-                  <Layers size={18} strokeWidth={2.2} />
-                </span>
-                <div className="dash-stat__label">On instrument {savedVersion}</div>
-              </div>
-              <div className="dash-stat__value-row">
-                <div className="dash-stat__value">{ready ? stats.onVersion : '—'}</div>
-                {ready && stats.total > 0 ? (
-                  <span className="dash-stat__share">{versionSharePct}%</span>
-                ) : null}
-              </div>
-              <div className="dash-stat__bar" aria-hidden="true">
-                <div className="dash-stat__bar-fill" style={{ width: `${versionSharePct}%` }} />
-              </div>
-              <div className="dash-stat__caption">Share of all responses stamped {savedVersion}</div>
-            </div>
-
-            <div className="dash-stat dash-stat--neutral" style={{ animationDelay: '180ms' }}>
-              <div className="dash-stat__top">
-                <span className="dash-stat__icon dash-stat__icon--neutral" aria-hidden="true">
-                  <CalendarRange size={18} strokeWidth={2.2} />
-                </span>
-                <div className="dash-stat__label">Last 7 days</div>
-              </div>
-              <div className="dash-stat__value-row">
-                <div className="dash-stat__value">{ready ? stats.lastWeek : '—'}</div>
-                {ready && stats.total > 0 ? (
-                  <span className="dash-stat__share">{weekSharePct}%</span>
-                ) : null}
-              </div>
-              <div className="dash-stat__bar" aria-hidden="true">
-                <div className="dash-stat__bar-fill" style={{ width: `${weekSharePct}%` }} />
-              </div>
-              <div className="dash-stat__caption">Share of all responses from this week</div>
-            </div>
-          </div>
-
-          <form className="dash-bento survey-bento" onSubmit={onSubmit} noValidate>
-            <div className="dash-bento__main">
-              <fieldset className="dash-insight survey-control-card survey-fieldset">
-                <legend className="survey-fieldset__legend">Survey window</legend>
-                <p className="survey-fieldset__help survey-fieldset__help--tight">
-                  Choose whether residents can start and submit.
-                </p>
-                <div className="survey-status-cards" role="radiogroup" aria-label="Survey window">
-                  {STATUS_CARDS.map(({ id, title, hint, Icon }) => {
-                    const selected = draft.status === id;
-                    return (
-                      <label
-                        key={id}
-                        className={`survey-status-card survey-status-card--${id}${selected ? ' is-selected' : ''}`}
-                      >
-                        <input
-                          type="radio"
-                          name="survey-window"
-                          value={id}
-                          checked={selected}
-                          onChange={() => patch({ status: id })}
-                        />
-                        <span className="survey-status-card__radio" aria-hidden="true" />
-                        <span className="survey-status-card__icon">
-                          <Icon size={20} strokeWidth={2} aria-hidden="true" />
-                        </span>
-                        <span className="survey-status-card__copy">
-                          <span className="survey-status-card__title">{title}</span>
-                          <span className="survey-status-card__hint">{hint}</span>
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
-
-              <fieldset className="dash-insight survey-control-card survey-fieldset">
-                <legend className="survey-fieldset__legend">
-                  <CalendarClock size={16} strokeWidth={2.2} aria-hidden="true" /> Schedule <span>optional</span>
-                </legend>
-                <p className="survey-fieldset__help">
-                  Open or close automatically. The database enforces these times, so no one needs to be online.
-                  Only applies while the window above is set to <strong>Open</strong>.
-                </p>
-                <div className="survey-schedule">
-                  <Input
-                    id="survey-opens"
-                    type="datetime-local"
-                    label="Opens at"
-                    value={draft.opensAt}
-                    onChange={(e) => patch({ opensAt: e.target.value })}
-                    helperText={opensMs != null ? friendlyDate(opensMs) : 'Leave empty to open right away.'}
+          <form className="sc-form" onSubmit={onSubmit} noValidate>
+            <div className="sc-wrap">
+              <div className="sc-layout">
+                <div className="sc-main">
+                  <CountLedger
+                    label="Responses"
+                    total={stats.total}
+                    totalNote={`of ${RESPONDENT_TARGET} target`}
+                    ariaLabel="Survey summary"
+                    empty={!ready}
+                    rows={ledgerRows}
                   />
-                  <Input
-                    id="survey-closes"
-                    type="datetime-local"
-                    label="Closes at"
-                    value={draft.closesAt}
-                    onChange={(e) => patch({ closesAt: e.target.value })}
-                    error={scheduleError}
-                    helperText={closesMs != null ? friendlyDate(closesMs) : 'Leave empty to stay open until you close it.'}
-                  />
-                </div>
-                {scheduleNotes.map((text) => (
-                  <p key={text} className="survey-callout" role="note">
-                    {text}
-                  </p>
-                ))}
-                <div className="survey-chips" role="group" aria-label="Opening shortcuts">
-                  <span className="survey-chips__label">Open:</span>
-                  {[
-                    { label: 'Tomorrow 8 AM', ms: () => atHour(new Date(Date.now() + 86_400_000), 8) },
-                    { label: 'Next Monday 8 AM', ms: () => nextWeekday(new Date(), 1, 8) },
-                  ].map((chip) => (
-                    <button
-                      key={chip.label}
-                      type="button"
-                      className="survey-chip"
-                      onClick={() => patch({ opensAt: toLocalInput(chip.ms()), status: 'open' })}
-                    >
-                      {chip.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="survey-chips" role="group" aria-label="Closing shortcuts">
-                  <span className="survey-chips__label">Close:</span>
-                  {[
-                    { label: 'In 7 days', ms: () => Date.now() + 7 * 86_400_000 },
-                    { label: 'In 30 days', ms: () => Date.now() + 30 * 86_400_000 },
-                    { label: 'End of this month', ms: () => endOfMonth(new Date()) },
-                  ].map((chip) => (
-                    <button
-                      key={chip.label}
-                      type="button"
-                      className="survey-chip"
-                      onClick={() => patch({ closesAt: toLocalInput(chip.ms()), status: 'open' })}
-                    >
-                      {chip.label}
-                    </button>
-                  ))}
-                  {(draft.opensAt || draft.closesAt) ? (
-                    <button
-                      type="button"
-                      className="survey-chip survey-chip--quiet"
-                      onClick={() => patch({ opensAt: '', closesAt: '' })}
-                    >
-                      Clear both times
-                    </button>
-                  ) : null}
-                </div>
-              </fieldset>
 
-              <fieldset className="dash-insight survey-control-card survey-fieldset">
-                <legend className="survey-fieldset__legend">Instrument version</legend>
-                <div className="survey-version">
-                  <Input
-                    id="survey-version"
-                    label="Label stamped on each new response"
-                    value={draft.version}
-                    onChange={(e) => patch({ version: e.target.value })}
-                    error={versionError}
-                  />
-                  <button
-                    type="button"
-                    className="survey-chip"
-                    onClick={() => patch({ version: nextInstrumentVersion(version) })}
-                  >
-                    Use {nextInstrumentVersion(version)}
-                  </button>
-                </div>
-                <p className="survey-fieldset__help">
-                  {versionHasResponses
-                    ? `${stats.onVersion} response${stats.onVersion === 1 ? '' : 's'} already use ${savedVersion}.`
-                    : `No responses use ${savedVersion} yet.`}{' '}
-                  Change the label only when the question set changes, so results can be compared fairly.
-                </p>
-                <p className="survey-fieldset__help">
-                  The questions themselves live in the{' '}
-                  <Link href="/admin/survey/builder/">Survey builder</Link>. Publishing a version there sets this label
-                  for you, and residents then see that version&apos;s questions.
-                </p>
-                {versionChanged && versionHasResponses ? (
-                  <p className="survey-callout" role="note">
-                    New responses will be stamped <strong>{version}</strong>. Existing responses keep{' '}
-                    <strong>{savedVersion}</strong>.
-                  </p>
-                ) : null}
-              </fieldset>
+                  <section className="sc-section" aria-labelledby="sc-window-title">
+                    <h2 id="sc-window-title" className="sc-section__title">
+                      Survey window
+                    </h2>
+                    <p className={`sc-state sc-state--${effective}`} aria-live="polite">
+                      <strong>{banner.title}</strong>
+                      <span>{banner.detail}</span>
+                    </p>
+                    <div
+                      className="sc-seg"
+                      role="radiogroup"
+                      aria-label="Survey window"
+                      data-status={draft.status}
+                      style={{ '--i': WINDOW_OPTIONS.findIndex((o) => o.id === draft.status) } as CSSProperties}
+                    >
+                      {WINDOW_OPTIONS.map(({ id, title }) => {
+                        const selected = draft.status === id;
+                        return (
+                          <label
+                            key={id}
+                            className={`sc-seg__opt sc-seg__opt--${id}${selected ? ' is-selected' : ''}`}
+                          >
+                            <input
+                              type="radio"
+                              name="survey-window"
+                              value={id}
+                              checked={selected}
+                              onChange={() => patch({ status: id })}
+                            />
+                            <span>{title}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </section>
 
-              <fieldset className="dash-insight survey-control-card survey-fieldset">
-                <legend className="survey-fieldset__legend">
-                  Message to residents <span>optional</span>
-                </legend>
-                <Textarea
-                  id="survey-message"
-                  label={draft.status === 'open' ? 'Shown if the survey is paused or closed later' : 'Shown to residents while the survey is ' + draft.status}
-                  value={draft.message}
-                  rows={4}
-                  onChange={(e) => patch({ message: e.target.value.slice(0, MESSAGE_MAX) })}
-                  helperText={`Leave blank to use the default: “${defaultResidentMessage(draft.status === 'open' ? 'paused' : draft.status)}”`}
-                />
-                <div className="survey-message-foot">
-                  <div className="survey-chips" role="group" aria-label="Message templates">
-                    <span className="survey-chips__label">Start from:</span>
-                    {templates.map((tpl) => (
-                      <button
-                        key={tpl.label}
-                        type="button"
-                        className="survey-chip"
-                        onClick={() => patch({ message: tpl.text })}
-                      >
-                        {tpl.label}
-                      </button>
+                  <section className="sc-section" aria-labelledby="sc-schedule-title">
+                    <h2 id="sc-schedule-title" className="sc-section__title">
+                      Schedule <span className="sc-section__opt">optional</span>
+                    </h2>
+                    <div className="sc-fields">
+                      <Input
+                        id="survey-opens"
+                        type="datetime-local"
+                        label="Opens at"
+                        value={draft.opensAt}
+                        onChange={(e) => patch({ opensAt: e.target.value })}
+                      />
+                      <Input
+                        id="survey-closes"
+                        type="datetime-local"
+                        label="Closes at"
+                        value={draft.closesAt}
+                        onChange={(e) => patch({ closesAt: e.target.value })}
+                        error={scheduleError}
+                      />
+                    </div>
+                    <p className="sc-hint">
+                      Leave a time empty for no limit. The database enforces these times, and they only apply while
+                      the window is Open.
+                    </p>
+                    {scheduleNotes.map((text) => (
+                      <p key={text} className="sc-note" role="note">
+                        {text}
+                      </p>
                     ))}
-                    {draft.message ? (
-                      <button type="button" className="survey-chip survey-chip--quiet" onClick={() => patch({ message: '' })}>
-                        Use default
-                      </button>
-                    ) : null}
-                  </div>
-                  <span
-                    className={`survey-counter${draft.message.length > MESSAGE_MAX - 40 ? ' is-near' : ''}`}
-                    aria-live="polite"
-                  >
-                    {draft.message.length}/{MESSAGE_MAX}
-                  </span>
-                </div>
-              </fieldset>
-
-            </div>
-
-            <aside className="dash-bento__rail" aria-label="Preview and history">
-              <div className="survey-control-side__sticky">
-                <section className="dash-insight survey-control-card survey-preview" aria-live="polite">
-                  <h2 className="survey-side-title">What residents see</h2>
-                  <div className={`survey-preview__screen survey-preview__screen--${effective}`}>
-                    <p className="survey-preview__kicker">
-                      {effective === 'open' ? 'Accepting responses' : effective === 'paused' ? 'Paused' : 'Closed'}
-                    </p>
-                    <p className="survey-preview__heading">Resident Needs Assessment Survey</p>
-                    {effective === 'open' ? (
-                      <>
-                        <p className="survey-preview__body">
-                          The survey takes about 11 to 13 minutes. Your answers are anonymous.
-                        </p>
-                        <span className="survey-preview__btn">Start the survey</span>
-                      </>
-                    ) : (
-                      <>
-                        <p className="survey-preview__body">{previewMessage}</p>
-                        <span className="survey-preview__btn survey-preview__btn--ghost">Back to home</span>
-                      </>
-                    )}
-                  </div>
-                </section>
-
-                <section className="dash-insight survey-control-card">
-                  <h2 className="survey-side-title">
-                    <History size={16} strokeWidth={2.2} aria-hidden="true" /> Recent changes
-                  </h2>
-                  {history.length === 0 ? (
-                    <p className="survey-history__empty">
-                      {exists && updatedAtMs
-                        ? `Last saved ${formatAbsoluteTime(updatedAtMs)}.`
-                        : 'No changes recorded yet. Saves appear here after you update settings.'}
-                    </p>
-                  ) : (
-                    <ol className="survey-history">
-                      {history.map((entry) => (
-                        <li key={entry.id} className="survey-history__item">
-                          <p className="survey-history__summary">{entry.summary}</p>
-                          <p className="survey-history__meta">
-                            {entry.byName}
-                            {entry.atMs ? (
-                              <>
-                                {' · '}
-                                <time title={formatAbsoluteTime(entry.atMs)}>
-                                  {formatRelativeTime(entry.atMs, now)}
-                                </time>
-                              </>
-                            ) : null}
-                          </p>
-                        </li>
+                    <div className="sc-quick" role="group" aria-label="Opening shortcuts">
+                      <span className="sc-quick__label">Opens</span>
+                      {[
+                        { label: 'Tomorrow 8 AM', ms: () => atHour(new Date(Date.now() + 86_400_000), 8) },
+                        { label: 'Next Monday 8 AM', ms: () => nextWeekday(new Date(), 1, 8) },
+                      ].map((chip) => (
+                        <button
+                          key={chip.label}
+                          type="button"
+                          className="sc-link"
+                          onClick={() => patch({ opensAt: toLocalInput(chip.ms()), status: 'open' })}
+                        >
+                          {chip.label}
+                        </button>
                       ))}
-                    </ol>
-                  )}
-                </section>
+                    </div>
+                    <div className="sc-quick" role="group" aria-label="Closing shortcuts">
+                      <span className="sc-quick__label">Closes</span>
+                      {[
+                        { label: 'In 7 days', ms: () => Date.now() + 7 * 86_400_000 },
+                        { label: 'In 30 days', ms: () => Date.now() + 30 * 86_400_000 },
+                        { label: 'End of this month', ms: () => endOfMonth(new Date()) },
+                      ].map((chip) => (
+                        <button
+                          key={chip.label}
+                          type="button"
+                          className="sc-link"
+                          onClick={() => patch({ closesAt: toLocalInput(chip.ms()), status: 'open' })}
+                        >
+                          {chip.label}
+                        </button>
+                      ))}
+                      {draft.opensAt || draft.closesAt ? (
+                        <button type="button" className="sc-link sc-link--quiet" onClick={() => patch({ opensAt: '', closesAt: '' })}>
+                          Clear both times
+                        </button>
+                      ) : null}
+                    </div>
+                  </section>
 
-                <details className="survey-danger">
-                  <summary className="survey-danger__summary">
-                    <RotateCcw size={15} strokeWidth={2.2} aria-hidden="true" />
-                    Advanced · Reset settings
-                  </summary>
-                  <div className="survey-danger__body">
-                    <p className="survey-fieldset__help">
-                      Deletes the saved settings. The survey becomes open with instrument{' '}
-                      {DEFAULT_INSTRUMENT_VERSION} and the default messages.
+                  <section className="sc-section" aria-labelledby="sc-version-title">
+                    <h2 id="sc-version-title" className="sc-section__title">
+                      Instrument version
+                    </h2>
+                    <div className="sc-version">
+                      <Input
+                        id="survey-version"
+                        label="Label stamped on each new response"
+                        value={draft.version}
+                        onChange={(e) => patch({ version: e.target.value })}
+                        error={versionError}
+                      />
+                      <button
+                        type="button"
+                        className="sc-link"
+                        onClick={() => patch({ version: nextInstrumentVersion(version) })}
+                      >
+                        Use {nextInstrumentVersion(version)}
+                      </button>
+                    </div>
+                    <p className="sc-hint">
+                      {versionHasResponses
+                        ? `${stats.onVersion} response${stats.onVersion === 1 ? '' : 's'} already use ${savedVersion}.`
+                        : `No responses use ${savedVersion} yet.`}{' '}
+                      Change the label only when the question set changes. The questions live in the{' '}
+                      <Link href="/admin/survey/builder/">Survey builder</Link>, and publishing there sets this label.
+                    </p>
+                    {versionChanged && versionHasResponses ? (
+                      <p className="sc-note" role="note">
+                        New responses will be stamped <strong>{version}</strong>. Existing responses keep{' '}
+                        <strong>{savedVersion}</strong>.
+                      </p>
+                    ) : null}
+                  </section>
+
+                  <section className="sc-section" aria-labelledby="sc-message-title">
+                    <h2 id="sc-message-title" className="sc-section__title">
+                      Message to residents <span className="sc-section__opt">optional</span>
+                    </h2>
+                    <Textarea
+                      id="survey-message"
+                      label={
+                        draft.status === 'open'
+                          ? 'Shown if the survey is paused or closed later'
+                          : 'Shown to residents while the survey is ' + draft.status
+                      }
+                      value={draft.message}
+                      rows={4}
+                      onChange={(e) => patch({ message: e.target.value.slice(0, MESSAGE_MAX) })}
+                    />
+                    <p className="sc-hint">
+                      Leave blank to use the default: “
+                      {defaultResidentMessage(draft.status === 'open' ? 'paused' : draft.status)}”
+                    </p>
+                    <div className="sc-foot">
+                      <div className="sc-quick" role="group" aria-label="Message templates">
+                        <span className="sc-quick__label">Start from</span>
+                        {templates.map((tpl) => (
+                          <button
+                            key={tpl.label}
+                            type="button"
+                            className="sc-link"
+                            onClick={() => patch({ message: tpl.text })}
+                          >
+                            {tpl.label}
+                          </button>
+                        ))}
+                        {draft.message ? (
+                          <button type="button" className="sc-link sc-link--quiet" onClick={() => patch({ message: '' })}>
+                            Use default
+                          </button>
+                        ) : null}
+                      </div>
+                      <span
+                        className={`survey-counter sc-counter${draft.message.length > MESSAGE_MAX - 40 ? ' is-near' : ''}`}
+                        aria-live="polite"
+                      >
+                        {draft.message.length}/{MESSAGE_MAX}
+                      </span>
+                    </div>
+                  </section>
+                </div>
+
+                <aside className="sc-rail" aria-label="Preview and history">
+                  <section className="sc-section" aria-labelledby="sc-preview-title" aria-live="polite">
+                    <h2 id="sc-preview-title" className="sc-section__title">
+                      What residents see
+                    </h2>
+                    <div className={`survey-preview__screen survey-preview__screen--${effective}`}>
+                      <p className="survey-preview__kicker">
+                        {effective === 'open' ? 'Accepting responses' : effective === 'paused' ? 'Paused' : 'Closed'}
+                      </p>
+                      <p className="survey-preview__heading">Resident Needs Assessment Survey</p>
+                      {effective === 'open' ? (
+                        <>
+                          <p className="survey-preview__body">
+                            The survey takes about 11 to 13 minutes. Your answers are anonymous.
+                          </p>
+                          <span className="survey-preview__btn">Start the survey</span>
+                        </>
+                      ) : (
+                        <>
+                          <p className="survey-preview__body">{previewMessage}</p>
+                          <span className="survey-preview__btn survey-preview__btn--ghost">Back to home</span>
+                        </>
+                      )}
+                    </div>
+                  </section>
+
+                  <section className="sc-section" aria-labelledby="sc-history-title">
+                    <h2 id="sc-history-title" className="sc-section__title">
+                      Recent changes
+                    </h2>
+                    {history.length === 0 ? (
+                      <p className="sc-hint">
+                        {exists && updatedAtMs
+                          ? `Last saved ${formatAbsoluteTime(updatedAtMs)}.`
+                          : 'No changes recorded yet. Saves appear here after you update settings.'}
+                      </p>
+                    ) : (
+                      <ol className="sc-history">
+                        {history.map((entry) => (
+                          <li key={entry.id}>
+                            <p className="sc-history__summary">{entry.summary}</p>
+                            <p className="sc-history__meta">
+                              {entry.byName}
+                              {entry.atMs ? (
+                                <>
+                                  {' · '}
+                                  <time title={formatAbsoluteTime(entry.atMs)}>
+                                    {formatRelativeTime(entry.atMs, now)}
+                                  </time>
+                                </>
+                              ) : null}
+                            </p>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </section>
+
+                  <details className="sc-reset">
+                    <summary>Reset settings</summary>
+                    <p className="sc-hint">
+                      Deletes the saved settings. The survey becomes open with instrument {DEFAULT_INSTRUMENT_VERSION}{' '}
+                      and the default messages.
                     </p>
                     <Button
                       variant="secondary"
                       type="button"
+                      size="sm"
                       loading={resetting}
                       disabled={busy || !exists}
                       onClick={() =>
@@ -919,38 +856,14 @@ export function SurveyControlPanel() {
                         })
                       }
                     >
-                      <RotateCcw size={16} strokeWidth={2.2} aria-hidden="true" />
                       Reset to defaults
                     </Button>
-                  </div>
-                </details>
+                  </details>
+                </aside>
               </div>
-            </aside>
-
-            <div className={`survey-savebar${dirty ? ' is-visible' : ''}`} role="region" aria-label="Save changes" aria-hidden={!dirty}>
-              <p className="survey-savebar__text">
-                {invalid ? 'Fix the highlighted fields to save.' : 'You have unsaved changes.'}
-                <span className="survey-savebar__hint"> Ctrl+S to save</span>
-              </p>
-              <Button
-                variant="secondary"
-                type="button"
-                disabled={busy || !dirty}
-                onClick={() =>
-                  setConfirm({
-                    kind: 'discard',
-                    title: 'Discard unsaved changes?',
-                    body: 'The form returns to the last saved settings.',
-                    label: 'Discard changes',
-                  })
-                }
-              >
-                Discard
-              </Button>
-              <Button variant="primary" type="submit" loading={saving} disabled={busy || !dirty || invalid}>
-                {exists ? 'Save changes' : 'Create settings'}
-              </Button>
             </div>
+
+            {barHost ? createPortal(saveBar, barHost) : null}
           </form>
         </>
       )}

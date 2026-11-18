@@ -9422,6 +9422,25 @@ html.admin-fit-viewport body {
   color: var(--white);
 }
 
+/* Forgot password: a button that reads as a link, aligned to the field edge */
+.auth-card__link--button {
+  align-self: flex-start;
+  min-height: 40px;
+  margin: -8px 0 -4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-card__link--button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .auth-page__back {
   text-align: center;
   margin: 22px 0 0;

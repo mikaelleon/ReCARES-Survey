@@ -2,26 +2,9 @@
 
 import { PageHeading } from '@/components/admin/PageHeading';
 import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
-import {
-  BarChart3,
-  BookOpen,
-  CalendarCheck,
-  CheckCircle2,
-  Copy,
-  Inbox,
-  KeyRound,
-  Mail,
-  Pencil,
-  Shield,
-  Trash2,
-  User,
-  UserMinus,
-  UserPlus,
-  X,
-  XCircle,
-} from 'lucide-react';
 import { AdminOverlayPortal } from '@/components/admin/AdminOverlayPortal';
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
+import { CountLedger } from '@/components/admin/CountLedger';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -33,11 +16,14 @@ import {
   emptyPermissions,
   isAssignableRole,
   roleLabel,
-  roleTone,
+  SIGN_IN_OFF_LABELS,
+  SIGN_IN_PERMISSION_HINTS,
+  SIGN_IN_PERMISSION_KEYS,
+  SIGN_IN_PERMISSION_LABELS,
   type AdminPermissions,
   type AdminRole,
   type DashboardPermissionKey,
-  type RoleTone,
+  type SignInPermissionKey,
 } from '@/lib/admin/access';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import {
@@ -77,12 +63,6 @@ function roleForFilter(row: AdminMemberRow): AdminRole | null {
   if (requested === 'advisor') return 'adviser';
   if (requested && isAssignableRole(requested)) return requested;
   return null;
-}
-
-function roleIcon(tone: RoleTone) {
-  if (tone === 'superadmin') return <Shield size={12} aria-hidden="true" />;
-  if (tone === 'adviser') return <BookOpen size={12} aria-hidden="true" />;
-  return <User size={12} aria-hidden="true" />;
 }
 
 function matchesRoleFilter(
@@ -126,24 +106,14 @@ function sortInvites(rows: InviteRow[], sortBy: MemberSort): InviteRow[] {
   return copy;
 }
 
-const PERMISSION_ICONS: Record<DashboardPermissionKey, ReactNode> = {
-  responsesDashboard: <BarChart3 size={14} strokeWidth={2.2} aria-hidden="true" />,
-  interviewInvites: <CalendarCheck size={14} strokeWidth={2.2} aria-hidden="true" />,
-  findingNotes: <BookOpen size={14} strokeWidth={2.2} aria-hidden="true" />,
-};
-
-function memberInitials(name?: string, email?: string): string {
-  const base = (name || email || '?').trim();
-  const parts = base.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase();
-  }
-  return base.slice(0, 2).toUpperCase();
+/** Sign-in switches are on unless explicitly false, so a member with none set keeps everything. */
+function signInOn(permissions: AdminPermissions, key: SignInPermissionKey): boolean {
+  return permissions[key] !== false;
 }
 
-function emailInitials(email: string): string {
-  const local = email.split('@')[0] || email;
-  return local.slice(0, 2).toUpperCase();
+/** Turning off both methods would lock the person out, so the form refuses it. */
+function noSignInMethod(permissions: AdminPermissions): boolean {
+  return !signInOn(permissions, 'signInPassword') && !signInOn(permissions, 'signInGoogle');
 }
 
 function formatRemovedAt(value: AdminMemberRow['removedAt']): string {
@@ -194,84 +164,178 @@ function RoleSelect({
   );
 }
 
-function RoleBadge({ role }: { role: string }) {
-  const tone = roleTone(role);
+type RosterKind = 'active' | 'invited' | 'pending' | 'removed';
+
+interface RosterEntry {
+  key: string;
+  kind: RosterKind;
+  name: string;
+  email: string;
+  role: string;
+  /** Pages this person can open, as words. */
+  access: string;
+  /** Sign-in switches that are off, as words; null when nothing is blocked. */
+  signIn: string | null;
+  /** Only set for rows that are not an active member yet (or any more). */
+  status: string | null;
+  isSelf: boolean;
+  actions: ReactNode;
+}
+
+function accessSummary(
+  role: string | null | undefined,
+  permissions: AdminPermissions,
+): { access: string; signIn: string | null } {
+  if (role === 'superadmin') return { access: 'All pages', signIn: null };
+  const pages = DASHBOARD_PERMISSION_KEYS.filter((key) => Boolean(permissions[key])).map(
+    (key) => DASHBOARD_PERMISSION_LABELS[key],
+  );
+  const blocked = SIGN_IN_PERMISSION_KEYS.filter((key) => !signInOn(permissions, key)).map(
+    (key) => SIGN_IN_OFF_LABELS[key],
+  );
+  return {
+    access: pages.length > 0 ? pages.join(', ') : 'No pages',
+    signIn: blocked.length > 0 ? blocked.join(', ') : null,
+  };
+}
+
+/** One person, one ruled line: who, role, what they can open, and what you can do. */
+function RosterRow({ entry }: { entry: RosterEntry }) {
   return (
-    <span className={`admin-kanban-role admin-kanban-role--${tone}`}>
-      {roleIcon(tone)}
-      {roleLabel(role)}
-    </span>
+    <li className={`mem-row mem-row--${entry.kind}`}>
+      <div className="mem-row__who">
+        <p className="mem-row__name" title={entry.name}>
+          {entry.name}
+          {entry.isSelf ? <span className="mem-row__you"> (you)</span> : null}
+        </p>
+        {entry.email && entry.email !== entry.name ? (
+          <p className="mem-row__sub" title={entry.email}>
+            {entry.email}
+          </p>
+        ) : null}
+      </div>
+      <div className="mem-row__role">
+        <p>{roleLabel(entry.role)}</p>
+        {entry.status ? <p className="mem-row__sub">{entry.status}</p> : null}
+      </div>
+      <div className="mem-row__access">
+        <p>{entry.access}</p>
+        {entry.signIn ? <p className="mem-row__sub">{entry.signIn}</p> : null}
+      </div>
+      <div className="mem-row__actions">{entry.actions}</div>
+    </li>
   );
 }
 
-function PermissionChip({
-  icon,
+const SKELETON_ROWS = 3;
+
+/** Placeholder for the roster: the same grid as a real row, a bar for each line of text. */
+function RosterSkeleton() {
+  return (
+    <ul className="mem-list mem-list--loading" aria-busy="true" aria-label="Loading members">
+      {Array.from({ length: SKELETON_ROWS }, (_, i) => {
+        const delay = { animationDelay: `${i * -150}ms` };
+        return (
+          <li key={i} className="mem-row" aria-hidden="true">
+            <div className="mem-row__who">
+              <p><span className="skel mem-skel" style={{ width: '46%', ...delay }} /></p>
+              <p><span className="skel mem-skel mem-skel--sub" style={{ width: '70%', ...delay }} /></p>
+            </div>
+            <div className="mem-row__role">
+              <p><span className="skel mem-skel" style={{ width: '56%', ...delay }} /></p>
+            </div>
+            <div className="mem-row__access">
+              <p><span className="skel mem-skel" style={{ width: '78%', ...delay }} /></p>
+            </div>
+            <div className="mem-row__actions" />
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function RowAction({
   label,
-  active,
+  onClick,
+  tone = 'default',
+  disabled,
 }: {
-  icon: ReactNode;
   label: string;
-  active: boolean;
+  onClick: () => void;
+  tone?: 'default' | 'primary' | 'danger';
+  disabled?: boolean;
 }) {
   return (
-    <span
-      className={`admin-permission-chip${active ? ' is-active' : ' is-inactive'}`}
-      title={label}
+    <button
+      type="button"
+      className={`mem-act${tone === 'primary' ? ' mem-act--primary' : ''}${tone === 'danger' ? ' mem-act--danger' : ''}`}
+      disabled={disabled}
+      onClick={onClick}
     >
-      {icon}
-      <span>{label}</span>
-    </span>
+      {label}
+    </button>
   );
 }
 
-/** Card / read-only chips — compact status only. */
-function PermissionChips({
-  permissions,
-  activeOnly = false,
-  fullAccess = false,
-}: {
-  permissions: AdminPermissions;
-  activeOnly?: boolean;
-  fullAccess?: boolean;
-}) {
-  if (fullAccess) {
-    return (
-      <div className="admin-permission-chips">
-        <span className="admin-permission-chip is-active" title="Full access">
-          <Shield size={14} strokeWidth={2.2} aria-hidden="true" />
-          <span>Full access</span>
-        </span>
-      </div>
-    );
-  }
+interface SwitchItem {
+  key: string;
+  label: string;
+  hint: string;
+  on: boolean;
+  onToggle: () => void;
+}
 
-  const keys = activeOnly
-    ? DASHBOARD_PERMISSION_KEYS.filter((key) => Boolean(permissions[key]))
-    : DASHBOARD_PERMISSION_KEYS;
-
-  if (keys.length === 0) {
-    return (
-      <div className="admin-permission-chips">
-        <span className="admin-permission-chip is-inactive">No permissions</span>
-      </div>
-    );
-  }
-
+/** Full-width switch rows: the words on the left, the switch on the right. */
+function SwitchList({ label, items }: { label: string; items: SwitchItem[] }) {
   return (
-    <div className="admin-permission-chips">
-      {keys.map((key) => (
-        <PermissionChip
-          key={key}
-          icon={PERMISSION_ICONS[key]}
-          label={DASHBOARD_PERMISSION_LABELS[key]}
-          active={Boolean(permissions[key])}
-        />
+    <div className="admin-permission-toggles" role="group" aria-label={label}>
+      {items.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          className={`admin-permission-toggle${item.on ? ' is-on' : ''}`}
+          aria-pressed={item.on}
+          onClick={item.onToggle}
+        >
+          <span className="admin-permission-toggle__copy">
+            <span className="admin-permission-toggle__label">{item.label}</span>
+            <span className="admin-permission-toggle__hint">{item.hint}</span>
+          </span>
+          <span className="admin-permission-toggle__switch" aria-hidden="true">
+            <span className="admin-permission-toggle__knob" />
+          </span>
+        </button>
       ))}
     </div>
   );
 }
 
-/** Modal toggles — full-width switch rows (not tag pills). */
+/** Account switches: on unless explicitly turned off. */
+function SignInToggleList({
+  permissions,
+  onToggle,
+}: {
+  permissions: AdminPermissions;
+  onToggle: (key: SignInPermissionKey) => void;
+}) {
+  return (
+    <SwitchList
+      label="Sign-in"
+      items={SIGN_IN_PERMISSION_KEYS.map((key) => {
+        const on = signInOn(permissions, key);
+        return {
+          key,
+          label: SIGN_IN_PERMISSION_LABELS[key],
+          hint: on ? SIGN_IN_PERMISSION_HINTS[key] : 'Off. This person cannot do this',
+          on,
+          onToggle: () => onToggle(key),
+        };
+      })}
+    />
+  );
+}
+
 function PermissionToggleList({
   permissions,
   onToggle,
@@ -280,104 +344,19 @@ function PermissionToggleList({
   onToggle: (key: DashboardPermissionKey) => void;
 }) {
   return (
-    <div className="admin-permission-toggles" role="group" aria-label="Permissions">
-      {DASHBOARD_PERMISSION_KEYS.map((key) => {
-        const active = Boolean(permissions[key]);
-        return (
-          <button
-            key={key}
-            type="button"
-            className={`admin-permission-toggle${active ? ' is-on' : ''}`}
-            aria-pressed={active}
-            onClick={() => onToggle(key)}
-          >
-            <span className="admin-permission-toggle__icon" aria-hidden="true">
-              {PERMISSION_ICONS[key]}
-            </span>
-            <span className="admin-permission-toggle__copy">
-              <span className="admin-permission-toggle__label">
-                {DASHBOARD_PERMISSION_LABELS[key]}
-              </span>
-              <span className="admin-permission-toggle__hint">
-                {active ? 'Enabled' : 'Off — tap to grant'}
-              </span>
-            </span>
-            <span className="admin-permission-toggle__switch" aria-hidden="true">
-              <span className="admin-permission-toggle__knob" />
-            </span>
-          </button>
-        );
+    <SwitchList
+      label="Permissions"
+      items={DASHBOARD_PERMISSION_KEYS.map((key) => {
+        const on = Boolean(permissions[key]);
+        return {
+          key,
+          label: DASHBOARD_PERMISSION_LABELS[key],
+          hint: on ? 'Can open this page' : 'Cannot open this page',
+          on,
+          onToggle: () => onToggle(key),
+        };
       })}
-    </div>
-  );
-}
-
-function IconButton({
-  icon,
-  label,
-  onClick,
-  variant = 'default',
-  disabled,
-  showLabel = false,
-}: {
-  icon: ReactNode;
-  label: string;
-  onClick: () => void;
-  variant?: 'default' | 'primary' | 'danger';
-  disabled?: boolean;
-  showLabel?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      className={`admin-kanban-icon-btn admin-kanban-icon-btn--${variant}${showLabel ? ' has-label' : ''}`}
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      {icon}
-      {showLabel ? <span>{label}</span> : null}
-    </button>
-  );
-}
-
-function ColumnEmptyState({ icon, message }: { icon: ReactNode; message: string }) {
-  return (
-    <div className="admin-kanban-empty">
-      <span className="admin-kanban-empty__icon" aria-hidden="true">
-        {icon}
-      </span>
-      <p className="admin-kanban-empty__msg">{message}</p>
-    </div>
-  );
-}
-
-function KanbanCard({
-  children,
-  tone,
-}: {
-  children: ReactNode;
-  tone?: RoleTone;
-}) {
-  return (
-    <article
-      className={`admin-kanban-card${tone ? ` admin-kanban-card--${tone}` : ''}`}
-    >
-      {children}
-    </article>
-  );
-}
-
-function CardActions({ children }: { children: ReactNode }) {
-  return <div className="admin-kanban-card__actions">{children}</div>;
-}
-
-function Avatar({ initials }: { initials: string }) {
-  return (
-    <span className="admin-avatar admin-kanban-card__avatar" aria-hidden="true">
-      {initials}
-    </span>
+    />
   );
 }
 
@@ -478,7 +457,8 @@ function MembersDrawer({
 }
 
 /**
- * Superadmin-only: invite → pending → active → removed as a Kanban board.
+ * Superadmin-only roster: pending requests, unused invites, active members and removed
+ * records as one ruled list, filtered by the ledger above it.
  */
 export function MemberManagement() {
   const { user, isSuperadmin } = useAuth();
@@ -501,7 +481,16 @@ export function MemberManagement() {
     label: string;
     action: () => void;
   } | null>(null);
-  const [showRemoved, setShowRemoved] = useState(false);
+  const [stage, setStage] = useState<'all' | RosterKind>('all');
+  const [loaded, setLoaded] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  // The first rows fade in over the skeleton; rows that mount later (filtering) do not
+  const [arriving, setArriving] = useState(true);
+  useEffect(() => {
+    if (!loaded) return;
+    const timer = window.setTimeout(() => setArriving(false), 400);
+    return () => window.clearTimeout(timer);
+  }, [loaded]);
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
@@ -544,15 +533,18 @@ export function MemberManagement() {
 
   useEffect(() => {
     if (!user) return;
-    void refresh().catch(() => setError('Could not load members or invites.'));
+    void refresh()
+      .catch(() => {
+        setLoadFailed(true);
+        setError('Could not load members or invites.');
+      })
+      .finally(() => setLoaded(true));
   }, [user, refresh]);
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebouncedQuery(query.trim()), 160);
     return () => window.clearTimeout(t);
   }, [query]);
-
-  const filtersActive = Boolean(debouncedQuery || roleFilter !== 'all' || sortBy !== 'name_asc');
 
   const filteredInvites = useMemo(() => {
     const next = invites.filter(
@@ -589,13 +581,6 @@ export function MemberManagement() {
     );
     return sortMembers(next, sortBy);
   }, [removed, debouncedQuery, roleFilter, sortBy]);
-
-  const totalVisible =
-    filteredInvites.length +
-    filteredPending.length +
-    filteredActive.length +
-    (showRemoved ? filteredRemoved.length : 0);
-  const totalAll = invites.length + pending.length + active.length + (showRemoved ? removed.length : 0);
 
   if (!user) return null;
 
@@ -719,6 +704,10 @@ export function MemberManagement() {
       return;
     }
     setInviteEmailError(null);
+    if (noSignInMethod(invitePerms)) {
+      setError('Keep at least one sign-in method on for this invite.');
+      return;
+    }
     const duplicate = invites.some((row) => row.email.trim().toLowerCase() === trimmed);
     if (duplicate && !inviteDuplicateWarn) {
       setInviteDuplicateWarn(true);
@@ -752,6 +741,179 @@ export function MemberManagement() {
     }
   };
 
+  const toggleStage = (next: RosterKind) => setStage((prev) => (prev === next ? 'all' : next));
+  const ledgerRows = (
+    [
+      ['active', 'Active', active.length, 'can sign in'],
+      ['invited', 'Invited', invites.length, 'link not used yet'],
+      ['pending', 'Pending approval', pending.length, 'waiting on you'],
+      ['removed', 'Removed', removed.length, 'access ended'],
+    ] as const
+  ).map(([kind, label, value, hint]) => ({
+    label,
+    value,
+    note: hint,
+    active: stage === kind,
+    onSelect: () => toggleStage(kind),
+  }));
+  const filtersOn = Boolean(debouncedQuery || roleFilter !== 'all' || stage !== 'all');
+  const showKind = (kind: RosterKind) => (stage === 'all' ? kind !== 'removed' : stage === kind);
+
+  const entries: RosterEntry[] = [];
+  if (showKind('pending')) {
+    for (const account of filteredPending) {
+      entries.push({
+        key: `pending-${account.uid}`,
+        kind: 'pending',
+        name: account.fullName || 'Unnamed',
+        email: account.email,
+        role: account.requestedRole || 'admin',
+        access: 'Set when approved',
+        signIn: null,
+        status: 'Waiting for approval',
+        isSelf: false,
+        actions: canManage ? (
+          <>
+            <RowAction
+              label="Approve"
+              tone="primary"
+              disabled={busy}
+              onClick={() =>
+                void run(
+                  () =>
+                    approvePendingAdmin({
+                      uid: account.uid,
+                      role: resolveApproveRole(account.requestedRole),
+                      permissions: emptyPermissions(),
+                      approvedBy: user.uid,
+                    }),
+                  `Approved ${account.email}.`,
+                )
+              }
+            />
+            <RowAction
+              label="Reject"
+              tone="danger"
+              disabled={busy}
+              onClick={() =>
+                setPendingConfirm({
+                  title: `Reject ${account.email}?`,
+                  body: 'Their pending profile is deleted. They can request access again with the access code.',
+                  label: 'Reject request',
+                  action: () =>
+                    void run(() => rejectPendingAdmin(account.uid), `Rejected ${account.email}.`),
+                })
+              }
+            />
+          </>
+        ) : null,
+      });
+    }
+  }
+  if (showKind('invited')) {
+    for (const invite of filteredInvites) {
+      const summary = accessSummary(invite.role, invite.permissions);
+      entries.push({
+        key: `invited-${invite.id}`,
+        kind: 'invited',
+        name: invite.email,
+        email: invite.email,
+        role: invite.role,
+        access: summary.access,
+        signIn: summary.signIn,
+        status: 'Invite not used yet',
+        isSelf: false,
+        actions: canManage ? (
+          <>
+            <RowAction
+              label="Copy link"
+              tone="primary"
+              disabled={busy}
+              onClick={() => {
+                const link = inviteSignupUrl(invite.id);
+                void navigator.clipboard.writeText(link).then(
+                  () => setNote('Invite link copied.'),
+                  () => setError('Could not copy link. Copy from the address bar after opening.'),
+                );
+              }}
+            />
+            <RowAction
+              label="Revoke"
+              tone="danger"
+              disabled={busy}
+              onClick={() =>
+                setPendingConfirm({
+                  title: `Revoke invite for ${invite.email}?`,
+                  body: 'The signup link stops working immediately. You can create a new invite later.',
+                  label: 'Revoke invite',
+                  action: () =>
+                    void run(() => revokeInvite(invite.id), `Revoked invite for ${invite.email}.`),
+                })
+              }
+            />
+          </>
+        ) : null,
+      });
+    }
+  }
+  if (showKind('active')) {
+    for (const member of filteredActive) {
+      const summary = accessSummary(member.role, member.permissions);
+      entries.push({
+        key: `active-${member.uid}`,
+        kind: 'active',
+        name: member.fullName || 'Unnamed',
+        email: member.email,
+        role: member.role || 'admin',
+        access: summary.access,
+        signIn: summary.signIn,
+        status: null,
+        isSelf: member.uid === user.uid,
+        actions: canManage ? (
+          <>
+            <RowAction label="Edit" tone="primary" disabled={busy} onClick={() => openEditPanel(member)} />
+            {member.uid !== user.uid ? (
+              <RowAction
+                label="Remove"
+                tone="danger"
+                disabled={busy}
+                onClick={() =>
+                  setPendingConfirm({
+                    title: `Remove access for ${member.email}?`,
+                    body: 'They lose access to the workspace right away. This is a soft removal: the record is kept under Removed and can be deleted permanently later.',
+                    label: 'Remove access',
+                    action: () =>
+                      void run(
+                        () => removeActiveMember({ uid: member.uid, removedBy: user.uid }),
+                        `Removed ${member.email}.`,
+                      ),
+                  })
+                }
+              />
+            ) : null}
+          </>
+        ) : null,
+      });
+    }
+  }
+  if (showKind('removed')) {
+    for (const member of filteredRemoved) {
+      entries.push({
+        key: `removed-${member.uid}`,
+        kind: 'removed',
+        name: member.fullName || 'Unnamed',
+        email: member.email,
+        role: member.role || 'admin',
+        access: 'No access',
+        signIn: null,
+        status: `Removed ${formatRemovedAt(member.removedAt)}`,
+        isSelf: false,
+        actions: canManage ? (
+          <RowAction label="Delete forever" tone="danger" disabled={busy} onClick={() => openDeletePanel(member)} />
+        ) : null,
+      });
+    }
+  }
   return (
     <section className="dash-page members-page" aria-labelledby="admin-members-title">
       <div className="dash-page__header">
@@ -760,129 +922,112 @@ export function MemberManagement() {
           {canManage ? (
             <>
               <Button variant="secondary" size="sm" onClick={() => void openAccessCodePanel()}>
-                <KeyRound size={16} strokeWidth={2.2} aria-hidden="true" />
                 Access code
               </Button>
               <Button variant="primary" size="sm" onClick={openInvitePanel}>
-                <UserPlus size={16} strokeWidth={2.2} aria-hidden="true" />
-                Add Member
+                Add member
               </Button>
             </>
           ) : (
-            <p className="members-page__readonly-hint">View only — role changes need a superadmin</p>
+            <p className="members-page__readonly-hint">View only. Role changes need a superadmin</p>
           )}
         </div>
       </div>
 
-      {error ? (
-        <p className="na-error" role="alert">
-          {error}
-        </p>
-      ) : null}
-      {note ? (
-        <p role="status" className="admin-kanban-note">
-          <CheckCircle2 size={16} strokeWidth={2.2} aria-hidden="true" />
-          <span>{note}</span>
-          <button
-            type="button"
-            className="admin-kanban-note__close"
-            aria-label="Dismiss message"
-            onClick={() => setNote(null)}
-          >
-            <X size={14} strokeWidth={2.4} aria-hidden="true" />
-          </button>
-        </p>
-      ) : null}
+      <CountLedger
+        label="Members"
+        total={active.length}
+        totalNote="with access"
+        ariaLabel="Members by status"
+        loading={!loaded}
+        empty={loadFailed}
+        rows={ledgerRows}
+      />
 
-      <div className="members-toolbar" role="search">
-        <div className="members-toolbar__filters">
-          <div className="members-toolbar__search">
-            <Input
-              label="Search members"
-              placeholder="Search name or email"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <div className="members-toolbar__select">
-            <Select
-              label="Role"
-              options={['All roles', 'Proponent', 'Adviser', 'Superadmin']}
-              value={
-                roleFilter === 'all'
-                  ? 'All roles'
-                  : roleFilter === 'superadmin'
-                    ? 'Superadmin'
-                    : roleFilter === 'adviser'
-                      ? 'Adviser'
-                      : 'Proponent'
-              }
-              onChange={(e) => {
-                const v = e.target.value;
-                setRoleFilter(
-                  v === 'Superadmin'
-                    ? 'superadmin'
-                    : v === 'Adviser'
-                      ? 'adviser'
-                      : v === 'Proponent'
-                        ? 'admin'
-                        : 'all',
-                );
-              }}
-            />
-          </div>
-          <div className="members-toolbar__select">
-            <Select
-              label="Sort by"
-              options={['Name (A-Z)', 'Recently joined', 'Oldest first']}
-              value={
-                sortBy === 'joined_desc'
-                  ? 'Recently joined'
-                  : sortBy === 'joined_asc'
-                    ? 'Oldest first'
-                    : 'Name (A-Z)'
-              }
-              onChange={(e) => {
-                const v = e.target.value;
-                setSortBy(
-                  v === 'Recently joined'
-                    ? 'joined_desc'
-                    : v === 'Oldest first'
-                      ? 'joined_asc'
-                      : 'name_asc',
-                );
-              }}
-            />
-          </div>
-        </div>
-        <div className="members-toolbar__actions">
-          <p className="members-toolbar__count" aria-live="polite">
-            Showing {totalVisible} of {totalAll}
-          </p>
-          <div className="members-toolbar__chips">
-            <button
-              type="button"
-              className={`members-toolbar__chip${showRemoved ? ' is-active' : ''}`}
-              onClick={() => setShowRemoved((v) => !v)}
-              aria-pressed={showRemoved}
-            >
-              Removed{removed.length > 0 ? ` · ${removed.length}` : ''}
+      <div className="inq-toolbar" role="search">
+        <div className="inq-toolbar__search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search"
+            aria-label="Search name or email"
+          />
+          {query ? (
+            <button type="button" aria-label="Clear search" onClick={() => setQuery('')}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
             </button>
-            {filtersActive ? (
-              <button
-                type="button"
-                className="members-toolbar__chip"
-                onClick={() => {
-                  setQuery('');
-                  setRoleFilter('all');
-                  setSortBy('name_asc');
-                }}
-              >
-                Clear filters
-              </button>
-            ) : null}
-          </div>
+          ) : null}
         </div>
+        <div className="inq-toolbar__sort">
+          <Select
+            label="Role"
+            options={['All roles', 'Proponent', 'Adviser', 'Superadmin']}
+            value={
+              roleFilter === 'all'
+                ? 'All roles'
+                : roleFilter === 'superadmin'
+                  ? 'Superadmin'
+                  : roleFilter === 'adviser'
+                    ? 'Adviser'
+                    : 'Proponent'
+            }
+            onChange={(e) => {
+              const v = e.target.value;
+              setRoleFilter(
+                v === 'Superadmin'
+                  ? 'superadmin'
+                  : v === 'Adviser'
+                    ? 'adviser'
+                    : v === 'Proponent'
+                      ? 'admin'
+                      : 'all',
+              );
+            }}
+          />
+        </div>
+        <div className="inq-toolbar__sort">
+          <Select
+            label="Sort by"
+            options={['Name (A-Z)', 'Recently joined', 'Oldest first']}
+            value={
+              sortBy === 'joined_desc'
+                ? 'Recently joined'
+                : sortBy === 'joined_asc'
+                  ? 'Oldest first'
+                  : 'Name (A-Z)'
+            }
+            onChange={(e) => {
+              const v = e.target.value;
+              setSortBy(
+                v === 'Recently joined'
+                  ? 'joined_desc'
+                  : v === 'Oldest first'
+                    ? 'joined_asc'
+                    : 'name_asc',
+              );
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="inq-notes">
+        {note ? (
+          <p role="status" className="inq-note">
+            {note}
+          </p>
+        ) : null}
+        {error ? (
+          <p className="inq-note inq-note--error" role="alert">
+            {error}
+          </p>
+        ) : null}
       </div>
 
       <ConfirmDeleteModal
@@ -899,291 +1044,28 @@ export function MemberManagement() {
         }}
       />
 
-      <div className="admin-kanban" role="region" aria-label="Members pipeline">
-        <div className="admin-kanban__scroller">
-          {/* Invited */}
-          <section className="admin-kanban-col" aria-labelledby="kanban-invited">
-            <header className="admin-kanban-col__head">
-              <Mail size={16} strokeWidth={2.2} aria-hidden="true" />
-              <h2 id="kanban-invited" className="admin-kanban-col__title">
-                Invited
-              </h2>
-              <span className="admin-kanban-col__count">{filteredInvites.length}</span>
-            </header>
-            <div className="admin-kanban-col__body">
-              {filteredInvites.length === 0 ? (
-                <ColumnEmptyState icon={<Inbox size={24} />} message="No pending invites" />
-              ) : (
-                filteredInvites.map((invite) => {
-                  const tone = roleTone(invite.role);
-                  return (
-                    <KanbanCard key={invite.id} tone={tone}>
-                      <div className="admin-kanban-card__top admin-kanban-card__top--polish">
-                        <Avatar initials={emailInitials(invite.email)} />
-                        <div className="admin-kanban-card__meta">
-                          <div className="admin-kanban-card__name" title={invite.email}>{invite.email}</div>
-                          <div className="admin-kanban-card__muted">Pending signup</div>
-                        </div>
-                        <RoleBadge role={invite.role} />
-                      </div>
-                      <PermissionChips
-                        permissions={invite.permissions}
-                        activeOnly
-                        fullAccess={invite.role === 'superadmin'}
-                      />
-                      {canManage ? (
-                        <CardActions>
-                          <IconButton
-                            icon={<Copy size={14} />}
-                            label="Copy link"
-                            showLabel
-                            disabled={busy}
-                            onClick={() => {
-                              const link = inviteSignupUrl(invite.id);
-                              void navigator.clipboard.writeText(link).then(
-                                () => setNote('Invite link copied.'),
-                                () =>
-                                  setError(
-                                    'Could not copy link. Copy from the address bar after opening.',
-                                  ),
-                              );
-                            }}
-                          />
-                          <IconButton
-                            icon={<Trash2 size={14} />}
-                            label="Revoke"
-                            showLabel
-                            variant="danger"
-                            disabled={busy}
-                            onClick={() => {
-                              setPendingConfirm({
-                                title: `Revoke invite for ${invite.email}?`,
-                                body: 'The signup link stops working immediately. You can create a new invite later.',
-                                label: 'Revoke invite',
-                                action: () =>
-                                  void run(
-                                    () => revokeInvite(invite.id),
-                                    `Revoked invite for ${invite.email}.`,
-                                  ),
-                              });
-                            }}
-                          />
-                        </CardActions>
-                      ) : null}
-                    </KanbanCard>
-                  );
-                })
-              )}
-            </div>
-          </section>
-
-          {/* Pending */}
-          <section className="admin-kanban-col" aria-labelledby="kanban-pending">
-            <header className="admin-kanban-col__head">
-              <CheckCircle2 size={16} strokeWidth={2.2} aria-hidden="true" />
-              <h2 id="kanban-pending" className="admin-kanban-col__title">
-                Pending Approval
-              </h2>
-              <span className="admin-kanban-col__count">{filteredPending.length}</span>
-            </header>
-            <div className="admin-kanban-col__body">
-              {filteredPending.length === 0 ? (
-                <ColumnEmptyState icon={<Inbox size={24} />} message="No pending requests" />
-              ) : (
-                filteredPending.map((account) => {
-                  const tone = roleTone(account.requestedRole || 'admin');
-                  return (
-                    <KanbanCard key={account.uid} tone={tone}>
-                      <div className="admin-kanban-card__top admin-kanban-card__top--polish">
-                        <Avatar initials={memberInitials(account.fullName, account.email)} />
-                        <div className="admin-kanban-card__meta">
-                          <div className="admin-kanban-card__name">
-                            {account.fullName || 'Unnamed'}
-                          </div>
-                          <div className="admin-kanban-card__muted" title={account.email}>{account.email}</div>
-                          <div className="admin-kanban-card__muted">
-                            Requested: {account.requestedRole || '—'}
-                          </div>
-                        </div>
-                        <RoleBadge role={account.requestedRole || 'admin'} />
-                      </div>
-                      {canManage ? (
-                        <CardActions>
-                          <IconButton
-                            icon={<CheckCircle2 size={14} />}
-                            label="Approve"
-                            showLabel
-                            variant="primary"
-                            disabled={busy}
-                            onClick={() =>
-                              void run(
-                                () =>
-                                  approvePendingAdmin({
-                                    uid: account.uid,
-                                    role: resolveApproveRole(account.requestedRole),
-                                    permissions: emptyPermissions(),
-                                    approvedBy: user.uid,
-                                  }),
-                                `Approved ${account.email}.`,
-                              )
-                            }
-                          />
-                          <IconButton
-                            icon={<XCircle size={14} />}
-                            label="Reject"
-                            showLabel
-                            variant="danger"
-                            disabled={busy}
-                            onClick={() => {
-                              setPendingConfirm({
-                                title: `Reject ${account.email}?`,
-                                body: 'Their pending profile is deleted. They can request access again with the access code.',
-                                label: 'Reject request',
-                                action: () =>
-                                  void run(
-                                    () => rejectPendingAdmin(account.uid),
-                                    `Rejected ${account.email}.`,
-                                  ),
-                              });
-                            }}
-                          />
-                        </CardActions>
-                      ) : null}
-                    </KanbanCard>
-                  );
-                })
-              )}
-            </div>
-          </section>
-
-          {/* Active */}
-          <section className="admin-kanban-col" aria-labelledby="kanban-active">
-            <header className="admin-kanban-col__head">
-              <User size={16} strokeWidth={2.2} aria-hidden="true" />
-              <h2 id="kanban-active" className="admin-kanban-col__title">
-                Active
-              </h2>
-              <span className="admin-kanban-col__count">{filteredActive.length}</span>
-            </header>
-            <div className="admin-kanban-col__body">
-              {filteredActive.length === 0 ? (
-                <ColumnEmptyState icon={<Inbox size={24} />} message="No active members" />
-              ) : (
-                filteredActive.map((member) => {
-                  const tone = roleTone(member.role);
-                  return (
-                    <KanbanCard key={member.uid} tone={tone}>
-                      <div className="admin-kanban-card__top admin-kanban-card__top--polish">
-                        <Avatar initials={memberInitials(member.fullName, member.email)} />
-                        <div className="admin-kanban-card__meta">
-                          <div className="admin-kanban-card__name" title={member.fullName || 'Unnamed'}>
-                            {member.fullName || 'Unnamed'}
-                          </div>
-                          <div className="admin-kanban-card__muted" title={member.email}>{member.email}</div>
-                        </div>
-                        <RoleBadge role={member.role || 'admin'} />
-                      </div>
-                      <PermissionChips
-                        permissions={member.permissions}
-                        activeOnly
-                        fullAccess={member.role === 'superadmin'}
-                      />
-                      {canManage ? (
-                        <CardActions>
-                          <IconButton
-                            icon={<Pencil size={14} />}
-                            label="Edit"
-                            showLabel
-                            disabled={busy}
-                            onClick={() => openEditPanel(member)}
-                          />
-                          {member.uid !== user.uid ? (
-                            <IconButton
-                              icon={<UserMinus size={14} />}
-                              label="Remove"
-                              showLabel
-                              variant="danger"
-                              disabled={busy}
-                              onClick={() => {
-                                setPendingConfirm({
-                                  title: `Remove access for ${member.email}?`,
-                                  body: 'They lose access to the workspace right away. This is a soft removal: the record is kept under Removed and can be deleted permanently later.',
-                                  label: 'Remove access',
-                                  action: () =>
-                                    void run(
-                                      () =>
-                                        removeActiveMember({
-                                          uid: member.uid,
-                                          removedBy: user.uid,
-                                        }),
-                                      `Removed ${member.email}.`,
-                                    ),
-                                });
-                              }}
-                            />
-                          ) : null}
-                        </CardActions>
-                      ) : null}
-                    </KanbanCard>
-                  );
-                })
-              )}
-            </div>
-          </section>
-
-          {/* Removed — only when toggled */}
-          {showRemoved ? (
-            <section className="admin-kanban-col" aria-labelledby="kanban-removed">
-              <header className="admin-kanban-col__head">
-                <UserMinus size={16} strokeWidth={2.2} aria-hidden="true" />
-                <h2 id="kanban-removed" className="admin-kanban-col__title">
-                  Removed
-                </h2>
-                <span className="admin-kanban-col__count">{filteredRemoved.length}</span>
-              </header>
-              <div className="admin-kanban-col__body">
-                {filteredRemoved.length === 0 ? (
-                  <ColumnEmptyState icon={<Inbox size={24} />} message="No removed members" />
-                ) : (
-                  filteredRemoved.map((member) => {
-                    const tone = roleTone(member.role);
-                    return (
-                      <KanbanCard key={member.uid} tone={tone}>
-                        <div className="admin-kanban-card__top admin-kanban-card__top--polish">
-                          <Avatar initials={memberInitials(member.fullName, member.email)} />
-                          <div className="admin-kanban-card__meta">
-                            <div className="admin-kanban-card__name">
-                              {member.fullName || 'Unnamed'}
-                            </div>
-                            <div className="admin-kanban-card__muted" title={member.email}>{member.email}</div>
-                          </div>
-                          <RoleBadge role={member.role || 'admin'} />
-                        </div>
-                        <div className="admin-kanban-card__history">
-                          <div>Removed {formatRemovedAt(member.removedAt)}</div>
-                          <div>By {member.removedBy || '—'}</div>
-                        </div>
-                        {canManage ? (
-                          <CardActions>
-                            <IconButton
-                              icon={<Trash2 size={14} />}
-                              label="Delete forever"
-                              showLabel
-                              variant="danger"
-                              disabled={busy}
-                              onClick={() => openDeletePanel(member)}
-                            />
-                          </CardActions>
-                        ) : null}
-                      </KanbanCard>
-                    );
-                  })
-                )}
-              </div>
-            </section>
-          ) : null}
+      {!loaded ? (
+        <RosterSkeleton />
+      ) : entries.length === 0 ? (
+        <div className="inq-state">
+          <p className="admin-empty__title">
+            {loadFailed ? 'Could not load members' : filtersOn ? 'No one matches' : 'No members yet'}
+          </p>
+          <p className="admin-empty__body">
+            {loadFailed
+              ? 'Check your connection and reload the page.'
+              : filtersOn
+                ? 'Change the search, role or status to see more people.'
+                : 'Add a member to create an invite link, or share the access code so people can request access.'}
+          </p>
         </div>
-      </div>
+      ) : (
+        <ul className={`mem-list${arriving ? ' is-arriving' : ''}`} aria-label="Members">
+          {entries.map((entry) => (
+            <RosterRow key={entry.key} entry={entry} />
+          ))}
+        </ul>
+      )}
 
       {canManage ? (
         <MembersDrawer
@@ -1243,6 +1125,20 @@ export function MemberManagement() {
               }
             />
           </div>
+          <div className="admin-member-modal__field">
+            <span className="admin-member-modal__label">Sign-in</span>
+            <p className="admin-member-modal__hint">
+              {noSignInMethod(invitePerms)
+                ? 'Keep at least one way to sign in on.'
+                : 'On unless you turn it off. Superadmins are never blocked.'}
+            </p>
+            <SignInToggleList
+              permissions={invitePerms}
+              onToggle={(key) =>
+                setInvitePerms((prev) => ({ ...prev, [key]: !signInOn(prev, key) }))
+              }
+            />
+          </div>
         </MembersDrawer>
       ) : null}
 
@@ -1264,7 +1160,7 @@ export function MemberManagement() {
               <Button
                 variant="primary"
                 size="sm"
-                disabled={busy || !editingMember}
+                disabled={busy || !editingMember || noSignInMethod(editPerms)}
                 onClick={() => {
                   if (!editingMember) return;
                   void run(async () => {
@@ -1300,6 +1196,20 @@ export function MemberManagement() {
               permissions={editPerms}
               onToggle={(key) =>
                 setEditPerms((prev) => ({ ...prev, [key]: !prev[key] }))
+              }
+            />
+          </div>
+          <div className="admin-member-modal__field">
+            <span className="admin-member-modal__label">Sign-in</span>
+            <p className="admin-member-modal__hint">
+              {noSignInMethod(editPerms)
+                ? 'Keep at least one way to sign in on, or this person is locked out.'
+                : 'On unless you turn it off. Takes effect at their next sign-in.'}
+            </p>
+            <SignInToggleList
+              permissions={editPerms}
+              onToggle={(key) =>
+                setEditPerms((prev) => ({ ...prev, [key]: !signInOn(prev, key) }))
               }
             />
           </div>

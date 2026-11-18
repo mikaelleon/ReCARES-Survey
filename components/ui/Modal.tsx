@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type CSSProperties, type MouseEventHandler, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type MouseEventHandler, type ReactNode } from 'react';
 import { AdminOverlayPortal } from '@/components/admin/AdminOverlayPortal';
 
 export interface ModalProps {
@@ -13,23 +13,24 @@ const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function Modal({ open = true, onClose, children }: ModalProps) {
-  const panelRef = useRef<HTMLDivElement | null>(null);
+  // State, not a ref: the portal mounts a tick after this component, so the effect below has to
+  // run again once the panel actually exists, or focus never leaves the button that opened it.
+  const [panel, setPanel] = useState<HTMLDivElement | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
   // Esc closes, Tab stays inside, focus returns to the opener on close.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !panel) return;
     const opener = document.activeElement as HTMLElement | null;
-    const panel = panelRef.current;
-    panel?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+    panel.querySelector<HTMLElement>(FOCUSABLE)?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.stopPropagation();
         closeRef.current?.();
         return;
       }
-      if (event.key !== 'Tab' || !panel) return;
+      if (event.key !== 'Tab') return;
       const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
       if (items.length === 0) return;
       const first = items[0]!;
@@ -47,7 +48,7 @@ export function Modal({ open = true, onClose, children }: ModalProps) {
       document.removeEventListener('keydown', onKey);
       opener?.focus?.();
     };
-  }, [open]);
+  }, [open, panel]);
 
   if (!open) {
     return null;
@@ -81,9 +82,10 @@ export function Modal({ open = true, onClose, children }: ModalProps) {
 
   return (
     <AdminOverlayPortal>
-      <div style={backdropStyle} onClick={onClose}>
+      <div className="ui-modal__backdrop" style={backdropStyle} onClick={onClose}>
         <div
-          ref={panelRef}
+          ref={setPanel}
+          className="ui-modal__panel"
           style={panelStyle}
           role="dialog"
           aria-modal="true"

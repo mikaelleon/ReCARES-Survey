@@ -21,7 +21,9 @@ function InquiryCard({
   const long = row.message.length > LONG_AT[variant] || row.message.split('\n').length > 3;
 
   return (
-    <li className={`inq-card inq-card--${variant}`}>
+    <li
+      className={`inq-card inq-card--${variant}${handlers.busyId === row.id ? ' is-busy' : ''}`}
+    >
       <div className="inq-card__head">
         <div className="inq-card__who">
           <p className="inq-card__name" title={row.name && row.email ? `${who} · ${row.email}` : who}>

@@ -33,7 +33,10 @@ export function InquiryList({ rows, ...handlers }: { rows: InquiryRow[] } & Inqu
   return (
     <ul className="inq-list" aria-label="Inquiries">
       {rows.map((row) => (
-        <li key={row.id} className="inq-list__row">
+        <li
+          key={row.id}
+          className={`inq-list__row${handlers.busyId === row.id ? ' is-busy' : ''}`}
+        >
           <div className="inq-list__status">
             <InquiryStatusPill status={row.status} />
           </div>
@@ -110,7 +113,7 @@ export function InquiryTable({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id}>
+            <tr key={row.id} className={handlers.busyId === row.id ? 'is-busy' : undefined}>
               <td className="inq-table__when">
                 <time className="inq-meta" dateTime={row.createdAt || undefined}>
                   {formatWhen(row.createdAt)}

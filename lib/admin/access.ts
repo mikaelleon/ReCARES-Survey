@@ -68,6 +68,43 @@ export const DASHBOARD_PERMISSION_LABELS: Record<DashboardPermissionKey, string>
   findingNotes: 'Findings log',
 };
 
+/**
+ * Account switches. Unlike page permissions these are on unless set to false, so every
+ * existing member keeps the sign-in methods they already use. Superadmins ignore them.
+ */
+export const SIGN_IN_PERMISSION_KEYS = ['signInPassword', 'signInGoogle', 'changePassword'] as const;
+
+export type SignInPermissionKey = (typeof SIGN_IN_PERMISSION_KEYS)[number];
+
+export const SIGN_IN_PERMISSION_LABELS: Record<SignInPermissionKey, string> = {
+  signInPassword: 'Sign in with email and password',
+  signInGoogle: 'Sign in with Google',
+  changePassword: 'Add or change a password',
+};
+
+/** Short form for chips, shown only when the switch is off. */
+export const SIGN_IN_OFF_LABELS: Record<SignInPermissionKey, string> = {
+  signInPassword: 'No password sign-in',
+  signInGoogle: 'No Google sign-in',
+  changePassword: 'No password change',
+};
+
+export const SIGN_IN_PERMISSION_HINTS: Record<SignInPermissionKey, string> = {
+  signInPassword: 'Log in with the email and password form',
+  signInGoogle: 'Log in with Continue with Google',
+  changePassword: 'Attach a password to a Google account, or change it',
+};
+
+/** True unless the member has this switch turned off. Superadmins are never blocked. */
+export function isSignInAllowed(
+  profile: Pick<AdminProfile, 'role' | 'permissions'> | null | undefined,
+  key: SignInPermissionKey,
+): boolean {
+  if (!profile) return true;
+  if (profile.role === 'superadmin') return true;
+  return profile.permissions?.[key] !== false;
+}
+
 export type AdminPermissions = Partial<Record<DashboardPermissionKey, boolean>> & {
   [dashboardKey: string]: boolean;
 };

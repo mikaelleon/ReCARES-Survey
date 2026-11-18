@@ -12,8 +12,10 @@ import {
   goToAdminPath,
   loginErrorMessage,
   loginWithEmail,
+  addPasswordWithGoogle,
   loginWithGoogle,
   resolveAdminProfile,
+  sendAdminPasswordReset,
 } from '@/lib/firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase/config';
 
@@ -68,6 +70,9 @@ export default function AdminLoginPage() {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [resetNote, setResetNote] = useState<string | null>(null);
+  /** True after a failed email sign-in: the account may be Google-only. */
+  const [canAddPassword, setCanAddPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [method, setMethod] = useState<'email' | 'google' | null>(null);
 
@@ -117,8 +122,61 @@ export default function AdminLoginPage() {
       await finishLogin();
     } catch (error) {
       setFormError(loginErrorMessage(error));
+      setCanAddPassword(true);
       setBusy(false);
       setMethod(null);
+    }
+  };
+
+  /** Google-only account: prove it is yours with Google, then keep the typed password for next time. */
+  const handleAddPassword = async () => {
+    const trimmed = email.trim();
+    if (!trimmed || !isValidEmail(trimmed) || !password) {
+      handleSubmitValidation();
+      return;
+    }
+    setBusy(true);
+    setMethod('google');
+    setFormError(null);
+    setResetNote(null);
+    try {
+      const result = await addPasswordWithGoogle(trimmed, password);
+      await reloadProfile();
+      routeForAccess(result === 'needs-access-code' || result === 'unauthenticated' ? 'unauthenticated' : result);
+    } catch (error) {
+      setFormError(loginErrorMessage(error));
+      setBusy(false);
+      setMethod(null);
+    }
+  };
+
+  const handleSubmitValidation = () => {
+    const trimmed = email.trim();
+    setEmailError(!trimmed ? 'Email is required.' : !isValidEmail(trimmed) ? 'Enter a valid email address.' : null);
+    setPasswordError(!password ? 'Password is required.' : null);
+    focusFirstInvalid();
+  };
+
+  const handleReset = async () => {
+    const trimmed = email.trim();
+    if (!trimmed || !isValidEmail(trimmed)) {
+      setEmailError(trimmed ? 'Enter a valid email address.' : 'Enter your email to reset your password.');
+      setFormError(null);
+      setResetNote(null);
+      focusFirstInvalid();
+      return;
+    }
+    setBusy(true);
+    setFormError(null);
+    setResetNote(null);
+    try {
+      await sendAdminPasswordReset(trimmed);
+      // Same words whether or not an account exists.
+      setResetNote(`If ${trimmed} has an account, a reset link is on its way. Check your spam folder too.`);
+    } catch (error) {
+      setFormError(loginErrorMessage(error));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -188,10 +246,34 @@ export default function AdminLoginPage() {
           error={passwordError}
         />
 
+        <button
+          type="button"
+          className="auth-card__link auth-card__link--button"
+          disabled={busy}
+          onClick={() => void handleReset()}
+        >
+          Forgot password?
+        </button>
+
         {formError ? (
           <p role="alert" className="auth-card__alert">
             {formError}
           </p>
+        ) : null}
+        {resetNote ? (
+          <p role="status" className="auth-card__alert">
+            {resetNote}
+          </p>
+        ) : null}
+        {canAddPassword && formError ? (
+          <button
+            type="button"
+            className="auth-card__link auth-card__link--button"
+            disabled={busy}
+            onClick={() => void handleAddPassword()}
+          >
+            Use this password with my Google account
+          </button>
         ) : null}
 
         <div className="auth-card__actions">

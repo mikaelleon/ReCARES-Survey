@@ -6,6 +6,8 @@ import { ThemeProvider } from '@/lib/theme/ThemeProvider';
 import '@/styles/globals.css';
 import '@/styles/inquiries.css';
 import '@/styles/workspace-ui.css';
+import '@/styles/members.css';
+import '@/styles/survey-control.css';
 
 const lato = Lato({
   subsets: ['latin'],

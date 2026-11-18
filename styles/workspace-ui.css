@@ -67,13 +67,7 @@
     .admin-panel,
     .survey-control-card,
     .survey-history,
-    .survey-status-card,
-    .inq-toolbar,
-    .inq-toast,
-    .inq-state,
-    .inq-card,
-    .inq-list__row,
-    .inq-table-wrap
+    .survey-status-card
   ) {
   background: var(--ws-card-bg);
   border: 1px solid var(--ws-card-border);
@@ -128,14 +122,14 @@
 
 /* Lift on hover for browsable item cards */
 @media (hover: hover) {
-  .admin-app.admin-app :is(.admin-kanban-card, .finding-note-card, .inq-card, .inq-list__row, .ws-card--lift):hover {
+  .admin-app.admin-app :is(.admin-kanban-card, .finding-note-card, .ws-card--lift):hover {
     transform: translateY(-1px);
     box-shadow: var(--ws-card-shadow-hover);
     border-color: rgba(19, 105, 63, 0.22);
   }
 }
 
-.admin-app.admin-app :is(.admin-kanban-card, .finding-note-card, .inq-card, .inq-list__row, .ws-card--lift) {
+.admin-app.admin-app :is(.admin-kanban-card, .finding-note-card, .ws-card--lift) {
   transition:
     box-shadow 200ms ease,
     border-color 200ms ease,
@@ -161,8 +155,7 @@
     .rt-filter-toggle,
     .admin-toolbar__dir,
     .admin-empty__btn,
-    .dash-quick__btn,
-    .inq-btn
+    .dash-quick__btn
   ) {
   display: inline-flex;
   align-items: center;
@@ -208,11 +201,11 @@
   color: var(--ws-ink);
 }
 
-.admin-app.admin-app :is(.ws-btn, .admin-kanban-icon-btn, .survey-control__tool, .rt-toggle, .rt-dir, .dash-quick__btn, .inq-btn):active:not(:disabled) {
+.admin-app.admin-app :is(.ws-btn, .admin-kanban-icon-btn, .survey-control__tool, .rt-toggle, .rt-dir, .dash-quick__btn):active:not(:disabled) {
   transform: scale(0.98);
 }
 
-.admin-app.admin-app :is(.ws-btn, .admin-kanban-icon-btn, .survey-control__tool, .survey-preview__btn, .rt-toggle, .rt-dir, .rt-clear, .admin-toolbar__dir, .admin-empty__btn, .dash-quick__btn, .inq-btn):disabled {
+.admin-app.admin-app :is(.ws-btn, .admin-kanban-icon-btn, .survey-control__tool, .survey-preview__btn, .rt-toggle, .rt-dir, .rt-clear, .admin-toolbar__dir, .admin-empty__btn, .dash-quick__btn):disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -224,8 +217,7 @@
     .survey-control__tool--primary,
     .survey-preview__btn:not(.survey-preview__btn--ghost),
     .admin-toolbar__dir,
-    .dash-quick__btn--primary,
-    .inq-btn
+    .dash-quick__btn--primary
   ) {
   background: var(--ws-fill);
   border-color: var(--ws-fill);
@@ -238,8 +230,7 @@
     .survey-control__tool--primary,
     .survey-preview__btn:not(.survey-preview__btn--ghost),
     .admin-toolbar__dir,
-    .dash-quick__btn--primary,
-    .inq-btn
+    .dash-quick__btn--primary
   ):hover:not(:disabled) {
   background: var(--ws-fill-hover);
   border-color: var(--ws-fill-hover);
@@ -247,7 +238,7 @@
   box-shadow: 0 6px 14px rgba(19, 105, 63, 0.22);
 }
 
-[data-theme='dark'] .admin-app.admin-app :is(.ws-btn--primary, .admin-kanban-icon-btn--primary, .survey-control__tool--primary, .dash-quick__btn--primary, .inq-btn) {
+[data-theme='dark'] .admin-app.admin-app :is(.ws-btn--primary, .admin-kanban-icon-btn--primary, .survey-control__tool--primary, .dash-quick__btn--primary) {
   border-color: var(--emerald-400);
 }
 
@@ -291,7 +282,7 @@
 }
 
 /* ── Chips (filters) ────────────────────────────────────────────────────── */
-.admin-app.admin-app :is(.ws-chip, .members-toolbar__chip, .survey-chip, .inq-chip) {
+.admin-app.admin-app :is(.ws-chip, .members-toolbar__chip, .survey-chip) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -311,12 +302,12 @@
   touch-action: manipulation;
 }
 
-.admin-app.admin-app :is(.ws-chip, .members-toolbar__chip, .survey-chip, .inq-chip):hover {
+.admin-app.admin-app :is(.ws-chip, .members-toolbar__chip, .survey-chip):hover {
   border-color: var(--ws-fill);
   background: var(--ws-tint);
 }
 
-.admin-app.admin-app :is(.ws-chip, .members-toolbar__chip, .survey-chip, .inq-chip):is(.is-active, .is-selected, [aria-pressed='true']) {
+.admin-app.admin-app :is(.ws-chip, .members-toolbar__chip, .survey-chip):is(.is-active, .is-selected, [aria-pressed='true']) {
   border-color: var(--ws-fill);
   background: var(--ws-tint);
   color: var(--ws-ink);
@@ -333,8 +324,7 @@
     .survey-window-chip,
     .rr-pill,
     .perm-tag,
-    .admin-permission-chip,
-    .inq-pill
+    .admin-permission-chip
   ) {
   display: inline-flex;
   align-items: center;
@@ -363,8 +353,7 @@
     .survey-window-chip,
     .rr-pill,
     .perm-tag,
-    .admin-permission-chip,
-    .inq-pill
+    .admin-permission-chip
   ) {
   color: color-mix(in srgb, var(--tone) 45%, white);
 }
@@ -394,7 +383,6 @@
     .members-status--active,
     .admin-kanban-role--proponent,
     .admin-kanban-card--proponent,
-    .inq-pill--resolved,
     .finding-tag--theme,
     .finding-status--final,
     .perm-tag--create,
@@ -411,7 +399,6 @@
     .members-status--invited,
     .admin-kanban-role--adviser,
     .admin-kanban-card--adviser,
-    .inq-pill--progress,
     .finding-tag--recommendation,
     .perm-tag--update,
     .admin-kanban-col--invited
@@ -424,7 +411,6 @@
     .members-status--pending,
     .admin-kanban-role--superadmin,
     .admin-kanban-card--superadmin,
-    .inq-pill--new,
     .finding-tag--barrier,
     .perm-tag--export,
     .survey-window-chip--paused,
@@ -569,23 +555,75 @@
 }
 
 /* ── Toolbar fields are pills too (inline component styles need !important) ─ */
-.admin-app.admin-app :is(.members-toolbar, .finding-notes-toolbar, .responses-toolbar, .inq-toolbar) :is(input:not([type='checkbox']):not([type='radio']), select) {
+.admin-app.admin-app :is(.members-toolbar, .finding-notes-toolbar, .responses-toolbar) :is(input:not([type='checkbox']):not([type='radio']), select) {
   border-radius: 999px !important;
   padding-inline: 16px !important;
 }
 
-.admin-app.admin-app .inq-toolbar .inq-toolbar__search input:not([type='checkbox']):not([type='radio']) {
-  padding-inline: 40px 44px !important;
-}
-
 /* ── Motion ─────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .admin-app.admin-app :is(.ws-btn, .admin-kanban-icon-btn, .survey-control__tool, .rt-toggle, .rt-dir, .dash-quick__btn, .inq-btn, .admin-kanban-card, .finding-note-card, .inq-card, .inq-list__row):is(:hover, :active) {
+  .admin-app.admin-app :is(.ws-btn, .admin-kanban-icon-btn, .survey-control__tool, .rt-toggle, .rt-dir, .dash-quick__btn, .admin-kanban-card, .finding-note-card):is(:hover, :active) {
     transform: none;
   }
 
-  .admin-app.admin-app :is(.admin-kanban-card, .finding-note-card, .inq-card, .inq-list__row, .ws-btn, .inq-btn) {
+  .admin-app.admin-app :is(.admin-kanban-card, .finding-note-card, .ws-btn) {
     transition: none;
+    animation: none;
+  }
+}
+
+/* ── Loading placeholders: a bar sits where each piece of text will be ──────
+   Inline-block so the line box (and so the height) stays the real text's. */
+.ledger-skel,
+.mem-skel {
+  --skel-a: rgba(16, 40, 28, 0.07);
+  --skel-b: rgba(16, 40, 28, 0.14);
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 100%;
+  border-radius: 4px;
+  background-image: linear-gradient(90deg, var(--skel-a) 0%, var(--skel-b) 45%, var(--skel-a) 100%);
+}
+
+[data-theme='dark'] .ledger-skel,
+[data-theme='dark'] .mem-skel {
+  --skel-a: rgba(229, 235, 232, 0.08);
+  --skel-b: rgba(229, 235, 232, 0.16);
+}
+
+.dash-page .ledger__figure .ledger-skel--figure {
+  width: 0.9em;
+  height: 0.62em;
+  margin-left: 0;
+  font-size: inherit;
+}
+
+/* ── Modal entrance: the scrim fades up and the panel grows from 0.95, ease-out.
+   One-shot keyframes: a modal that is open is not interrupted mid-entrance. ─── */
+@keyframes uiModalFade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes uiModalRise {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.ui-modal__backdrop {
+  animation: uiModalFade 200ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.ui-modal__panel {
+  animation: uiModalRise 220ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-modal__backdrop,
+  .ui-modal__panel {
     animation: none;
   }
 }

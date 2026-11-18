@@ -1,7 +1,8 @@
 'use client';
 
-import { AlertCircle, CheckCircle2, LayoutGrid, List, Rows3, Search, Table2, X } from 'lucide-react';
+import { LayoutGrid, List, Rows3, Search, Table2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CountLedger } from '@/components/admin/CountLedger';
 import { PageHeading } from '@/components/admin/PageHeading';
 import { AdminAppShell } from '@/components/admin/AdminAppShell';
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal';
@@ -14,7 +15,6 @@ import {
   SORT_NEWEST,
   SORT_OLDEST,
   SORT_OPTIONS,
-  STATUS_FILTER,
   filterLabel,
   senderLabel,
   statusFromFilter,
@@ -161,6 +161,16 @@ function InquiryInboxContent() {
     setFilter('All');
   };
 
+  /** Ledger rows are the status filter; selecting the active one clears it. */
+  const toggleFilter = (label: string) => setFilter((current) => (current === label ? 'All' : label));
+  const ledgerRows = ['New', 'In progress', 'Resolved'].map((label) => ({
+    label,
+    value: counts[label] ?? 0,
+    note: label === 'New' ? 'not answered yet' : label === 'In progress' ? 'being handled' : 'answered',
+    active: filter === label,
+    onSelect: () => toggleFilter(label),
+  }));
+
   const renderResults = () => {
     if (loading) return <InquirySkeleton mode={mode} />;
     if (loadError) {
@@ -213,6 +223,20 @@ function InquiryInboxContent() {
         <PageHeading id="inquiries-title" title="Inquiries" sub={"Messages from the homepage contact form. Reply from your own email, then set a status so the team knows where each one stands."} />
       </div>
 
+      <CountLedger
+        ariaLabel="Inquiries summary"
+        label="Inquiries"
+        total={counts.All ?? 0}
+        totalNote={
+          filter === 'All'
+            ? 'Messages from the homepage contact form'
+            : `Showing ${filter.toLowerCase()} only. Select it again to see all`
+        }
+        empty={rows.length === 0}
+        loading={loading}
+        rows={ledgerRows}
+      />
+
       <div className="inq-toolbar">
         <div className="inq-toolbar__search">
           <Search size={16} aria-hidden="true" />
@@ -220,8 +244,8 @@ function InquiryInboxContent() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name, email or message"
-            aria-label="Search inquiries"
+            placeholder="Search"
+            aria-label="Search name, email or message"
           />
           {query ? (
             <button type="button" aria-label="Clear search" onClick={() => setQuery('')}>
@@ -233,48 +257,20 @@ function InquiryInboxContent() {
           <Select label="Sort" options={SORT_OPTIONS} value={sortBy} onChange={(e) => setSortBy(e.target.value)} />
         </div>
         <ViewSwitcher label="Inquiry view" value={mode} options={VIEW_OPTIONS} onChange={setMode} />
-        <div className="inq-chips" role="group" aria-label="Filter by status">
-          {STATUS_FILTER.map((label) => (
-            <button
-              key={label}
-              type="button"
-              className={`inq-chip${filter === label ? ' is-active' : ''}`}
-              aria-pressed={filter === label}
-              onClick={() => setFilter(label)}
-            >
-              {label}
-              <span className="inq-chip__count">{counts[label]}</span>
-            </button>
-          ))}
-        </div>
       </div>
 
-      {note ? (
-        <p role="status" className="inq-toast">
-          <CheckCircle2 size={18} aria-hidden="true" />
-          <span>{note}</span>
-          <button type="button" aria-label="Dismiss message" onClick={() => setNote(null)}>
-            <X size={16} aria-hidden="true" />
-          </button>
-        </p>
-      ) : null}
-      {error ? (
-        <p className="inq-toast inq-toast--error" role="alert">
-          <AlertCircle size={18} aria-hidden="true" />
-          <span>{error}</span>
-          <button type="button" aria-label="Dismiss error" onClick={() => setError(null)}>
-            <X size={16} aria-hidden="true" />
-          </button>
-        </p>
-      ) : null}
-
-      {!loading && !loadError && rows.length > 0 ? (
-        <p className="inq-count" aria-live="polite">
-          {shown.length === rows.length
-            ? `${rows.length} ${rows.length === 1 ? 'inquiry' : 'inquiries'}`
-            : `${shown.length} of ${rows.length} inquiries`}
-        </p>
-      ) : null}
+      <div className="inq-notes">
+        {note ? (
+          <p role="status" className="inq-note">
+            {note}
+          </p>
+        ) : null}
+        {error ? (
+          <p className="inq-note inq-note--error" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </div>
 
       {renderResults()}
 

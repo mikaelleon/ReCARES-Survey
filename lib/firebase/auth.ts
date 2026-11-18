@@ -1,11 +1,17 @@
 'use client';
 
 import {
+  EmailAuthProvider,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
+  linkWithCredential,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updatePassword,
   type User,
 } from 'firebase/auth';
 import {
@@ -21,6 +27,7 @@ import {
 } from 'firebase/firestore';
 import {
   getAdminAccessState,
+  isSignInAllowed,
   type AdminInvite,
   type AdminPermissions,
   type AdminProfile,
@@ -432,6 +439,10 @@ export async function registerAdminFromInvite(params: {
     await credential.user.delete().catch(() => undefined);
     throw new Error('This invite link is no longer valid.');
   }
+  if (invite.permissions?.signInPassword === false) {
+    await credential.user.delete().catch(() => undefined);
+    throw new Error(SIGN_IN_BLOCKED.password);
+  }
   if (invite.email.trim().toLowerCase() !== email.toLowerCase()) {
     await credential.user.delete().catch(() => undefined);
     throw new Error('This invite was issued for a different email address.');
@@ -476,9 +487,37 @@ export async function completeGoogleAdmin(params: {
   });
 }
 
+/** Shown when a superadmin has switched a sign-in method off for this member. */
+export const SIGN_IN_BLOCKED = {
+  password: 'Email and password sign-in is turned off for your account. Use Continue with Google, or ask a superadmin.',
+  google: 'Google sign-in is turned off for your account. Use your email and password, or ask a superadmin.',
+  changePassword: 'Changing your password is turned off for your account. Ask a superadmin.',
+} as const;
+
+const BLOCKED_MESSAGES: string[] = Object.values(SIGN_IN_BLOCKED);
+
 export async function loginWithEmail(email: string, password: string): Promise<void> {
   const { auth } = requireServices();
-  await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+  const credential = await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+  let profile: AdminProfile | null = null;
+  try {
+    profile = await resolveAdminProfile(credential.user.uid, credential.user.email ?? '');
+  } catch {
+    // Profile problems are reported by the caller's own lookup; only an explicit "off" blocks here.
+  }
+  if (!isSignInAllowed(profile, 'signInPassword')) {
+    await signOut(auth);
+    throw new Error(SIGN_IN_BLOCKED.password);
+  }
+}
+
+/**
+ * Sends a password reset link. Firebase answers the same way whether or not the address has
+ * an account, so the caller must not say which.
+ */
+export async function sendAdminPasswordReset(email: string): Promise<void> {
+  const { auth } = requireServices();
+  await sendPasswordResetEmail(auth, email.trim().toLowerCase());
 }
 
 export type GoogleLoginResult =
@@ -496,11 +535,88 @@ export async function loginWithGoogle(): Promise<GoogleLoginResult> {
   const { auth } = requireServices();
   const provider = new GoogleAuthProvider();
   const credential = await signInWithPopup(auth, provider);
+  return resolveGoogleUser(credential.user);
+}
+
+export const GOOGLE_EMAIL_MISMATCH = 'The Google account is not the one for that email.';
+
+/**
+ * Lets one account use both methods. Proves ownership with Google first, then attaches the
+ * typed password to that same account, so email and password works from then on.
+ */
+export async function addPasswordWithGoogle(email: string, password: string): Promise<GoogleLoginResult> {
+  const { auth } = requireServices();
+  const wanted = email.trim().toLowerCase();
+  const credential = await signInWithPopup(auth, new GoogleAuthProvider());
   const user = credential.user;
+  if ((user.email ?? '').trim().toLowerCase() !== wanted) {
+    await signOut(auth);
+    throw new Error(GOOGLE_EMAIL_MISMATCH);
+  }
+  const hasPassword = user.providerData.some((p) => p.providerId === 'password');
+  let existing: AdminProfile | null = null;
+  try {
+    existing = await resolveAdminProfile(user.uid, user.email ?? '');
+  } catch {
+    // Without a readable profile nothing is switched off for this person.
+  }
+  if (!isSignInAllowed(existing, 'changePassword') || !isSignInAllowed(existing, 'signInGoogle')) {
+    await signOut(auth);
+    throw new Error(
+      !isSignInAllowed(existing, 'signInGoogle') ? SIGN_IN_BLOCKED.google : SIGN_IN_BLOCKED.changePassword,
+    );
+  }
+  if (!hasPassword) {
+    await linkWithCredential(user, EmailAuthProvider.credential(wanted, password));
+  }
+  return resolveGoogleUser(user);
+}
+
+/** True when the signed-in account already has an email and password attached. */
+export function currentUserHasPassword(): boolean {
+  const user = getFirebaseAuth()?.currentUser;
+  return Boolean(user?.providerData.some((p) => p.providerId === 'password'));
+}
+
+/**
+ * Self-service password change. Re-checks who is asking first (current password, or Google
+ * for an account that has none), then updates it. A Google-only account gets a password
+ * attached instead, so it can use both methods afterwards.
+ * Returns what happened so the caller can say it plainly.
+ */
+export async function changeOwnPassword(params: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<'changed' | 'added'> {
+  const { auth } = requireServices();
+  const user = auth.currentUser;
+  if (!user || !user.email) throw new Error('Sign in again to change your password.');
+  const hasPassword = user.providerData.some((p) => p.providerId === 'password');
+
+  if (hasPassword) {
+    await reauthenticateWithCredential(
+      user,
+      EmailAuthProvider.credential(user.email, params.currentPassword),
+    );
+    await updatePassword(user, params.newPassword);
+    return 'changed';
+  }
+
+  await reauthenticateWithPopup(user, new GoogleAuthProvider());
+  await linkWithCredential(user, EmailAuthProvider.credential(user.email, params.newPassword));
+  return 'added';
+}
+
+async function resolveGoogleUser(user: User): Promise<GoogleLoginResult> {
   const email = user.email ?? '';
   try {
     const profile = await resolveAdminProfile(user.uid, email);
     if (profile) {
+      if (!isSignInAllowed(profile, 'signInGoogle')) {
+        const auth = getFirebaseAuth();
+        if (auth) await signOut(auth);
+        throw new Error(SIGN_IN_BLOCKED.google);
+      }
       return getAdminAccessState(profile);
     }
   } catch (error) {
@@ -512,6 +628,11 @@ export async function loginWithGoogle(): Promise<GoogleLoginResult> {
   if (emailKey) {
     const invite = await findUnusedInviteByEmail(emailKey);
     if (invite) {
+      if (invite.permissions?.signInGoogle === false) {
+        const auth = getFirebaseAuth();
+        if (auth) await signOut(auth);
+        throw new Error(SIGN_IN_BLOCKED.google);
+      }
       await assertEmailFreeForNewAdmin(email, user.uid);
       await writeActiveFromInvite(
         user.uid,
@@ -567,6 +688,41 @@ export function loginErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message === 'Invalid access code.') {
     return error.message;
   }
+  if (
+    code === 'auth/invalid-credential' ||
+    code === 'auth/wrong-password' ||
+    code === 'auth/user-not-found' ||
+    code === 'auth/invalid-login-credentials'
+  ) {
+    return 'That email and password do not match. If you signed up with Google, use the button below to add this password to your Google account.';
+  }
+  if (code === 'auth/invalid-email') {
+    return 'Enter a valid email address.';
+  }
+  if (error instanceof Error && (error.message === GOOGLE_EMAIL_MISMATCH || BLOCKED_MESSAGES.includes(error.message))) {
+    return error.message;
+  }
+  if (code === 'auth/weak-password') {
+    return 'Use a password of at least 6 characters.';
+  }
+  if (code === 'auth/requires-recent-login') {
+    return 'For safety, log in again and then change your password.';
+  }
+  if (code === 'auth/provider-already-linked' || code === 'auth/credential-already-in-use') {
+    return 'This account already has a password. Use Forgot password if you do not remember it.';
+  }
+  if (code === 'auth/operation-not-allowed') {
+    return 'Email and password sign-in is turned off for this project. Use Continue with Google, or ask a superadmin to turn it on in Firebase.';
+  }
+  if (code === 'auth/user-disabled') {
+    return 'This account has been disabled. Ask a superadmin for help.';
+  }
+  if (code === 'auth/too-many-requests') {
+    return 'Too many attempts. Wait a few minutes, or reset your password.';
+  }
+  if (code === 'auth/network-request-failed') {
+    return 'Could not reach the sign-in service. Check your connection and try again.';
+  }
   return 'Sign-in failed. Check your email and password and try again.';
 }
 
@@ -574,6 +730,7 @@ export function signupErrorMessage(error: unknown): string {
   const code = firebaseCode(error);
   if (error instanceof Error) {
     if (
+      BLOCKED_MESSAGES.includes(error.message) ||
       error.message === 'Invalid access code.' ||
       error.message === 'This invite link is no longer valid.' ||
       error.message === 'This invite was issued for a different email address.' ||

@@ -1,17 +1,41 @@
-/* Inquiries screen: layout only.
-   Card, button, chip, pill and switcher looks come from styles/workspace-ui.css. */
+/* Inquiries screen. Flat and ruled, like Dashboard, Findings Log and Interview invites:
+   a ledger on top (its rows are the status filter), then one of four layouts of the same
+   messages. No card shadows, no pills, no icons on status, nothing moves on hover.
+   Colour tokens (--ws-*) come from styles/workspace-ui.css. */
 
 .inquiries-page {
   min-width: 0;
 }
 
+/* Ledger rows that filter: a button that fills the row, marked by an underline when in force */
+.count-ledger .ledger__link--button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.count-ledger .ledger__link--button[aria-pressed='true'] {
+  color: var(--text-headline);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Toolbar: search, sort, view. One line of 40px controls ───────────── */
 .inq-toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px 16px;
-  margin: 0 0 16px;
-  padding: 16px;
+  align-items: center;
+  gap: 8px 16px;
+  margin: 24px 0 8px;
+}
+
+.inq-toolbar > .view-switcher {
+  margin-left: auto;
 }
 
 .inq-toolbar__search {
@@ -19,14 +43,14 @@
   display: flex;
   align-items: center;
   flex: 1 1 240px;
-  max-width: 420px;
+  max-width: 360px;
   min-width: 0;
   color: var(--ws-muted);
 }
 
 .inq-toolbar__search > svg {
   position: absolute;
-  left: 14px;
+  left: 12px;
   pointer-events: none;
 }
 
@@ -34,33 +58,32 @@
   width: 100%;
   min-height: var(--ws-hit);
   box-sizing: border-box;
+  padding: 0 44px 0 40px;
   border: 1px solid var(--field-border);
+  border-radius: 8px;
   font-family: var(--font-sans);
   font-size: var(--text-body-size);
 }
 
-.inq-toolbar__search button,
-.inq-toast button {
+.inq-toolbar__search button {
+  position: absolute;
+  right: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: var(--ws-hit);
   height: var(--ws-hit);
   border: 0;
-  border-radius: 999px;
+  border-radius: 8px;
   background: transparent;
   color: var(--ws-ink-soft);
   cursor: pointer;
 }
 
-.inq-toolbar__search button {
-  position: absolute;
-  right: 2px;
-}
-
-.inq-toolbar__search button:hover,
-.inq-toast button:hover {
-  background: var(--ws-tint);
+@media (hover: hover) {
+  .inq-toolbar__search button:hover {
+    background: var(--ws-tint);
+  }
 }
 
 .inq-toolbar__sort {
@@ -68,72 +91,44 @@
   min-width: 140px;
 }
 
+/* The select's value says what it is; the label stays for screen readers */
+.inq-toolbar__sort label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .inq-toolbar__sort select {
   min-height: var(--ws-hit);
 }
 
-.inq-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  flex: 1 1 100%;
-  padding-top: 12px;
-  border-top: 1px solid var(--ws-card-border);
-}
-
-.inq-chip__count {
-  min-width: 22px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: var(--ws-tint);
-  font-size: 12px;
-  text-align: center;
-}
-
-.inq-chip.is-active .inq-chip__count {
-  background: var(--ws-fill);
-  color: var(--ws-on-fill);
-}
-
-.inq-count {
+/* ── Notes: one reserved line, so a result never shoves the list down ──── */
+.inq-notes {
+  min-height: 24px;
   margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ws-muted);
 }
 
-.inq-toast {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 0 16px;
-  padding: 8px 8px 8px 16px;
+.inq-note {
+  margin: 0;
   font-size: 14px;
-  font-weight: 700;
-  color: var(--ws-ink);
+  line-height: 24px;
+  color: var(--ws-ink-soft);
   overflow-wrap: anywhere;
 }
 
-.inq-toast > svg {
-  flex: none;
-  color: var(--ws-fill);
-}
-
-.inq-toast > span {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.inq-toast--error > svg {
+.inq-note--error {
   color: color-mix(in srgb, var(--error-red) 70%, var(--black));
 }
 
-[data-theme='dark'] .inq-toast--error > svg {
+[data-theme='dark'] .inq-note--error {
   color: color-mix(in srgb, var(--error-red) 40%, var(--white));
 }
 
 .inq-state {
-  padding: 32px;
+  padding: 24px 0;
 }
 
 .inq-state .admin-empty__title {
@@ -144,9 +139,39 @@
   color: var(--ws-muted);
 }
 
+/* ── Shared pieces ─────────────────────────────────────────────────────── */
+.inq-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--ws-hit);
+  padding: 0 16px;
+  border: 1px solid var(--ws-control-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ws-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 150ms ease-in-out;
+}
+
+@media (hover: hover) {
+  .inq-btn:hover:not(:disabled) {
+    background: var(--ws-tint);
+  }
+}
+
+.inq-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
 .inq-link-btn {
   align-self: flex-start;
   min-height: var(--ws-hit);
+  margin-block: -8px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -155,29 +180,34 @@
   font-size: 13px;
   font-weight: 700;
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
   cursor: pointer;
 }
 
-.inq-link-btn:hover {
-  color: var(--ws-fill);
+@media (hover: hover) {
+  .inq-link-btn:hover {
+    color: var(--ws-fill);
+  }
 }
 
-.inq-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex: none;
+/* Status is words. New is the one that still needs someone, so it is set darker */
+.inq-status {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ws-muted);
+  white-space: nowrap;
 }
 
-.inq-pill {
-  height: 26px;
+.inq-status--new {
+  font-weight: 700;
+  color: var(--ws-ink);
 }
 
 .inq-meta {
   font-size: 13px;
   color: var(--ws-muted);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .inq-email {
@@ -186,14 +216,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 20px;
   color: var(--ws-ink-soft);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
 }
 
-.inq-email:hover {
-  color: var(--ws-fill);
+@media (hover: hover) {
+  .inq-email:hover {
+    color: var(--ws-fill);
+  }
 }
 
 .inq-sender {
@@ -208,12 +241,81 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
+  line-height: 20px;
   color: var(--ws-ink);
 }
 
-/* Cards (comfortable + compact) */
+/* Actions: Reply and the next step are text; the menu is a quiet square, not a ringed pill */
+.inq-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0 12px;
+  flex: none;
+}
+
+.inq-act {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--ws-hit);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ws-ink-soft);
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: color 150ms ease-in-out;
+}
+
+.inq-act--primary {
+  color: var(--text-headline);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.inq-act:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inq-act:not(:disabled):active {
+  transform: scale(0.96);
+}
+
+@media (hover: hover) {
+  .inq-act:hover:not(:disabled) {
+    color: var(--ws-fill);
+  }
+}
+
+.admin-app.admin-app .inquiries-page .inq-actions .row-menu__trigger {
+  border: 0;
+  border-radius: 8px;
+}
+
+/* A row being saved dims what it says; its own action still reads "Saving…" */
+.inq-card.is-busy .inq-card__head,
+.inq-card.is-busy .inq-card__msg,
+.inq-list__row.is-busy > :not(.inq-actions),
+.inq-table tr.is-busy td:not(.inq-table__actions-col) {
+  opacity: 0.55;
+}
+
+.inq-card__head,
+.inq-card__msg,
+.inq-list__row > *,
+.inq-table td {
+  transition: opacity 150ms ease-in-out;
+}
+
+/* ── Cards (comfortable and compact): one hairline box per message ────── */
 .inq-cards {
   display: grid;
   gap: 16px;
@@ -231,13 +333,15 @@
 .inq-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
   padding: 16px;
+  border: 1px solid var(--ws-card-border);
+  border-radius: 8px;
+  background: var(--ws-card-bg);
 }
 
 .inq-card--compact {
-  gap: 8px;
   padding: 12px;
 }
 
@@ -263,10 +367,11 @@
   -webkit-line-clamp: 4;
   overflow: hidden;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 20px;
   color: var(--ws-ink-soft);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  text-wrap: pretty;
 }
 
 .inq-card--compact .inq-card__msg {
@@ -278,34 +383,34 @@
   -webkit-line-clamp: unset;
 }
 
+/* Footer pins to the bottom so cards in a row end on one line; spacing, not a rule, sets it apart */
 .inq-card__foot {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 12px;
+  gap: 0 12px;
   margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid var(--ws-card-border);
+  padding-top: 4px;
 }
 
-/* List: one row per inquiry */
+/* ── List: one ruled line per message ──────────────────────────────────── */
 .inq-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  container-type: inline-size;
   margin: 0;
   padding: 0;
   list-style: none;
+  border-top: 1px solid var(--ws-ink-soft);
 }
 
 .inq-list__row {
   display: grid;
   align-items: center;
-  gap: 8px 16px;
-  grid-template-columns: 128px minmax(160px, 1fr) minmax(0, 2fr) 150px 220px;
+  gap: 0 16px;
+  grid-template-columns: 88px minmax(160px, 1fr) minmax(0, 2fr) 148px 248px;
   min-width: 0;
-  padding: 8px 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ws-card-border);
 }
 
 .inq-list__row > .inq-actions {
@@ -318,16 +423,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 14px;
+  line-height: 20px;
   color: var(--ws-ink-soft);
 }
 
-@media (max-width: 1180px) {
+/* Narrow container: sender and actions on top, the message in full width, then status and time */
+@container (max-width: 999px) {
   .inq-list__row {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      'status sender actions'
+      'sender sender actions'
       'msg msg msg'
-      'when when when';
+      'status when when';
+    padding: 12px 0 4px;
   }
 
   .inq-list__status {
@@ -340,6 +448,10 @@
 
   .inq-list__msg {
     grid-area: msg;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
   }
 
   .inq-list__when {
@@ -353,11 +465,11 @@
 
 .inq-list--skel .inq-list__row {
   grid-template-areas: none;
-  grid-template-columns: 120px minmax(0, 1fr) minmax(0, 2fr);
+  grid-template-columns: 88px minmax(0, 1fr) minmax(0, 2fr);
   min-height: 56px;
 }
 
-/* Table: sticky sortable header inside one card */
+/* ── Table: ruled, with a sticky header ────────────────────────────────── */
 .inq-table-wrap {
   max-height: min(70vh, 720px);
   overflow: auto;
@@ -365,55 +477,66 @@
 
 .inq-table {
   width: 100%;
-  min-width: 880px;
+  min-width: 960px;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
 .inq-table th,
 .inq-table td {
-  padding: 12px 16px;
+  padding: 12px;
   text-align: left;
   vertical-align: middle;
   border-top: 1px solid var(--ws-card-border);
   font-size: 14px;
+  line-height: 20px;
   color: var(--ws-ink-soft);
 }
 
-.inq-table tbody tr:hover td {
-  background: var(--ws-tint);
+.inq-table th:first-child,
+.inq-table td:first-child {
+  padding-left: 0;
+}
+
+.inq-table th:last-child,
+.inq-table td:last-child {
+  padding-right: 0;
+}
+
+@media (hover: hover) {
+  .inq-table tbody tr:hover td {
+    background: color-mix(in srgb, var(--ws-fill) 5%, transparent);
+  }
 }
 
 .inq-table thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding-top: 0;
+  padding-bottom: 0;
   border-top: 0;
-  background: var(--ws-card-bg);
-  box-shadow: inset 0 -1px 0 var(--ws-card-border);
-  font-size: 12px;
+  background: var(--page-bg);
+  box-shadow: inset 0 -1px 0 var(--ws-ink-soft);
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--ws-muted);
 }
 
 .inq-table th:nth-child(1) {
-  width: 170px;
+  width: 176px;
 }
 
 .inq-table th:nth-child(2) {
-  width: 230px;
+  width: 224px;
 }
 
 .inq-table th:nth-child(4) {
-  width: 140px;
+  width: 104px;
 }
 
 .inq-table th.inq-table__actions-col {
-  width: 250px;
+  width: 264px;
 }
 
 .inq-table__actions-col {
@@ -432,6 +555,7 @@
   -webkit-line-clamp: 2;
   overflow: hidden;
   overflow-wrap: anywhere;
+  text-wrap: pretty;
 }
 
 .inq-sort {
@@ -444,8 +568,6 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
   cursor: pointer;
 }
 
@@ -453,4 +575,20 @@
 th[aria-sort='ascending'] .inq-sort,
 th[aria-sort='descending'] .inq-sort {
   color: var(--ws-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inq-act:active,
+  .inq-btn:active {
+    transform: none;
+  }
+
+  .inq-card__head,
+  .inq-card__msg,
+  .inq-list__row > *,
+  .inq-table td,
+  .inq-act,
+  .inq-btn {
+    transition: none;
+  }
 }
